@@ -1,0 +1,721 @@
+Ab hum Student Panel – Homepage (Dashboard) ko pixel-level soch ke design karte hain.
+Ye section daily 80% usage ka hota hai, isliye agar yeh strong hai → pura app strong lagega.
+
+🎯 Goal of Homepage
+“Student app khole aur turant samajh jaye:
+Aaj kya important hai?”
+
+Below is MOBILE-FIRST HOMEPAGE BLUEPRINT (web isi ka enhanced version hoga).
+
+🏠 Student Panel – Homepage (Dashboard) UI/UX Blueprint
+1️⃣ Overall Layout Structure (Mobile First)
+[ Header ]
+[ Alerts / Important Info ]
+[ Today Section ]
+[ Quick Action Row ]
+[ Category-wise Cards ]
+[ Performance Snapshot ]
+[ Bottom Navigation ]
+
+
+👉 Scroll smooth
+👉 Cards based
+👉 Thumb-friendly
+
+2️⃣ Header Design (TOP SECTION)
+🔹 Header Should Contain:
+Left:
+
+👋 Greeting
+“Good Morning, Hritik”
+
+Center / Right:
+
+🔔 Notification Icon (badge count)
+
+👤 Profile avatar (tap → profile)
+
+🔹 Header Design Rules
+
+Height: Compact (not bulky)
+
+Background: Primary color (soft shade)
+
+Sticky on scroll (optional)
+
+📌 No heavy banners here
+
+3️⃣ Alerts / Important Info Strip (VERY IMPORTANT)
+
+Just below header.
+
+Types of Alerts:
+
+🔴 Low attendance warning
+
+🟠 Homework due today
+
+🔵 Exam announced
+
+🟢 Fee confirmation
+
+UI:
+
+Horizontal swipeable alert cards
+
+Auto-priority (critical first)
+
+📌 If no alerts → show motivation card
+
+“You’re all caught up today 🎉”
+
+4️⃣ “Today” Section (MOST USED)
+Title:
+
+📅 Today
+
+Content:
+
+Today’s classes (time-wise)
+
+Subject + teacher
+
+Online / Offline indicator
+
+Card Design:
+
+Time on left
+
+Subject bold
+
+Teacher name small
+
+Join link (if online)
+
+📌 If no class today:
+
+“No classes today. Use time to revise 📚”
+
+5️⃣ Quick Action Row (ICON BASED)
+
+This is thumb-zone friendly row
+
+4–5 Quick Actions (Scrollable)
+Icon	Label
+📘	Homework
+🧪	Exams
+📊	Attendance
+💰	Fees
+📂	Materials
+Rules:
+
+Circular icons
+
+Same size
+
+Label below icon
+
+📌 This is NOT bottom nav, this is shortcut row
+
+6️⃣ Category-wise Cards (MAIN CONTENT)
+🟦 Card Section 1: Homework
+
+Title: 📝 Homework
+
+Card Content:
+
+Pending homework count
+
+Nearest due date
+
+CTA: “View All”
+
+Edge case:
+
+No homework → green success card
+
+🟦 Card Section 2: Attendance Snapshot
+
+Circular progress (%)
+
+Text:
+
+“Present: 78%”
+
+“Required: 75%”
+
+Color logic:
+
+Green ≥ 75
+
+Yellow 70–74
+
+Red < 70
+
+🟦 Card Section 3: Exams & Results
+
+Two states:
+
+Upcoming exam (countdown)
+
+Recent result (marks + grade)
+
+🟦 Card Section 4: Study Material
+
+Recently added notes
+
+Subject tag
+
+Download / View icon
+
+7️⃣ Performance Snapshot (Motivation Section)
+Card Content:
+
+Weekly attendance
+
+Homework completion rate
+
+Small improvement message
+
+Example:
+
+“You improved attendance by +5% this week 👏”
+
+📌 This builds engagement + habit
+
+8️⃣ Optional Section (Events / Announcements)
+
+School events
+
+Competitions
+
+Activities
+
+Shown only if available.
+
+9️⃣ Bottom Navigation Bar (CRITICAL)
+🔹 Bottom Nav Options (MAX 5)
+🏠 Home
+📘 Academics
+📝 Homework
+🔔 Notices
+⚙️ Profile
+
+Rules:
+
+Fixed bottom
+
+Icons + labels
+
+Active state highlighted
+
+Safe area spacing (iOS/Android)
+
+📌 Do NOT overload bottom nav
+
+🔟 Web Version Differences (Important)
+Web:
+
+Sidebar instead of bottom nav
+
+Same cards, grid layout
+
+No design change, only layout change
+
+📌 Same components, different container
+
+1️⃣1️⃣ Empty States & Edge Cases (MUST HANDLE)
+Situation	UI Behavior
+No data	Friendly empty card
+Slow internet	Skeleton loaders
+API error	Retry button
+New student	Onboarding tips
+1️⃣2️⃣ UX Rules (NON-NEGOTIABLE)
+
+No screen > 2 scrolls
+
+Important info always on top
+
+CTA buttons always visible
+
+No academic pressure language
+
+🧠 FINAL GOLDEN RULE
+
+❝ Homepage should feel like
+“Helper” not “Report Card” ❞
+
+
+
+
+
+You are a Senior Frontend Architect, UX Engineer, and Animation Specialist.
+
+CONTEXT:
+I am building an enterprise-grade Education Management CRM.
+The Student Panel homepage (dashboard) blueprint is already provided in full detail
+(assume it is present in this same file above this prompt).
+
+TECH STACK (MANDATORY):
+- React.js + Vite
+- Mobile-first approach
+- Tailwind CSS
+- Centralized theme system
+- Component-based architecture
+
+ANIMATIONS & SMOOTHNESS (CRITICAL):
+- Use GSAP for micro-interactions and entry animations
+- Use Framer Motion for page transitions and card motion
+- Use Lenis for smooth scrolling
+- Animations must feel calm, educational, premium (NOT flashy)
+
+STRICT UI RULES:
+- Mobile-first layout (web is responsive extension)
+- Bottom navigation fixed for mobile
+- Card-based dashboard
+- Thumb-zone friendly
+- No inline CSS
+- No hard-coded colors (use theme tokens only)
+
+HOMEPAGE MUST INCLUDE:
+1. Header
+   - Greeting text
+   - Notification icon with badge
+   - Profile avatar
+   - Sticky behavior
+
+2. Alert / Important Info Section
+   - Swipeable alert cards
+   - Priority-based rendering
+   - Empty state if no alerts
+
+3. "Today" Section
+   - Today's classes list
+   - Time-wise ordering
+   - Empty state handling
+
+4. Quick Action Row
+   - Horizontal scroll
+   - Icon + label buttons
+   - Homework, Exams, Attendance, Fees, Materials
+
+5. Category-wise Cards
+   - Homework card (pending count + CTA)
+   - Attendance snapshot (progress indicator)
+   - Exams & results card
+   - Study material card
+
+6. Performance Snapshot
+   - Weekly progress
+   - Motivational message
+
+7. Optional Events / Announcements Section
+
+8. Bottom Navigation Bar
+   - Home
+   - Academics
+   - Homework
+   - Notices
+   - Profile
+
+ANIMATION REQUIREMENTS:
+- Page load: subtle fade + slide up (Framer Motion)
+- Cards: staggered reveal (GSAP)
+- Alert cards: horizontal swipe + inertia
+- Bottom nav: active state animation
+- Scroll: smooth using Lenis
+- Skeleton loaders for loading states
+
+CODE STRUCTURE REQUIREMENTS:
+- Create `Dashboard.jsx`
+- Create reusable components:
+  - Header
+  - AlertCarousel
+  - TodayClasses
+  - QuickActions
+  - DashboardCard
+  - PerformanceCard
+  - BottomNav
+- Components must be clean and reusable
+- Use mock JSON data (no backend yet)
+- Handle empty, loading, and error states
+
+QUALITY BAR (VERY IMPORTANT):
+- Code should be production-quality
+- Clean folder structure
+- Readable naming
+- No over-engineering
+- Performance optimized
+- Accessibility friendly (aria, contrast)
+
+OUTPUT EXPECTED:
+1. Folder structure for homepage components
+2. Full `Dashboard.jsx` code
+3. Example component code (at least 2 components)
+4. Animation logic explanation (GSAP + Framer Motion + Lenis)
+5. Brief notes on how to extend this later
+
+FINAL RULE:
+This dashboard should feel like a calm, premium student companion —
+not a corporate ERP and not a flashy app.
+
+If something is unclear, make smart product decisions instead of asking questions.
+
+
+
+
+
+
+
+
+
+
+//academics page
+🥇 NEXT PAGE #1: 📘 Academics Page (MOST IMPORTANT)
+❓ Kyun sabse pehle?
+
+Student ka core purpose = padhna
+
+Subjects, timetable, teachers sab yahin se aata hai
+
+Homepage ke baad natural click yahi hota hai
+
+📘 Academics Page – Production Ready Blueprint
+🔹 Page Sections (Mobile First)
+[ Header ]
+[ Class & Section Info ]
+[ Weekly Timetable ]
+[ Subjects Grid ]
+[ Teacher Info (Optional) ]
+
+1️⃣ Header
+
+Title: Academics
+
+Back button
+
+No clutter
+
+2️⃣ Class & Section Card
+
+Example Content:
+
+Class: 10th – A
+
+Academic Year: 2025–26
+
+Medium: English
+
+📌 Read-only card
+
+3️⃣ Weekly Timetable (Swipeable)
+
+Horizontal day tabs (Mon–Sat)
+
+Classes listed vertically
+
+Time + subject + room / online link
+
+Empty case:
+
+“No classes scheduled for today”
+
+4️⃣ Subjects Grid (Clickable Cards)
+
+Each Subject Card:
+
+Subject name
+
+Teacher name
+
+Total classes/week
+
+CTA: “Open Subject”
+
+On click → Subject Detail Page (later)
+
+5️⃣ Animations
+
+Timetable swipe → Framer Motion
+
+Subject cards → GSAP stagger
+
+Page entry → fade + slide
+
+6️⃣ Data (Mock JSON)
+{
+  "class": "10-A",
+  "subjects": [
+    { "name": "Maths", "teacher": "Mr. Sharma", "weeklyClasses": 5 },
+    { "name": "Science", "teacher": "Ms. Verma", "weeklyClasses": 4 }
+  ]
+}
+
+🥈 NEXT PAGE #2: 📝 Homework Page
+❓ Kyun second?
+
+Daily pain point
+
+High engagement
+
+Direct performance impact
+
+📝 Homework Page – Structure
+Sections:
+[ Filter Tabs: All | Pending | Submitted ]
+[ Homework List ]
+[ Homework Detail Modal ]
+
+
+Each Homework Card:
+
+Subject
+
+Due date
+
+Status badge
+
+CTA: Submit / View
+
+Edge Cases:
+
+Late submission
+
+File size limit
+
+Re-submission
+
+🥉 NEXT PAGE #3: 📊 Attendance Page
+Purpose:
+
+Avoid shock at end of term
+
+Build discipline
+
+UI:
+
+Overall % (big)
+
+Subject-wise breakdown
+
+Color-coded warnings
+
+🟨 NEXT PAGE #4: 🧪 Exams & Results
+Sections:
+[ Upcoming Exams ]
+[ Past Results ]
+[ Performance Graph ]
+
+
+Each Result Card:
+
+Marks
+
+Grade
+
+Teacher remark
+
+🟩 NEXT PAGE #5: 🔔 Notices / Notifications
+Purpose:
+
+Official communication only
+
+UI:
+
+Priority filter
+
+Read / unread
+
+Date grouped
+
+🟪 NEXT PAGE #6: 👤 Profile Page
+Content:
+
+Student info (read-only)
+
+Parent linked info
+
+Documents access
+
+🟥 NEXT PAGE #7: 💰 Fees Page
+
+⚠️ Sensitive → Build later
+
+First version:
+
+Read-only
+
+Fee breakdown
+
+Due date
+
+🧭 IDEAL BUILD ORDER (FINAL)
+1️⃣ Homepage (DONE / IN PROGRESS)
+2️⃣ Academics
+3️⃣ Homework
+4️⃣ Attendance
+5️⃣ Exams & Results
+6️⃣ Notices
+7️⃣ Profile
+8️⃣ Fees
+9️⃣ Documents
+🔟 Help & Support
+
+🛠️ HOW TO BUILD EACH PAGE (RULE)
+
+For every page:
+
+Static UI
+
+Empty state
+
+Loading state
+
+Error state
+
+Mock data
+
+Animations
+
+Mobile-first check
+
+❌ Never jump to backend early
+
+🔥 PRODUCT OWNER FINAL ADVICE
+
+❝ Agar student bina training app use kar le
+toh tumhara UX successful h
+
+
+
+
+
+
+
+
+
+
+//homework
+✅ NEXT PAGE AFTER ACADEMICS (FINAL PRODUCT LOGIC)
+
+🧠 Product Rule:
+Student ka next natural thought hota hai:
+“Mujhe kya kaam pending hai?”
+
+👉 Isliye NEXT PAGE = 📝 HOMEWORK PAGE
+
+🥈 NEXT PAGE: 📝 Homework Page
+❓ Kyun Homework next?
+
+Daily engagement driver
+
+Academic performance ka direct impact
+
+Teachers + students + parents sabse zyada use karte hain
+
+Homepage ke Quick Actions se direct click hota hai
+
+📝 Homework Page – HIGH-LEVEL PURPOSE
+
+This page should:
+
+Clearly show pending vs submitted
+
+Reduce “bhool gaya” problem
+
+Make submission stress-free
+
+Encourage on-time completion
+
+🧭 Page Intent (Student Mindset)
+
+“Aaj mujhe kya submit karna hai
+aur kitna time bacha hai?”
+
+🧱 Homework Page – Content Blocks (Mobile First)
+[ Header ]
+[ Filter Tabs ]
+[ Homework List ]
+[ Homework Detail View ]
+[ Submit / Upload Flow ]
+
+🔢 What Will Be Built Here (Production Scope)
+1️⃣ Filter Tabs
+
+All
+
+Pending
+
+Submitted
+
+Late (optional)
+
+Animated tab switch (Framer Motion)
+
+2️⃣ Homework Cards
+
+Each card shows:
+
+Subject name
+
+Homework title
+
+Due date & countdown
+
+Status badge
+
+CTA button
+
+3️⃣ Homework Detail Screen / Modal
+
+Instructions
+
+Attached files
+
+Submission rules
+
+Upload section
+
+4️⃣ Submission Flow
+
+File upload
+
+Preview
+
+Confirmation
+
+Re-submit (if allowed)
+
+5️⃣ Edge & Stress Cases
+
+Late submission warning
+
+File size limit
+
+Network fail
+
+Teacher re-opened submission
+
+🎨 UX Emotion
+
+Calm
+
+Supportive
+
+Deadline-aware (not scary)
+
+🎬 Animation Intent
+
+Cards fade-in
+
+Countdown subtle pulse
+
+Success animation on submit
+
+🔁 AFTER HOMEWORK (NEXT SEQUENCE)
+1️⃣ Homework (Next)
+2️⃣ Attendance
+3️⃣ Exams & Results
+4️⃣ Notices
+5️⃣ Profile
+6️⃣ Fees

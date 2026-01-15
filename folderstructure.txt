@@ -1,0 +1,111 @@
+src/
+│
+├── app/                     # App-level setup
+│   ├── App.jsx
+│   ├── main.jsx
+│   ├── routes.jsx           # Centralized routing
+│   ├── ProtectedRoute.jsx   # RBAC logic
+│   └── ErrorBoundary.jsx
+│
+├── modules/                 # 🔥 ALL PANELS LIVE HERE
+│   ├── student/
+│   ├── teacher/
+│   ├── parent/
+│   ├── admin/
+│   └── staff/
+│
+├── shared/                  # Reusable across ALL modules
+│   ├── components/
+│   ├── layouts/
+│   ├── hooks/
+│   ├── utils/
+│   ├── services/
+│   └── constants/
+│
+├── theme/                   # Centralized Design System
+│   ├── colors.js
+│   ├── typography.js
+│   ├── spacing.js
+│   ├── shadows.js
+│   ├── animations.js
+│   └── index.js
+│
+├── assets/
+│   ├── images/
+│   ├── icons/
+│   └── illustrations/
+│
+├── store/                   # Global state (Redux/Zustand)
+│   ├── auth/
+│   ├── user/
+│   └── index.js
+│
+├── styles/
+│   ├── global.css
+│   └── tailwind.css
+│
+└── config/
+    ├── env.js
+    ├── roles.js
+    └── permissions.js
+
+modules/
+└── student/
+    ├── pages/               # Route-level pages
+    │   ├── Dashboard.jsx
+    │   ├── Attendance.jsx
+    │   ├── Academics.jsx
+    │   ├── Homework.jsx
+    │   ├── Exams.jsx
+    │   ├── Fees.jsx
+    │   ├── Notifications.jsx
+    │   ├── Profile.jsx
+    │   └── Settings.jsx
+    │
+    ├── components/          # Student-only components
+    │   ├── DashboardWidgets/
+    │   ├── AttendanceCard.jsx
+    │   ├── HomeworkItem.jsx
+    │   └── ExamResultCard.jsx
+    │
+    ├── services/            # API calls (student specific)
+    │   ├── student.api.js
+    │   ├── attendance.api.js
+    │   └── exam.api.js
+    │
+    ├── hooks/               # Custom hooks
+    │   ├── useStudentData.js
+    │   └── useAttendance.js
+    │
+    ├── routes.jsx           # Student routes
+    ├── constants.js         # Enums, labels
+    └── index.js             # Barrel export
+
+
+shared/
+├── components/
+│   ├── Button/
+│   ├── Card/
+│   ├── Modal/
+│   ├── Table/
+│   ├── Loader/
+│   └── EmptyState/
+│
+├── layouts/
+│   ├── AuthLayout.jsx
+│   ├── DashboardLayout.jsx
+│   └── MobileLayout.jsx
+│
+├── hooks/
+│   ├── useAuth.js
+│   ├── useTheme.js
+│   └── usePermissions.js
+│
+├── services/
+│   ├── apiClient.js
+│   └── auth.api.js
+│
+└── utils/
+    ├── formatDate.js
+    ├── permissions.js
+    └── validators.js
