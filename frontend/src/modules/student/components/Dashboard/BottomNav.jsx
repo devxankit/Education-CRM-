@@ -11,7 +11,7 @@ const BottomNav = () => {
         { id: 'dashboard', icon: Home, label: 'Home', path: '/student/dashboard' },
         { id: 'academics', icon: BookOpen, label: 'Academics', path: '/student/academics' },
         { id: 'homework', icon: FileText, label: 'Homework', path: '/student/homework' },
-        { id: 'notifications', icon: Bell, label: 'Notices', path: '/student/notifications' },
+        { id: 'notices', icon: Bell, label: 'Notices', path: '/student/notices' },
         { id: 'profile', icon: User, label: 'Profile', path: '/student/profile' },
     ];
 

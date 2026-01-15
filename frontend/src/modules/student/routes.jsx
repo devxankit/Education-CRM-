@@ -5,11 +5,13 @@ import { Navigate } from 'react-router-dom';
 import StudentDashboard from './pages/Dashboard';
 import Academics from './pages/Academics';
 import Homework from './pages/Homework';
+import Notices from './pages/Notices';
 import BottomNav from './components/Dashboard/BottomNav';
 
 const StudentAttendance = () => <div>Student Attendance</div>;
 const StudentAcademics = Academics;
 const StudentHomework = Homework;
+const StudentNotices = Notices;
 
 
 const studentRoutes = [
@@ -35,6 +37,10 @@ const studentRoutes = [
             {
                 path: 'homework',
                 element: <StudentHomework />,
+            },
+            {
+                path: 'notices',
+                element: <StudentNotices />,
             },
             // Add other student routes here
         ],

@@ -719,3 +719,224 @@ Success animation on submit
 4️⃣ Notices
 5️⃣ Profile
 6️⃣ Fees
+
+
+
+
+
+
+//notices
+Below you’ll get 2 parts:
+1️⃣ Professional Product Plan (Notices Module)
+2️⃣ MASTER-LEVEL AI PROMPT to generate it (production-ready)
+
+🟦 PART 1: NOTICES MODULE – PROFESSIONAL PRODUCT PLAN
+🎯 Purpose (Product Owner View)
+
+The Notices Page is:
+
+The single source of truth for official communication
+
+A non-chat, non-noise channel
+
+Legally auditable communication
+
+❝ If it’s not in Notices, it’s not official ❞
+
+🧠 Student Psychology (Important)
+
+Students:
+
+Ignore long text
+
+Panic on unclear notices
+
+Miss deadlines if priority not clear
+
+So Notices must be:
+
+Short
+
+Structured
+
+Priority-driven
+
+Timestamped
+
+🧩 Module Scope (Student Panel)
+What Student SHOULD See
+
+School/Institute notices
+
+Exam announcements
+
+Holiday notifications
+
+Fee reminders
+
+Academic updates
+
+Emergency alerts
+
+What Student SHOULD NOT See
+
+Internal admin messages
+
+Teacher staff-only notices
+
+Financial internal circulars
+
+🧱 Page Structure (Mobile First)
+[ Header ]
+[ Priority Filter ]
+[ Notices List ]
+[ Notice Detail View ]
+
+1️⃣ Header
+Elements:
+
+Title: Notices
+
+Back button
+
+Filter icon (optional)
+
+UX Rules:
+
+Clean
+
+No banners
+
+Sticky on scroll
+
+2️⃣ Priority Filter Tabs (CRITICAL)
+
+Tabs:
+
+All
+
+🔴 Important
+
+🟡 Academic
+
+🔵 General
+
+Rules:
+
+Color-coded
+
+Persistent selection
+
+Smooth animated switch
+
+3️⃣ Notices List (Core Area)
+Each Notice Card Must Contain:
+Element	Description
+Icon	Based on notice type
+Title	Short, clear
+Short preview	1–2 lines max
+Date & Time	Mandatory
+Priority Badge	Critical / Normal
+Read / Unread State	Visual
+Notice Card Types (Icons)
+Type	Icon
+Important	Alert triangle
+Exam	Clipboard
+Holiday	Calendar
+Fee	Wallet
+General	Info
+4️⃣ Notice Detail View (VERY IMPORTANT)
+
+When student opens a notice:
+
+Content:
+
+Full notice text
+
+Structured paragraphs
+
+Bullet points if needed
+
+Attachments (PDF/Image)
+
+Issued by (School/Admin)
+
+Issued date
+
+Actions:
+
+Mark as read (auto)
+
+Download attachments
+
+Acknowledge (if required)
+
+5️⃣ Acknowledgement Flow (Enterprise Feature)
+
+Some notices require:
+
+“I have read and understood”
+
+UI:
+
+Checkbox
+
+Confirm button
+
+Timestamp logged
+
+📌 Important for:
+
+Exam rules
+
+Discipline notices
+
+Policy updates
+
+6️⃣ Empty States
+Situation	Message
+No notices	“No new notices 🎉”
+Filter empty	“No notices in this category”
+Error	Retry with message
+7️⃣ Data & Audit Requirements
+
+Each notice stores:
+
+Notice ID
+
+Issued by
+
+Target audience
+
+Read status
+
+Acknowledgement status
+
+Read timestamp
+
+📌 This is audit-safe design
+
+8️⃣ Animation & UX Behavior
+
+Notice cards fade in (GSAP)
+
+Filter tab switch (Framer Motion)
+
+Detail page slide-in
+
+Read status animation (subtle)
+
+9️⃣ Mobile vs Web Differences
+Mobile	Web
+Full screen detail	Side panel
+Bottom nav	Sidebar
+Swipe gestures	Click
+🔐 Security Rules
+
+Read-only for students
+
+No delete/edit
+
+Attachments view-only
+
+Download permission configurable
