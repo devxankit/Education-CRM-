@@ -8,10 +8,25 @@ import Homework from './pages/Homework';
 import Notices from './pages/Notices';
 import BottomNav from './components/Dashboard/BottomNav';
 
-const StudentAttendance = () => <div>Student Attendance</div>;
+import AttendancePage from './pages/Attendance';
+import ProfilePage from './pages/Profile';
+import ExamsResultsPage from './pages/ExamsResults';
+import HomeworkPage from './pages/Homework';
+import FeesPage from './pages/Fees';
+import DocumentsPage from './pages/Documents';
+import HelpSupportPage from './pages/HelpSupport';
+import SettingsPage from './pages/Settings';
+import ProfileCorrection from './pages/ProfileCorrection';
+
+const StudentAttendance = AttendancePage;
 const StudentAcademics = Academics;
-const StudentHomework = Homework;
+const StudentHomework = HomeworkPage;
+const StudentFees = FeesPage;
+const StudentDocuments = DocumentsPage;
 const StudentNotices = Notices;
+const StudentHelp = HelpSupportPage;
+const StudentSettings = SettingsPage;
+const StudentExams = ExamsResultsPage;
 
 
 const studentRoutes = [
@@ -41,6 +56,38 @@ const studentRoutes = [
             {
                 path: 'notices',
                 element: <StudentNotices />,
+            },
+            {
+                path: 'profile',
+                element: <ProfilePage />,
+            },
+            {
+                path: 'exams',
+                element: <StudentExams />,
+            },
+            {
+                path: 'homework',
+                element: <StudentHomework />,
+            },
+            {
+                path: 'fees',
+                element: <StudentFees />,
+            },
+            {
+                path: 'documents',
+                element: <DocumentsPage />,
+            },
+            {
+                path: 'help',
+                element: <HelpSupportPage />,
+            },
+            {
+                path: 'settings',
+                element: <SettingsPage />,
+            },
+            {
+                path: 'profile/correction',
+                element: <ProfileCorrection />,
             },
             // Add other student routes here
         ],

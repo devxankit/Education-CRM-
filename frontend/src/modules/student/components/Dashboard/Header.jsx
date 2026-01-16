@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, HelpCircle } from 'lucide-react';
 import { colors } from '@/theme/colors';
 import { motion } from 'framer-motion';
 
@@ -27,7 +27,13 @@ const Header = ({ user }) => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => window.location.href = '/student/help'}
+                        className="p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-600"
+                    >
+                        <HelpCircle size={22} />
+                    </button>
                     <button className="relative p-2 rounded-full hover:bg-gray-50 transition-colors">
                         <Bell size={22} className="text-gray-600" />
                         {(user?.unreadNotifications > 0) && (

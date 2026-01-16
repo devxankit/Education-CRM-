@@ -1,6 +1,29 @@
 
 export const notices = [
     {
+        id: 101, // High ID to appear new
+        title: 'Attendance Warning: Mathematics',
+        date: '2026-01-16',
+        time: '09:30 AM',
+        type: 'Academic',
+        priority: 'Important',
+        read: false,
+        content: `Ref: ATT/WARN/2026/01
+
+Dear Student,
+
+Your attendance in Mathematics has dropped below the mandatory 75% threshold. It is currently at 68%.
+
+Please ensure you attend the upcoming classes to avoid detainment from the mid-term examinations.
+Review your detailed attendance report immediately.`,
+        issuedBy: 'Academic Coordinator',
+        attachments: [],
+        requiresAcknowledgement: true,
+        acknowledged: false,
+        actionLink: '/student/attendance',
+        actionLabel: 'View Attendance Report'
+    },
+    {
         id: 1,
         title: 'Mid-Term Examination Schedule Released',
         date: '2026-01-14',

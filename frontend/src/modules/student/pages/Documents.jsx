@@ -2,28 +2,29 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Info, CheckSquare } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 
 // Components
-import HomeworkTabs from '../components/Homework/HomeworkTabs';
-import HomeworkCard from '../components/Homework/HomeworkCard';
-import HomeworkDetail from '../components/Homework/HomeworkDetail';
+import DocumentTabs from '../components/Documents/DocumentTabs';
+import DocumentCard from '../components/Documents/DocumentCard';
+import RequestDocumentModal from '../components/Documents/RequestDocumentModal';
+import DocumentViewerModal from '../components/Documents/DocumentViewerModal';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 import EmptyState from '../components/Attendance/EmptyState';
 
 // Data
-import { homeworkData, homeworkStats } from '../data/homeworkData';
+import { documentsData } from '../data/documentsData';
 
-const TABS = ['All', 'Pending', 'Submitted', 'Overdue'];
+const TABS = ['All', 'Academic', 'Certificates', 'Identity', 'Financial'];
 
-const HomeworkPage = () => {
+const DocumentsPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState([]);
-    const [stats, setStats] = useState(null);
-    const [activeTab, setActiveTab] = useState('Pending');
-    const [selectedHomework, setSelectedHomework] = useState(null);
+    const [activeTab, setActiveTab] = useState('All');
+    const [showRequestModal, setShowRequestModal] = useState(false);
+    const [selectedDoc, setSelectedDoc] = useState(null);
 
     // Initial Load & Smooth Scroll
     useEffect(() => {
@@ -44,8 +45,7 @@ const HomeworkPage = () => {
 
         // Simulate Fetch
         setTimeout(() => {
-            setData(homeworkData);
-            setStats(homeworkStats);
+            setData(documentsData);
             setLoading(false);
         }, 800);
 
@@ -53,13 +53,21 @@ const HomeworkPage = () => {
     }, []);
 
     // Filter Logic
-    const filteredData = data.filter(item => {
+    const filteredData = data.filter(doc => {
         if (activeTab === 'All') return true;
-        if (activeTab === 'Pending') return item.status === 'Pending';
-        if (activeTab === 'Submitted') return item.status === 'Submitted' || item.status === 'Checked';
-        if (activeTab === 'Overdue') return item.status === 'Overdue' || item.status === 'Late';
-        return true;
+        return doc.category === activeTab;
     });
+
+    const handleView = (doc) => {
+        if (!doc.permissions.view) return;
+        setSelectedDoc(doc);
+    };
+
+    const handleDownload = (doc) => {
+        // In real app, trigger download
+        console.log("Downloading", doc);
+        alert(`Downloading ${doc.name}...`);
+    };
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50">
@@ -75,15 +83,15 @@ const HomeworkPage = () => {
                         </svg>
                     </button>
 
-                    <h1 className="text-lg font-bold text-gray-900">Homework</h1>
+                    <h1 className="text-lg font-bold text-gray-900">Documents</h1>
 
                     <InfoTooltip
                         content={
                             <div className="space-y-2">
-                                <p className="font-bold border-b border-gray-100 pb-1">Submission Rules</p>
-                                <p>1. Files must be under 5MB.</p>
-                                <p>2. Late submissions are marked yellow.</p>
-                                <p>3. Once checked, you cannot resubmit.</p>
+                                <p className="font-bold border-b border-gray-100 pb-1">Document Validity</p>
+                                <p>1. Only verified documents are official.</p>
+                                <p>2. Downloaded copies include a digital stamp.</p>
+                                <p>3. Expired ID cards are not valid proof.</p>
                             </div>
                         }
                     >
@@ -98,15 +106,14 @@ const HomeworkPage = () => {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="mt-4 text-sm text-gray-500 font-medium">Loading Tasks...</p>
+                        <p className="mt-4 text-sm text-gray-500 font-medium">Fetching Records...</p>
                     </div>
                 ) : (
                     <>
-                        <HomeworkTabs
+                        <DocumentTabs
                             tabs={TABS}
                             activeTab={activeTab}
                             setActiveTab={setActiveTab}
-                            counts={stats}
                         />
 
                         <AnimatePresence mode="wait">
@@ -118,17 +125,18 @@ const HomeworkPage = () => {
                                 transition={{ duration: 0.3 }}
                             >
                                 {filteredData.length > 0 ? (
-                                    filteredData.map((hw, index) => (
-                                        <HomeworkCard
-                                            key={hw.id}
-                                            homework={hw}
+                                    filteredData.map((doc, index) => (
+                                        <DocumentCard
+                                            key={doc.id}
+                                            doc={doc}
                                             index={index}
-                                            onClick={setSelectedHomework}
+                                            onView={handleView}
+                                            onDownload={handleDownload}
                                         />
                                     ))
                                 ) : (
                                     <div className="py-12">
-                                        <EmptyState message={`No ${activeTab.toLowerCase()} homework found.`} />
+                                        <EmptyState message={`No ${activeTab.toLowerCase()} documents found.`} />
                                     </div>
                                 )}
                             </motion.div>
@@ -137,23 +145,32 @@ const HomeworkPage = () => {
                 )}
             </main>
 
-            {/* Detail Modal */}
+            {/* Request FAB */}
+            <div className="fixed bottom-6 right-6 z-30">
+                <button
+                    onClick={() => setShowRequestModal(true)}
+                    className="flex items-center gap-2 px-5 py-3 bg-gray-900 text-white font-bold rounded-full shadow-lg hover:bg-gray-800 active:scale-95 transition-all"
+                >
+                    <Plus size={20} /> Request Doc
+                </button>
+            </div>
+
+            {/* Request Modal */}
             <AnimatePresence>
-                {selectedHomework && (
-                    <HomeworkDetail
-                        homework={selectedHomework}
-                        onClose={() => setSelectedHomework(null)}
-                        onRefresh={() => {
-                            // Mock Refresh - update status locally for demo
-                            const newData = data.map(d =>
-                                d.id === selectedHomework.id
-                                    ? { ...d, status: 'Submitted', submission: { date: new Date().toISOString(), files: [{ name: 'Uploaded_File.pdf' }] } }
-                                    : d
-                            );
-                            setData(newData);
-                            // Update stats mock
-                            setStats(prev => ({ ...prev, pending: prev.pending - 1, submitted: prev.submitted + 1 }));
-                        }}
+                {showRequestModal && (
+                    <RequestDocumentModal
+                        onClose={() => setShowRequestModal(false)}
+                        onSubmit={() => alert("Request Submitted Successfully (Mock)")}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Document Viewer Modal */}
+            <AnimatePresence>
+                {selectedDoc && (
+                    <DocumentViewerModal
+                        doc={selectedDoc}
+                        onClose={() => setSelectedDoc(null)}
                     />
                 )}
             </AnimatePresence>
@@ -161,4 +178,4 @@ const HomeworkPage = () => {
     );
 };
 
-export default HomeworkPage;
+export default DocumentsPage;

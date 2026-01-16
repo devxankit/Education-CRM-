@@ -86,6 +86,24 @@ const NoticeDetail = ({ notice, onClose }) => {
                             </button>
                         </div>
                     )}
+                    {/* Action Button */}
+                    {notice.actionLink && (
+                        <div className="mt-6 pt-4 border-t border-gray-100">
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    // Assuming parent or context provides navigation, but since this is a modal 
+                                    // often used inside a page, we might need to pass navigate or use window.location
+                                    // Using window.location for safety unless we import useNavigate
+                                    window.location.href = notice.actionLink;
+                                }}
+                                className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-xl border border-red-100 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                                {notice.actionLabel || 'View Details'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </motion.div>
         </motion.div>

@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle, CheckCircle, Clock, CreditCard } from 'lucide-react';
 
 const AlertSection = ({ alerts = [] }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="pt-4 pb-2 px-4 max-w-md mx-auto overflow-hidden">
             <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar">
@@ -19,7 +22,8 @@ const AlertSection = ({ alerts = [] }) => {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className={`snap-center flex-shrink-0 w-[85%] sm:w-[300px] p-4 rounded-2xl border ${alert.color} shadow-sm flex items-start gap-3`}
+                                onClick={() => alert.link && navigate(alert.link)}
+                                className={`snap-center flex-shrink-0 w-[85%] sm:w-[300px] p-4 rounded-2xl border ${alert.color} shadow-sm flex items-start gap-3 ${alert.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
                             >
                                 <div className="p-2 bg-white/50 rounded-full shrink-0">
                                     <Icon size={18} />

@@ -1,0 +1,229 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Lenis from 'lenis';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, Book, Users, Shield, HelpCircle, ChevronRight } from 'lucide-react';
+
+// Components
+import ProfileSummaryCard from '../components/Profile/ProfileSummaryCard';
+import InfoSectionCard from '../components/Profile/InfoSectionCard';
+import DocumentsList from '../components/Profile/DocumentsList';
+import EmptyState from '../components/Attendance/EmptyState'; // Reuse or create new
+
+// Data
+import { profileData } from '../data/profileData';
+
+// Helper for Academic Card (Simple enough to be inline or separate, let's keep it robust here)
+const AcademicInfoCard = ({ data }) => (
+    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
+        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="w-1 h-5 bg-purple-500 rounded-full"></span>
+            Academic Details
+        </h3>
+        <div className="grid grid-cols-1 gap-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Institute</p>
+                    <p className="text-sm font-semibold text-gray-800">{data.instituteName}</p>
+                </div>
+                <div className="p-2 bg-white rounded-lg text-purple-600">
+                    <Shield size={18} />
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 border border-gray-100 rounded-xl">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium">Stream</p>
+                    <p className="text-sm font-bold text-gray-800">{data.stream}</p>
+                </div>
+                <div className="p-3 border border-gray-100 rounded-xl">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium">Medium</p>
+                    <p className="text-sm font-bold text-gray-800">{data.medium}</p>
+                </div>
+                <div className="p-3 border border-gray-100 rounded-xl">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium">House</p>
+                    <p className="text-sm font-bold text-gray-800">{data.house}</p>
+                </div>
+                <div className="p-3 border border-gray-100 rounded-xl">
+                    <p className="text-[10px] text-gray-400 uppercase font-medium">Since</p>
+                    <p className="text-sm font-bold text-gray-800">{new Date(data.admissionDate).getFullYear()}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+// Helper for Parent Card
+const ParentInfoCard = ({ data }) => (
+    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
+        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="w-1 h-5 bg-emerald-500 rounded-full"></span>
+            Parent / Guardian
+        </h3>
+        <div className="space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
+                    {data.fatherName.charAt(0)}
+                </div>
+                <div>
+                    <p className="text-sm font-bold text-gray-900">{data.fatherName}</p>
+                    <p className="text-xs text-gray-500">Father • {data.guardianContact}</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
+                    {data.motherName.charAt(0)}
+                </div>
+                <div>
+                    <p className="text-sm font-bold text-gray-900">{data.motherName}</p>
+                    <p className="text-xs text-gray-500">Mother</p>
+                </div>
+            </div>
+            {data.linkedAccount && (
+                <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-emerald-50/50 rounded-lg border border-emerald-100 text-xs text-emerald-800 font-medium">
+                    <Shield size={12} />
+                    Parent Account Linked
+                </div>
+            )}
+        </div>
+    </div>
+);
+
+const ProfilePage = () => {
+    const navigate = useNavigate();
+    const containerRef = useRef(null);
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState(null);
+
+    // Initial Load & Smooth Scroll
+    useEffect(() => {
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: 'vertical',
+            gestureOrientation: 'vertical',
+            smoothWheel: true,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Simulate Fetch
+        setTimeout(() => {
+            setData(profileData);
+            setLoading(false);
+        }, 600);
+
+        return () => lenis.destroy();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!data) return <EmptyState />;
+
+    return (
+        <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-20">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 py-4 px-4 shadow-sm">
+                <div className="flex items-center justify-between max-w-lg mx-auto">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 -ml-2 rounded-full hover:bg-gray-100 active:scale-95 transition-transform text-gray-700"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <h1 className="text-lg font-bold text-gray-900">My Profile</h1>
+
+                    <button
+                        onClick={() => navigate('/student/settings')}
+                        className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors"
+                    >
+                        <Settings size={20} />
+                    </button>
+                </div>
+            </div>
+
+            <main className="max-w-lg mx-auto px-4 pt-6">
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                        hidden: { opacity: 0 },
+                        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                    }}
+                >
+                    {/* 1. Summary */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <ProfileSummaryCard student={data.student} />
+                    </motion.div>
+
+                    {/* 2. Personal Info */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <InfoSectionCard
+                            title="Personal Information"
+                            data={data.student}
+                        />
+                    </motion.div>
+
+                    {/* 3. Academic Info */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <AcademicInfoCard data={data.academic} />
+                    </motion.div>
+
+                    {/* 4. Documents */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <DocumentsList documents={data.documents} />
+                    </motion.div>
+
+                    {/* 5. Parent Info */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <ParentInfoCard data={data.parent} />
+                    </motion.div>
+
+
+                    {/* 6. Help Action */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <button
+                            onClick={() => navigate('/student/help')}
+                            className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-8 flex items-center justify-between group active:scale-[0.98] transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <HelpCircle size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-gray-900">Help & Support</p>
+                                    <p className="text-xs text-gray-400">Raised tickets, FAQs & more</p>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="text-gray-300 group-hover:text-indigo-600 transition-colors" />
+                        </button>
+                    </motion.div>
+
+                    {/* 7. Account Footer */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="text-center text-[10px] text-gray-400 pb-10">
+                            <p>Last login: {new Date(data.account.lastLogin).toLocaleString()}</p>
+                            <p>Account Version v1.2.0 • {data.account.securityStatus}</p>
+                        </div>
+                    </motion.div>
+
+                </motion.div>
+            </main>
+        </div>
+    );
+};
+
+export default ProfilePage;

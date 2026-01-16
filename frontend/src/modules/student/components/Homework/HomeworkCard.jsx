@@ -1,70 +1,89 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, AlertCircle, CheckCircle, FileText, ChevronRight } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Calendar, Clock, AlertCircle, CheckCircle, FileText } from 'lucide-react';
+import gsap from 'gsap';
 
-const HomeworkCard = ({ item, onClick }) => {
-    const isPending = item.status === 'Pending';
-    const isOverdue = isPending && new Date(item.dueDate) < new Date();
+const HomeworkCard = ({ homework, index, onClick }) => {
+    const cardRef = useRef(null);
 
-    const statusColor = isOverdue
-        ? 'bg-red-50 text-red-600 border-red-100'
-        : isPending
-            ? 'bg-orange-50 text-orange-600 border-orange-100'
-            : 'bg-green-50 text-emerald-600 border-green-100';
+    useEffect(() => {
+        gsap.fromTo(cardRef.current,
+            { y: 20, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, delay: index * 0.05, ease: 'power2.out' }
+        );
+    }, [index]);
 
-    const statusIcon = isOverdue ? AlertCircle : isPending ? ClockIcon : CheckCircle;
+    // Status Config
+    const statusConfig = {
+        Pending: { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', icon: Clock },
+        Submitted: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', icon: CheckCircle },
+        Checked: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', icon: CheckCircle },
+        Overdue: { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', icon: AlertCircle },
+        Late: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100', icon: AlertCircle },
+    };
+
+    const config = statusConfig[homework.status] || statusConfig.Pending;
+    const StatusIcon = config.icon;
+    const isOverdue = homework.status === 'Overdue';
 
     return (
-        <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onClick(item)}
-            className="bg-white p-4 rounded-2xl border border-gray-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] mb-3 relative overflow-hidden"
+        <div
+            ref={cardRef}
+            onClick={() => onClick(homework)}
+            className={`bg-white rounded-2xl p-4 border shadow-sm relative overflow-hidden cursor-pointer group mb-3 transition-all active:scale-[0.99] hover:border-gray-300 ${isOverdue ? 'border-red-100' : 'border-gray-100'}`}
         >
-            <div className="flex justify-between items-start mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-2 py-0.5 rounded">
-                    {item.subject}
+            <div className="flex justify-between items-start mb-3">
+                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide bg-gray-50 text-gray-600`}>
+                    {homework.subject}
                 </span>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${statusColor}`}>
-                    {isOverdue ? 'Overdue' : item.status}
-                </div>
+                <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${config.bg} ${config.color} ${config.border}`}>
+                    <StatusIcon size={12} />
+                    {homework.status}
+                </span>
             </div>
 
-            <h3 className="font-bold text-gray-900 text-sm mb-1 leading-tight">{item.title}</h3>
+            <h3 className="text-sm font-bold text-gray-900 leading-snug mb-2 pr-4">{homework.title}</h3>
 
-            <div className="flex items-center gap-4 text-xs text-gray-500 mt-3">
+            <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                 <div className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-gray-400" />
-                    <span>Due: {new Date(item.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span>Assign: {new Date(homework.assignedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
                 </div>
-                {item.priority === 'High' && isPending && (
-                    <span className="text-red-500 font-medium text-[10px]">High Priority</span>
+                {!isOverdue && (
+                    <div className="flex items-center gap-1.5">
+                        <Clock size={14} className="text-gray-400" />
+                        <span className={isOverdue ? "text-red-500 font-medium" : ""}>
+                            Due: {new Date(homework.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </span>
+                    </div>
                 )}
             </div>
 
-            <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ChevronRight size={18} className="text-gray-300" />
+            {/* Overdue Warning or Feedback Preview */}
+            {isOverdue && (
+                <div className="flex items-center gap-2 text-xs font-medium text-red-600 bg-red-50 p-2 rounded-lg mt-2">
+                    <AlertCircle size={14} />
+                    <span>Submission deadline passed. Contact teacher.</span>
+                </div>
+            )}
+
+            {homework.status === 'Checked' && homework.feedback && (
+                <div className="flex items-center justify-between bg-emerald-50/50 p-2 rounded-lg mt-2 border border-emerald-50">
+                    <span className="text-xs text-emerald-700 font-medium line-clamp-1 italic">"{homework.feedback.remarks}"</span>
+                    <span className="text-xs font-bold text-emerald-800 bg-white px-2 py-0.5 rounded shadow-sm">
+                        {homework.feedback.marks}/{homework.feedback.maxMarks}
+                    </span>
+                </div>
+            )}
+
+            {/* Action Hint */}
+            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs">
+                <span className="text-gray-400">By {homework.teacher}</span>
+                <span className="text-primary font-semibold flex items-center group-hover:translate-x-1 transition-transform">
+                    {homework.status === 'Pending' ? 'Submit Now' : 'View Details'} →
+                </span>
             </div>
-        </motion.div>
+        </div>
     );
 };
-
-// Simple Clock Icon component for internal use
-const ClockIcon = ({ size, className }) => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-    </svg>
-);
 
 export default HomeworkCard;

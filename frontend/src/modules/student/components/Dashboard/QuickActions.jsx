@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Award, CalendarCheck, CreditCard, FolderOpen } from 'lucide-react';
+import { FileText, Award, CalendarCheck, CreditCard, FolderOpen, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const actions = [
@@ -7,7 +7,7 @@ const actions = [
     { icon: Award, label: 'Exams', path: '/student/exams', color: 'text-purple-600 bg-purple-50' },
     { icon: CalendarCheck, label: 'Attendance', path: '/student/attendance', color: 'text-emerald-600 bg-emerald-50' },
     { icon: CreditCard, label: 'Fees', path: '/student/fees', color: 'text-orange-600 bg-orange-50' },
-    { icon: FolderOpen, label: 'Material', path: '/student/materials', color: 'text-pink-600 bg-pink-50' },
+    { icon: FileText, label: 'Documents', path: '/student/documents', color: 'text-indigo-600 bg-indigo-50' },
 ];
 
 const QuickActions = () => {

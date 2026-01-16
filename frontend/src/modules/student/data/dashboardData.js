@@ -15,6 +15,7 @@ export const alerts = [
         message: 'Your Math attendance is 68%.',
         icon: 'AlertCircle',
         color: 'bg-red-50 text-red-700 border-red-100',
+        link: '/student/attendance'
     },
     {
         id: 2,
