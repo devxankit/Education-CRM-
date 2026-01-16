@@ -2,6 +2,10 @@ import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Book } from 'lucide-react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+// Register ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
 
 const SubjectCard = ({ subject }) => {
     return (
@@ -37,21 +41,50 @@ const SubjectsGrid = ({ subjects }) => {
     const gridRef = useRef(null);
 
     useEffect(() => {
+        if (!gridRef.current) return;
+        
         const ctx = gsap.context(() => {
-            gsap.from('.subject-card', {
-                y: 30,
-                opacity: 0,
-                duration: 0.6,
-                stagger: 0.05,
-                ease: 'back.out(1.2)',
-                scrollTrigger: {
-                    trigger: gridRef.current,
-                    start: 'top 85%',
-                }
-            });
+            const cards = gridRef.current.querySelectorAll('.subject-card');
+            if (cards.length === 0) return;
+
+            // Set initial hidden state
+            gsap.set('.subject-card', { y: 30, opacity: 0 });
+
+            // Check if element is already in viewport
+            const rect = gridRef.current.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const isAlreadyInView = rect.top < viewportHeight * 0.85;
+
+            if (isAlreadyInView) {
+                // If already in view, animate immediately
+                gsap.to('.subject-card', {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.6,
+                    stagger: 0.05,
+                    ease: 'back.out(1.2)',
+                });
+            } else {
+                // Otherwise, use ScrollTrigger
+                gsap.to('.subject-card', {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.6,
+                    stagger: 0.05,
+                    ease: 'back.out(1.2)',
+                    scrollTrigger: {
+                        trigger: gridRef.current,
+                        start: 'top 85%',
+                        toggleActions: 'play none none none',
+                    }
+                });
+            }
         }, gridRef);
-        return () => ctx.revert();
-    }, []);
+        
+        return () => {
+            ctx.revert();
+        };
+    }, [subjects]);
 
     return (
         <div ref={gridRef}>
