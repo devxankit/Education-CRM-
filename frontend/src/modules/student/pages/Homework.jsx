@@ -94,7 +94,7 @@ const HomeworkPage = () => {
                 </div>
             </div>
 
-            <main className="max-w-lg mx-auto px-4 pt-6 pb-20">
+            <main className="max-w-lg mx-auto px-4 pt-6 pb-24">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>

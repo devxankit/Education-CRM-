@@ -164,7 +164,7 @@ const HelpSupportPage = () => {
             </main>
 
             {/* Raise Ticket FAB */}
-            <div className="fixed bottom-6 right-6 z-30">
+            <div className="fixed bottom-24 right-6 z-30">
                 <button
                     onClick={() => {
                         setSelectedCategory('');

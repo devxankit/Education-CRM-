@@ -102,7 +102,7 @@ const DocumentsPage = () => {
                 </div>
             </div>
 
-            <main className="max-w-lg mx-auto px-4 pt-6 pb-20">
+            <main className="max-w-lg mx-auto px-4 pt-6 pb-24">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -146,7 +146,7 @@ const DocumentsPage = () => {
             </main>
 
             {/* Request FAB */}
-            <div className="fixed bottom-6 right-6 z-30">
+            <div className="fixed bottom-24 right-6 z-30">
                 <button
                     onClick={() => setShowRequestModal(true)}
                     className="flex items-center gap-2 px-5 py-3 bg-gray-900 text-white font-bold rounded-full shadow-lg hover:bg-gray-800 active:scale-95 transition-all"

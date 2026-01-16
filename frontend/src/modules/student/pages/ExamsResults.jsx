@@ -59,7 +59,7 @@ const ExamsResultsPage = () => {
         if (activeTab === 'Upcoming Exams') {
             if (data.upcoming.length === 0) return <EmptyState message="No upcoming exams scheduled." />;
             return (
-                <div className="space-y-4 pb-20">
+                <div className="space-y-4">
                     {data.upcoming.map((exam, index) => (
                         <UpcomingExamCard key={exam.id} exam={exam} index={index} />
                     ))}
@@ -70,7 +70,7 @@ const ExamsResultsPage = () => {
         if (activeTab === 'Results') {
             if (data.results.length === 0) return <EmptyState message="No results published yet." />;
             return (
-                <div className="space-y-2 pb-20">
+                <div className="space-y-2">
                     {data.results.map((result, index) => (
                         <ResultCard
                             key={result.id}
@@ -90,7 +90,7 @@ const ExamsResultsPage = () => {
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-gray-50/50">
+        <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-24">
             {/* Sticky Header */}
             <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 py-4 px-4 shadow-sm">
                 <div className="flex items-center justify-between max-w-lg mx-auto">

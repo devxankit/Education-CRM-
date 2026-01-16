@@ -57,7 +57,7 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50/50 pb-20" ref={containerRef}>
+        <div className="min-h-screen bg-gray-50/50 pb-24" ref={containerRef}>
             {/* Header - Sticky */}
             <Header user={studentProfile} />
 

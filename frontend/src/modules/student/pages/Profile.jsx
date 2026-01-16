@@ -131,7 +131,7 @@ const ProfilePage = () => {
     if (!data) return <EmptyState />;
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-20">
+        <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-24">
             {/* Sticky Header */}
             <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 py-4 px-4 shadow-sm">
                 <div className="flex items-center justify-between max-w-lg mx-auto">

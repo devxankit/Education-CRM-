@@ -55,7 +55,7 @@ const AttendancePage = () => {
     }, []);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-white md:bg-gray-50 pb-10">
+        <div ref={containerRef} className="min-h-screen bg-white md:bg-gray-50 pb-24">
             {/* 1. Header (Sticky) */}
             <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 py-4 px-4 shadow-sm">
                 <div className="flex items-center justify-between max-w-2xl mx-auto">
