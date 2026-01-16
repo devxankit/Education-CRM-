@@ -17,6 +17,8 @@ import DocumentsPage from './pages/Documents';
 import HelpSupportPage from './pages/HelpSupport';
 import SettingsPage from './pages/Settings';
 import ProfileCorrection from './pages/ProfileCorrection';
+import NotesPage from './pages/Notes';
+import NotificationsPage from './pages/Notifications';
 
 const StudentAttendance = AttendancePage;
 const StudentAcademics = Academics;
@@ -27,6 +29,8 @@ const StudentNotices = Notices;
 const StudentHelp = HelpSupportPage;
 const StudentSettings = SettingsPage;
 const StudentExams = ExamsResultsPage;
+const StudentNotes = NotesPage;
+const StudentNotifications = NotificationsPage;
 
 
 import StudentLayout from './layouts/StudentLayout';
@@ -77,6 +81,14 @@ const studentRoutes = [
                     {
                         path: 'documents',
                         element: <StudentDocuments />,
+                    },
+                    {
+                        path: 'notes',
+                        element: <StudentNotes />,
+                    },
+                    {
+                        path: 'notifications',
+                        element: <StudentNotifications />,
                     },
                     {
                         path: 'help',

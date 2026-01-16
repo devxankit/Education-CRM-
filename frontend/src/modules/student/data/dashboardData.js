@@ -81,7 +81,7 @@ export const stats = {
     },
     materials: {
         newCount: 5,
-        link: '/student/materials'
+        link: '/student/notes'
     }
 };
 

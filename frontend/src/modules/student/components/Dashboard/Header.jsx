@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Menu, HelpCircle } from 'lucide-react';
 import { colors } from '@/theme/colors';
 import { motion } from 'framer-motion';
 
 const Header = ({ user }) => {
+    const navigate = useNavigate();
     return (
         <motion.header
             initial={{ y: -50, opacity: 0 }}
@@ -29,12 +31,15 @@ const Header = ({ user }) => {
 
                 <div className="flex items-center gap-1">
                     <button
-                        onClick={() => window.location.href = '/student/help'}
+                        onClick={() => navigate('/student/help')}
                         className="p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-600"
                     >
                         <HelpCircle size={22} />
                     </button>
-                    <button className="relative p-2 rounded-full hover:bg-gray-50 transition-colors">
+                    <button
+                        onClick={() => navigate('/student/notifications')}
+                        className="relative p-2 rounded-full hover:bg-gray-50 transition-colors"
+                    >
                         <Bell size={22} className="text-gray-600" />
                         {(user?.unreadNotifications > 0) && (
                             <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>

@@ -4,6 +4,7 @@ import App from './App';
 import ErrorBoundary from './ErrorBoundary';
 // Import module routes
 import studentRoutes from '../modules/student/routes';
+import teacherRoutes from '../modules/teacher/routes';
 
 // Placeholder components for other modules
 const TeacherDashboard = () => <div>Teacher Dashboard</div>;
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
                 element: <Login />,
             },
             ...studentRoutes, // Merge student routes
+            ...teacherRoutes, // Merge teacher routes
             {
                 path: 'teacher/*',
                 element: <TeacherDashboard />,
