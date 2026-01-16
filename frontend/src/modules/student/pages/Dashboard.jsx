@@ -10,7 +10,6 @@ import QuickActions from '../components/Dashboard/QuickActions';
 import TodayClasses from '../components/Dashboard/TodayClasses';
 import StatsSection from '../components/Dashboard/StatsSection';
 import PerformanceCard from '../components/Dashboard/PerformanceCard';
-import BottomNav from '../components/Dashboard/BottomNav';
 
 // Data
 import { studentProfile, alerts, todayClasses, stats, performance } from '../data/dashboardData';
@@ -91,8 +90,7 @@ const Dashboard = () => {
 
             </main>
 
-            {/* Fixed Bottom Navigation */}
-            <BottomNav />
+            {/* Fixed Bottom Navigation removed as it is in Layout */}
         </div>
     );
 };

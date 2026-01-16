@@ -5,7 +5,6 @@ import PageHeader from '../components/Academics/PageHeader';
 import ClassInfoCard from '../components/Academics/ClassInfoCard';
 import TimetableSection from '../components/Academics/TimetableSection';
 import SubjectsGrid from '../components/Academics/SubjectsGrid';
-import BottomNav from '../components/Dashboard/BottomNav'; // Reused
 
 // Mock Data
 import { classInfo, subjects, timetable } from '../data/academicsData';
@@ -67,7 +66,7 @@ const Academics = () => {
             </main>
 
             {/* Navigation */}
-            <BottomNav />
+            {/* Bottom Nav removed */}
         </div>
     );
 };

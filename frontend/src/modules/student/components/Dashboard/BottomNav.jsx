@@ -16,7 +16,7 @@ const BottomNav = () => {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe pt-2 px-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe pt-2 px-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30">
             <div className="flex justify-between items-center max-w-md mx-auto">
                 {navItems.map((item) => {
                     const isActive = activeTab === item.id || (item.id === 'dashboard' && activeTab === '');

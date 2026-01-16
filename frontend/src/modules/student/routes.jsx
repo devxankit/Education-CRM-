@@ -29,6 +29,8 @@ const StudentSettings = SettingsPage;
 const StudentExams = ExamsResultsPage;
 
 
+import StudentLayout from './layouts/StudentLayout';
+
 const studentRoutes = [
     {
         path: 'student',
@@ -38,52 +40,53 @@ const studentRoutes = [
                 element: <Navigate to="dashboard" replace />,
             },
             {
-                path: 'dashboard',
-                element: <StudentDashboard />,
-            },
-            {
-                path: 'attendance',
-                element: <StudentAttendance />,
-            },
-            {
-                path: 'academics',
-                element: <StudentAcademics />,
-            },
-            {
-                path: 'homework',
-                element: <StudentHomework />,
-            },
-            {
-                path: 'notices',
-                element: <StudentNotices />,
-            },
-            {
-                path: 'profile',
-                element: <ProfilePage />,
-            },
-            {
-                path: 'exams',
-                element: <StudentExams />,
-            },
-            {
-                path: 'homework',
-                element: <StudentHomework />,
-            },
-            {
-                path: 'fees',
-                element: <StudentFees />,
-            },
-            {
-                path: 'documents',
-                element: <DocumentsPage />,
-            },
-            {
-                path: 'help',
-                element: <HelpSupportPage />,
+                element: <StudentLayout />,
+                children: [
+                    {
+                        path: 'dashboard',
+                        element: <StudentDashboard />,
+                    },
+                    {
+                        path: 'attendance',
+                        element: <StudentAttendance />,
+                    },
+                    {
+                        path: 'academics',
+                        element: <StudentAcademics />,
+                    },
+                    {
+                        path: 'homework',
+                        element: <StudentHomework />,
+                    },
+                    {
+                        path: 'notices',
+                        element: <StudentNotices />,
+                    },
+                    {
+                        path: 'profile',
+                        element: <ProfilePage />,
+                    },
+                    {
+                        path: 'exams',
+                        element: <StudentExams />,
+                    },
+                    {
+                        path: 'fees',
+                        element: <StudentFees />,
+                    },
+                    {
+                        path: 'documents',
+                        element: <StudentDocuments />,
+                    },
+                    {
+                        path: 'help',
+                        element: <StudentHelp />,
+                    },
+                ],
             },
             {
                 path: 'settings',
-                element: <SettingsPage />,
+                element: <StudentSettings />,
             },
             {
                 path: 'profile/correction',

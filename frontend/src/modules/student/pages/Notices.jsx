@@ -6,7 +6,6 @@ import gsap from 'gsap';
 
 // Components
 import PageHeader from '../components/Academics/PageHeader';
-import BottomNav from '../components/Dashboard/BottomNav';
 import NoticeFilterTabs from '../components/Notices/NoticeFilterTabs';
 import NoticeCard from '../components/Notices/NoticeCard';
 import NoticeDetail from '../components/Notices/NoticeDetail';
@@ -93,7 +92,7 @@ const Notices = () => {
                 )}
             </AnimatePresence>
 
-            <BottomNav />
+            {/* Bottom Nav removed */}
         </div>
     );
 };
