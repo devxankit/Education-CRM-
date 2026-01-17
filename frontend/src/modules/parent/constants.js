@@ -1,0 +1,6 @@
+
+export const PARENT_DASHBOARD_STATS = {
+    ATTENDANCE: 'ATTENDANCE',
+    HOMEWORK: 'HOMEWORK',
+    FEES: 'FEES'
+};
