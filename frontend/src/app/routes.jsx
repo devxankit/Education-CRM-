@@ -5,6 +5,7 @@ import ErrorBoundary from './ErrorBoundary';
 import studentRoutes from '../modules/student/routes';
 import teacherRoutes from '../modules/teacher/routes';
 import parentRoutes from '../modules/parent/routes';
+import staffRoutes from '../modules/staff/routes';
 
 // Placeholder components for other modules
 const AdminDashboard = () => <div>Admin Dashboard</div>;
@@ -24,13 +25,10 @@ const router = createBrowserRouter([
             ...studentRoutes, // Merge student routes
             ...teacherRoutes, // Merge teacher routes
             ...parentRoutes,  // Merge parent routes
+            ...staffRoutes,   // Merge staff routes
             {
                 path: 'admin/*',
                 element: <AdminDashboard />,
-            },
-            {
-                path: 'staff/*',
-                element: <StaffDashboard />,
             },
             {
                 path: '/',

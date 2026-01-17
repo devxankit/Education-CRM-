@@ -14,7 +14,7 @@ const AlertCard = ({ alert, onClick }) => {
     return (
         <button
             onClick={() => onClick(alert)}
-            className="w-full text-left bg-red-50/50 border border-red-100 rounded-xl p-4 flex items-start gap-4 mx-4 mb-3 active:bg-red-50 transition-colors"
+            className="w-full text-left bg-red-50/50 border border-red-100 rounded-xl p-4 flex items-start gap-4 mb-3 active:bg-red-50 transition-colors"
         >
             <div className="p-2 bg-red-100 text-red-600 rounded-lg shrink-0">
                 <Icon size={20} />
@@ -34,8 +34,8 @@ const AlertsSection = ({ alerts, onAlertClick }) => {
     if (!alerts || alerts.length === 0) return null;
 
     return (
-        <div className="mb-6">
-            <h3 className="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Action Required</h3>
+        <div className="mb-6 px-4">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Action Required</h3>
             {alerts.map(alert => (
                 <AlertCard key={alert.id} alert={alert} onClick={onAlertClick} />
             ))}
