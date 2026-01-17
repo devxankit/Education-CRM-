@@ -2,7 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Menu } from 'lucide-react';
 
+import { useNavigate } from 'react-router-dom';
+
 const TeacherHeader = ({ user }) => {
+    const navigate = useNavigate();
     return (
         <motion.header
             initial={{ y: -20, opacity: 0 }}
@@ -28,12 +31,21 @@ const TeacherHeader = ({ user }) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button className="relative p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-600">
+                    <button
+                        onClick={() => navigate('/teacher/notices')}
+                        className="relative p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-600"
+                    >
                         <Bell size={20} />
                         {user?.unreadNotifications > 0 && (
                             <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                         )}
                     </button>
+                    <div
+                        onClick={() => navigate('/teacher/profile')}
+                        className='cursor-pointer'
+                    >
+                        {/* Profile Area Clickable */}
+                    </div>
                 </div>
             </div>
         </motion.header>

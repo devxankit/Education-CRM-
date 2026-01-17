@@ -1,46 +1,52 @@
 import React, { useRef, useEffect } from 'react';
-import { Plus, CheckSquare, UploadCloud, Edit3, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, CheckSquare, UploadCloud, FileBarChart, MessageCircle } from 'lucide-react';
 import gsap from 'gsap';
 
 const actions = [
-    { label: 'Create Homework', icon: Plus, color: 'bg-indigo-50 text-indigo-600' },
-    { label: 'Mark Attendance', icon: CheckSquare, color: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Upload Materials', icon: UploadCloud, color: 'bg-blue-50 text-blue-600' },
-    { label: 'Enter Marks', icon: Edit3, color: 'bg-purple-50 text-purple-600' },
-    { label: 'Student Queries', icon: MessageCircle, color: 'bg-orange-50 text-orange-600' },
+    { label: 'Homework', icon: Plus, bg: 'bg-indigo-100', text: 'text-indigo-600', path: '/teacher/homework' },
+    { label: 'Attendance', icon: CheckSquare, bg: 'bg-emerald-100', text: 'text-emerald-600', path: '/teacher/attendance' },
+    { label: 'Materials', icon: UploadCloud, bg: 'bg-blue-100', text: 'text-blue-600', path: '/teacher/classes' },
+    { label: 'Marks', icon: FileBarChart, bg: 'bg-purple-100', text: 'text-purple-600', path: '/teacher/exams' },
+    { label: 'Support', icon: MessageCircle, bg: 'bg-orange-100', text: 'text-orange-600', path: '/teacher/support' },
 ];
 
 const QuickActionsRow = () => {
     const rowRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (rowRef.current) {
-            gsap.from(rowRef.current.children, {
-                y: 20,
-                opacity: 0,
-                duration: 0.5,
-                stagger: 0.1,
-                ease: 'back.out(1.7)',
-                delay: 0.4
-            });
+            gsap.fromTo(rowRef.current.children,
+                { y: 15, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.4,
+                    stagger: 0.08,
+                    ease: 'power2.out',
+                    delay: 0.1
+                }
+            );
         }
     }, []);
 
     return (
-        <div className="mb-8">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Actions</h3>
-            <div ref={rowRef} className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-hide">
+        <div className="mb-6 mt-2">
+            {/* Horizontal Scroll Layout - Floating Icons */}
+            <div ref={rowRef} className="flex gap-4 overflow-x-auto pb-4 px-2 scrollbar-hide justify-between">
                 {actions.map((action, idx) => {
                     const Icon = action.icon;
                     return (
                         <button
                             key={idx}
-                            className="flex flex-col items-center gap-2 group min-w-[80px]"
+                            onClick={() => navigate(action.path)}
+                            className="flex flex-col items-center gap-2 min-w-[64px] flex-shrink-0 group"
                         >
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border border-transparent group-hover:border-gray-200 group-hover:shadow-md transition-all active:scale-90 ${action.color}`}>
-                                <Icon size={24} strokeWidth={2} />
+                            <div className={`w-14 h-14 rounded-[20px] ${action.bg} ${action.text} flex items-center justify-center shadow-sm group-active:scale-95 transition-all duration-200`}>
+                                <Icon size={24} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[10px] font-bold text-gray-600 text-center leading-tight group-hover:text-gray-900">
+                            <span className="text-[11px] font-bold text-gray-600 tracking-tight">
                                 {action.label}
                             </span>
                         </button>

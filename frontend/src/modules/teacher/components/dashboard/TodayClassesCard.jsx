@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TodayClassesCard = ({ classes }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="mb-6">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Today's Schedule</h3>
@@ -14,7 +17,8 @@ const TodayClassesCard = ({ classes }) => {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: idx * 0.1 }}
                             key={cls.id}
-                            className={`bg-white p-4 rounded-xl border ${cls.status === 'Pending' ? 'border-orange-200 bg-orange-50/10' : 'border-gray-100'} shadow-sm flex items-center justify-between group active:scale-[0.99] transition-all`}
+                            onClick={() => navigate(`/teacher/classes`)} // In real app, /teacher/classes/${cls.id}
+                            className={`bg-white p-4 rounded-xl border ${cls.status === 'Pending' ? 'border-orange-200 bg-orange-50/10' : 'border-gray-100'} shadow-sm flex items-center justify-between group active:scale-[0.99] transition-all cursor-pointer`}
                         >
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
@@ -33,6 +37,11 @@ const TodayClassesCard = ({ classes }) => {
                             </div>
 
                             <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (cls.status === 'Pending') navigate('/teacher/attendance');
+                                    else navigate(`/teacher/classes`);
+                                }}
                                 className={`ml-3 px-4 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm whitespace-nowrap
                                     ${cls.status === 'Pending'
                                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'

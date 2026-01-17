@@ -1,0 +1,35 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+
+const AttendanceSummaryBar = ({ stats, onSubmit }) => {
+    return (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+            <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+                <div className="flex gap-4 text-xs">
+                    <div className="text-center">
+                        <span className="block font-bold text-emerald-600">{stats.present}</span>
+                        <span className="text-[10px] text-gray-400 font-medium">Present</span>
+                    </div>
+                    <div className="text-center">
+                        <span className="block font-bold text-red-600">{stats.absent}</span>
+                        <span className="text-[10px] text-gray-400 font-medium">Absent</span>
+                    </div>
+                    <div className="text-center">
+                        <span className="block font-bold text-amber-600">{stats.leave}</span>
+                        <span className="text-[10px] text-gray-400 font-medium">Leave</span>
+                    </div>
+                </div>
+
+                <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onSubmit}
+                    className="flex-1 bg-gray-900 text-white font-bold text-sm py-3 px-6 rounded-xl shadow-lg shadow-gray-200 hover:bg-black transition-colors"
+                >
+                    Submit Attendance
+                </motion.button>
+            </div>
+        </div>
+    );
+};
+
+export default AttendanceSummaryBar;

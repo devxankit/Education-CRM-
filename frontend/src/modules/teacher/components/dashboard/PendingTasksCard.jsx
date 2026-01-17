@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, BookOpen, MessageSquare, ClipboardCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -9,7 +10,15 @@ const iconMap = {
     'default': AlertTriangle
 };
 
+const routeMap = {
+    'attendance': '/teacher/attendance',
+    'homework': '/teacher/homework',
+    'query': '/teacher/support'
+};
+
 const PendingTasksCard = ({ actions }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="mb-6">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Actions Pending</h3>
@@ -22,6 +31,7 @@ const PendingTasksCard = ({ actions }) => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.2 + (idx * 0.1) }}
+                            onClick={() => navigate(routeMap[action.type] || '/teacher/dashboard')}
                             className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex flex-col items-start gap-2 hover:shadow-md hover:border-gray-200 transition-all text-left active:scale-95"
                         >
                             <div className={`p-2 rounded-lg ${action.color} mb-1`}>

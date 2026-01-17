@@ -1,9 +1,11 @@
 import React, { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Calendar, Info } from 'lucide-react';
 import gsap from 'gsap';
 
 const AdminNoticeCard = ({ notices }) => {
     const listRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (listRef.current) {
@@ -21,7 +23,8 @@ const AdminNoticeCard = ({ notices }) => {
                 {notices.map((notice) => (
                     <div
                         key={notice.id}
-                        className={`w-72 p-4 rounded-xl border ${notice.priorityColor} bg-white shadow-sm flex flex-col gap-2 relative overflow-hidden group hover:shadow-md transition-shadow`}
+                        onClick={() => navigate(`/teacher/notices/${notice.id}`)}
+                        className={`w-72 p-4 rounded-xl border ${notice.priorityColor} bg-white shadow-sm flex flex-col gap-2 relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]`}
                     >
                         {/* Decorative Icon BG */}
                         <div className="absolute -right-4 -top-4 opacity-10 rotate-12">

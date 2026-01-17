@@ -5,7 +5,15 @@ import TeacherDashboard from './pages/Dashboard';
 import ClassesPage from './pages/Classes';
 import AttendancePage from './pages/Attendance';
 import HomeworkPage from './pages/Homework';
+import ExamsPage from './pages/Exams';
+import ReportsPage from './pages/Reports';
 import ProfilePage from './pages/Profile';
+import NoticesPage from './pages/Notices';
+import NoticeDetail from './pages/NoticeDetail';
+import SupportPage from './pages/Support';
+import TeacherHelpPage from './pages/TeacherHelp';
+import HomeworkDetailPage from './pages/HomeworkDetail';
+import SubmissionsPage from './pages/Submissions';
 
 const teacherRoutes = [
     {
@@ -22,7 +30,15 @@ const teacherRoutes = [
                     { path: 'classes', element: <ClassesPage /> },
                     { path: 'attendance', element: <AttendancePage /> },
                     { path: 'homework', element: <HomeworkPage /> },
+                    { path: 'homework/:id', element: <HomeworkDetailPage /> },
+                    { path: 'homework/submissions', element: <SubmissionsPage /> },
+                    { path: 'exams', element: <ExamsPage /> },
+                    { path: 'reports', element: <ReportsPage /> },
                     { path: 'profile', element: <ProfilePage /> },
+                    { path: 'notices', element: <NoticesPage /> },
+                    { path: 'notices/:id', element: <NoticeDetail /> },
+                    { path: 'support', element: <SupportPage /> },
+                    { path: 'help', element: <TeacherHelpPage /> },
                 ]
             }
         ]

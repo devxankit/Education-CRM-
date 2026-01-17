@@ -960,3 +960,1630 @@ Admin escalations	Low
 
 
 
+
+
+
+
+👨‍🏫 PART 1: Teacher Classes & Subjects – COMPLETE PRODUCT PLAN
+
+(Enterprise SaaS | Student–Teacher–Admin Fully Connected)
+
+1️⃣ Purpose of Classes & Subjects Module
+
+This module defines teacher ka academic universe.
+
+❝ Teacher sirf wahi dekh sakta hai
+jo admin ne usko officially assign kiya hai ❞
+
+It answers:
+
+Mai kaun-kaun si class padhata hoon?
+
+Kaunsa subject kis class me?
+
+Kaunse students mere responsibility me hain?
+
+Main yahin se attendance, homework, marks manage kar sakta hoon?
+
+2️⃣ Admin → Teacher Dependency (CRITICAL)
+Admin assigns:
+
+Subjects
+
+Classes / Sections
+
+Academic year
+
+Timetable
+
+Permissions (attendance edit, marks entry, etc.)
+
+Teacher CANNOT:
+
+Add/remove subject
+
+Change class assignment
+
+See unassigned students
+
+📌 Classes & Subjects page is 100% admin-driven
+
+3️⃣ High-Level Page Structure (Mobile First)
+[ Header ]
+[ Assigned Subjects Overview ]
+[ Classes Grouped by Subject ]
+[ Class Detail View ]
+[ Subject Detail View ]
+
+4️⃣ Main Entry Page: Classes & Subjects Overview
+Header
+
+Title: Classes & Subjects
+
+Back button
+
+Info icon (admin assignment info)
+
+Assigned Subjects Section (TOP)
+
+Each Subject Card shows:
+
+Subject name (e.g., Mathematics)
+
+Subject code (optional)
+
+Number of classes assigned
+
+Academic year
+
+Status badge (Active)
+
+Visuals:
+
+Subject-related SVG icon
+
+Clean card layout
+
+👉 Tap subject → Subject Detail Page
+
+5️⃣ Classes Grouped by Subject (CORE UX)
+
+For each subject:
+
+Subject Group Card
+
+Subject name
+
+Expand / collapse arrow
+
+Total students count
+
+Inside expanded view:
+
+Class Cards
+
+Class & section (10-A)
+
+Number of students
+
+Weekly classes count
+
+CTA buttons:
+
+View Class
+
+Mark Attendance
+
+Homework
+
+Marks
+
+📌 Teacher ka daily flow yahin se nikalta hai
+
+6️⃣ Subject Detail Page (VERY IMPORTANT)
+Purpose
+
+Subject ke andar teacher sab kuch control karta hai.
+
+Sections:
+
+Subject info (read-only)
+
+Assigned classes
+
+Study material
+
+Homework
+
+Exams / marks
+
+Teacher Actions:
+
+Upload study material
+
+Create homework
+
+Enter marks (if allowed)
+
+📌 Student side ka subject page yahin se feed hota hai
+
+7️⃣ Class Detail Page (MOST IMPORTANT)
+This is teacher ka mini classroom
+Header
+
+Class & section
+
+Subject name
+
+Total students
+
+Students List
+
+Each Student Row:
+
+Name
+
+Roll no
+
+Attendance %
+
+Homework status
+
+Performance indicator
+
+CTA:
+
+View student (limited)
+
+Mark attendance
+
+View submissions
+
+Quick Actions (Class Level)
+
+Mark attendance
+
+Assign homework
+
+Upload notes
+
+Enter marks
+
+8️⃣ Student–Teacher Connection (NO GAP)
+
+From Classes & Subjects, teacher can:
+
+Teacher Action	Student Impact
+Mark attendance	Student attendance page
+Create homework	Student homework page
+Upload notes	Student study material
+Enter marks	Student exams & results
+Add remark	Student performance
+
+📌 This module connects 80% of student panel
+
+9️⃣ Permissions Matrix (Teacher)
+Teacher CAN:
+
+View assigned students
+
+Manage academic data
+
+Perform subject actions
+
+Teacher CANNOT:
+
+Edit student profile
+
+Access other subjects
+
+Modify admin data
+
+🔟 Edge Cases (MUST HANDLE)
+Case	Behavior
+No subject assigned	Info message
+Class inactive	Read-only
+Student transferred	Removed automatically
+Permission revoked	Disable actions
+1️⃣1️⃣ Mobile vs Web Behavior
+Mobile	Web
+Accordion layout	Grid + side panel
+Quick actions	Hover actions
+Swipe	Click
+
+Same data, same permissions.
+
+1️⃣2️⃣ UX & UI Tone
+
+Professional
+
+Classroom-like
+
+No clutter
+
+Fast actions
+
+Visual clarity
+
+No emojis ❌
+No playful UI ❌
+
+🔚 PRODUCT OWNER NOTE
+
+❝ Agar Classes & Subjects sahi bana
+to Attendance, Homework, Marks
+sab naturally smooth ho jata hai
+
+
+
+
+
+
+
+
+
+
+👨‍🏫 PART 1: Teacher Attendance – COMPLETE PRODUCT PLAN
+
+(Enterprise SaaS | Compliance | Zero loopholes)
+
+1️⃣ Purpose of Teacher Attendance Module
+
+Teacher Attendance module is NOT just marking present/absent.
+
+It is:
+
+Discipline enforcement tool
+
+Exam eligibility foundation
+
+Parent trust layer
+
+Admin compliance system
+
+❝ Attendance once marked = academic truth ❞
+
+2️⃣ Teacher ↔ Student ↔ Admin Flow (CRITICAL)
+Teacher DOES:
+
+Mark daily attendance
+
+View subject-wise attendance
+
+Correct attendance (if allowed)
+
+Submit attendance to system
+
+Student GETS:
+
+Attendance reflected instantly
+
+Eligibility calculation updated
+
+Warnings if attendance drops
+
+Admin GETS:
+
+Attendance logs
+
+Teacher compliance reports
+
+Edit history & audit trail
+
+📌 Every action is logged
+
+3️⃣ Entry Points to Teacher Attendance
+
+Teacher can open Attendance from:
+
+Dashboard → “Mark Attendance”
+
+Classes & Subjects → Class Card → Attendance
+
+Quick Actions Row
+
+Notifications (pending attendance alert)
+
+4️⃣ Page Structure (Mobile First)
+[ Header ]
+[ Class & Subject Selector ]
+[ Date Selector ]
+[ Attendance Marking Table ]
+[ Summary & Submit Bar ]
+[ History & Edit Log ]
+
+5️⃣ Header Section
+Content:
+
+Title: Attendance
+
+Back button
+
+Info icon (attendance rules)
+
+Sticky header
+
+6️⃣ Class & Subject Selector (TOP CONTROL)
+Purpose:
+
+Teacher selects:
+
+Subject
+
+Class & section
+
+Rules:
+
+Only admin-assigned subjects visible
+
+Last selected class remembered
+
+7️⃣ Date Selector
+Behavior:
+
+Default = Today
+
+Past dates selectable (if allowed)
+
+Future dates disabled
+
+Admin-controlled rules:
+
+Edit window allowed (Yes/No)
+
+Late marking flag
+
+8️⃣ Attendance Marking Table (CORE AREA)
+Each Student Row:
+
+Roll no
+
+Student name
+
+Attendance toggle:
+
+Present
+
+Absent
+
+Leave (optional)
+
+Status icon
+
+Optional remark icon
+
+UX Rules:
+
+One-tap marking
+
+Bulk mark present
+
+Offline-friendly (future)
+
+9️⃣ Summary & Submit Bar (CRITICAL)
+Shows:
+
+Total students
+
+Present count
+
+Absent count
+
+Leave count
+
+CTA:
+
+Submit Attendance
+
+Rules:
+
+Attendance saved only on submit
+
+Confirmation modal before submit
+
+Once submitted → locked (if admin rules)
+
+🔟 Attendance Submission Logic
+On Submit:
+
+Data sent to backend
+
+Student attendance updated
+
+Eligibility recalculated
+
+Admin log created
+
+Failure:
+
+Retry option
+
+Unsaved warning
+
+1️⃣1️⃣ Edit & Correction Flow (CONTROLLED)
+Allowed only if:
+
+Admin permission enabled
+
+Within allowed time window
+
+UI:
+
+Edit reason mandatory
+
+Change highlighted
+
+Edit logged
+
+1️⃣2️⃣ Attendance History & Logs
+Teacher can view:
+
+Past attendance (read-only)
+
+Submission timestamps
+
+Edited records (marked)
+
+Admin sees:
+
+Who edited
+
+When
+
+Why
+
+1️⃣3️⃣ Edge Cases (MANDATORY)
+Case	Behavior
+Student absent but later joined	Leave tag
+Student transferred	Auto-removed
+Attendance already submitted	Read-only
+Network failure	Save draft warning
+Admin locked attendance	Info banner
+1️⃣4️⃣ Permissions Matrix
+Teacher CAN:
+
+Mark attendance
+
+Submit attendance
+
+Edit (if allowed)
+
+View history
+
+Teacher CANNOT:
+
+Delete records
+
+Modify eligibility rules
+
+Access other teachers’ classes
+
+1️⃣5️⃣ Mobile vs Web Differences
+Mobile	Web
+Toggle buttons	Checkbox + keyboard
+Swipe marking	Click marking
+Sticky submit bar	Fixed footer
+
+Same logic everywhere.
+
+1️⃣6️⃣ UX Tone
+
+Serious
+
+Fast
+
+No distraction
+
+No emojis
+
+Clear warnings
+
+🔚 PRODUCT OWNER NOTE
+
+❝ Attendance page must feel like
+a responsibility, not a burden ❞
+
+
+
+
+
+
+
+
+👨‍🏫 PART 1: Teacher Homework & Submissions – COMPLETE PRODUCT PLAN
+
+(Enterprise SaaS | Daily Usage | Zero Chaos)
+
+1️⃣ Purpose of Homework & Submissions Module
+
+This module is NOT just “give homework”.
+
+It is:
+
+Academic discipline system
+
+Daily student engagement loop
+
+Evaluation & feedback pipeline
+
+Admin-observable academic activity
+
+❝ Homework system weak → learning weak ❞
+
+2️⃣ Teacher ↔ Student ↔ Admin Flow (CRITICAL)
+Teacher DOES:
+
+Create homework
+
+Define rules (due date, file type, attempts)
+
+Receive submissions
+
+Review submissions
+
+Give feedback & marks
+
+Allow re-submission
+
+Student DOES:
+
+View homework
+
+Submit files/text
+
+Re-submit if allowed
+
+View feedback
+
+Admin SEES:
+
+Homework frequency
+
+Submission rates
+
+Teacher activity logs
+
+Late submission patterns
+
+📌 Everything is logged & auditable
+
+3️⃣ Entry Points (Teacher Side)
+
+Teacher can access Homework from:
+
+Dashboard → Quick Action “Create Homework”
+
+Dashboard → Pending Submissions card
+
+Classes & Subjects → Class → Homework
+
+Bottom Navigation → Homework
+
+4️⃣ High-Level Page Structure (Mobile First)
+[ Header ]
+[ Homework Tabs ]
+[ Homework List ]
+[ Homework Detail ]
+[ Submissions List ]
+[ Review & Feedback ]
+
+5️⃣ Homework Tabs (PRIMARY NAV)
+
+Tabs:
+
+All
+
+Active
+
+Past
+
+Drafts (optional)
+
+Rules:
+
+Smooth transitions
+
+Badge count for Active
+
+Persist selection
+
+6️⃣ Homework List (Teacher View)
+
+Each Homework Card shows:
+
+Subject
+
+Class & section
+
+Homework title
+
+Due date & time
+
+Submission status:
+
+Submitted / Total students
+
+Status badge:
+
+Active
+
+Closed
+
+Draft
+
+CTA:
+
+View Homework
+
+View Submissions
+
+📌 Teacher instantly knows which class is lagging
+
+7️⃣ Create Homework Flow (CORE TEACHER ACTION)
+Fields:
+
+Subject (admin-assigned only)
+
+Class & section
+
+Homework title
+
+Instructions (rich text)
+
+Attachments (PDF / image / doc)
+
+Due date & time
+
+Submission rules:
+
+File types
+
+Max size
+
+Attempts
+
+Late submission allowed (Yes/No)
+
+CTA:
+
+Save as Draft
+
+Publish Homework
+
+Rules:
+
+Validation mandatory
+
+Confirmation before publish
+
+8️⃣ Homework Detail View
+
+Shows:
+
+Homework info
+
+Instructions
+
+Attachments
+
+Due date
+
+Submission rules
+
+Status
+
+Actions:
+
+Edit (before deadline, if allowed)
+
+Close homework
+
+View submissions
+
+9️⃣ Submissions List (MOST IMPORTANT)
+
+Each Student Submission Row:
+
+Student name & roll no
+
+Submission status:
+
+Submitted
+
+Late
+
+Not submitted
+
+Submission time
+
+Attempts used
+
+File preview icon
+
+Sorting:
+
+Pending review first
+
+Late highlighted
+
+🔟 Review & Feedback Flow
+
+Teacher can:
+
+Open submission
+
+View files
+
+Add remarks
+
+Assign marks (if applicable)
+
+Mark as reviewed
+
+CTA:
+
+Submit feedback
+
+📌 Student sees feedback instantly
+
+1️⃣1️⃣ Re-Submission Control (STRICT)
+
+Teacher can:
+
+Allow re-submission
+
+Limit attempts
+
+Set new deadline
+
+Rules:
+
+Action logged
+
+Student notified
+
+1️⃣2️⃣ Homework Analytics (Teacher Level)
+
+Teacher can see:
+
+Submission percentage
+
+Late submissions
+
+Class-wise completion
+
+📌 No comparison with other teachers
+
+1️⃣3️⃣ Edge Cases (MANDATORY)
+Case	Behavior
+No submission	Highlight student
+Late submission	Auto-tag
+Network fail during upload	Retry
+Homework closed	Read-only
+Student transferred	Auto removed
+1️⃣4️⃣ Permissions Matrix
+Teacher CAN:
+
+Create/edit homework
+
+Review submissions
+
+Give feedback
+
+Allow re-submission
+
+Teacher CANNOT:
+
+Edit student profile
+
+Delete submitted homework
+
+Access other teachers’ homework
+
+1️⃣5️⃣ Mobile vs Web Behavior
+Mobile	Web
+Cards	Tables + cards
+Tap review	Click review
+Sticky actions	Side panel
+
+Same logic everywhere.
+
+1️⃣6️⃣ UX Tone
+
+Supportive
+
+Academic
+
+Fast
+
+No clutter
+
+No emojis
+
+🔚 PRODUCT OWNER NOTE
+
+❝ Homework module should feel like
+a structured academic workflow,
+not WhatsApp homework chaos ❞
+
+
+
+
+
+
+
+👨‍🏫 PART 1: Teacher Exams & Marks – COMPLETE PRODUCT PLAN
+
+(Enterprise SaaS | Evaluation System | Audit-Safe)
+
+1️⃣ Purpose of Exams & Marks Module
+
+This module handles academic evaluation lifecycle.
+
+It is NOT just marks entry.
+
+It is:
+
+Exam execution layer (teacher side)
+
+Evaluation & grading control
+
+Student result source
+
+Admin audit & compliance layer
+
+❝ Exam data once published = permanent academic record ❞
+
+2️⃣ Teacher ↔ Student ↔ Admin Flow (CRITICAL)
+Teacher DOES:
+
+View assigned exams
+
+Enter subject-wise marks
+
+Add remarks
+
+Save drafts
+
+Submit marks for approval (if required)
+
+Student GETS:
+
+Marks reflected in Results page
+
+Grade calculation
+
+Performance insights
+
+Admin DOES:
+
+Create exams & structure
+
+Define marking scheme
+
+Control publish permissions
+
+Lock / unlock marks
+
+📌 Teacher NEVER controls exam creation or final publish unless allowed
+
+3️⃣ Entry Points (Teacher Side)
+
+Teacher can access Exams & Marks from:
+
+Dashboard → Pending Marks card
+
+Classes & Subjects → Subject → Exams
+
+Bottom Navigation → Exams
+
+Notifications (marks pending)
+
+4️⃣ High-Level Page Structure (Mobile First)
+[ Header ]
+[ Exam Tabs ]
+[ Exams List ]
+[ Exam Detail ]
+[ Marks Entry Table ]
+[ Submission & Status ]
+
+5️⃣ Exam Tabs (PRIMARY NAV)
+
+Tabs:
+
+Upcoming Exams (view only)
+
+Active Evaluations
+
+Submitted
+
+Locked / Published
+
+Rules:
+
+Smooth transitions
+
+Badge count for Active
+
+Clear status visibility
+
+6️⃣ Exams List (Teacher View)
+
+Each Exam Card shows:
+
+Exam name (Unit Test / Mid-Term / Final)
+
+Subject
+
+Class & section
+
+Exam date
+
+Evaluation status:
+
+Pending
+
+In Progress
+
+Submitted
+
+Locked
+
+CTA:
+
+Enter Marks
+
+View Details
+
+📌 Teacher instantly knows what needs evaluation
+
+7️⃣ Exam Detail View
+
+Shows:
+
+Exam info
+
+Subject & class
+
+Total marks
+
+Passing marks
+
+Marking scheme
+
+Instructions from admin
+
+Actions:
+
+Enter marks (if allowed)
+
+View submissions (optional)
+
+Save draft
+
+8️⃣ Marks Entry Table (MOST CRITICAL SCREEN)
+
+Each Student Row:
+
+Roll no
+
+Student name
+
+Marks obtained
+
+Grade (auto / manual)
+
+Remarks (optional)
+
+Status indicator
+
+Rules:
+
+Validation (marks ≤ total)
+
+Auto grade calculation (if enabled)
+
+Keyboard-friendly (web)
+
+Bulk save support
+
+9️⃣ Save, Submit & Lock Flow
+States:
+
+Draft (editable)
+
+Submitted (awaiting admin)
+
+Locked (read-only)
+
+Rules:
+
+Draft auto-saves
+
+Submit requires confirmation
+
+Locked data cannot be edited
+
+📌 This prevents disputes
+
+🔟 Teacher Remarks & Feedback
+
+Teacher can:
+
+Add subject-level remarks
+
+Add student-level remarks
+
+Student sees:
+
+Remarks in Results page
+
+Admin can:
+
+Review remarks (optional)
+
+1️⃣1️⃣ Error Handling & Validation
+Case	Behavior
+Marks exceed total	Block save
+Student absent	Mark AB
+Exam cancelled	Read-only notice
+Admin locks exam	Disable editing
+Network failure	Save draft locally
+1️⃣2️⃣ Permissions Matrix
+Teacher CAN:
+
+Enter marks
+
+Save drafts
+
+Submit marks
+
+Add remarks
+
+Teacher CANNOT:
+
+Create exam
+
+Change exam structure
+
+Publish results (unless allowed)
+
+Edit locked marks
+
+1️⃣3️⃣ Mobile vs Web Differences
+Mobile	Web
+Vertical mark entry	Table + keyboard
+Tap input	Arrow navigation
+Sticky submit	Side panel
+
+Same logic everywhere.
+
+1️⃣4️⃣ UX Tone
+
+Serious
+
+Calm
+
+Clear
+
+No pressure language
+
+No emojis
+
+🔚 PRODUCT OWNER NOTE
+
+❝ Exams module must feel like
+a professional evaluation system,
+not a spreadsheet ❞
+
+
+
+
+
+👨‍🏫 PART 1: Teacher Reports & Analytics – COMPLETE PRODUCT PLAN
+
+(Enterprise SaaS | Insight-Driven | Teacher-Focused)
+
+1️⃣ Purpose of Reports & Analytics Module
+
+This module answers one core question:
+
+“Meri teaching se students ka performance kaisa chal raha hai?”
+
+It is NOT admin-level BI.
+It is teacher-level insight for:
+
+Improving teaching quality
+
+Identifying weak students
+
+Tracking discipline (attendance + homework)
+
+Reporting progress to admin (read-only exports)
+
+2️⃣ Teacher ↔ Student ↔ Admin Flow (CRITICAL)
+Teacher GETS:
+
+Class-level performance insights
+
+Subject-wise trends
+
+Student-wise risk indicators
+
+Teacher DOES:
+
+View reports
+
+Export allowed reports
+
+Take corrective academic action
+
+Admin SEES:
+
+Teacher activity summary
+
+Aggregated academic data
+
+Compliance metrics
+
+📌 Teacher cannot manipulate data, only consume insights
+
+3️⃣ Entry Points (Teacher Side)
+
+Teacher can open Reports & Analytics from:
+
+Dashboard → “Performance Snapshot” → View Details
+
+Bottom Navigation → Reports
+
+Classes & Subjects → Subject → Reports
+
+4️⃣ High-Level Page Structure (Mobile First)
+[ Header ]
+[ Report Filters ]
+[ Key Metrics Cards ]
+[ Attendance Analytics ]
+[ Homework Analytics ]
+[ Exam Performance Analytics ]
+[ Student Risk Insights ]
+[ Export & Summary ]
+
+5️⃣ Header Section
+Content:
+
+Title: Reports & Analytics
+
+Back button
+
+Info icon (report scope & limitations)
+
+Sticky header
+
+Tone:
+
+Professional
+
+Insight-focused
+
+Calm
+
+6️⃣ Report Filters (VERY IMPORTANT)
+Filters:
+
+Academic year
+
+Subject
+
+Class & section
+
+Time range (Month / Term)
+
+Rules:
+
+Only admin-assigned subjects & classes
+
+Persist last selection
+
+Instant refresh on change
+
+📌 Prevents confusion & misinterpretation
+
+7️⃣ Key Metrics Cards (TOP INSIGHTS)
+
+Each metric card shows:
+
+Metric name
+
+Value
+
+Trend indicator (↑ ↓ →)
+
+Short insight text
+
+Core Metrics:
+
+Average attendance %
+
+Homework completion %
+
+Average exam score
+
+At-risk students count
+
+📌 These are decision triggers
+
+8️⃣ Attendance Analytics (Teacher View)
+Shows:
+
+Class-wise attendance trend
+
+Subject-wise attendance comparison
+
+Students below threshold (list)
+
+Teacher Action:
+
+Click student → go to Student Detail (limited)
+
+Plan corrective steps
+
+📌 No editing, insight only
+
+9️⃣ Homework Analytics
+Shows:
+
+Homework completion rate
+
+Late submission % trend
+
+Top pending homework
+
+Visuals:
+
+Simple bar charts
+
+Completion progress indicators
+
+🔟 Exam Performance Analytics
+Shows:
+
+Average marks per exam
+
+Subject-wise performance trend
+
+Pass / fail ratio
+
+Improvement / decline indicators
+
+📌 Avoid ranking or comparison with other teachers
+
+1️⃣1️⃣ Student Risk Insights (VERY IMPORTANT)
+
+Auto-generated insights:
+
+Low attendance + low marks
+
+Frequent homework delays
+
+Sudden performance drop
+
+UI:
+
+Student cards with risk tags
+
+Suggested academic actions (text only)
+
+📌 Helps teachers intervene early
+
+1️⃣2️⃣ Reports Export & Summary
+Allowed Exports (Admin Controlled):
+
+Attendance summary
+
+Homework completion
+
+Exam marks summary
+
+Formats:
+
+PDF
+
+CSV
+
+Rules:
+
+Export logged
+
+Watermark if required
+
+1️⃣3️⃣ Edge Cases (MANDATORY)
+Case	Behavior
+No data	Calm empty state
+Filter mismatch	Clear message
+Permission restricted	Info banner
+Network error	Retry
+1️⃣4️⃣ Permissions Matrix
+Teacher CAN:
+
+View reports
+
+Filter reports
+
+Export allowed summaries
+
+Teacher CANNOT:
+
+Edit academic data
+
+See other teachers’ reports
+
+Access admin analytics
+
+1️⃣5️⃣ Mobile vs Web Differences
+Mobile	Web
+Cards + collapsible charts	Grid + charts
+Swipe	Hover
+Vertical scroll	Multi-column
+
+Same data everywhere.
+
+1️⃣6️⃣ UX Tone & Design Rules
+
+Insightful, not judgmental
+
+Simple charts only
+
+Clear explanations
+
+No pressure language
+
+No emojis
+
+🔚 PRODUCT OWNER NOTE
+
+❝ Reports should guide teachers,
+not overwhelm them with data ❞
+
+
+
+
+
+👨‍🏫 PART 1: Teacher Profile & Settings – COMPLETE PRODUCT PLAN
+
+(Enterprise SaaS | Identity & Security | Admin-Governed)
+
+1️⃣ Purpose of Teacher Profile & Settings
+
+This module answers:
+
+“Main kaun hoon system me,
+mujhe kya access hai,
+aur meri account security & preferences kya hain?”
+
+It is NOT:
+
+Resume page
+
+Editable bio
+
+Social profile
+
+It IS:
+
+Official institutional identity
+
+Admin-linked role record
+
+Security & preference center
+
+2️⃣ Teacher ↔ Admin Dependency (CRITICAL)
+Admin Controls:
+
+Teacher role
+
+Assigned subjects
+
+Assigned classes
+
+Permissions (attendance edit, marks entry, export)
+
+Account status (active / inactive)
+
+Teacher Controls:
+
+Password
+
+Notification preferences
+
+Language (optional)
+
+Logout sessions
+
+📌 Teacher cannot change academic scope
+
+3️⃣ Entry Points
+
+Teacher Profile & Settings accessible from:
+
+Dashboard → Profile avatar
+
+Bottom Navigation → Profile
+
+Any page → Header avatar
+
+4️⃣ High-Level Page Structure (Mobile First)
+[ Header ]
+[ Profile Summary ]
+[ Professional Information ]
+[ Assigned Subjects & Classes ]
+[ Account & Security ]
+[ Preferences ]
+[ Support & Help ]
+
+5️⃣ Header Section
+Content:
+
+Title: My Profile
+
+Back button
+
+Edit icon (limited scope)
+
+Sticky header
+
+Tone:
+
+Formal
+
+Institutional
+
+Clean
+
+6️⃣ Profile Summary Card (TOP)
+Shows:
+
+Teacher photo/avatar
+
+Full name
+
+Teacher ID / Employee code
+
+Role badge (Teacher)
+
+Status (Active / Inactive)
+
+Rules:
+
+Avatar editable (optional, admin-controlled)
+
+All other fields read-only
+
+7️⃣ Professional Information (READ-ONLY)
+Fields:
+
+Department
+
+Designation
+
+Joining date
+
+Employment type (Full-time / Part-time)
+
+Institute name
+
+📌 Admin-managed only
+
+8️⃣ Assigned Subjects & Classes (IMPORTANT)
+Displays:
+
+List of subjects
+
+Classes & sections per subject
+
+Academic year
+
+Behavior:
+
+Read-only
+
+“Managed by Admin” info note
+
+📌 This builds trust & avoids confusion
+
+9️⃣ Account & Security (CRITICAL)
+Features:
+
+Change password
+
+View last login
+
+Active sessions
+
+Logout from all devices
+
+2FA status (if enabled)
+
+Rules:
+
+Password strength enforcement
+
+Session activity visible
+
+Security actions logged
+
+🔟 Preferences (TEACHER-CONTROLLED)
+Options:
+
+Notification preferences:
+
+Attendance reminders
+
+Homework submissions
+
+Admin notices
+
+Language (optional)
+
+Theme mode (Light/Dark if enabled)
+
+📌 Preferences affect UX, not data access
+
+1️⃣1️⃣ Support & Help Access
+Buttons:
+
+Help & Support
+
+Report issue
+
+View FAQs
+
+📌 Links to Teacher Helpdesk module
+
+1️⃣2️⃣ Edge Cases (MANDATORY)
+Case	Behavior
+Inactive teacher	Read-only mode
+Permission revoked	Info banner
+Network error	Retry
+Incomplete profile	Admin note
+1️⃣3️⃣ Permissions Matrix
+Teacher CAN:
+
+Update password
+
+Update preferences
+
+View profile details
+
+Teacher CANNOT:
+
+Edit professional info
+
+Edit subjects/classes
+
+Change role
+
+1️⃣4️⃣ Mobile vs Web Differences
+Mobile	Web
+Card sections	Side-by-side panels
+Tap-based	Hover tooltips
+Single column	Two-column layout
+
+Same data everywhere.
+
+1️⃣5️⃣ UX Tone & Design Rules
+
+Professional
+
+Calm
+
+Secure
+
+No emojis
+
+Clear labels
+
+🔚 PRODUCT OWNER NOTE
+
+❝ Profile page should give
+clarity & confidence,
+not customization overload ❞

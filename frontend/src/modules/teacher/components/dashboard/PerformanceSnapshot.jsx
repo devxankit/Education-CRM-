@@ -1,11 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const PerformanceSnapshot = ({ stats }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="mb-24">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Your Performance</h3>
-            <div className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-indigo-200">
+            <div
+                onClick={() => navigate('/teacher/reports')}
+                className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-indigo-200 cursor-pointer active:scale-98 transition-transform"
+            >
                 <div className="flex items-end justify-between mb-6">
                     <div>
                         <h4 className="text-lg font-bold">Good Job, Sir! 👍</h4>
