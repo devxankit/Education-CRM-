@@ -2,14 +2,15 @@
 import React from 'react';
 import { Bell, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useStaffAuth } from '../../context/StaffAuthContext';
 
 const StaffHeader = () => {
     const navigate = useNavigate();
+    const { user, logout } = useStaffAuth();
 
     const handleLogout = () => {
-        // In a real app: logout();
-        console.log('Logging out...');
-        navigate('/login');
+        logout();
+        navigate('/staff/login');
     };
 
     return (
@@ -32,8 +33,10 @@ const StaffHeader = () => {
                     onClick={() => navigate('/staff/profile')}
                 >
                     <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors">Sarah Jenkins</p>
-                        <p className="text-xs text-gray-500">Staff User</p>
+                        <p className="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors uppercase">
+                            {user?.name || 'Staff Member'}
+                        </p>
+                        <p className="text-xs text-gray-500">{user?.role || 'Staff User'}</p>
                     </div>
                     <div className="w-9 h-9 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center text-indigo-600 group-hover:bg-indigo-100 transition-colors">
                         <User size={18} />

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Briefcase, Eye, EyeOff, Shield } from 'lucide-react';
 import { STAFF_ROLES } from '../../config/roles';
+import { useStaffAuth } from '../../context/StaffAuthContext';
 
 // Mock Auth Function (Simulating backend)
 const mockLogin = (staffId, password, role) => {
@@ -12,7 +13,7 @@ const mockLogin = (staffId, password, role) => {
                 // Return success with selected role (for dev/demo flexibility)
                 resolve({
                     staffId,
-                    name: 'Sarah Jenkins',
+                    name: 'Sarah Jenkins', // In real app, name comes from DB based on ID
                     role: role || STAFF_ROLES.FRONT_DESK,
                     permissions: [] // In real app, permissions come from DB
                 });
@@ -25,6 +26,7 @@ const mockLogin = (staffId, password, role) => {
 
 const StaffLogin = () => {
     const navigate = useNavigate();
+    const { login } = useStaffAuth(); // Use the strict auth context
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -47,12 +49,16 @@ const StaffLogin = () => {
         setError('');
 
         try {
+            // 1. Authenticate with "Backend"
             const user = await mockLogin(formData.staffId, formData.password, formData.role);
 
-            // In real app: save token to localStorage/Context
-            console.log('Login Success:', user);
+            // 2. Lock the Role in Global State (Immutable Session)
+            login(user);
 
-            navigate('/staff/dashboard', { state: { role: user.role } });
+            // 3. Redirect to Dashboard (No state passing needed)
+            console.log('Login Success & Role Locked:', user.role);
+            navigate('/staff/dashboard', { replace: true });
+
         } catch (err) {
             setError(err || 'Login failed. Please try again.');
         } finally {
