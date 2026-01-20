@@ -1,105 +1,103 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Bell, Moon, LogOut, ChevronRight, Smartphone } from 'lucide-react';
 import { useStaffAuth } from '../context/StaffAuthContext';
+import {
+    User, Bell, Lock, Smartphone, Globe, Moon, Shield, LogOut, ChevronRight
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const StaffSettings = () => {
+const Settings = () => {
+    const { user, logout } = useStaffAuth();
     const navigate = useNavigate();
-    const { logout, user } = useStaffAuth();
-
-    const [notifications, setNotifications] = useState(true);
-    const [darkMode, setDarkMode] = useState(false);
-
-    const handleLogout = () => {
-        logout();
-        navigate('/staff/login');
-    };
-
-    const SettingItem = ({ icon: Icon, title, subtitle, toggle, value, onClick, danger }) => (
-        <div
-            onClick={onClick}
-            className={`flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl mb-3 ${onClick ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}
-        >
-            <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${danger ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-600'}`}>
-                    <Icon size={20} />
-                </div>
-                <div>
-                    <h3 className={`text-sm font-bold ${danger ? 'text-red-600' : 'text-gray-900'}`}>{title}</h3>
-                    {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
-                </div>
-            </div>
-            {toggle ? (
-                <div
-                    onClick={(e) => { e.stopPropagation(); toggle(!value); }}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer ${value ? 'bg-indigo-600' : 'bg-gray-300'}`}
-                >
-                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${value ? 'translate-x-6' : 'translate-x-0'}`} />
-                </div>
-            ) : (
-                <ChevronRight size={18} className="text-gray-300" />
-            )}
-        </div>
-    );
 
     return (
-        <div className="max-w-md mx-auto pb-24 md:pb-6 min-h-screen">
+        <div className="max-w-3xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ArrowLeft size={20} className="text-gray-600" />
-                </button>
-                <div>
-                    <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-                    <p className="text-xs text-gray-500">App preferences</p>
+            <div className="bg-white px-5 py-6 border-b border-gray-200">
+                <h1 className="text-xl font-bold text-gray-900">Settings & Profile</h1>
+                <p className="text-xs text-gray-500">Manage account preferences</p>
+            </div>
+
+            <div className="p-4 md:p-6 space-y-6">
+
+                {/* Profile Card */}
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-2xl font-bold">
+                        {user?.name?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800">{user?.name}</h2>
+                        <p className="text-sm text-gray-500">{user?.role} Staff</p>
+                        <p className="text-xs text-indigo-600 font-bold mt-1 max-w-[150px] truncate">{user?.email}</p>
+                    </div>
+                    <button className="ml-auto text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200">
+                        Edit
+                    </button>
                 </div>
-            </div>
 
-            <div className="mb-6">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Account</h2>
-                <SettingItem
-                    icon={Lock}
-                    title="Change Password"
-                    subtitle="Update your easy-to-guess password"
-                    onClick={() => { }} // Placeholder
-                />
-                <SettingItem
-                    icon={Smartphone}
-                    title="Two-Factor Auth"
-                    subtitle="Enabled"
-                    onClick={() => { }}
-                />
-            </div>
+                {/* Settings list */}
+                <div className="space-y-4">
 
-            <div className="mb-6">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Preferences</h2>
-                <SettingItem
-                    icon={Bell}
-                    title="Push Notifications"
-                    subtitle="Receive updates instantly"
-                    toggle={setNotifications}
-                    value={notifications}
-                />
-                <SettingItem
-                    icon={Moon}
-                    title="Dark Mode"
-                    subtitle="Reduce eye strain"
-                    toggle={setDarkMode}
-                    value={darkMode}
-                />
-            </div>
+                    <SettingsSection title="Account Security">
+                        <SettingsItem icon={Lock} label="Change Password" sub="Last changed 30 days ago" />
+                        <SettingsItem icon={Smartphone} label="Two-Factor Auth" sub="Enabled" toggle />
+                    </SettingsSection>
 
-            <div className="mt-8">
-                <button
-                    onClick={handleLogout}
-                    className="w-full bg-red-50 text-red-600 font-bold py-4 rounded-xl border border-red-100 flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                    <LogOut size={20} /> Sign Out
-                </button>
-                <p className="text-center text-xs text-gray-400 mt-4">Version 1.2.0 (Build 450)</p>
+                    <SettingsSection title="Preferences">
+                        <SettingsItem icon={Bell} label="Notifications" sub="Push & Email" toggle defaultChecked />
+                        <SettingsItem icon={Moon} label="Dark Mode" sub="Coming Soon" toggle disabled />
+                        <SettingsItem icon={Globe} label="Language" sub="English (US)" />
+                    </SettingsSection>
+
+                    <SettingsSection title="Support">
+                        <SettingsItem icon={Shield} label="Privacy Policy" />
+                        <SettingsItem icon={User} label="Help & Support" onClick={() => navigate('/staff/support')} />
+                    </SettingsSection>
+
+                    <button
+                        onClick={logout}
+                        className="w-full bg-white p-4 rounded-xl border border-red-100 flex items-center justify-between text-red-600 font-bold hover:bg-red-50 transition-colors"
+                    >
+                        <span className="flex items-center gap-3"><LogOut size={20} /> Sign Out</span>
+                    </button>
+
+                </div>
+
             </div>
         </div>
     );
 };
 
-export default StaffSettings;
+const SettingsSection = ({ title, children }) => (
+    <div>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">{title}</h3>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-50">
+            {children}
+        </div>
+    </div>
+);
+
+const SettingsItem = ({ icon: Icon, label, sub, toggle, disabled, defaultChecked, onClick }) => (
+    <div
+        onClick={!toggle && !disabled ? onClick : undefined}
+        className={`p-4 flex items-center justify-between transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}
+    >
+        <div className="flex items-center gap-3">
+            <div className="p-2 bg-gray-50 rounded-lg text-gray-500">
+                <Icon size={18} />
+            </div>
+            <div>
+                <p className="text-sm font-bold text-gray-800">{label}</p>
+                {sub && <p className="text-xs text-gray-400">{sub}</p>}
+            </div>
+        </div>
+        {toggle ? (
+            <div className={`w-10 h-5 rounded-full relative transition-colors ${defaultChecked ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all shadow-sm ${defaultChecked ? 'left-5.5' : 'left-0.5'}`}></div>
+            </div>
+        ) : (
+            <ChevronRight size={16} className="text-gray-300" />
+        )}
+    </div>
+);
+
+export default Settings;

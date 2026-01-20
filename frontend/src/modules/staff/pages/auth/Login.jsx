@@ -26,10 +26,17 @@ const mockLogin = (staffId, password, role) => {
 
 const StaffLogin = () => {
     const navigate = useNavigate();
-    const { login } = useStaffAuth(); // Use the strict auth context
+    const { login, user } = useStaffAuth(); // Use the strict auth context
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (user && user.role) {
+            navigate('/staff/dashboard', { replace: true });
+        }
+    }, [user, navigate]);
 
     // Form State
     const [formData, setFormData] = useState({

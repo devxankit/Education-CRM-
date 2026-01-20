@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     User, Phone, MapPin, Mail, CreditCard, FileText,
-    Bus, Ticket, ArrowLeft, Shield, AlertCircle
+    Bus, Ticket, ArrowLeft, Shield, AlertCircle, Clock, Briefcase, CheckCircle, Upload
 } from 'lucide-react';
 import { STAFF_ROLES } from '../config/roles';
 import RoleBasedSection from '../components/students/RoleBasedSection';
@@ -30,9 +30,10 @@ const MOCK_STUDENT_DETAIL = {
 const StaffStudentDetail = () => {
     const { studentId } = useParams();
     const navigate = useNavigate();
+    const { user } = useStaffAuth();
 
-    // In real app, verify role permissions here
-    const currentRole = STAFF_ROLES.ACCOUNTS; // TOGGLE THIS FOR DEV
+    // Use real role
+    const currentRole = user?.role;
 
     const [student, setStudent] = useState(MOCK_STUDENT_DETAIL);
 
@@ -113,18 +114,18 @@ const StaffStudentDetail = () => {
                 title="Contact Details"
                 role={currentRole}
                 allowedRoles={Object.values(STAFF_ROLES)}
-                editable={currentRole === STAFF_ROLES.FRONT_DESK}
+                editable={currentRole === STAFF_ROLES.FRONT_DESK || currentRole === STAFF_ROLES.DATA_ENTRY}
             >
-                <InfoField label="Mobile Number" value={student.contact.phone} icon={Phone} disabled={currentRole !== STAFF_ROLES.FRONT_DESK} />
-                <InfoField label="Email Address" value={student.contact.email} icon={Mail} disabled={currentRole !== STAFF_ROLES.FRONT_DESK} />
-                <InfoField label="Current Address" value={student.contact.address} icon={MapPin} disabled={currentRole !== STAFF_ROLES.FRONT_DESK} />
+                <InfoField label="Mobile Number" value={student.contact.phone} icon={Phone} disabled={currentRole !== STAFF_ROLES.FRONT_DESK && currentRole !== STAFF_ROLES.DATA_ENTRY} />
+                <InfoField label="Email Address" value={student.contact.email} icon={Mail} disabled={currentRole !== STAFF_ROLES.FRONT_DESK && currentRole !== STAFF_ROLES.DATA_ENTRY} />
+                <InfoField label="Current Address" value={student.contact.address} icon={MapPin} disabled={currentRole !== STAFF_ROLES.FRONT_DESK && currentRole !== STAFF_ROLES.DATA_ENTRY} />
             </RoleBasedSection>
 
             {/* SECTION 3: FEES INFO (Accounts Full, others read-only) */}
             <RoleBasedSection
                 title="Financial Information"
                 role={currentRole}
-                allowedRoles={[STAFF_ROLES.ACCOUNTS, STAFF_ROLES.FRONT_DESK, STAFF_ROLES.SUPPORT]}
+                allowedRoles={[STAFF_ROLES.ACCOUNTS, STAFF_ROLES.FRONT_DESK, STAFF_ROLES.SUPPORT, STAFF_ROLES.DATA_ENTRY]}
                 editable={currentRole === STAFF_ROLES.ACCOUNTS}
             >
                 <InfoField label="Total Annual Fee" value={`₹${student.fees.total.toLocaleString()}`} icon={CreditCard} disabled={true} />
@@ -172,7 +173,7 @@ const StaffStudentDetail = () => {
             <RoleBasedSection
                 title="Transport Details"
                 role={currentRole}
-                allowedRoles={[STAFF_ROLES.TRANSPORT, STAFF_ROLES.SUPPORT]}
+                allowedRoles={[STAFF_ROLES.TRANSPORT, STAFF_ROLES.SUPPORT, STAFF_ROLES.DATA_ENTRY]}
                 editable={currentRole === STAFF_ROLES.TRANSPORT}
             >
                 <InfoField label="Assigned Route" value={student.transport.route} icon={MapPin} disabled={currentRole !== STAFF_ROLES.TRANSPORT} />

@@ -1,90 +1,130 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
-import { useNavigate }
-    from 'react-router-dom';
-import { User, LogOut, Shield, Mail, Phone, Building, Info, ChevronRight, Lock } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Calendar, Shield, Camera } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-    const { user, logout } = useStaffAuth();
+    const { user } = useStaffAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
-        navigate('/staff/login');
+    // Mock Data (fallback if user context missing details)
+    const profile = {
+        name: user?.name || 'Staff Member',
+        role: user?.role || 'Admin',
+        email: user?.email || 'staff@school.com',
+        phone: '+91 9876543210',
+        dob: '15 Aug 1990',
+        joinDate: '01 June 2020',
+        department: 'Science',
+        address: '123, School Campus, Main Block',
+        employeeId: 'EMP-2020-001'
     };
 
-    if (!user) return null;
-
     return (
-        <div className="max-w-md mx-auto pb-24 md:pb-6 min-h-screen relative">
-
-            {/* 1. Header & Identity */}
-            <div className="bg-white p-6 rounded-b-3xl shadow-sm border-b border-gray-100 mb-4 text-center">
-                <div className="w-20 h-20 bg-indigo-50 border-4 border-white rounded-full mx-auto shadow-md flex items-center justify-center text-indigo-500 mb-3">
-                    <User size={32} />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 leading-tight">{user.name || 'Staff Member'}</h2>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 mb-2">{user.staffId || 'ID: ST-0000'}</p>
-
-                <div className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide border border-indigo-100">
-                    <Shield size={10} /> {user.role}
+        <div className="max-w-2xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">
+            {/* Header / Cover */}
+            <div className="bg-indigo-600 h-32 relative">
+                <div className="absolute -bottom-10 left-6">
+                    <div className="w-24 h-24 rounded-full bg-white p-1 shadow-lg relative">
+                        <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-3xl font-bold">
+                            {profile.name.charAt(0)}
+                        </div>
+                        <button className="absolute bottom-0 right-0 p-1.5 bg-gray-900 text-white rounded-full border-2 border-white hover:bg-gray-800">
+                            <Camera size={14} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* 2. Details Card */}
-            <div className="px-4 space-y-3">
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="p-3 border-b border-gray-50 flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Mail size={16} /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold">Email</p>
-                            <p className="text-sm font-semibold text-gray-800">staff@example.com</p>
-                        </div>
+            <div className="pt-12 px-5 pb-5">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900">{profile.name}</h1>
+                        <p className="text-sm text-gray-500 font-medium">{profile.role} • {profile.department}</p>
                     </div>
-                    <div className="p-3 border-b border-gray-50 flex items-center gap-3">
-                        <div className="p-2 bg-green-50 text-green-600 rounded-lg"><Phone size={16} /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold">Phone</p>
-                            <p className="text-sm font-semibold text-gray-800">+91 98765 43210</p>
-                        </div>
-                    </div>
-                    <div className="p-3 flex items-center gap-3">
-                        <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><Building size={16} /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold">Department</p>
-                            <p className="text-sm font-semibold text-gray-800">{user.role}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Settings / Actions */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-50">
-                        <div className="flex items-center gap-3">
-                            <Lock size={18} className="text-gray-400" />
-                            <span className="text-sm font-bold text-gray-700">Change Password</span>
-                        </div>
-                        <ChevronRight size={16} className="text-gray-300" />
-                    </button>
                     <button
-                        onClick={handleLogout}
-                        className="w-full p-4 flex items-center justify-between hover:bg-red-50 transition-colors group"
+                        onClick={() => navigate('/staff/settings')}
+                        className="text-xs font-bold bg-white border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50"
                     >
-                        <div className="flex items-center gap-3">
-                            <LogOut size={18} className="text-red-500" />
-                            <span className="text-sm font-bold text-red-600">Logout</span>
-                        </div>
+                        Edit Profile
                     </button>
                 </div>
+            </div>
 
-                {/* 4. Footer */}
-                <div className="text-center pt-4 opacity-50">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Education CRM v1.0.0</p>
+            <div className="px-4 space-y-4">
+
+                {/* ID Card Info */}
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Briefcase size={16} className="text-indigo-600" /> Employment Details
+                    </h3>
+                    <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                        <ProfileField label="Employee ID" value={profile.employeeId} />
+                        <ProfileField label="Date of Joining" value={profile.joinDate} />
+                        <ProfileField label="Department" value={profile.department} />
+                        <ProfileField label="Role" value={profile.role} />
+                    </div>
                 </div>
+
+                {/* Personal Info */}
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <User size={16} className="text-indigo-600" /> Personal Information
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <Mail size={16} className="text-gray-400" />
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase">Email</p>
+                                <p className="text-sm font-bold text-gray-900">{profile.email}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Phone size={16} className="text-gray-400" />
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase">Phone</p>
+                                <p className="text-sm font-bold text-gray-900">{profile.phone}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Calendar size={16} className="text-gray-400" />
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase">Date of Birth</p>
+                                <p className="text-sm font-bold text-gray-900">{profile.dob}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <MapPin size={16} className="text-gray-400" />
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase">Address</p>
+                                <p className="text-sm font-bold text-gray-900">{profile.address}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Account Status */}
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Shield size={20} className="text-green-600" />
+                        <div>
+                            <p className="text-sm font-bold text-gray-900">Account Active</p>
+                            <p className="text-xs text-gray-500">Full access granted to modules.</p>
+                        </div>
+                    </div>
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Verified</span>
+                </div>
+
             </div>
         </div>
     );
 };
+
+const ProfileField = ({ label, value }) => (
+    <div>
+        <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">{label}</p>
+        <p className="text-sm font-bold text-gray-900">{value}</p>
+    </div>
+);
 
 export default Profile;

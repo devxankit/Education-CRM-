@@ -1,0 +1,820 @@
+🧠 STAFF MODULE – ENTERPRISE V2
+MASTER FUNCTIONAL PLAN (DETAILED)
+
+This plan includes
+✅ Existing pages ke alawa sab additional pages
+✅ Har role ke liye pages
+✅ Har page ke andar kya sections honge
+✅ Har button / card / icon pe click hone ke baad kya hoga
+
+🧑‍💼 STAFF ROLES (FINAL – REAL WORLD)
+Role Code	Real World Meaning
+FRONT_DESK	Admissions & Relations Officer
+ACCOUNTS	Finance Officer
+DATA_ENTRY	Academic + HR Records Officer
+TRANSPORT	Logistics Officer
+SUPPORT	Operations Support
+ADMIN	Institutional Controller (separate panel later)
+🧭 STAFF MODULE – HIGH LEVEL NAVIGATION
+Dashboard
+People
+ ├─ Students
+ ├─ Teachers
+ ├─ Employees (Non-teaching)
+Finance
+ ├─ Student Fees
+ ├─ Payroll
+ ├─ Expenses & Vendors
+Operations
+ ├─ Transport
+ ├─ Assets & Inventory
+Documents & Compliance
+ ├─ Documents
+ ├─ Certificates
+Support
+ ├─ Tickets
+Reports
+Profile & Settings
+
+📌 SECTION 1: DASHBOARD (Already exists – ENHANCED LOGIC)
+Purpose
+
+Daily role-specific tasks overview
+
+Enhancements
+
+Cards now link to People / Finance / Operations
+
+NO role switcher
+
+Static role badge only
+
+Example Clicks
+
+“Pending Salaries” card (Accounts) → Finance → Payroll
+
+“New Teachers Joined” card (Data Entry) → People → Teachers
+
+“Low Asset Stock” card → Assets & Inventory
+
+👥 SECTION 2: PEOPLE MANAGEMENT (NEW – BIG ADDITION)
+2.1 Students (Already built – minor enhancement)
+
+Already done:
+
+List
+
+Detail
+
+Fees / Docs / Transport linking
+
+No major change.
+
+🧑‍🏫 2.2 TEACHERS MANAGEMENT (NEW)
+Pages
+/staff/teachers
+/staff/teachers/:id
+
+Teachers List Page
+
+Cards / Table
+
+Name
+
+Subject(s)
+
+Employment Type (Permanent / Contract)
+
+Status (Active / On Leave)
+
+Clicks
+
+Row click → Teacher Detail Page
+
+Filter icon → Filter by subject / status
+
+Add Teacher (Front Desk / Admin only)
+
+Teacher Detail Page (VERY IMPORTANT)
+Sections
+
+1️⃣ Basic Info
+
+Name
+
+Employee ID
+
+DOJ
+
+Qualification
+
+2️⃣ Subjects & Classes
+
+Assigned subjects
+
+Assigned classes
+📌 Read-only for staff (admin controlled)
+
+3️⃣ Payroll Info (Accounts view)
+
+Salary type
+
+Monthly salary
+
+Deductions
+
+4️⃣ Documents
+
+Certificates
+
+ID proofs
+
+Contracts
+
+5️⃣ Activity History
+
+Salary paid logs
+
+Leave summary (view)
+
+Button Actions
+
+📄 View Documents → opens document viewer
+
+💰 View Payroll → redirects to Payroll Detail
+
+🖊 Edit Basic Info → Data Entry only
+
+👨‍🔧 2.3 EMPLOYEES (NON-TEACHING STAFF) – NEW
+Pages
+/staff/employees
+/staff/employees/:id
+
+Employee Types
+
+Office staff
+
+Drivers
+
+Helpers
+
+Lab assistants
+
+Employee Detail
+
+Personal info
+
+Role & department
+
+Salary mapping
+
+Attendance summary (view)
+
+Documents
+
+📌 Same behavior as Teachers but different category
+
+💰 SECTION 3: FINANCE (MAJOR EXPANSION)
+3.1 Student Fees (Already planned)
+
+No change.
+
+🧾 3.2 PAYROLL MANAGEMENT (NEW – CRITICAL)
+Pages
+/staff/payroll
+/staff/payroll/:personId
+
+Payroll Dashboard
+
+Cards:
+
+Pending Salaries
+
+Paid This Month
+
+Total Salary Expense
+
+Payroll List
+
+Teachers
+
+Employees
+
+Salary amount
+
+Payment status
+
+Clicks
+
+Row click → Payroll Detail
+
+Pay Salary → Opens confirmation modal
+
+View Payslip → Opens PDF view
+
+📌 Accounts only
+
+🧮 3.3 EXPENSES & VENDORS (NEW)
+Pages
+/staff/expenses
+/staff/vendors
+
+Vendors Page
+
+Vendor name
+
+Service type
+
+Outstanding amount
+
+Expenses Page
+
+Category (Electricity, Maintenance)
+
+Amount
+
+Status
+
+Button Actions
+
+Add Expense
+
+Mark Paid
+
+View Invoice
+
+🚌 SECTION 4: OPERATIONS
+4.1 Transport (Already planned – expanded)
+
+Enhancements:
+
+Driver profiles
+
+Fuel expenses
+
+Maintenance logs
+
+🏢 4.2 ASSETS & INVENTORY (NEW)
+Pages
+/staff/assets
+/staff/assets/:id
+/staff/inventory
+
+Assets
+
+Buses
+
+Classrooms
+
+Computers
+
+Furniture
+
+Asset Detail
+
+Assigned to
+
+Condition
+
+Maintenance history
+
+Buttons
+
+Assign Asset
+
+Log Maintenance
+
+Mark Inactive
+
+📄 SECTION 5: DOCUMENTS & COMPLIANCE (EXPANDED)
+Documents
+
+Now includes:
+
+Student docs
+
+Teacher docs
+
+Employee docs
+
+Vendor docs
+
+Filters
+
+Entity type
+
+Pending / Verified
+
+🎧 SECTION 6: SUPPORT (Already planned)
+
+Enhancement:
+
+Tickets can be linked to:
+
+Student
+
+Teacher
+
+Employee
+
+Finance
+
+Transport
+
+📊 SECTION 7: REPORTS (MANAGEMENT READY)
+Categories
+
+Financial reports
+
+HR reports
+
+Operations reports
+
+Compliance reports
+
+📌 Staff view only
+📌 Admin approval actions later
+
+⚙️ SECTION 8: PROFILE & SETTINGS
+
+View profile
+
+Logout
+
+Change password
+
+App info
+
+🔐 PERMISSION LOGIC (SUMMARY)
+Entity	Who Manages
+Students	Front Desk + Data Entry
+Teachers	Data Entry + Accounts
+Employees	Data Entry + Accounts
+Finance	Accounts
+Assets	Transport + Admin
+Docs	Data Entry
+Reports	View only
+🧠 FINAL PRODUCT OWNER SUMMARY
+
+What you had ❌
+
+Student helper panel
+
+What you are building now ✅
+
+FULL EDUCATION INSTITUTION ERP
+
+This plan is:
+
+Scalable
+
+Future-proof
+
+College & School ready
+
+Investor & client acceptable
+
+🔜 NEXT STEP (VERY IMPORTANT)
+
+Now we must LOCK THIS PLAN before execution.
+
+Choose next action:
+
+1️⃣ Convert this plan into FINAL PAGE LIST (route-wise)
+2️⃣ Create Enterprise Permission Matrix v2
+3️⃣ Start execution prompts page-by-page (new expanded system)
+
+Reply with 1 / 2 / 3
+
+ok convert this plan into final page list
+
+Perfect 👍
+Neeche FINAL PAGE LIST (Route-wise) de raha hoon — enterprise-grade, future-proof, aur real school/college ERP ke exact use ke according.
+
+❗ This is the SOURCE OF TRUTH
+❗ Iske baad execution, prompts, backend sab isi par depend karega
+
+✅ STAFF MODULE – FINAL PAGE LIST (ENTERPRISE V2)
+
+(All pages Staff Module ke andar hi rahenge)
+
+🔐 AUTH (Already exists – for completeness)
+/staff/login
+/staff/signup
+
+🧭 CORE
+/staff/dashboard
+
+
+Purpose:
+
+Role-specific operational overview
+
+Entry point for all staff users
+
+👥 PEOPLE MANAGEMENT (MAJOR ADDITION)
+🎓 STUDENTS (Mostly done)
+/staff/students
+/staff/students/new                 → New Admission
+/staff/students/inquiries           → Inquiries Management
+/staff/students/:studentId
+/staff/students/:studentId/history  → Activity Timeline
+
+🧑‍🏫 TEACHERS (NEW – FULL MODULE)
+/staff/teachers
+/staff/teachers/new
+/staff/teachers/:teacherId
+
+
+Used for:
+
+Teacher records
+
+Documents
+
+Payroll linkage
+
+Subjects (view)
+
+👨‍🔧 EMPLOYEES (NON-TEACHING STAFF – NEW)
+/staff/employees
+/staff/employees/new
+/staff/employees/:employeeId
+
+
+Covers:
+
+Office staff
+
+Drivers
+
+Helpers
+
+Lab assistants
+
+💰 FINANCE (ENTERPRISE LEVEL)
+🎒 STUDENT FEES
+/staff/fees
+/staff/fees/:studentId
+/staff/fees/:studentId/receipts
+
+💵 PAYROLL (NEW – CRITICAL)
+/staff/payroll
+/staff/payroll/:personId      → Teacher / Employee payroll detail
+/staff/payroll/:personId/slip → Payslip view
+
+🧾 EXPENSES & VENDORS (NEW)
+/staff/expenses
+/staff/expenses/new
+/staff/vendors
+/staff/vendors/new
+/staff/vendors/:vendorId
+
+🚌 OPERATIONS
+🚍 TRANSPORT (Expanded)
+/staff/transport
+/staff/transport/routes
+/staff/transport/routes/:routeId
+/staff/transport/students
+/staff/transport/issues
+
+🏢 ASSETS & INVENTORY (NEW)
+/staff/assets
+/staff/assets/new
+/staff/assets/:assetId
+
+/staff/inventory
+/staff/inventory/new
+
+📄 DOCUMENTS & COMPLIANCE (EXPANDED)
+/staff/documents
+/staff/documents/:entityType/:entityId
+/staff/documents/:entityType/:entityId/preview
+
+
+entityType:
+
+student
+
+teacher
+
+employee
+
+vendor
+
+🎧 SUPPORT & COMMUNICATION
+🆘 SUPPORT / TICKETS
+/staff/support
+/staff/support/new
+/staff/support/:ticketId
+
+📢 NOTICES
+/staff/notices
+/staff/notices/:noticeId
+
+📊 REPORTS (MANAGEMENT READY)
+/staff/reports
+/staff/reports/finance
+/staff/reports/hr
+/staff/reports/operations
+/staff/reports/compliance
+
+⚙️ PROFILE & SETTINGS
+/staff/profile
+/staff/settings
+
+🧩 PAGE COUNT SUMMARY
+Category	Pages
+Core	1
+Students	4
+Teachers	3
+Employees	3
+Fees	3
+Payroll	3
+Expenses/Vendors	5
+Transport	5
+Assets/Inventory	5
+Documents	3
+Support	3
+Notices	2
+Reports	5
+Profile/Settings	2
+TOTAL	43 PAGES
+
+📌 This is normal for a real ERP.
+
+🧠 WHY THIS PAGE LIST IS CORRECT
+
+✔ Covers entire institution
+
+✔ Works for school + college
+
+✔ HR + Finance + Operations included
+
+✔ Future modules can be plugged in
+
+✔ No role confusion
+
+✔ Scales to 5 students or 50,000
+
+
+
+
+
+
+
+
+
+
+🔐 STAFF MODULE – PERMISSION MATRIX v2 (FINAL)
+
+(Entity-wise | Page-wise | Action-wise)
+
+🧑‍💼 STAFF ROLES (Locked)
+Code	Role Name	Real Meaning
+FRONT_DESK	Admissions & Relations Officer	Admissions, inquiries
+ACCOUNTS	Finance Officer	Fees, payroll, expenses
+DATA_ENTRY	Academic & HR Records Officer	Records, documents
+TRANSPORT	Logistics Officer	Transport, assets
+SUPPORT	Operations Support	Tickets, notices
+ADMIN	Institutional Controller	(Future – full control)
+👥 PEOPLE MODULE – PERMISSIONS
+🎓 STUDENTS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Student List	✅	✅	✅	✅	✅
+Add New Student	✅	❌	❌	❌	❌
+Edit Basic Info	❌	❌	✅	❌	❌
+View Fees	👁	👁	❌	❌	👁
+Edit Fees	❌	✏	❌	❌	❌
+View Documents	👁	👁	👁	❌	👁
+Upload Documents	✅	❌	✅	❌	❌
+Verify Documents	❌	❌	✏	❌	❌
+Assign Transport	❌	❌	❌	✏	❌
+Raise Ticket	❌	❌	❌	❌	✏
+🧑‍🏫 TEACHERS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Teachers	👁	👁	👁	❌	👁
+Add Teacher	❌	❌	✅	❌	❌
+Edit Teacher Info	❌	❌	✏	❌	❌
+View Payroll	❌	👁	❌	❌	❌
+Edit Payroll	❌	✏	❌	❌	❌
+View Documents	👁	👁	👁	❌	👁
+Verify Documents	❌	❌	✏	❌	❌
+👨‍🔧 EMPLOYEES (Non-Teaching)
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Employees	❌	👁	👁	👁	👁
+Add Employee	❌	❌	✅	❌	❌
+Edit Employee Info	❌	❌	✏	❌	❌
+View Payroll	❌	👁	❌	❌	❌
+Edit Payroll	❌	✏	❌	❌	❌
+View Documents	👁	👁	👁	❌	👁
+💰 FINANCE MODULE – PERMISSIONS
+🎒 STUDENT FEES
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Fees	👁	👁	❌	❌	👁
+Edit Fee Status	❌	✏	❌	❌	❌
+Generate Receipt	❌	✏	❌	❌	❌
+Download Receipt	👁	👁	❌	❌	👁
+💵 PAYROLL (Teachers + Employees)
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Payroll	❌	👁	❌	❌	❌
+Process Salary	❌	✏	❌	❌	❌
+Generate Payslip	❌	✏	❌	❌	❌
+🧾 EXPENSES & VENDORS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Expenses	❌	👁	❌	❌	❌
+Add Expense	❌	✏	❌	❌	❌
+Mark Paid	❌	✏	❌	❌	❌
+View Vendors	❌	👁	❌	❌	❌
+Add Vendor	❌	✏	❌	❌	❌
+🚌 OPERATIONS MODULE – PERMISSIONS
+🚍 TRANSPORT
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Routes	👁	❌	❌	👁	👁
+Assign Student	❌	❌	❌	✏	❌
+Log Issue	❌	❌	❌	✏	❌
+Close Issue	❌	❌	❌	✏	❌
+🏢 ASSETS & INVENTORY
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Assets	❌	👁	❌	👁	❌
+Add Asset	❌	❌	❌	✏	❌
+Assign Asset	❌	❌	❌	✏	❌
+Log Maintenance	❌	❌	❌	✏	❌
+📄 DOCUMENTS & COMPLIANCE
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Documents	👁	👁	👁	❌	👁
+Upload Documents	✅	❌	✅	❌	❌
+Verify Documents	❌	❌	✏	❌	❌
+View Certificates	👁	👁	👁	❌	👁
+🎧 SUPPORT & COMMUNICATION
+🆘 TICKETS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Tickets	👁	👁	👁	👁	👁
+Reply to Ticket	❌	❌	❌	❌	✏
+Close Ticket	❌	❌	❌	❌	✏
+📢 NOTICES
+Action	All Staff
+View Notices	👁
+Acknowledge	👁
+Create / Edit	❌
+📊 REPORTS
+Report Type	Front Desk	Accounts	Data Entry	Transport	Support
+View Reports	👁	👁	👁	👁	👁
+Export Finance Reports	❌	📥	❌	❌	❌
+⚙️ PROFILE & SETTINGS
+Action	All Staff
+View Profile	👁
+Change Password	✏
+Edit Role	❌
+🧠 GLOBAL NON-NEGOTIABLE RULES
+
+❌ No staff can:
+
+Change role
+
+Delete people
+
+Override finance
+
+Edit academics
+
+Bypass audit logs
+
+✅ WHY THIS MATRIX IS ENTERPRISE-READY
+
+✔ Covers students + teachers + employees
+✔ Finance beyond fees
+✔ HRMS-like control
+✔ Operations + assets included
+✔ Clear separation of power
+✔ Scales from school → university
+
+
+
+
+
+
+
+
+🔐 STAFF MODULE – PERMISSION MATRIX v2 (FINAL)
+
+(Entity-wise | Page-wise | Action-wise)
+
+🧑‍💼 STAFF ROLES (Locked)
+Code	Role Name	Real Meaning
+FRONT_DESK	Admissions & Relations Officer	Admissions, inquiries
+ACCOUNTS	Finance Officer	Fees, payroll, expenses
+DATA_ENTRY	Academic & HR Records Officer	Records, documents
+TRANSPORT	Logistics Officer	Transport, assets
+SUPPORT	Operations Support	Tickets, notices
+ADMIN	Institutional Controller	(Future – full control)
+👥 PEOPLE MODULE – PERMISSIONS
+🎓 STUDENTS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Student List	✅	✅	✅	✅	✅
+Add New Student	✅	❌	❌	❌	❌
+Edit Basic Info	❌	❌	✅	❌	❌
+View Fees	👁	👁	❌	❌	👁
+Edit Fees	❌	✏	❌	❌	❌
+View Documents	👁	👁	👁	❌	👁
+Upload Documents	✅	❌	✅	❌	❌
+Verify Documents	❌	❌	✏	❌	❌
+Assign Transport	❌	❌	❌	✏	❌
+Raise Ticket	❌	❌	❌	❌	✏
+🧑‍🏫 TEACHERS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Teachers	👁	👁	👁	❌	👁
+Add Teacher	❌	❌	✅	❌	❌
+Edit Teacher Info	❌	❌	✏	❌	❌
+View Payroll	❌	👁	❌	❌	❌
+Edit Payroll	❌	✏	❌	❌	❌
+View Documents	👁	👁	👁	❌	👁
+Verify Documents	❌	❌	✏	❌	❌
+👨‍🔧 EMPLOYEES (Non-Teaching)
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Employees	❌	👁	👁	👁	👁
+Add Employee	❌	❌	✅	❌	❌
+Edit Employee Info	❌	❌	✏	❌	❌
+View Payroll	❌	👁	❌	❌	❌
+Edit Payroll	❌	✏	❌	❌	❌
+View Documents	👁	👁	👁	❌	👁
+💰 FINANCE MODULE – PERMISSIONS
+🎒 STUDENT FEES
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Fees	👁	👁	❌	❌	👁
+Edit Fee Status	❌	✏	❌	❌	❌
+Generate Receipt	❌	✏	❌	❌	❌
+Download Receipt	👁	👁	❌	❌	👁
+💵 PAYROLL (Teachers + Employees)
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Payroll	❌	👁	❌	❌	❌
+Process Salary	❌	✏	❌	❌	❌
+Generate Payslip	❌	✏	❌	❌	❌
+🧾 EXPENSES & VENDORS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Expenses	❌	👁	❌	❌	❌
+Add Expense	❌	✏	❌	❌	❌
+Mark Paid	❌	✏	❌	❌	❌
+View Vendors	❌	👁	❌	❌	❌
+Add Vendor	❌	✏	❌	❌	❌
+🚌 OPERATIONS MODULE – PERMISSIONS
+🚍 TRANSPORT
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Routes	👁	❌	❌	👁	👁
+Assign Student	❌	❌	❌	✏	❌
+Log Issue	❌	❌	❌	✏	❌
+Close Issue	❌	❌	❌	✏	❌
+🏢 ASSETS & INVENTORY
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Assets	❌	👁	❌	👁	❌
+Add Asset	❌	❌	❌	✏	❌
+Assign Asset	❌	❌	❌	✏	❌
+Log Maintenance	❌	❌	❌	✏	❌
+📄 DOCUMENTS & COMPLIANCE
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Documents	👁	👁	👁	❌	👁
+Upload Documents	✅	❌	✅	❌	❌
+Verify Documents	❌	❌	✏	❌	❌
+View Certificates	👁	👁	👁	❌	👁
+🎧 SUPPORT & COMMUNICATION
+🆘 TICKETS
+Action	Front Desk	Accounts	Data Entry	Transport	Support
+View Tickets	👁	👁	👁	👁	👁
+Reply to Ticket	❌	❌	❌	❌	✏
+Close Ticket	❌	❌	❌	❌	✏
+📢 NOTICES
+Action	All Staff
+View Notices	👁
+Acknowledge	👁
+Create / Edit	❌
+📊 REPORTS
+Report Type	Front Desk	Accounts	Data Entry	Transport	Support
+View Reports	👁	👁	👁	👁	👁
+Export Finance Reports	❌	📥	❌	❌	❌
+⚙️ PROFILE & SETTINGS
+Action	All Staff
+View Profile	👁
+Change Password	✏
+Edit Role	❌
+🧠 GLOBAL NON-NEGOTIABLE RULES
+
+❌ No staff can:
+
+Change role
+
+Delete people
+
+Override finance
+
+Edit academics
+
+Bypass audit logs
+
+✅ WHY THIS MATRIX IS ENTERPRISE-READY
+
+✔ Covers students + teachers + employees
+✔ Finance beyond fees
+✔ HRMS-like control
+✔ Operations + assets included
+✔ Clear separation of power
+✔ Scales from school → university

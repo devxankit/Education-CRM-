@@ -1,275 +1,207 @@
-
 import React, { useState } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
-import { Search, Filter, Shield, Eye, CheckCircle, XCircle, FileText, ChevronRight, Upload, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Folder, FileText, CheckCircle, AlertCircle, Clock, Filter, ChevronRight, Eye } from 'lucide-react';
 
-// MOCK DATA
-const STUDENTS_DOCS = [
-    {
-        id: '1', studentId: 'ST-2024-001', name: 'Aarav Gupta', class: '10-A',
-        completion: 75,
-        status: 'Pending Verification',
-        documents: [
-            { id: 101, name: 'Birth Certificate', status: 'Verified', url: '#', date: '2024-01-10' },
-            { id: 102, name: 'Aadhar Card', status: 'Pending', url: 'https://via.placeholder.com/400x500.png?text=Aadhar+Preview', date: '2024-01-15' },
-            { id: 103, name: 'Transfer Certificate', status: 'Missing', url: null, date: null },
-            { id: 104, name: 'Previous Marksheet', status: 'Verified', url: '#', date: '2024-01-12' }
-        ]
-    },
-    {
-        id: '2', studentId: 'ST-2024-002', name: 'Zara Khan', class: '8-B',
-        completion: 100,
-        status: 'Verified',
-        documents: [
-            { id: 201, name: 'Birth Certificate', status: 'Verified', url: '#', date: '2024-01-05' },
-            { id: 202, name: 'Aadhar Card', status: 'Verified', url: '#', date: '2024-01-05' },
-            { id: 203, name: 'Transfer Certificate', status: 'Verified', url: '#', date: '2024-01-05' },
-            { id: 204, name: 'Previous Marksheet', status: 'Verified', url: '#', date: '2024-01-05' }
-        ]
-    },
-    {
-        id: '3', studentId: 'ST-2024-003', name: 'Rohan Verma', class: '12-C',
-        completion: 50,
-        status: 'Rejected',
-        documents: [
-            { id: 301, name: 'Birth Certificate', status: 'Pending', url: '#', date: '2024-01-18' },
-            { id: 302, name: 'Aadhar Card', status: 'Rejected', reason: 'Blurry Image', url: '#', date: '2024-01-18' }
-        ]
-    }
+// --- MOCK DOCUMENTS DATA ---
+// Consolidated overview of entities and their document status
+const MOCK_DOCS_OVERVIEW = [
+    { id: 'DOC-S-001', entityId: 'STU-2024-001', name: 'Aarav Patel', type: 'Student', required: 4, uploaded: 3, verified: 2, status: 'Pending' },
+    { id: 'DOC-T-001', entityId: 'TCH-001', name: 'Suresh Kumar', type: 'Teacher', required: 3, uploaded: 3, verified: 3, status: 'Complete' },
+    { id: 'DOC-E-001', entityId: 'EMP-D-101', name: 'Ramesh Singh', type: 'Employee', required: 4, uploaded: 2, verified: 1, status: 'Rejected' },
+    { id: 'DOC-S-002', entityId: 'STU-2024-002', name: 'Zara Khan', type: 'Student', required: 4, uploaded: 0, verified: 0, status: 'Pending' },
+    { id: 'DOC-V-001', entityId: 'V-001', name: 'City Fuels', type: 'Vendor', required: 3, uploaded: 3, verified: 0, status: 'Review' },
 ];
-
-const COMPONENT_ROLES = {
-    VERIFIER: [STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ADMIN],
-    UPLOADER: [STAFF_ROLES.FRONT_DESK, STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ADMIN]
-};
 
 const Documents = () => {
     const { user } = useStaffAuth();
-    const canVerify = COMPONENT_ROLES.VERIFIER.includes(user?.role);
-    const canUpload = COMPONENT_ROLES.UPLOADER.includes(user?.role);
-
-    const [selectedStudent, setSelectedStudent] = useState(null);
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('All');
+    const [filterType, setFilterType] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('All');
+
+    // Access Check: Transport NO ACCESS
+    if (user?.role === STAFF_ROLES.TRANSPORT) {
+        return <AccessDenied />;
+    }
 
     // Filter Logic
-    const filteredList = STUDENTS_DOCS.filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s.studentId.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filter === 'All' ||
-            (filter === 'Pending' && s.status === 'Pending Verification') ||
-            s.status === filter;
-        return matchesSearch && matchesFilter;
+    const filteredDocs = MOCK_DOCS_OVERVIEW.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.entityId.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = filterType === 'All' || item.type === filterType;
+        const matchesStatus = filterStatus === 'All' || item.status === filterStatus;
+        return matchesSearch && matchesType && matchesStatus;
     });
 
-    const handleBack = () => {
-        setSelectedStudent(null);
-    };
-
-    return (
-        <div className="max-w-7xl mx-auto pb-20 md:pb-6 relative min-h-screen">
-
-            {/* --- LIST VIEW --- */}
-            {!selectedStudent && (
-                <>
-                    {/* Compact Header */}
-                    <div className="flex flex-col gap-4 mb-4">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-900">Documents</h1>
-                                <p className="text-xs text-gray-500">Record verification</p>
-                            </div>
-                            {canVerify && (
-                                <div className="flex gap-1.5 text-[10px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 items-center">
-                                    <AlertTriangle size={12} /> Pending: 12
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Search & Filter Bar */}
-                        <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-200 sticky top-0 md:static z-10 mx-[-4px]">
-                            <div className="flex flex-col gap-3">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                                    <input
-                                        type="text"
-                                        placeholder="Find Student..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    />
-                                </div>
-                                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                                    {['All', 'Pending', 'Verified', 'Rejected'].map(f => (
-                                        <button
-                                            key={f}
-                                            onClick={() => setFilter(f)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-colors ${filter === f
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            {f}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {filteredList.map(student => (
-                            <DocumentGridCard
-                                key={student.id}
-                                student={student}
-                                onClick={() => setSelectedStudent(student)}
-                            />
-                        ))}
-                    </div>
-                </>
-            )}
-
-            {/* --- DETAIL VIEW --- */}
-            {selectedStudent && (
-                <DocumentVerificationView
-                    student={selectedStudent}
-                    onBack={handleBack}
-                    canVerify={canVerify}
-                    canUpload={canUpload}
-                />
-            )}
-        </div>
-    );
-};
-
-// --- SUB COMPONENTS ---
-
-const DocumentGridCard = ({ student, onClick }) => {
-    const getStatusStyle = (status) => {
+    const getStatusColor = (status) => {
         switch (status) {
-            case 'Verified': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'Rejected': return 'bg-red-100 text-red-700 border-red-200';
-            default: return 'bg-amber-100 text-amber-700 border-amber-200';
+            case 'Complete': return 'bg-green-50 text-green-700 border-green-200';
+            case 'Pending': return 'bg-gray-50 text-gray-600 border-gray-200';
+            case 'Review': return 'bg-amber-50 text-amber-700 border-amber-200';
+            case 'Rejected': return 'bg-red-50 text-red-700 border-red-200';
+            default: return 'bg-gray-50 text-gray-600';
         }
     };
 
     return (
-        <div
-            onClick={onClick}
-            className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm active:scale-[0.99] transition-all cursor-pointer group relative"
-        >
-            <div className="flex justify-between items-start mb-3">
-                <div className="min-w-0">
-                    <h3 className="font-bold text-gray-900 truncate pr-2">{student.name}</h3>
-                    <p className="text-[10px] text-gray-500">{student.studentId} • {student.class}</p>
+        <div className="max-w-7xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">
+            {/* Header */}
+            <div className="bg-white px-5 pt-5 pb-3 border-b border-gray-200">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900">Document Compliance</h1>
+                        <p className="text-xs text-gray-500">Centralized audit & verification system</p>
+                    </div>
                 </div>
-                <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap ${getStatusStyle(student.status)}`}>
-                    {student.status.split(' ')[0]}
-                </div>
-            </div>
 
-            <div className="mb-2">
-                <div className="w-full bg-gray-100 rounded-full h-1.5">
-                    <div
-                        className={`h-1.5 rounded-full transition-all duration-500 ${student.completion === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                        style={{ width: `${student.completion}%` }}
-                    ></div>
-                </div>
-            </div>
-
-            <div className="flex justify-between items-center text-xs text-gray-400">
-                <span>{student.documents.length} Docs</span>
-                <ChevronRight size={16} />
-            </div>
-        </div>
-    );
-};
-
-const DocumentVerificationView = ({ student, onBack, canVerify, canUpload }) => {
-    const [selectedDoc, setSelectedDoc] = useState(student.documents[0] || null);
-
-    return (
-        <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col md:static md:h-auto md:bg-transparent">
-            {/* 1. Header (Compact) */}
-            <div className="bg-white px-4 py-3 border-b border-gray-200 flex items-center gap-3 shadow-sm shrink-0">
-                <button onClick={onBack} className="p-1 -ml-1 hover:bg-gray-100 rounded-full">
-                    <ArrowLeft size={20} className="text-gray-600" />
-                </button>
-                <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-gray-900 truncate">{student.name}</h2>
-                    <p className="text-[10px] text-gray-500">{student.studentId}</p>
-                </div>
-            </div>
-
-            {/* 2. Main Content (Split Vertical on Mobile) */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-
-                {/* A. Document List (Scrollable Horizontal on Mobile Top, or Vertical Side on Desktop) */}
-                <div className="w-full md:w-1/3 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex md:flex-col overflow-x-auto md:overflow-y-auto shrink-0 p-2 gap-2 whitespace-nowrap md:whitespace-normal h-20 md:h-full items-center md:items-stretch">
-                    {student.documents.map(doc => (
-                        <button
-                            key={doc.id}
-                            onClick={() => setSelectedDoc(doc)}
-                            className={`flex-none md:flex-auto p-2 md:p-3 rounded-lg border text-left transition-all w-48 md:w-full flex items-center gap-2 ${selectedDoc?.id === doc.id
-                                ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200'
-                                : 'bg-white border-gray-100'
-                                }`}
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search name or ID..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="px-3 py-2 bg-gray-100 text-sm font-bold text-gray-600 rounded-lg border-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                         >
-                            <FileText size={16} className={selectedDoc?.id === doc.id ? 'text-indigo-600' : 'text-gray-400'} />
-                            <div className="min-w-0 overflow-hidden">
-                                <p className={`text-xs font-bold truncate ${selectedDoc?.id === doc.id ? 'text-indigo-900' : 'text-gray-700'}`}>{doc.name}</p>
-                                <p className="text-[10px] text-gray-400 truncate">{doc.status}</p>
+                            <option value="All">All Entities</option>
+                            <option value="Student">Student</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Employee">Employee</option>
+                            <option value="Vendor">Vendor</option>
+                        </select>
+
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="px-3 py-2 bg-gray-100 text-sm font-bold text-gray-600 rounded-lg border-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Complete">Complete</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Review">In Review</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* List */}
+            <div className="p-4 md:p-6 space-y-4">
+                {/* Desktop Table */}
+                <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-4">Entity Details</th>
+                                <th className="px-6 py-4">Type</th>
+                                <th className="px-6 py-4 text-center">Progress</th>
+                                <th className="px-6 py-4">Compliance Status</th>
+                                <th className="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredDocs.map(doc => (
+                                <tr
+                                    key={doc.id}
+                                    onClick={() => navigate(`/staff/documents/${doc.type.toLowerCase()}/${doc.entityId}`)}
+                                    className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                                >
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                                <Folder size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900">{doc.name}</p>
+                                                <p className="text-xs text-gray-500 font-mono">{doc.entityId}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-600">{doc.type}</td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-xs font-bold text-gray-700 mb-1">{doc.uploaded}/{doc.required} Uploaded</span>
+                                            <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-indigo-500 rounded-full"
+                                                    style={{ width: `${(doc.uploaded / doc.required) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 mt-1">{doc.verified} Verified</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(doc.status)}`}>
+                                            {doc.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-indigo-600 hover:text-indigo-800 p-2 rounded-full hover:bg-indigo-50 font-bold text-xs flex items-center gap-1 ml-auto">
+                                            View <ChevronRight size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden grid grid-cols-1 gap-4">
+                    {filteredDocs.map(doc => (
+                        <div
+                            key={doc.id}
+                            onClick={() => navigate(`/staff/documents/${doc.type.toLowerCase()}/${doc.entityId}`)}
+                            className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm active:scale-[0.99] transition-transform"
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
+                                        <FileText size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 text-sm">{doc.name}</h3>
+                                        <p className="text-xs text-gray-500">{doc.entityId} • {doc.type}</p>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusColor(doc.status)}`}>
+                                    {doc.status}
+                                </span>
                             </div>
-                        </button>
+
+                            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs">
+                                <span className="font-bold text-gray-500">Progress</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-indigo-600 font-bold">{doc.uploaded}/{doc.required} Uploaded</span>
+                                    <span className="text-gray-300">|</span>
+                                    <span className="text-green-600 font-bold">{doc.verified} Verified</span>
+                                </div>
+                            </div>
+                        </div>
                     ))}
                 </div>
-
-                {/* B. Preview Area (Takes remaining space) */}
-                <div className="flex-1 bg-slate-900 relative overflow-hidden flex items-center justify-center p-4">
-                    {selectedDoc?.url ? (
-                        <img
-                            src={selectedDoc.url}
-                            alt="Doc"
-                            className="max-w-full max-h-full object-contain"
-                        />
-                    ) : (
-                        <div className="text-white/40 text-center text-xs">
-                            <FileText size={32} className="mx-auto mb-2 opacity-50" />
-                            No Preview
-                        </div>
-                    )}
-                </div>
             </div>
-
-            {/* 3. Action Footer (Compact) */}
-            {canVerify && selectedDoc?.status === 'Pending' && (
-                <div className="bg-white border-t border-gray-200 p-3 shrink-0 flex gap-3">
-                    <button className="flex-1 bg-white border border-red-200 text-red-600 font-bold py-3 rounded-xl text-sm hover:bg-red-50">
-                        Reject
-                    </button>
-                    <button className="flex-[2] bg-emerald-600 text-white font-bold py-3 rounded-xl text-sm shadow-md hover:bg-emerald-700">
-                        Approve
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
 
-// Helper
-const StatusBadge = ({ status }) => {
-    const styles = {
-        'Verified': 'bg-emerald-100 text-emerald-700',
-        'Pending': 'bg-amber-100 text-amber-700',
-        'Rejected': 'bg-red-100 text-red-700',
-        'Missing': 'bg-gray-100 text-gray-500'
-    };
-    return (
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${styles[status] || styles['Missing']}`}>
-            {status}
-        </span>
-    );
-};
+const AccessDenied = () => (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 bg-gray-50">
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 text-red-400"><AlertCircle size={32} /></div>
+        <h2 className="text-lg font-bold text-gray-900">Access Restricted</h2>
+        <p className="text-sm text-gray-500 mt-2">You do not have permission to access compliance documents.</p>
+    </div>
+);
 
 export default Documents;

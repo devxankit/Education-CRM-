@@ -6,7 +6,7 @@ import { useStaffAuth } from '../context/StaffAuthContext'; // STRICT AUTH
 import {
     Users, FileText, ClipboardList, Wallet, Ticket, Bus,
     AlertCircle, CheckCircle, Clock, Plus, Upload, Filter,
-    Download, Search, Shield, ChevronRight, Info, AlertTriangle, Briefcase
+    Download, Search, Shield, ChevronRight, Info, AlertTriangle, Briefcase, UserPlus
 } from 'lucide-react';
 import { STAFF_ROLES } from '../config/roles';
 import { ROLE_DASHBOARD_MAP } from '../config/roleDashboardMap';
@@ -34,21 +34,32 @@ const StaffDashboard = () => {
         const getWidgetProps = (key) => {
             // ... (Keep existing mapping logic, but verified for brevity) ...
             switch (key) {
-                case 'TodayAdmissions': return { title: 'Admissions', count: 5, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' };
-                case 'PendingDocuments': return { title: 'Pending Docs', count: 12, icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50' };
-                case 'VisitorRequests': return { title: 'Inquiries', count: 8, icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50' };
-                case 'PendingFees': return { title: 'Fee Pending', count: 145, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' };
-                case 'OverdueFees': return { title: 'Overdue', count: 28, icon: Clock, color: 'text-rose-600', bg: 'bg-rose-50' };
-                case 'TodayCollections': return { title: 'Collected', count: '₹45k', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50' };
-                case 'ActiveRoutes': return { title: 'Routes', count: 14, icon: Bus, color: 'text-indigo-600', bg: 'bg-indigo-50' };
-                case 'BusAllocationIssues': return { title: 'Issues', count: 3, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' };
-                case 'DriverStatus': return { title: 'Drivers', count: '12/14', icon: Users, color: 'text-slate-600', bg: 'bg-slate-50' };
-                case 'PendingDataUpdates': return { title: 'Data Missing', count: 42, icon: Briefcase, color: 'text-pink-600', bg: 'bg-pink-50' };
-                case 'VerificationTasks': return { title: 'Verify', count: 15, icon: Shield, color: 'text-teal-600', bg: 'bg-teal-50' };
-                case 'ClassSectionUpdates': return { title: 'Unmapped', count: 5, icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50' };
-                case 'OpenTickets': return { title: 'Tickets', count: 9, icon: Ticket, color: 'text-indigo-600', bg: 'bg-indigo-50' };
-                case 'SlaBreachAlerts': return { title: 'SLA Risk', count: 2, icon: Clock, color: 'text-red-600', bg: 'bg-red-50' };
-                case 'HighPriorityTickets': return { title: 'High Prio', count: 3, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' };
+                case 'TodayAdmissions': return { title: 'Admissions', count: 5, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50', path: '/staff/students' };
+                case 'PendingDocuments': return { title: 'Pending Docs', count: 12, icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50', path: '/staff/documents' };
+                case 'VisitorRequests': return { title: 'Inquiries', count: 8, icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50', path: '/staff/students' };
+                case 'PendingFees': return { title: 'Fee Pending', count: 145, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', path: '/staff/fees' };
+                case 'OverdueFees': return { title: 'Overdue', count: 28, icon: Clock, color: 'text-rose-600', bg: 'bg-rose-50', path: '/staff/fees' };
+                case 'TodayCollections': return { title: 'Collected', count: '₹45k', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50', path: '/staff/fees' };
+                case 'ActiveRoutes': return { title: 'Routes', count: 14, icon: Bus, color: 'text-indigo-600', bg: 'bg-indigo-50', path: '/staff/transport' };
+                case 'BusAllocationIssues': return { title: 'Issues', count: 3, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50', path: '/staff/transport' };
+                case 'DriverStatus': return { title: 'Drivers', count: '12/14', icon: Users, color: 'text-slate-600', bg: 'bg-slate-50', path: '/staff/transport' };
+                case 'PendingDataUpdates': return { title: 'Data Missing', count: 42, icon: Briefcase, color: 'text-pink-600', bg: 'bg-pink-50', path: '/staff/students' };
+                case 'VerificationTasks': return { title: 'Verify', count: 15, icon: Shield, color: 'text-teal-600', bg: 'bg-teal-50', path: '/staff/documents' };
+                case 'ClassSectionUpdates': return { title: 'Unmapped', count: 5, icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50', path: '/staff/students' };
+                case 'OpenTickets': return { title: 'Tickets', count: 9, icon: Ticket, color: 'text-indigo-600', bg: 'bg-indigo-50', path: '/staff/support' };
+                case 'SlaBreachAlerts': return { title: 'SLA Risk', count: 2, icon: Clock, color: 'text-red-600', bg: 'bg-red-50', path: '/staff/support' };
+                case 'HighPriorityTickets': return { title: 'High Prio', count: 3, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50', path: '/staff/support' };
+                case 'PendingPayroll': return { title: 'Payroll Due', count: 5, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', path: '/staff/payroll' };
+                case 'UnpaidExpenses': return { title: 'Expenses', count: 12, icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50', path: '/staff/expenses' };
+                // DATA ENTRY WIDGETS
+                case 'IncompleteProfiles': return { title: 'Incomplete', count: 8, icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50', path: '/staff/students' };
+                case 'PendingVerifications': return { title: 'Verify Docs', count: 12, icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50', path: '/staff/documents' };
+                case 'MissingEmployeeRecords': return { title: 'Staff Info', count: 3, icon: Users, color: 'text-red-600', bg: 'bg-red-50', path: '/staff/employees' };
+                // PRINCIPAL & TEACHER WIDGETS
+                case 'TeacherStatus': return { title: 'Staff Active', count: '24/26', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50', path: '/staff/teachers' };
+                case 'MyClasses': return { title: 'Assigned', count: 4, icon: Briefcase, color: 'text-indigo-600', bg: 'bg-indigo-50', path: '/staff/teachers' };
+                case 'TodayAttendance': return { title: 'Attendance', count: '94%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', path: '/staff/students' };
+                case 'PendingAssignments': return { title: 'Grading', count: 8, icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50', path: '/staff/dashboard' };
                 default: return null;
             }
         };
@@ -60,7 +71,7 @@ const StaffDashboard = () => {
                     if (!props) return null;
                     const Icon = props.icon;
                     return (
-                        <div key={key} onClick={() => handleNavigation('/staff/tasks')} className={`${props.bg} rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm active:scale-95 transition-transform`}>
+                        <div key={key} onClick={() => handleNavigation(props.path || '/staff/dashboard')} className={`${props.bg} rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm active:scale-95 transition-transform`}>
                             <Icon size={20} className={`mb-1.5 ${props.color}`} />
                             <span className={`text-xl font-bold ${props.color} leading-none mb-1`}>{props.count}</span>
                             <span className="text-[10px] font-bold text-gray-500 uppercase leading-none">{props.title}</span>
@@ -77,21 +88,32 @@ const StaffDashboard = () => {
 
         const ACTIONS = {
             // ... Same Mapping but optimized keys ...
-            'AddNewInquiry': { label: 'New Inquiry', icon: Plus },
-            'UploadDocuments': { label: 'Upload', icon: Upload },
-            'ViewPendingAdmissions': { label: 'Admissions', icon: Users },
-            'ViewFeeLedger': { label: 'Ledger', icon: Search },
-            'DownloadFeeReport': { label: 'Report', icon: Download },
-            'ViewReceipts': { label: 'Receipts', icon: FileText },
-            'AssignStudentRoute': { label: 'Assign Bus', icon: Bus },
-            'ViewRouteDetails': { label: 'Routes', icon: Search },
-            'ReportTransportIssue': { label: 'Report Issue', icon: AlertTriangle },
-            'EditStudentRecords': { label: 'Edit Student', icon: Search },
-            'VerifyDocuments': { label: 'Verify', icon: Shield },
-            'UpdateClassInfo': { label: 'Classes', icon: Users },
-            'ViewOpenTickets': { label: 'Inbox', icon: Ticket },
-            'RespondToTicket': { label: 'Reply', icon: Info },
-            'CloseTicket': { label: 'Close', icon: CheckCircle },
+            'AddNewInquiry': { label: 'New Inquiry', icon: Plus, path: '/staff/students/new' },
+            'UploadDocuments': { label: 'Upload', icon: Upload, path: '/staff/documents' },
+            'ViewPendingAdmissions': { label: 'Admissions', icon: Users, path: '/staff/students' },
+            'ViewFeeLedger': { label: 'Ledger', icon: Search, path: '/staff/fees' },
+            'DownloadFeeReport': { label: 'Report', icon: Download, path: '/staff/reports' },
+            'ViewReceipts': { label: 'Receipts', icon: FileText, path: '/staff/fees' },
+            'AssignStudentRoute': { label: 'Assign Bus', icon: Bus, path: '/staff/transport' },
+            'ViewRouteDetails': { label: 'Routes', icon: Search, path: '/staff/transport' },
+            'ReportTransportIssue': { label: 'Report Issue', icon: AlertTriangle, path: '/staff/support' },
+            'EditStudentRecords': { label: 'Edit Student', icon: Search, path: '/staff/students' },
+            'VerifyDocuments': { label: 'Verify', icon: Shield, path: '/staff/documents' },
+            'UpdateClassInfo': { label: 'Classes', icon: Users, path: '/staff/students' },
+            'ViewOpenTickets': { label: 'Inbox', icon: Ticket, path: '/staff/support' },
+            'RespondToTicket': { label: 'Reply', icon: Info, path: '/staff/support' },
+            'CloseTicket': { label: 'Close', icon: CheckCircle, path: '/staff/support' },
+            'AddExpense': { label: 'New Expense', icon: Plus, path: '/staff/expenses/new' },
+            'ProcessPayroll': { label: 'Payroll', icon: Wallet, path: '/staff/payroll' },
+            'ManageVendors': { label: 'Vendors', icon: Bus, path: '/staff/vendors' },
+            // DATA ENTRY ACTIONS
+            'AddStudent': { label: 'New Student', icon: UserPlus, path: '/staff/students/new' },
+            'AddTeacher': { label: 'New Teacher', icon: Briefcase, path: '/staff/teachers/new' },
+            'AddEmployee': { label: 'New Staff', icon: Users, path: '/staff/employees/new' },
+            // ACADEMIC ACTIONS
+            'MarkAttendance': { label: 'Register', icon: CheckCircle, path: '/staff/students' },
+            'UploadNotes': { label: 'Upload', icon: Upload, path: '/staff/dashboard' },
+            'ScheduleClass': { label: 'Schedule', icon: Clock, path: '/staff/dashboard' },
         };
 
         return (
@@ -103,7 +125,7 @@ const StaffDashboard = () => {
                         if (!action) return null;
                         const Icon = action.icon;
                         return (
-                            <button key={actionKey} onClick={() => handleNavigation(action.path)} className="flex flex-col items-center gap-2 group">
+                            <button key={actionKey} onClick={() => handleNavigation(action.path || '/staff/dashboard')} className="flex flex-col items-center gap-2 group">
                                 <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center text-gray-600 group-hover:border-indigo-500 group-hover:text-indigo-600 transition-colors">
                                     <Icon size={20} />
                                 </div>

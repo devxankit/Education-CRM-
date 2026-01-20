@@ -10,10 +10,10 @@ export const ROLE_DASHBOARD_MAP = {
         bannerText: "Manage admissions, inquiries & front desk operations"
     },
     [STAFF_ROLES.ACCOUNTS]: {
-        primaryWidgets: ['PendingFees', 'TodayCollections', 'OverdueFees'],
+        primaryWidgets: ['PendingFees', 'TodayCollections', 'PendingPayroll', 'UnpaidExpenses'],
         secondaryWidgets: ['FeeNotices', 'PolicyReminders'],
-        quickActions: ['ViewFeeLedger', 'DownloadFeeReport', 'ViewReceipts'],
-        bannerText: "Track fees, collections & financial records"
+        quickActions: ['ViewFeeLedger', 'AddExpense', 'ProcessPayroll', 'ManageVendors'],
+        bannerText: "Track fees, payroll, expenses & financial records"
     },
     [STAFF_ROLES.TRANSPORT]: {
         primaryWidgets: ['ActiveRoutes', 'BusAllocationIssues', 'DriverStatus'],
@@ -22,16 +22,28 @@ export const ROLE_DASHBOARD_MAP = {
         bannerText: "Oversee routes, buses & student transport safety"
     },
     [STAFF_ROLES.DATA_ENTRY]: {
-        primaryWidgets: ['PendingDataUpdates', 'ClassSectionUpdates', 'VerificationTasks'],
-        secondaryWidgets: ['AdminInstructions', 'CalendarAlerts'],
-        quickActions: ['EditStudentRecords', 'VerifyDocuments', 'UpdateClassInfo'],
-        bannerText: "Maintain accurate student & academic records"
+        primaryWidgets: ['IncompleteProfiles', 'PendingVerifications', 'MissingEmployeeRecords'],
+        secondaryWidgets: ['AdminInstructions', 'StaffNotices'],
+        quickActions: ['AddStudent', 'AddEmployee', 'AddTeacher', 'VerifyDocuments'],
+        bannerText: "Central Data Management & Compliance"
     },
     [STAFF_ROLES.SUPPORT]: {
         primaryWidgets: ['OpenTickets', 'HighPriorityTickets', 'SlaBreachAlerts'],
         secondaryWidgets: ['AdminAnnouncements', 'SupportGuidelines'],
         quickActions: ['ViewOpenTickets', 'RespondToTicket', 'CloseTicket'],
         bannerText: "Resolve student & parent queries efficiently"
+    },
+    [STAFF_ROLES.PRINCIPAL]: {
+        primaryWidgets: ['TodayAdmissions', 'ClassSectionUpdates', 'TeacherStatus'],
+        secondaryWidgets: ['AdminNotices', 'AcademicCalendar'],
+        quickActions: ['UpdateClassInfo', 'ViewPendingAdmissions', 'AddNewInquiry'],
+        bannerText: "Academic & Administrative Leadership"
+    },
+    [STAFF_ROLES.TEACHER]: {
+        primaryWidgets: ['MyClasses', 'TodayAttendance', 'PendingAssignments'],
+        secondaryWidgets: ['StaffNotices', 'AcademicCalendar'],
+        quickActions: ['MarkAttendance', 'UploadNotes', 'ScheduleClass'],
+        bannerText: "Manage your classes and student progress"
     },
     [STAFF_ROLES.ADMIN]: {
         primaryWidgets: ['SystemHealth', 'AllStaffOverview'],

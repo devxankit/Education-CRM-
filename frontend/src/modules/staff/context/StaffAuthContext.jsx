@@ -17,7 +17,7 @@ export const StaffAuthProvider = ({ children }) => {
     });
 
     // 2. Login function: sets the role ONCE.
-    const login = (userData) => {
+    const login = React.useCallback((userData) => {
         // Enforce user structure
         if (!userData || !userData.role) {
             console.error("Invalid login data: Role is missing");
@@ -32,16 +32,20 @@ export const StaffAuthProvider = ({ children }) => {
 
         setUser(userData);
         localStorage.setItem('staff_user', JSON.stringify(userData));
-    };
+    }, []);
 
     // 3. Logout function: clears everything
-    const logout = () => {
+    const logout = React.useCallback(() => {
         setUser(null);
         localStorage.removeItem('staff_user');
-    };
+    }, []);
+
+    const value = React.useMemo(() => ({
+        user, login, logout, isAuthenticated: !!user
+    }), [user, login, logout]);
 
     return (
-        <StaffAuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+        <StaffAuthContext.Provider value={value}>
             {children}
         </StaffAuthContext.Provider>
     );

@@ -4,7 +4,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useStaffAuth } from '../../context/StaffAuthContext';
 
 const StaffRoleGuard = () => {
-    const { isAuthenticated, user } = useStaffAuth();
+    const { isAuthenticated, user, logout } = useStaffAuth();
     const location = useLocation();
 
     // 1. If not logged in, force to login
@@ -12,13 +12,16 @@ const StaffRoleGuard = () => {
         return <Navigate to="/staff/login" state={{ from: location }} replace />;
     }
 
-    // 2. (Optional) We could add specific role checks per route here if we had a comprehensive permission map.
-    // For now, if they are authenticated as a staff member, we allow them into the protected layout.
-    // The Dashboard itself handles what they *see*.
+    // 2. Data Integrity Check: If user exists but role is missing
+    React.useEffect(() => {
+        if (isAuthenticated && !user?.role) {
+            console.warn("Invalid user session detected (missing role). Logging out.");
+            logout();
+        }
+    }, [isAuthenticated, user, logout]);
 
-    // Strict Safety: If user has no role (data corruption), force logout/login
-    if (!user?.role) {
-        return <Navigate to="/staff/login" replace />;
+    if (isAuthenticated && !user?.role) {
+        return null; // Show nothing while logging out
     }
 
     return <Outlet />;

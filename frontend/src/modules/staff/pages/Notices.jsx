@@ -1,132 +1,118 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
-import { STAFF_ROLES } from '../config/roles';
-import { Bell, Info, AlertTriangle, CheckCircle, Clock, Calendar } from 'lucide-react';
+import { Search, Filter, Bell, AlertTriangle, FileText, CheckCircle, Clock } from 'lucide-react';
 
 const MOCK_NOTICES = [
-    {
-        id: 1,
-        title: 'System Maintenance Scheduled',
-        content: 'The CRM will be unavailable on Saturday from 10 PM to 12 AM for scheduled upgrades. Please save all work beforehand.',
-        date: '2024-03-10',
-        priority: 'High',
-        type: 'System',
-        isRead: false
-    },
-    {
-        id: 2,
-        title: 'Quarterly Staff Meeting',
-        content: 'All staff members are required to attend the quarterly review details in the conference room. Transport Department to present stats.',
-        date: '2024-03-08',
-        priority: 'Normal',
-        type: 'General',
-        isRead: true
-    },
-    {
-        id: 3,
-        title: 'Fee Collection Policy Update',
-        content: 'New guidelines for partial fee acceptance have been updated in the Accounts module. Please review before next collection.',
-        date: '2024-03-05',
-        priority: 'Important',
-        type: 'Accounts',
-        isRead: false
-    }
+    { id: 'N-2024-001', title: 'Emergency: School Closed Tomorrow due to Rain', category: 'Emergency', priority: 'Urgent', date: '10 Oct 2024', status: 'Pending' },
+    { id: 'N-2024-002', title: 'Revised Salary Structure for Q4', category: 'Finance', priority: 'Important', date: '08 Oct 2024', status: 'Read' },
+    { id: 'N-2024-003', title: 'New Library Rules for Staff', category: 'General', priority: 'Normal', date: '05 Oct 2024', status: 'Pending' },
+    { id: 'N-2024-004', title: 'Public Holiday: Diwali Break Schedule', category: 'HR', priority: 'Normal', date: '01 Oct 2024', status: 'Read' },
 ];
 
 const Notices = () => {
-    // This page is View-Only for all staff.
-    const [notices, setNotices] = useState(MOCK_NOTICES);
+    const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterPriority, setFilterPriority] = useState('All');
 
-    const markAsRead = (id) => {
-        setNotices(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    const filteredNotices = MOCK_NOTICES.filter(notice => {
+        const matchesSearch = notice.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesPriority = filterPriority === 'All' || notice.priority === filterPriority;
+        return matchesSearch && matchesPriority;
+    });
+
+    const getPriorityStyle = (priority) => {
+        switch (priority) {
+            case 'Urgent': return 'bg-red-50 text-red-600 border-red-200';
+            case 'Important': return 'bg-amber-50 text-amber-600 border-amber-200';
+            default: return 'bg-blue-50 text-blue-600 border-blue-200';
+        }
     };
 
     return (
-        <div className="max-w-3xl mx-auto pb-20 md:pb-6 min-h-screen">
+        <div className="max-w-4xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Notices & Announcements</h1>
-                    <p className="text-sm text-gray-500">Stay updated with admin communications</p>
-                </div>
-            </div>
-
-            {/* Notice List */}
-            <div className="space-y-4">
-                {notices.map(notice => (
-                    <NoticeCard
-                        key={notice.id}
-                        notice={notice}
-                        onMarkRead={() => markAsRead(notice.id)}
-                    />
-                ))}
-            </div>
-
-            {notices.length === 0 && (
-                <div className="text-center py-12 text-gray-400">
-                    <Bell size={48} className="mx-auto mb-2 opacity-30" />
-                    No active notices.
-                </div>
-            )}
-        </div>
-    );
-};
-
-// --- SUB-COMPONENT ---
-
-const NoticeCard = ({ notice, onMarkRead }) => {
-    const isPriority = notice.priority === 'High' || notice.priority === 'Important';
-
-    return (
-        <div className={`bg-white rounded-xl shadow-sm border overflow-hidden relative transition-all ${notice.isRead ? 'border-gray-200 opacity-80' : 'border-indigo-100 ring-1 ring-indigo-50 shadow-md'
-            }`}>
-            {/* Unread Indicator */}
-            {!notice.isRead && (
-                <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full m-3 animate-pulse border-2 border-white "></div>
-            )}
-
-            <div className="p-5">
-                <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-2">
-                        <span className={`p-1.5 rounded-lg ${isPriority ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                            {isPriority ? <AlertTriangle size={16} /> : <Info size={16} />}
-                        </span>
-                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${notice.type === 'Accounts' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'
-                            }`}>
-                            {notice.type}
-                        </span>
+            <div className="bg-white px-5 py-4 border-b border-gray-200">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900">Official Notices</h1>
+                        <p className="text-xs text-gray-500">Circulars & Announcements</p>
                     </div>
-                    <span className="text-xs font-medium text-gray-400 flex items-center gap-1">
-                        <Calendar size={12} /> {notice.date}
-                    </span>
                 </div>
 
-                <h3 className={`font-bold text-lg mb-2 ${notice.isRead ? 'text-gray-700' : 'text-gray-900'}`}>
-                    {notice.title}
-                </h3>
-                <p className={`text-sm leading-relaxed mb-4 ${notice.isRead ? 'text-gray-500' : 'text-gray-600'}`}>
-                    {notice.content}
-                </p>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                    <span className="text-xs px-2 py-1 bg-gray-50 text-gray-500 rounded font-bold">
-                        Priority: {notice.priority}
-                    </span>
-
-                    {!notice.isRead ? (
-                        <button
-                            onClick={onMarkRead}
-                            className="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
-                        >
-                            <CheckCircle size={16} /> Acknowledge Read
-                        </button>
-                    ) : (
-                        <span className="flex items-center gap-2 text-xs font-bold text-green-600">
-                            <CheckCircle size={14} /> Read
-                        </span>
-                    )}
+                {/* Filters */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search notices..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                    </div>
+                    <select
+                        value={filterPriority}
+                        onChange={(e) => setFilterPriority(e.target.value)}
+                        className="px-3 py-2 bg-gray-100 text-sm font-bold text-gray-600 rounded-lg border-none focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                    >
+                        <option value="All">All Priorities</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="Important">Important</option>
+                        <option value="Normal">Normal</option>
+                    </select>
                 </div>
+            </div>
+
+            <div className="p-4 space-y-3">
+                {filteredNotices.map(notice => (
+                    <div
+                        key={notice.id}
+                        onClick={() => navigate(`/staff/notices/${notice.id}`)}
+                        className={`bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.99] group ${notice.status === 'Pending' ? 'border-l-4 border-l-indigo-500' : 'border-gray-200'}`}
+                    >
+                        <div className="flex justify-between items-start mb-2">
+                            <div className="flex gap-2">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 ${getPriorityStyle(notice.priority)}`}>
+                                    {notice.priority === 'Urgent' && <AlertTriangle size={10} />}
+                                    {notice.priority}
+                                </span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200">
+                                    {notice.category}
+                                </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400 font-medium">{notice.date}</span>
+                        </div>
+
+                        <h3 className={`text-sm ${notice.status === 'Pending' ? 'font-bold text-gray-900' : 'font-medium text-gray-700'} mb-2 group-hover:text-indigo-600 transition-colors`}>
+                            {notice.title}
+                        </h3>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-2">
+                            <span className="text-[10px] text-gray-400 font-mono">{notice.id}</span>
+                            {notice.status === 'Read' ? (
+                                <span className="text-[10px] font-bold text-green-600 flex items-center gap-1">
+                                    <CheckCircle size={10} /> Acknowledged
+                                </span>
+                            ) : (
+                                <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-1">
+                                    <Clock size={10} /> Action Required
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {filteredNotices.length === 0 && (
+                    <div className="text-center py-10">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400">
+                            <Bell size={24} />
+                        </div>
+                        <h3 className="text-gray-900 font-bold text-sm">No Notices Found</h3>
+                        <p className="text-gray-500 text-xs">You are all caught up!</p>
+                    </div>
+                )}
             </div>
         </div>
     );
