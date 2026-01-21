@@ -76,8 +76,10 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'students', label: 'Students (Master View)', path: '/admin/people/students' },
             { id: 'teachers', label: 'Teachers', path: '/admin/people/teachers' },
-            { id: 'employees', label: 'Employees (Non-teaching)', path: '/admin/people/employees' },
+            { id: 'employees', label: 'Employee Directory', path: '/admin/people/employees' },
             { id: 'parents', label: 'Parents', path: '/admin/people/parents' },
+            { id: 'departments', label: 'Departments & Roles', path: '/admin/people/departments' },
+            { id: 'employment-types', label: 'Employment Types & Rules', path: '/admin/people/employment-types' },
             { id: 'bulk-import', label: 'Bulk Import', path: '/admin/people/bulk-import' }
         ]
     },
@@ -100,11 +102,16 @@ export const adminMenuConfig = [
         icon: SettingsIcon,
         path: '/admin/operations',
         subItems: [
-            { id: 'transport', label: 'Transport Setup', path: '/admin/operations/transport' },
+            { id: 'admissions-rules', label: 'Admission Policy', path: '/admin/operations/admissions-rules' },
+            { id: 'transport', label: 'Transport Setup', path: '/admin/operations/transport-config' },
             { id: 'routes', label: 'Routes & Stops', path: '/admin/operations/routes' },
-            { id: 'assets', label: 'Assets Master', path: '/admin/operations/assets' },
+            { id: 'asset-rules', label: 'Asset Governance', path: '/admin/operations/asset-rules' },
+            { id: 'support-rules', label: 'Helpdesk Rules', path: '/admin/operations/support-rules' },
             { id: 'inventory', label: 'Inventory Categories', path: '/admin/operations/inventory' },
-            { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel' }
+            { id: 'assets-master', label: 'Assets Master', path: '/admin/operations/inventory/assets' },
+            { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
+            { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' },
+            { id: 'communication-rules', label: 'Communication Policy', path: '/admin/operations/communication-rules' }
         ]
     },
     {

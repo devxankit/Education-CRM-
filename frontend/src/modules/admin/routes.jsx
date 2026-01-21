@@ -35,6 +35,26 @@ import ProgramsMaster from './pages/academics/ProgramsMaster';
 import TeacherMapping from './pages/academics/TeacherMapping';
 import ExamPolicies from './pages/academics/ExamPolicies';
 
+// Operations Management Pages
+import AdmissionRules from './pages/operations/AdmissionsRules';
+import TransportConfig from './pages/operations/TransportConfig';
+import HostelConfig from './pages/operations/HostelConfig';
+import DocumentRules from './pages/operations/DocumentRules';
+import CommunicationRules from './pages/operations/CommunicationRules';
+import AssetRules from './pages/operations/AssetRules';
+import SupportRules from './pages/operations/SupportRules';
+import TransportRoutes from './pages/operations/TransportRoutes';
+import InventoryCategories from './pages/operations/InventoryCategories';
+import AssetsMaster from './pages/operations/AssetsMaster';
+import Employees from './pages/people/employees/Employees';
+import Teachers from './pages/people/teachers/Teachers';
+import Parents from './pages/people/parents/Parents';
+import Departments from './pages/people/departments/Departments'; // New Import
+import StudentList from './pages/people/students/StudentList';
+import StudentAdmission from './pages/people/students/admission/StudentAdmission';
+import StudentProfile from './pages/people/students/profile/StudentProfile';
+import EmploymentTypes from './pages/people/employment-types/EmploymentTypes'; // New Import
+
 // Helper to render Outlet
 const OutletWrapper = () => <Outlet />;
 
@@ -84,10 +104,14 @@ const adminRoutes = [
                     { path: 'academics/exam-policies', element: <ExamPolicies /> },
 
                     // 5. People Management
-                    { path: 'people/students', element: <PlaceholderPage /> },
-                    { path: 'people/teachers', element: <PlaceholderPage /> },
-                    { path: 'people/employees', element: <PlaceholderPage /> },
-                    { path: 'people/parents', element: <PlaceholderPage /> },
+                    { path: 'people/students/add', element: <StudentAdmission /> },
+                    { path: 'people/students/:id', element: <StudentProfile /> }, // New Route
+                    { path: 'people/students', element: <StudentList /> },
+                    { path: 'people/teachers', element: <Teachers /> },
+                    { path: 'people/employees', element: <Employees /> },
+                    { path: 'people/employment-types', element: <EmploymentTypes /> }, // New Route
+                    { path: 'people/parents', element: <Parents /> },
+                    { path: 'people/departments', element: <Departments /> }, // New Route
                     { path: 'people/bulk-import', element: <PlaceholderPage /> },
 
                     // 6. Finance Management
@@ -98,11 +122,16 @@ const adminRoutes = [
                     { path: 'finance/taxes', element: <PlaceholderPage /> },
 
                     // 7. Operations Management
-                    { path: 'operations/transport', element: <PlaceholderPage /> },
-                    { path: 'operations/routes', element: <PlaceholderPage /> },
-                    { path: 'operations/assets', element: <PlaceholderPage /> },
-                    { path: 'operations/inventory', element: <PlaceholderPage /> },
-                    { path: 'operations/hostel', element: <PlaceholderPage /> },
+                    { path: 'operations/admissions-rules', element: <AdmissionRules /> },
+                    { path: 'operations/transport-config', element: <TransportConfig /> }, // Renamed from 'transport' to 'transport-config' to match request or keep 'transport'? Request said '/admin/operations/transport-config'
+                    { path: 'operations/routes', element: <TransportRoutes /> },
+                    { path: 'operations/asset-rules', element: <AssetRules /> },
+                    { path: 'operations/support-rules', element: <SupportRules /> },
+                    { path: 'operations/inventory', element: <InventoryCategories /> },
+                    { path: 'operations/inventory/assets', element: <AssetsMaster /> }, // New Route
+                    { path: 'operations/hostel-config', element: <HostelConfig /> },
+                    { path: 'operations/document-rules', element: <DocumentRules /> },
+                    { path: 'operations/communication-rules', element: <CommunicationRules /> }, // Communication Governance
 
                     // 8. Documents & Compliance (Renamed from 'documents')
                     { path: 'compliance/document-rules', element: <PlaceholderPage /> },
@@ -135,7 +164,7 @@ const adminRoutes = [
                     { path: 'audit/data-history', element: <PlaceholderPage /> },
                     { path: 'audit/security', element: <PlaceholderPage /> },
 
-                    { path: '*', element: <Navigate to="dashboard" replace /> }
+                    { path: '*', element: <Navigate to="/admin/dashboard" replace /> }
                 ]
             }
         ]

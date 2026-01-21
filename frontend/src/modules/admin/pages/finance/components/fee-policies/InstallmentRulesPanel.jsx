@@ -100,7 +100,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div>
                         <label className="block text-sm font-bold text-red-900">Block Results / Admit Card on Dues</label>
                         <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                            Automatically hide exam results if pending dues > $0.
+                            Automatically hide exam results if pending dues &gt; $0.
                         </p>
                     </div>
                 </div>
