@@ -6,10 +6,9 @@ import studentRoutes from '../modules/student/routes';
 import teacherRoutes from '../modules/teacher/routes';
 import parentRoutes from '../modules/parent/routes';
 import staffRoutes from '../modules/staff/routes';
+import adminRoutes from '../modules/admin/routes';
 
 // Placeholder components for other modules
-const AdminDashboard = () => <div>Admin Dashboard</div>;
-const StaffDashboard = () => <div>Staff Dashboard</div>;
 const Login = () => <div>Login Page</div>;
 
 const router = createBrowserRouter([
@@ -26,10 +25,7 @@ const router = createBrowserRouter([
             ...teacherRoutes, // Merge teacher routes
             ...parentRoutes,  // Merge parent routes
             ...staffRoutes,   // Merge staff routes
-            {
-                path: 'admin/*',
-                element: <AdminDashboard />,
-            },
+            ...adminRoutes,   // Merge admin routes
             {
                 path: '/',
                 element: <div>Landing Page / Redirect</div>,

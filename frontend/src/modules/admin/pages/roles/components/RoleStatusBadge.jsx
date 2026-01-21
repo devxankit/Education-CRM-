@@ -1,0 +1,38 @@
+
+import React from 'react';
+
+const RoleStatusBadge = ({ status, type }) => {
+
+    if (type) {
+        // Render Type Badge
+        const isSystem = type === 'system';
+        return (
+            <span className={`
+                inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide border uppercase
+                ${isSystem
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                }
+            `}>
+                {isSystem ? 'SYSTEM' : 'CUSTOM'}
+            </span>
+        );
+    }
+
+    // Render Status Badge
+    const isActive = status === 'active';
+    return (
+        <span className={`
+            inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border
+            ${isActive
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : 'bg-gray-100 text-gray-500 border-gray-200'
+            }
+        `}>
+            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+            {isActive ? 'ACTIVE' : 'INACTIVE'}
+        </span>
+    );
+};
+
+export default RoleStatusBadge;

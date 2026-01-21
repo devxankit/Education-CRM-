@@ -1,0 +1,4905 @@
+🛡️ Admin Panel – Super Controller (Enterprise Education CRM)
+
+Designed by a Senior Product Manager + Solution Architect for India-focused Schools, Colleges & Universities
+
+🎯 ADMIN PANEL PHILOSOPHY
+
+The Admin Panel is the brain + constitution of the Education CRM.
+
+Admin does not perform daily operations
+
+Admin defines how the system behaves
+
+Admin creates rules, policies, structures, and permissions
+
+Every change is logged, auditable, and reversible
+
+Designed for single school → multi-campus university
+
+Think of Admin as:
+
+Institution Owner + Controller + Compliance Officer
+
+🧭 ADMIN PANEL – MAIN SIDEBAR MODULES (FINAL)
+1. Dashboard
+2. Institution Setup
+3. User & Role Management
+4. Academic Management
+5. People Management
+6. Finance Management
+7. Operations Management
+8. Documents & Compliance
+9. Communication
+10. Reports & Analytics
+11. System Settings
+12. Security & Audit Logs
+
+
+This structure is locked and enterprise-complete.
+
+1️⃣ DASHBOARD
+Purpose
+
+A high-level institutional control center, not a working screen.
+
+Sub-tabs / Sections
+
+Institution Overview
+
+Total students, teachers, staff
+
+Active academic year
+
+Branch-wise summary
+
+Critical Alerts
+
+Compliance pending
+
+Unverified documents
+
+Finance rule violations
+
+Security alerts
+
+Pending Approvals
+
+Role changes
+
+Policy changes
+
+Bulk imports
+
+Data corrections (if approval-based)
+
+System Health
+
+API status
+
+Backup status
+
+Integration failures
+
+📌 Admin sees problems early, not daily tasks.
+
+2️⃣ INSTITUTION SETUP (FOUNDATION MODULE)
+
+If this is wrong, the whole ERP becomes wrong.
+
+Sub-tabs
+
+Institution Profile
+
+Legal name
+
+Affiliation details (CBSE, ICSE, UGC, AICTE)
+
+Address & contact
+
+Logo & branding
+
+Branches / Campuses
+
+Multi-campus setup
+
+Branch-specific settings
+
+Shared vs independent rules
+
+Academic Years
+
+Year creation & locking
+
+Promotion rules
+
+Historical data freeze
+
+Holidays & Calendars
+
+Academic holidays
+
+Exam periods
+
+Staff-only holidays
+
+Timetable Rules
+
+Period duration
+
+Break rules
+
+Teacher workload limits
+
+📌 Admin defines the institution’s skeleton here.
+
+3️⃣ USER & ROLE MANAGEMENT (POWER CORE)
+Sub-tabs
+
+Admin Users
+
+Super Admin
+
+Sub-admins
+
+Access scoping
+
+Staff Roles
+
+Front Desk
+
+Accounts
+
+Data Entry
+
+Transport
+
+Support
+
+Custom roles
+
+Permission Matrix
+
+Page-level permissions
+
+Action-level permissions
+
+Read / Write / Approve / Export
+
+Role Policies
+
+Role locking rules
+
+Cross-module visibility
+
+Approval hierarchies
+
+Access Control Rules
+
+Time-based access
+
+IP/device restrictions
+
+Branch-level access
+
+📌 No role exists without Admin approval.
+
+4️⃣ ACADEMIC MANAGEMENT
+Sub-tabs
+
+Classes & Sections
+
+School: Class 1–12
+
+College: Programs, semesters
+
+Subjects
+
+Subject master
+
+Theory / practical split
+
+Credit system (college)
+
+Programs / Courses
+
+UG / PG / Diploma
+
+Duration & structure
+
+Teacher–Subject Mapping
+
+Subject ownership
+
+Load distribution
+
+Conflict prevention
+
+Exam Rules & Policies
+
+Grading systems
+
+Passing criteria
+
+Internal vs external marks
+
+📌 Admin controls academics; teachers only execute.
+
+5️⃣ PEOPLE MANAGEMENT (MASTER DATA)
+Sub-tabs
+
+Students (Master View)
+
+Bulk activation/deactivation
+
+Transfer / alumni marking
+
+Branch reassignment
+
+Teachers
+
+Employment status
+
+Qualification verification rules
+
+Employees (Non-teaching)
+
+Department mapping
+
+Contract types
+
+Parents
+
+Linked students
+
+Access control
+
+Bulk Import / Export
+
+Excel/CSV validation
+
+Error preview
+
+Rollback option
+
+📌 Admin owns lifecycle of every person.
+
+6️⃣ FINANCE MANAGEMENT (RULE MAKER)
+
+Accounts executes. Admin defines rules.
+
+Sub-tabs
+
+Fee Structures
+
+Class/program-wise fees
+
+Installments
+
+Late fee rules
+
+Fee Policies
+
+Concessions
+
+Scholarships
+
+Refund rules
+
+Payroll Rules
+
+Salary structures
+
+Allowances & deductions
+
+Attendance linkage
+
+Expense Categories
+
+Fixed vs variable
+
+Approval requirements
+
+Tax & Deductions
+
+PF, TDS, GST
+
+Institution-level tax config
+
+📌 No money moves without Admin-defined rules.
+
+7️⃣ OPERATIONS MANAGEMENT
+Sub-tabs
+
+Transport Setup
+
+Enable/disable transport
+
+Capacity rules
+
+Routes & Stops
+
+Route definitions
+
+Stop ordering
+
+Assets Master
+
+Asset categories
+
+Depreciation rules
+
+Inventory Categories
+
+Consumable vs reusable
+
+Reorder thresholds
+
+Hostel Setup (Optional)
+
+Rooms
+
+Mess rules
+
+Allocation policies
+
+📌 Admin designs infrastructure, staff operates it.
+
+8️⃣ DOCUMENTS & COMPLIANCE (AUDIT CORE)
+Sub-tabs
+
+Required Documents Rules
+
+Entity-wise requirements
+
+Mandatory vs optional
+
+Verification Policies
+
+Who can verify
+
+Multi-level verification (if needed)
+
+Certificate Templates
+
+Bonafide
+
+TC
+
+Experience letters
+
+Compliance Checklist
+
+Affiliation requirements
+
+Audit readiness tracking
+
+📌 This module decides if the institution passes audits.
+
+9️⃣ COMMUNICATION
+Sub-tabs
+
+Notices & Circulars
+
+Staff / Student / Parent targeting
+
+Priority levels
+
+Announcements
+
+Public vs internal
+
+Email / SMS Templates
+
+Pre-approved formats
+
+Language support
+
+Notification Rules
+
+Trigger-based notifications
+
+Quiet hours
+
+📌 Admin controls what, when, and how communication happens.
+
+🔟 REPORTS & ANALYTICS
+Sub-tabs
+
+Academic Reports
+
+Performance summaries
+
+Promotion eligibility
+
+Finance Reports
+
+Fee collection
+
+Payroll summaries
+
+Expenses
+
+HR Reports
+
+Staff strength
+
+Attrition
+
+Compliance
+
+Operations Reports
+
+Transport utilization
+
+Asset health
+
+Custom Reports
+
+Filter builder
+
+Export rules
+
+📌 Admin consumes data for decisions, not actions.
+
+1️⃣1️⃣ SYSTEM SETTINGS
+Sub-tabs
+
+General Settings
+
+Timezone
+
+Language
+
+Date formats
+
+App Configuration
+
+Feature toggles
+
+Module enable/disable
+
+Integrations
+
+Payment gateways
+
+SMS/email providers
+
+External LMS
+
+Backup & Recovery
+
+Backup frequency
+
+Restore options
+
+📌 This is the technical control room.
+
+1️⃣2️⃣ SECURITY & AUDIT LOGS (NON-NEGOTIABLE)
+Sub-tabs
+
+User Activity Logs
+
+Who did what, when
+
+Financial Logs
+
+Fee edits
+
+Payroll actions
+
+Data Change History
+
+Old vs new values
+
+Approval trail
+
+Login & Security Logs
+
+Failed logins
+
+Device/IP tracking
+
+📌 If it’s not logged, it didn’t happen.
+
+🏁 FINAL PRODUCT OWNER VERDICT
+
+This Admin Panel:
+
+✅ Covers Academics, Finance, HR, Operations
+
+✅ Works for School + College
+
+✅ Supports multi-branch institutions
+
+✅ Is audit-safe & scalable
+
+✅ Ready for real-world deployment
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📐 TECHNICAL IMPLEMENTATION BLUEPRINT
+═══════════════════════════════════════════════════════════════════════════════
+
+🎨 UI/UX DESIGN GUIDELINES
+
+Color Theme (Centralized Tokens)
+--primary: #6366f1 (Indigo - Admin authority)
+--primary-dark: #4f46e5
+--primary-light: #818cf8
+--secondary: #8b5cf6 (Purple - Premium feel)
+--accent: #06b6d4 (Cyan - Action items)
+--success: #10b981 (Green - Approvals)
+--warning: #f59e0b (Amber - Pending items)
+--danger: #ef4444 (Red - Critical alerts)
+--info: #3b82f6 (Blue - Information)
+--background: #f9fafb (Light gray)
+--surface: #ffffff
+--text-primary: #111827
+--text-secondary: #6b7280
+--border: #e5e7eb
+
+Typography
+Primary Font: 'Inter', sans-serif
+Headings: 'Poppins', sans-serif
+Monospace: 'Fira Code', monospace
+
+Spacing System
+xs: 4px, sm: 8px, md: 16px, lg: 24px, xl: 32px, 2xl: 48px, 3xl: 64px
+
+Animation Guidelines
+- Use GSAP for complex animations
+- Framer Motion for component transitions
+- Lenis for smooth scrolling
+- All animations: duration 300-500ms, ease-out
+- Hover effects: scale(1.02), translateY(-2px)
+- Loading states: skeleton screens with shimmer
+- Page transitions: fade + slide (20px)
+
+Responsive Breakpoints
+Mobile: < 768px
+Tablet: 768px - 1024px
+Desktop: > 1024px
+Large Desktop: > 1440px
+
+Mobile-First Design
+- Bottom navigation for mobile
+- Sidebar for desktop
+- Touch-friendly buttons (min 44px)
+- Swipe gestures for mobile
+- Collapsible sections
+- Sticky headers with scroll behavior
+
+
+🏗️ COMPONENT ARCHITECTURE
+
+Shared Components (Reusable across all modules)
+- DataTable (sortable, filterable, paginated)
+- FormBuilder (dynamic form generation)
+- Modal (confirmation, forms, previews)
+- Dropdown (single/multi-select)
+- DatePicker (range support)
+- FileUploader (drag-drop, preview)
+- SearchBar (debounced, autocomplete)
+- StatusBadge (color-coded statuses)
+- ActionMenu (kebab menu for actions)
+- BreadcrumbNav (navigation trail)
+- StatsCard (dashboard metrics)
+- ChartWrapper (Recharts integration)
+- EmptyState (no data placeholder)
+- LoadingSpinner (skeleton screens)
+- Toast (notifications)
+- ConfirmDialog (destructive actions)
+- PermissionGate (role-based rendering)
+
+Layout Components
+- AdminSidebar (collapsible, role-based menu)
+- AdminHeader (search, notifications, profile)
+- AdminBottomNav (mobile only)
+- PageHeader (title, breadcrumb, actions)
+- ContentWrapper (consistent padding/spacing)
+
+
+🗄️ DATABASE SCHEMA (MongoDB)
+
+Admin Collection
+{
+  _id: ObjectId,
+  email: String (unique, indexed),
+  password: String (hashed),
+  name: String,
+  role: String (super_admin, sub_admin),
+  permissions: [String],
+  branches: [ObjectId], // Access to specific branches
+  isActive: Boolean,
+  lastLogin: Date,
+  createdAt: Date,
+  updatedAt: Date,
+  createdBy: ObjectId
+}
+
+Institution Collection
+{
+  _id: ObjectId,
+  legalName: String,
+  displayName: String,
+  type: String (school, college, university),
+  affiliation: {
+    board: String (CBSE, ICSE, State, UGC, AICTE),
+    affiliationNumber: String,
+    validUntil: Date
+  },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    pincode: String,
+    country: String
+  },
+  contact: {
+    phone: [String],
+    email: [String],
+    website: String
+  },
+  branding: {
+    logo: String (URL),
+    favicon: String (URL),
+    primaryColor: String,
+    secondaryColor: String
+  },
+  settings: {
+    timezone: String,
+    language: String,
+    dateFormat: String,
+    currency: String
+  },
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Branch Collection
+{
+  _id: ObjectId,
+  institutionId: ObjectId,
+  name: String,
+  code: String (unique),
+  type: String (main, branch),
+  address: Object,
+  contact: Object,
+  capacity: {
+    students: Number,
+    teachers: Number,
+    classrooms: Number
+  },
+  settings: {
+    inheritsFromMain: Boolean,
+    customRules: Object
+  },
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+AcademicYear Collection
+{
+  _id: ObjectId,
+  institutionId: ObjectId,
+  branchId: ObjectId,
+  name: String (e.g., "2024-2025"),
+  startDate: Date,
+  endDate: Date,
+  isActive: Boolean,
+  isLocked: Boolean, // Prevents modifications
+  terms: [{
+    name: String (Term 1, Semester 1),
+    startDate: Date,
+    endDate: Date
+  }],
+  promotionRules: {
+    minAttendance: Number,
+    minMarks: Number,
+    graceMarks: Number
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Role Collection
+{
+  _id: ObjectId,
+  name: String (unique),
+  displayName: String,
+  type: String (admin, staff, teacher, student, parent),
+  permissions: [{
+    module: String,
+    actions: [String] // read, write, approve, delete, export
+  }],
+  hierarchy: Number, // For approval chains
+  isSystem: Boolean, // Cannot be deleted
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date,
+  createdBy: ObjectId
+}
+
+Permission Collection
+{
+  _id: ObjectId,
+  module: String,
+  resource: String,
+  action: String (read, write, approve, delete, export),
+  description: String,
+  isSystem: Boolean
+}
+
+Class Collection
+{
+  _id: ObjectId,
+  institutionId: ObjectId,
+  branchId: ObjectId,
+  name: String (Class 1, BCA Sem 1),
+  code: String,
+  level: String (primary, secondary, ug, pg),
+  sections: [{
+    name: String (A, B, C),
+    capacity: Number,
+    classTeacherId: ObjectId
+  }],
+  academicYearId: ObjectId,
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+Subject Collection
+{
+  _id: ObjectId,
+  institutionId: ObjectId,
+  name: String,
+  code: String (unique),
+  type: String (theory, practical, both),
+  credits: Number, // For colleges
+  totalMarks: {
+    internal: Number,
+    external: Number,
+    practical: Number
+  },
+  passingCriteria: {
+    internal: Number,
+    external: Number,
+    overall: Number
+  },
+  isElective: Boolean,
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+FeeStructure Collection
+{
+  _id: ObjectId,
+  institutionId: ObjectId,
+  branchId: ObjectId,
+  academicYearId: ObjectId,
+  classId: ObjectId,
+  name: String,
+  components: [{
+    name: String (Tuition, Transport, Library),
+    amount: Number,
+    isMandatory: Boolean,
+    taxable: Boolean,
+    taxRate: Number
+  }],
+  totalAmount: Number,
+  installments: [{
+    name: String (1st Installment),
+    dueDate: Date,
+    amount: Number,
+    lateFeeRule: {
+      graceDays: Number,
+      penaltyType: String (fixed, percentage),
+      penaltyAmount: Number
+    }
+  }],
+  concessions: [{
+    type: String (sibling, merit, financial),
+    percentage: Number,
+    maxAmount: Number
+  }],
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date,
+  createdBy: ObjectId
+}
+
+AuditLog Collection
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  userType: String (admin, staff, teacher),
+  action: String (create, update, delete, approve, export),
+  module: String,
+  resource: String,
+  resourceId: ObjectId,
+  changes: {
+    before: Object,
+    after: Object
+  },
+  ipAddress: String,
+  userAgent: String,
+  timestamp: Date,
+  status: String (success, failed),
+  errorMessage: String
+}
+
+
+🔌 API ENDPOINTS STRUCTURE
+
+Authentication
+POST   /api/admin/auth/login
+POST   /api/admin/auth/logout
+POST   /api/admin/auth/refresh-token
+GET    /api/admin/auth/me
+PUT    /api/admin/auth/change-password
+
+Institution Management
+GET    /api/admin/institution
+PUT    /api/admin/institution
+GET    /api/admin/branches
+POST   /api/admin/branches
+PUT    /api/admin/branches/:id
+DELETE /api/admin/branches/:id
+
+Academic Year Management
+GET    /api/admin/academic-years
+POST   /api/admin/academic-years
+PUT    /api/admin/academic-years/:id
+POST   /api/admin/academic-years/:id/lock
+POST   /api/admin/academic-years/:id/unlock
+
+User & Role Management
+GET    /api/admin/users
+POST   /api/admin/users
+PUT    /api/admin/users/:id
+DELETE /api/admin/users/:id
+GET    /api/admin/roles
+POST   /api/admin/roles
+PUT    /api/admin/roles/:id
+DELETE /api/admin/roles/:id
+GET    /api/admin/permissions
+POST   /api/admin/roles/:id/permissions
+
+Academic Management
+GET    /api/admin/classes
+POST   /api/admin/classes
+PUT    /api/admin/classes/:id
+DELETE /api/admin/classes/:id
+GET    /api/admin/subjects
+POST   /api/admin/subjects
+PUT    /api/admin/subjects/:id
+DELETE /api/admin/subjects/:id
+GET    /api/admin/teacher-subject-mapping
+POST   /api/admin/teacher-subject-mapping
+DELETE /api/admin/teacher-subject-mapping/:id
+
+Finance Management
+GET    /api/admin/fee-structures
+POST   /api/admin/fee-structures
+PUT    /api/admin/fee-structures/:id
+DELETE /api/admin/fee-structures/:id
+GET    /api/admin/payroll-rules
+POST   /api/admin/payroll-rules
+PUT    /api/admin/payroll-rules/:id
+
+Reports & Analytics
+GET    /api/admin/reports/academic
+GET    /api/admin/reports/finance
+GET    /api/admin/reports/hr
+GET    /api/admin/reports/operations
+POST   /api/admin/reports/custom
+GET    /api/admin/reports/export/:reportId
+
+Audit & Security
+GET    /api/admin/audit-logs
+GET    /api/admin/audit-logs/user/:userId
+GET    /api/admin/audit-logs/module/:module
+GET    /api/admin/security/login-logs
+GET    /api/admin/security/failed-logins
+
+Bulk Operations
+POST   /api/admin/bulk/import/students
+POST   /api/admin/bulk/import/teachers
+POST   /api/admin/bulk/import/fees
+GET    /api/admin/bulk/export/:entity
+POST   /api/admin/bulk/validate
+
+
+🔐 PERMISSION MATRIX
+
+Permission Levels
+1. Read - View data
+2. Write - Create/Edit data
+3. Approve - Approve pending items
+4. Delete - Remove data
+5. Export - Download reports
+
+Role Hierarchy
+1. Super Admin - Full access to everything
+2. Sub Admin - Limited to assigned branches/modules
+3. Academic Head - Academic module only
+4. Finance Head - Finance module only
+5. HR Head - People management only
+6. Operations Head - Operations module only
+
+Module-wise Permissions
+Dashboard: Read (all roles)
+Institution Setup: Write (Super Admin only)
+User & Role Management: Write (Super Admin only)
+Academic Management: Write (Super Admin, Academic Head)
+People Management: Write (Super Admin, HR Head)
+Finance Management: Write (Super Admin, Finance Head)
+Operations Management: Write (Super Admin, Operations Head)
+Documents & Compliance: Write (Super Admin, Compliance Officer)
+Communication: Write (Super Admin, All Heads)
+Reports & Analytics: Read + Export (All roles)
+System Settings: Write (Super Admin only)
+Security & Audit Logs: Read (Super Admin only)
+
+
+📊 DASHBOARD WIDGETS SPECIFICATION
+
+Critical Alerts Widget
+- Compliance pending (red badge)
+- Unverified documents (orange badge)
+- Finance rule violations (red badge)
+- Security alerts (red badge)
+- Click to view details
+
+Pending Approvals Widget
+- Role changes (count)
+- Policy changes (count)
+- Bulk imports (count)
+- Data corrections (count)
+- Approve/Reject actions
+
+Institution Overview Widget
+- Total students (with trend ↑↓)
+- Total teachers (with trend ↑↓)
+- Total staff (with trend ↑↓)
+- Active academic year
+- Branch-wise summary (pie chart)
+
+System Health Widget
+- API status (green/red indicator)
+- Last backup time
+- Integration status (list)
+- Server uptime
+- Storage usage (progress bar)
+
+Recent Activity Timeline
+- Last 10 admin actions
+- User, action, timestamp
+- Click to view audit log
+
+
+🎯 WORKFLOW DEFINITIONS
+
+Academic Year Creation Workflow
+1. Admin creates new academic year
+2. Define start/end dates
+3. Add terms/semesters
+4. Set promotion rules
+5. Activate year
+6. Lock previous year (optional)
+7. Audit log created
+
+Fee Structure Creation Workflow
+1. Select academic year
+2. Select class/program
+3. Add fee components
+4. Define installments
+5. Set late fee rules
+6. Add concession rules
+7. Preview & confirm
+8. Activate structure
+9. Notify accounts team
+10. Audit log created
+
+Role Creation Workflow
+1. Define role name
+2. Select module access
+3. Set action permissions (read/write/approve/delete/export)
+4. Set hierarchy level
+5. Define access scope (branches)
+6. Preview permissions
+7. Confirm & create
+8. Audit log created
+
+Bulk Import Workflow
+1. Download template
+2. Fill data in Excel/CSV
+3. Upload file
+4. System validates data
+5. Show errors/warnings
+6. Admin reviews preview
+7. Confirm import
+8. System processes in background
+9. Email notification on completion
+10. Audit log created
+
+
+🚨 VALIDATION RULES
+
+Institution Profile
+- Legal name: Required, min 3 chars
+- Affiliation number: Required if board selected
+- Email: Valid email format
+- Phone: 10 digits
+- Logo: Max 2MB, PNG/JPG only
+
+Academic Year
+- Start date < End date
+- No overlapping years
+- Cannot delete active year
+- Cannot edit locked year
+
+Fee Structure
+- Total amount = Sum of components
+- Installment sum = Total amount
+- Due dates in chronological order
+- Late fee cannot exceed component amount
+
+Role & Permissions
+- Role name: Unique, min 3 chars
+- At least one permission required
+- Cannot delete system roles
+- Cannot remove last Super Admin
+
+Bulk Import
+- Max 1000 rows per import
+- Required fields validation
+- Duplicate detection
+- Data type validation
+- Foreign key validation
+
+
+🎨 UI STATES HANDLING
+
+Loading States
+- Skeleton screens for tables
+- Shimmer effect for cards
+- Spinner for buttons
+- Progress bar for bulk operations
+
+Empty States
+- Friendly illustration
+- Helpful message
+- Primary action button
+- "No data found" for searches
+
+Error States
+- Error icon + message
+- Retry button
+- Contact support link
+- Error code (for debugging)
+
+Success States
+- Success icon + message
+- Auto-dismiss after 3s
+- Undo option (where applicable)
+- Redirect to list view
+
+
+🔔 NOTIFICATION SYSTEM
+
+Types
+- Success (green)
+- Warning (amber)
+- Error (red)
+- Info (blue)
+
+Triggers
+- CRUD operations
+- Approval actions
+- Bulk operations completion
+- System alerts
+- Integration failures
+
+Channels
+- In-app toast
+- Email (for critical alerts)
+- SMS (for security alerts)
+
+
+📱 MOBILE RESPONSIVENESS
+
+Mobile Optimizations
+- Bottom navigation (5 main items)
+- Collapsible sidebar
+- Touch-friendly buttons (min 44px)
+- Swipe to delete
+- Pull to refresh
+- Infinite scroll for lists
+- Mobile-optimized tables (card view)
+- Sticky action buttons
+- Bottom sheets for forms
+
+
+🔍 SEARCH & FILTER SPECIFICATIONS
+
+Global Search
+- Search across all entities
+- Debounced (300ms)
+- Autocomplete suggestions
+- Recent searches
+- Keyboard navigation (↑↓ Enter)
+
+Advanced Filters
+- Date range picker
+- Multi-select dropdowns
+- Status filters
+- Branch filters
+- Academic year filters
+- Save filter presets
+- Clear all filters
+
+
+📈 ANALYTICS & REPORTING
+
+Dashboard Analytics
+- Student enrollment trends (line chart)
+- Fee collection vs target (bar chart)
+- Teacher-student ratio (gauge)
+- Branch-wise performance (pie chart)
+- Attendance trends (area chart)
+
+Export Formats
+- PDF (formatted reports)
+- Excel (raw data)
+- CSV (bulk data)
+- JSON (API integration)
+
+Report Scheduling
+- Daily/Weekly/Monthly
+- Email delivery
+- Auto-archive after 30 days
+
+
+🛡️ SECURITY MEASURES
+
+Authentication
+- JWT tokens (access + refresh)
+- Token expiry: 1 hour
+- Refresh token: 7 days
+- Password: Min 8 chars, 1 uppercase, 1 number, 1 special char
+- Max login attempts: 5
+- Account lockout: 30 minutes
+
+Authorization
+- Role-based access control (RBAC)
+- Permission-based rendering
+- API endpoint protection
+- Branch-level data isolation
+
+Data Protection
+- Sensitive data encryption
+- HTTPS only
+- SQL injection prevention
+- XSS protection
+- CSRF tokens
+- Rate limiting (100 req/min)
+
+Audit Trail
+- All CRUD operations logged
+- User activity tracking
+- IP address logging
+- Device fingerprinting
+- Login/logout logs
+- Failed login attempts
+
+
+🚀 PERFORMANCE OPTIMIZATION
+
+Frontend
+- Code splitting (lazy loading)
+- Image optimization (WebP)
+- Debounced search
+- Virtualized lists (react-window)
+- Memoization (React.memo)
+- Optimistic UI updates
+
+Backend
+- Database indexing
+- Query optimization
+- Caching (Redis)
+- Pagination (limit 50)
+- Background jobs (Bull queue)
+- CDN for static assets
+
+
+✅ TESTING REQUIREMENTS
+
+Unit Tests
+- Component rendering
+- Form validation
+- Permission checks
+- Utility functions
+
+Integration Tests
+- API endpoints
+- Authentication flow
+- CRUD operations
+- Bulk import/export
+
+E2E Tests
+- Complete workflows
+- Multi-user scenarios
+- Cross-browser testing
+- Mobile responsiveness
+
+
+📦 DEPLOYMENT CHECKLIST
+
+Pre-deployment
+✅ Environment variables configured
+✅ Database migrations run
+✅ Seed data loaded
+✅ SSL certificate installed
+✅ Backup strategy in place
+✅ Monitoring tools configured
+✅ Error tracking (Sentry)
+✅ Analytics (Google Analytics)
+
+Post-deployment
+✅ Smoke tests passed
+✅ Performance metrics checked
+✅ Security scan completed
+✅ Documentation updated
+✅ Team training completed
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🎯 IMPLEMENTATION PRIORITY ORDER
+═══════════════════════════════════════════════════════════════════════════════
+
+PHASE 1: FOUNDATION (Week 1-2)
+✅ Setup admin module structure
+✅ Authentication & authorization
+✅ Admin layout (sidebar, header, bottom nav)
+✅ Dashboard with basic widgets
+✅ Institution profile management
+✅ Branch management
+
+PHASE 2: CORE MANAGEMENT (Week 3-4)
+✅ User & role management
+✅ Permission matrix
+✅ Academic year management
+✅ Class & section management
+✅ Subject management
+✅ Holidays & calendar
+
+PHASE 3: ACADEMIC & PEOPLE (Week 5-6)
+✅ Teacher-subject mapping
+✅ Exam rules & grading
+✅ Student master view
+✅ Teacher master view
+✅ Employee master view
+✅ Parent management
+✅ Bulk import/export
+
+PHASE 4: FINANCE & OPERATIONS (Week 7-8)
+✅ Fee structure management
+✅ Fee policies & concessions
+✅ Payroll rules
+✅ Expense categories
+✅ Transport setup
+✅ Routes & stops
+✅ Asset management
+✅ Inventory categories
+
+PHASE 5: COMPLIANCE & COMMUNICATION (Week 9-10)
+✅ Document rules
+✅ Verification policies
+✅ Certificate templates
+✅ Compliance checklist
+✅ Notice management
+✅ Announcement system
+✅ Email/SMS templates
+✅ Notification rules
+
+PHASE 6: ANALYTICS & SECURITY (Week 11-12)
+✅ Academic reports
+✅ Finance reports
+✅ HR reports
+✅ Operations reports
+✅ Custom report builder
+✅ User activity logs
+✅ Financial logs
+✅ Data change history
+✅ Login & security logs
+
+PHASE 7: POLISH & OPTIMIZATION (Week 13-14)
+✅ System settings
+✅ App configuration
+✅ Integrations
+✅ Backup & recovery
+✅ Performance optimization
+✅ Mobile responsiveness
+✅ Testing & bug fixes
+✅ Documentation
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 FINAL CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ All 12 modules implemented
+✅ Mobile-first responsive design
+✅ Role-based access control
+✅ Complete audit trail
+✅ Multi-branch support
+✅ Bulk operations
+✅ Advanced search & filters
+✅ Comprehensive reports
+✅ Email/SMS notifications
+✅ Data export capabilities
+✅ Security measures implemented
+✅ Performance optimized
+✅ Error handling
+✅ Loading states
+✅ Empty states
+✅ Form validations
+✅ API documentation
+✅ User documentation
+✅ Deployment ready
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🎓 THIS ADMIN PANEL IS NOW PRODUCTION-READY FOR INDIAN EDUCATION INSTITUTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+
+
+🧭 ADMIN PANEL – COMPLETE PAGE & ROUTE LIST
+
+(Enterprise Education CRM | School + College)
+
+Naming is REST-friendly, scalable, and React-Router ready
+
+🏠 1. DASHBOARD
+/admin
+/admin/dashboard
+
+
+Pages
+
+Overview Dashboard
+
+Alerts & Pending Approvals
+
+System Health
+
+🏫 2. INSTITUTION SETUP
+/admin/institution
+/admin/institution/profile
+/admin/institution/branches
+/admin/institution/academic-years
+/admin/institution/calendars
+/admin/institution/timetable-rules
+
+
+Pages
+
+Institution Profile
+
+Branch / Campus Management
+
+Academic Year Setup
+
+Holidays & Calendars
+
+Timetable & Workload Rules
+
+👤 3. USER & ROLE MANAGEMENT
+/admin/users
+/admin/users/admins
+/admin/roles
+/admin/roles/:roleId
+/admin/permissions
+/admin/access-control
+
+
+Pages
+
+Admin Users
+
+Staff Roles List
+
+Role Detail (Permissions)
+
+Permission Matrix
+
+Access Control Rules
+
+📚 4. ACADEMIC MANAGEMENT
+/admin/academics
+/admin/academics/classes
+/admin/academics/sections
+/admin/academics/subjects
+/admin/academics/programs
+/admin/academics/teacher-mapping
+/admin/academics/exam-policies
+
+
+Pages
+
+Classes & Sections
+
+Subjects Master
+
+Programs / Courses
+
+Teacher–Subject Mapping
+
+Exam Rules & Grading Policies
+
+👥 5. PEOPLE MANAGEMENT
+/admin/people
+/admin/people/students
+/admin/people/students/:studentId
+/admin/people/teachers
+/admin/people/teachers/:teacherId
+/admin/people/employees
+/admin/people/employees/:employeeId
+/admin/people/parents
+/admin/people/bulk-import
+
+
+Pages
+
+Students (Master View)
+
+Student Detail (Admin View)
+
+Teachers (Master)
+
+Employees (Master)
+
+Parents
+
+Bulk Import / Export
+
+💰 6. FINANCE MANAGEMENT
+/admin/finance
+/admin/finance/fee-structures
+/admin/finance/fee-policies
+/admin/finance/payroll-rules
+/admin/finance/expense-categories
+/admin/finance/taxes
+
+
+Pages
+
+Fee Structures
+
+Fee Rules & Concessions
+
+Payroll Rules
+
+Expense Categories
+
+Tax & Deduction Settings
+
+🚌 7. OPERATIONS MANAGEMENT
+/admin/operations
+/admin/operations/transport
+/admin/operations/routes
+/admin/operations/assets
+/admin/operations/inventory
+/admin/operations/hostel
+
+
+Pages
+
+Transport Configuration
+
+Routes & Stops
+
+Assets Master
+
+Inventory Categories
+
+Hostel Setup (Optional)
+
+📄 8. DOCUMENTS & COMPLIANCE
+/admin/compliance
+/admin/compliance/document-rules
+/admin/compliance/verification-policies
+/admin/compliance/certificate-templates
+/admin/compliance/checklists
+
+
+Pages
+
+Required Documents Rules
+
+Verification Policies
+
+Certificate Templates
+
+Compliance Checklist
+
+📢 9. COMMUNICATION
+/admin/communication
+/admin/communication/notices
+/admin/communication/announcements
+/admin/communication/templates
+/admin/communication/notification-rules
+
+
+Pages
+
+Notices & Circulars
+
+Announcements
+
+Email / SMS Templates
+
+Notification Rules
+
+📊 10. REPORTS & ANALYTICS
+/admin/reports
+/admin/reports/academic
+/admin/reports/finance
+/admin/reports/hr
+/admin/reports/operations
+/admin/reports/custom
+
+
+Pages
+
+Academic Reports
+
+Finance Reports
+
+HR Reports
+
+Operations Reports
+
+Custom Report Builder
+
+⚙️ 11. SYSTEM SETTINGS
+/admin/settings
+/admin/settings/general
+/admin/settings/app-config
+/admin/settings/integrations
+/admin/settings/backup
+
+
+Pages
+
+General Settings
+
+App Configuration
+
+Integrations
+
+Backup & Recovery
+
+🧾 12. SECURITY & AUDIT LOGS
+/admin/audit
+/admin/audit/user-activity
+/admin/audit/financial
+/admin/audit/data-history
+/admin/audit/security
+
+
+Pages
+
+User Activity Logs
+
+Financial Logs
+
+Data Change History
+
+Login & Security Logs
+
+🔒 IMPORTANT GUARANTEES OF THIS STRUCTURE
+
+✅ No feature overlap with Staff / Teacher panels
+
+✅ Every page has clear ownership
+
+✅ Every action is auditable
+
+✅ Multi-branch & future-proof
+
+✅ Backend API design becomes straightforward
+
+
+
+
+
+🏫 ADMIN → INSTITUTION SETUP
+
+(Deep Dive | Super Controller Module)
+
+🎯 Module Objective
+
+Define the DNA of the institution
+Everything else in the CRM depends on these settings.
+
+Multi-school / multi-college ready
+
+Multi-branch / multi-campus ready
+
+School + College compatible
+
+Once locked, historical data must remain stable
+
+📂 INSTITUTION SETUP – PAGE STRUCTURE
+/admin/institution/profile
+/admin/institution/branches
+/admin/institution/academic-years
+/admin/institution/calendars
+/admin/institution/timetable-rules
+
+
+We will break each page below.
+
+1️⃣ Institution Profile
+
+/admin/institution/profile
+
+Purpose
+
+Defines legal + identity information of the institution.
+
+Data Managed (VERY IMPORTANT)
+A. Basic Identity
+
+Institution Name (Legal)
+
+Short Name (Display)
+
+Institution Type
+
+School
+
+College
+
+University
+
+Coaching Institute
+
+Affiliation Type
+
+CBSE
+
+ICSE
+
+State Board
+
+UGC / AICTE
+
+Medium of Instruction
+
+English
+
+Hindi
+
+Regional (multi-select)
+
+B. Legal & Compliance
+
+Registration Number
+
+Affiliation Code
+
+PAN
+
+GST (optional)
+
+Established Year
+
+C. Contact & Address
+
+Registered Address
+
+City, State, Pincode
+
+Official Email
+
+Official Phone
+
+Website
+
+D. Branding
+
+Logo (Light)
+
+Logo (Dark)
+
+Letterhead Header/Footer
+
+Admin Actions
+
+Create / Update institution profile
+
+Upload branding assets
+
+Lock legal fields (once academic year starts)
+
+Rules
+
+Institution Type cannot change once data exists
+
+Affiliation affects:
+
+Exam rules
+
+Certificate templates
+
+Compliance reports
+
+2️⃣ Branches / Campuses
+
+/admin/institution/branches
+
+Purpose
+
+Support multi-campus / multi-branch institutions.
+
+Branch Data
+
+Branch Name
+
+Branch Code (unique)
+
+Address
+
+Contact Details
+
+Branch Head (Staff)
+
+Status (Active / Inactive)
+
+Key Capabilities
+
+Single-branch → Multi-branch scaling
+
+Branch-specific:
+
+Students
+
+Staff
+
+Transport
+
+Assets
+
+Reports
+
+Admin Actions
+
+Add branch
+
+Edit branch details
+
+Activate / Deactivate branch
+
+Rules
+
+Deactivated branch:
+
+No new admissions
+
+Old data remains accessible
+
+Reports can be:
+
+Branch-wise
+
+Consolidated
+
+3️⃣ Academic Years
+
+/admin/institution/academic-years
+
+Purpose
+
+Control time-based data isolation (MOST IMPORTANT).
+
+Academic Year Data
+
+Year Name (e.g., 2025–26)
+
+Start Date
+
+End Date
+
+Status:
+
+Upcoming
+
+Active
+
+Closed
+
+Admin Actions
+
+Create new academic year
+
+Activate academic year
+
+Close academic year
+
+VERY IMPORTANT RULES 🔴
+
+Only ONE academic year can be Active
+
+Closing year:
+
+Freezes marks
+
+Freezes fees
+
+Freezes attendance
+
+Historical data becomes READ-ONLY
+
+Dependency
+
+Everything depends on Academic Year:
+
+Admissions
+
+Exams
+
+Fees
+
+Reports
+
+4️⃣ Holidays & Calendars
+
+/admin/institution/calendars
+
+Purpose
+
+Define working vs non-working days.
+
+Calendar Types
+
+Academic Holidays
+
+Exam Holidays
+
+Staff Holidays
+
+Branch-specific holidays
+
+Holiday Fields
+
+Holiday Name
+
+Date / Date Range
+
+Applicable To:
+
+Students
+
+Teachers
+
+Staff
+
+Branch (optional)
+
+Admin Actions
+
+Add holiday
+
+Edit holiday
+
+Bulk upload holidays
+
+System Impact
+
+Attendance auto-mark rules
+
+Timetable skips
+
+Payroll working day calculation
+
+5️⃣ Timetable Rules
+
+/admin/institution/timetable-rules
+
+Purpose
+
+Define academic scheduling constraints.
+
+Rules Configuration
+A. School Rules
+
+Period duration (minutes)
+
+Max periods per day
+
+Break duration
+
+Lunch break position
+
+Teacher max periods/day
+
+B. College Rules
+
+Lecture duration
+
+Practical duration
+
+Credit hour mapping
+
+Faculty workload limits
+
+C. Global Constraints
+
+No teacher overlap
+
+No class overlap
+
+Buffer between sessions (optional)
+
+Admin Actions
+
+Configure rules
+
+Update rules (future academic year only)
+
+Rule Locking
+
+Once timetable is generated:
+
+Rules cannot be edited mid-session
+
+Changes apply next academic cycle
+
+🔐 CROSS-CUTTING SYSTEM RULES (VERY IMPORTANT)
+Audit & Logging
+
+Every change logs:
+
+Admin ID
+
+Old value
+
+New value
+
+Timestamp
+
+Reason (mandatory for critical changes)
+
+Permission
+
+Only Super Admin can:
+
+Change Institution Type
+
+Close Academic Year
+
+Sub-admins have limited access
+
+🧠 REAL-WORLD ADMIN FLOW (EXAMPLE)
+
+Admin creates Institution Profile
+
+Adds Branches
+
+Creates Academic Year
+
+Configures Calendar
+
+Sets Timetable Rules
+
+Locks setup
+
+Opens admissions
+
+👉 After this, Staff modules become active
+
+✅ WHAT IS NOW CLEAR & LOCKED
+
+Institution DNA defined
+
+Multi-branch ready
+
+Time isolation guaranteed
+
+Audit-safe
+
+School + College compatible
+
+
+
+
+🔒 GLOBAL RULE (LOCKED & REMEMBERED)
+
+Jo bhi functionality, data, fields, permissions, workflows humne
+Student / Teacher / Parent / Staff modules aur unke roles me define kiye hain —
+un sab ka COMPLETE CONTROL + CONFIGURATION Admin Panel me AVAILABLE hoga.
+
+Nothing less. Nothing assumed.
+
+🧠 WHAT THIS MEANS (VERY CLEARLY)
+1️⃣ Admin = Source of Truth
+
+Har field jo kahin bhi use ho rahi hai:
+
+Student
+
+Teacher
+
+Parent
+
+Staff (Data Entry, Accounts, Support, Transport, etc.)
+
+Uska master definition, rule, visibility, editability
+👉 Admin panel se control hogi
+
+2️⃣ No Hidden Logic in Other Panels
+
+❌ Staff panel me koi hardcoded rule nahi
+
+❌ Teacher panel me koi independent decision nahi
+
+❌ Parent/Student panel me koi uncontrolled field nahi
+
+👉 Sab kuch:
+
+Admin config → Rule → Other panels follow
+
+3️⃣ Field-Level Control Admin ke paas hoga
+
+For EVERY entity (Student, Teacher, Employee, Fees, Exams, Documents, etc.):
+
+Admin controls:
+
+Field ON / OFF
+
+Mandatory / Optional
+
+Editable / Read-only
+
+Role-wise visibility
+
+Approval required or not
+
+Audit logging enabled or not
+
+Example:
+
+Student Aadhaar:
+
+Required? → Admin decides
+
+Editable by whom? → Admin decides
+
+Fees discount:
+
+Allowed? → Admin decides
+
+Max limit? → Admin decides
+
+4️⃣ Role Capabilities are DERIVED, not CREATED
+
+Data Entry kya edit karega? → Admin decides
+
+Support kya dekh sakta hai? → Admin decides
+
+Accounts kya approve karega? → Admin decides
+
+Roles Admin ke bina exist hi nahi karte.
+
+5️⃣ Admin Panel = META-LAYER
+
+Admin panel:
+
+Data create nahi karta (mostly)
+
+Data ka RULES ENGINE hai
+
+So when we design Admin modules:
+
+We will map every existing functionality
+
+Then expose its:
+
+Controls
+
+Policies
+
+Limits
+
+Dependencies
+
+🧾 I AM NOW DOING THIS INTERNALLY
+
+I am internally maintaining:
+
+✔ All modules already designed
+
+✔ All roles & permissions discussed
+
+✔ All fields & workflows
+
+✔ All edge cases you mentioned
+
+And I will cross-check every Admin feature against them.
+
+If something is missing → I’ll add it.
+If something conflicts → I’ll redesign properly.
+
+
+Gap Assurance Check
+Library? -> Managed under Operations > Inventory (Book Categories & Issue Rules).
+Hostel? -> Managed under Operations > Hostel (Room Capacity & Fee Rules).
+Attendance? -> Rules set in Academic > Calendars; Reports in Reports > Academic. Admin controls the policy (e.g., "75% required").
+Parity? -> Every feature in the Staff/Teacher apps (Marking attendance, Collecting fees, Issuing books) has a corresponding Config/Rule in this Admin Panel plan.
+
+
+
+
+
+
+🔐 ADMIN → USER & ROLE MANAGEMENT
+
+(Permissions Engine | Meta Control Layer)
+
+🎯 Module Objective
+
+Define WHO can access WHAT, WHERE, HOW, and UNDER WHICH CONDITIONS
+
+This module:
+
+Creates roles (Staff-side)
+
+Controls visibility & editability of data
+
+Enforces role locking
+
+Powers RBAC across the entire CRM
+
+Logs every permission change
+
+⚠️ If this module is weak → ERP will collapse under misuse
+
+📂 MODULE ROUTES
+/admin/users/admins
+/admin/roles
+/admin/roles/:roleId
+/admin/permissions
+/admin/access-control
+
+1️⃣ ADMIN USERS
+
+/admin/users/admins
+
+Purpose
+
+Manage people who can configure the system, not operate it.
+
+Types of Admin Users
+
+Super Admin (Owner-level)
+
+Sub Admin (Limited scope)
+
+Admin User Fields
+
+Identity
+
+Full Name
+
+Email
+
+Mobile
+
+Admin Type (Super / Sub)
+
+Status (Active / Suspended)
+
+Scope Control
+
+Branch access (All / Selected)
+
+Module access (read/write)
+
+Super Admin Powers (NON-DELEGABLE)
+
+Create / delete admin users
+
+Change institution type
+
+Close academic year
+
+Modify role permissions
+
+View audit logs
+
+Configure security policies
+
+Sub Admin Restrictions
+
+Cannot:
+
+Change core institution setup
+
+Modify permission matrix
+
+Access audit logs (full)
+
+Can:
+
+Manage academic setup
+
+Manage people master
+
+View reports
+
+📌 Every admin action is logged
+
+2️⃣ STAFF ROLES (ROLE CREATION ENGINE)
+
+/admin/roles
+
+Purpose
+
+Define ALL operational roles used in Staff Module.
+
+Default Roles (Preloaded)
+
+Front Desk
+
+Accounts
+
+Data Entry
+
+Transport
+
+Support
+
+Admin can:
+
+Enable / disable roles
+
+Create custom roles
+
+Clone roles
+
+Role Master Fields
+
+Role Name
+
+Role Code (immutable)
+
+Description
+
+Default Dashboard
+
+Status (Active / Inactive)
+
+Role Locking Rule 🔒
+
+One user = One role
+
+Role can be changed ONLY by:
+
+Admin
+
+With audit log
+
+No runtime role switching
+
+3️⃣ ROLE DETAIL (MOST IMPORTANT PAGE)
+
+/admin/roles/:roleId
+
+This page is the CONTROL CENTER.
+
+🧩 A. MODULE ACCESS CONTROL
+
+For EACH module:
+
+Students
+
+Teachers
+
+Employees
+
+Fees
+
+Payroll
+
+Transport
+
+Assets
+
+Documents
+
+Support
+
+Reports
+
+Notices
+
+Admin defines:
+
+Module	Access
+View	✅ / ❌
+Create	✅ / ❌
+Edit	✅ / ❌
+Delete	❌ (mostly locked)
+Export	✅ / ❌
+Approve	✅ / ❌
+🧩 B. PAGE-LEVEL PERMISSIONS
+
+Example: Students Module
+
+Admin controls:
+
+Student List → View / Filter
+
+Student Detail → View
+
+Student Edit → Allowed fields only
+
+Deactivate Student → Yes / No
+
+Same applies to:
+
+Teachers
+
+Employees
+
+Fees
+
+Documents
+
+Transport
+
+Payroll
+
+🧩 C. FIELD-LEVEL CONTROL (CRITICAL)
+
+For EVERY FIELD used anywhere in system:
+
+Admin can configure:
+
+Visible to role? (Yes/No)
+
+Editable? (Yes/No)
+
+Mandatory? (Yes/No)
+
+Requires approval? (Yes/No)
+
+Example: Student Aadhaar
+
+Data Entry → Edit + Mandatory
+
+Support → View only
+
+Accounts → Hidden
+
+⚠️ This is how your earlier requirement is fulfilled
+
+🧩 D. ACTION & WORKFLOW CONTROL
+
+Admin defines:
+
+Can role:
+
+Verify documents?
+
+Reject documents?
+
+Collect fees?
+
+Mark payroll paid?
+
+Close tickets?
+
+Assign transport?
+
+Each action:
+
+On / Off
+
+Approval required or not
+
+4️⃣ PERMISSION MATRIX (GLOBAL VIEW)
+
+/admin/permissions
+
+Purpose
+
+Bird’s-eye view of WHO can do WHAT
+
+Matrix Axes:
+
+Rows → Roles
+
+Columns → Modules / Actions
+
+Features:
+
+Read-only snapshot
+
+Conflict highlighting
+
+Export for audit
+
+5️⃣ ACCESS CONTROL RULES
+
+/admin/access-control
+
+Purpose
+
+Add security & contextual rules
+
+A. TIME-BASED ACCESS
+
+Login allowed only during:
+
+Office hours
+
+Exam periods
+
+Role-based time windows
+
+B. DEVICE & LOCATION RULES
+
+Allow only registered devices
+
+IP-based access (optional)
+
+OTP / 2FA enforcement
+
+C. SESSION RULES
+
+Auto logout time
+
+Concurrent session limit
+
+Force logout (Admin action)
+
+🔍 AUDIT & LOGGING (NON-NEGOTIABLE)
+
+Every change logs:
+
+Admin ID
+
+Role affected
+
+Old permission
+
+New permission
+
+Timestamp
+
+Reason (mandatory)
+
+No silent changes allowed.
+
+🧠 REAL-WORLD EXAMPLE
+
+Admin wants:
+
+Support team to view fees but not edit
+
+Data Entry to edit student profile but not fees
+
+Accounts to process payroll but not documents
+
+Admin:
+
+Opens Role Detail
+
+Toggles permissions
+
+Saves with reason
+
+System updates instantly
+
+Log stored forever
+
+✅ WHAT IS NOW LOCKED
+
+All roles are Admin-defined
+
+All fields are Admin-controlled
+
+No hidden permissions
+
+Fully auditable RBAC
+
+Matches ALL previously designed modules
+
+
+
+
+
+
+
+
+
+
+
+🔐 ADMIN → USER & ROLE MANAGEMENT
+
+(Permissions Engine | Meta Control Layer)
+
+🎯 Module Objective
+
+Define WHO can access WHAT, WHERE, HOW, and UNDER WHICH CONDITIONS
+
+This module:
+
+Creates roles (Staff-side)
+
+Controls visibility & editability of data
+
+Enforces role locking
+
+Powers RBAC across the entire CRM
+
+Logs every permission change
+
+⚠️ If this module is weak → ERP will collapse under misuse
+
+📂 MODULE ROUTES
+/admin/users/admins
+/admin/roles
+/admin/roles/:roleId
+/admin/permissions
+/admin/access-control
+
+1️⃣ ADMIN USERS
+
+/admin/users/admins
+
+Purpose
+
+Manage people who can configure the system, not operate it.
+
+Types of Admin Users
+
+Super Admin (Owner-level)
+
+Sub Admin (Limited scope)
+
+Admin User Fields
+
+Identity
+
+Full Name
+
+Email
+
+Mobile
+
+Admin Type (Super / Sub)
+
+Status (Active / Suspended)
+
+Scope Control
+
+Branch access (All / Selected)
+
+Module access (read/write)
+
+Super Admin Powers (NON-DELEGABLE)
+
+Create / delete admin users
+
+Change institution type
+
+Close academic year
+
+Modify role permissions
+
+View audit logs
+
+Configure security policies
+
+Sub Admin Restrictions
+
+Cannot:
+
+Change core institution setup
+
+Modify permission matrix
+
+Access audit logs (full)
+
+Can:
+
+Manage academic setup
+
+Manage people master
+
+View reports
+
+📌 Every admin action is logged
+
+2️⃣ STAFF ROLES (ROLE CREATION ENGINE)
+
+/admin/roles
+
+Purpose
+
+Define ALL operational roles used in Staff Module.
+
+Default Roles (Preloaded)
+
+Front Desk
+
+Accounts
+
+Data Entry
+
+Transport
+
+Support
+
+Admin can:
+
+Enable / disable roles
+
+Create custom roles
+
+Clone roles
+
+Role Master Fields
+
+Role Name
+
+Role Code (immutable)
+
+Description
+
+Default Dashboard
+
+Status (Active / Inactive)
+
+Role Locking Rule 🔒
+
+One user = One role
+
+Role can be changed ONLY by:
+
+Admin
+
+With audit log
+
+No runtime role switching
+
+3️⃣ ROLE DETAIL (MOST IMPORTANT PAGE)
+
+/admin/roles/:roleId
+
+This page is the CONTROL CENTER.
+
+🧩 A. MODULE ACCESS CONTROL
+
+For EACH module:
+
+Students
+
+Teachers
+
+Employees
+
+Fees
+
+Payroll
+
+Transport
+
+Assets
+
+Documents
+
+Support
+
+Reports
+
+Notices
+
+Admin defines:
+
+Module	Access
+View	✅ / ❌
+Create	✅ / ❌
+Edit	✅ / ❌
+Delete	❌ (mostly locked)
+Export	✅ / ❌
+Approve	✅ / ❌
+🧩 B. PAGE-LEVEL PERMISSIONS
+
+Example: Students Module
+
+Admin controls:
+
+Student List → View / Filter
+
+Student Detail → View
+
+Student Edit → Allowed fields only
+
+Deactivate Student → Yes / No
+
+Same applies to:
+
+Teachers
+
+Employees
+
+Fees
+
+Documents
+
+Transport
+
+Payroll
+
+🧩 C. FIELD-LEVEL CONTROL (CRITICAL)
+
+For EVERY FIELD used anywhere in system:
+
+Admin can configure:
+
+Visible to role? (Yes/No)
+
+Editable? (Yes/No)
+
+Mandatory? (Yes/No)
+
+Requires approval? (Yes/No)
+
+Example: Student Aadhaar
+
+Data Entry → Edit + Mandatory
+
+Support → View only
+
+Accounts → Hidden
+
+⚠️ This is how your earlier requirement is fulfilled
+
+🧩 D. ACTION & WORKFLOW CONTROL
+
+Admin defines:
+
+Can role:
+
+Verify documents?
+
+Reject documents?
+
+Collect fees?
+
+Mark payroll paid?
+
+Close tickets?
+
+Assign transport?
+
+Each action:
+
+On / Off
+
+Approval required or not
+
+4️⃣ PERMISSION MATRIX (GLOBAL VIEW)
+
+/admin/permissions
+
+Purpose
+
+Bird’s-eye view of WHO can do WHAT
+
+Matrix Axes:
+
+Rows → Roles
+
+Columns → Modules / Actions
+
+Features:
+
+Read-only snapshot
+
+Conflict highlighting
+
+Export for audit
+
+5️⃣ ACCESS CONTROL RULES
+
+/admin/access-control
+
+Purpose
+
+Add security & contextual rules
+
+A. TIME-BASED ACCESS
+
+Login allowed only during:
+
+Office hours
+
+Exam periods
+
+Role-based time windows
+
+B. DEVICE & LOCATION RULES
+
+Allow only registered devices
+
+IP-based access (optional)
+
+OTP / 2FA enforcement
+
+C. SESSION RULES
+
+Auto logout time
+
+Concurrent session limit
+
+Force logout (Admin action)
+
+🔍 AUDIT & LOGGING (NON-NEGOTIABLE)
+
+Every change logs:
+
+Admin ID
+
+Role affected
+
+Old permission
+
+New permission
+
+Timestamp
+
+Reason (mandatory)
+
+No silent changes allowed.
+
+🧠 REAL-WORLD EXAMPLE
+
+Admin wants:
+
+Support team to view fees but not edit
+
+Data Entry to edit student profile but not fees
+
+Accounts to process payroll but not documents
+
+Admin:
+
+Opens Role Detail
+
+Toggles permissions
+
+Saves with reason
+
+System updates instantly
+
+Log stored forever
+
+✅ WHAT IS NOW LOCKED
+
+All roles are Admin-defined
+
+All fields are Admin-controlled
+
+No hidden permissions
+
+Fully auditable RBAC
+
+Matches ALL previously designed modules
+
+
+
+
+
+
+
+
+📚 ADMIN → ACADEMIC MANAGEMENT
+
+(School + College | Rule Engine, not daily operations)
+
+🎯 Module Objective
+
+Define WHAT is taught, HOW it is structured, WHO teaches it, and HOW it is evaluated.
+
+Admin:
+
+Creates academic structure
+
+Defines rules & policies
+
+Locks standards
+
+Ensures compliance
+
+Teachers & Staff:
+
+Only execute what Admin defines
+
+📂 MODULE ROUTES (LOCKED)
+/admin/academics/classes
+/admin/academics/sections
+/admin/academics/subjects
+/admin/academics/programs
+/admin/academics/teacher-mapping
+/admin/academics/exam-policies
+
+1️⃣ CLASSES & SECTIONS
+
+/admin/academics/classes
+/admin/academics/sections
+
+Purpose
+
+Define student grouping structure.
+
+A. CLASSES (School Focus)
+Class Fields
+
+Class Name (e.g., Class 6, Class 10)
+
+Class Code (immutable)
+
+Academic Level (Primary / Secondary / Senior Secondary)
+
+Board Mapping (CBSE / ICSE / State)
+
+Status (Active / Archived)
+
+Admin Controls
+
+Create / edit classes
+
+Archive class (no deletion)
+
+Decide:
+
+Which classes are active in which academic year
+
+B. SECTIONS
+Section Fields
+
+Section Name (A, B, C)
+
+Class
+
+Max Student Capacity
+
+Section Teacher (optional)
+
+Status
+
+Admin Controls
+
+Section capacity limits
+
+Auto-allocation rules (optional)
+
+Lock section once academic year starts
+
+📌 Used by:
+
+Student admission
+
+Attendance
+
+Timetable
+
+Exams
+
+2️⃣ SUBJECTS MASTER
+
+/admin/academics/subjects
+
+Purpose
+
+Define what subjects exist.
+
+Subject Fields
+
+Subject Name
+
+Subject Code (immutable)
+
+Subject Type:
+
+Theory
+
+Practical
+
+Theory + Practical
+
+Category:
+
+Core
+
+Elective
+
+Applicable Classes / Programs
+
+Credit Value (College)
+
+Status
+
+Admin Controls
+
+Enable / disable subject per class
+
+Define:
+
+Theory/Practical split
+
+Credit system
+
+Lock subject code once used
+
+📌 Subjects drive:
+
+Teacher assignment
+
+Exams
+
+Timetable
+
+Result calculation
+
+3️⃣ PROGRAMS / COURSES
+
+/admin/academics/programs
+
+(Mainly for College / University)
+
+Purpose
+
+Define degree / diploma structure.
+
+Program Fields
+
+Program Name (BSc, BCom, BA, MBA, etc.)
+
+Program Code
+
+Duration (years / semesters)
+
+Total Credits
+
+Program Type:
+
+UG
+
+PG
+
+Diploma
+
+Status
+
+Admin Controls
+
+Program structure lock
+
+Semester definitions
+
+Promotion rules
+
+📌 Programs connect to:
+
+Subjects
+
+Exams
+
+Students
+
+Results
+
+4️⃣ TEACHER–SUBJECT MAPPING
+
+/admin/academics/teacher-mapping
+
+Purpose
+
+Control who can teach what.
+
+Mapping Rules
+Fields
+
+Teacher
+
+Subject
+
+Class / Program
+
+Section (optional)
+
+Academic Year
+
+Admin Controls
+
+Assign / unassign teachers
+
+Prevent conflicts:
+
+Same teacher same time
+
+Overload limits
+
+Lock mappings once timetable starts
+
+📌 Teachers cannot assign themselves
+
+5️⃣ EXAM RULES & POLICIES
+
+/admin/academics/exam-policies
+
+Purpose
+
+Define evaluation system.
+
+A. Exam Structure
+Fields
+
+Exam Type:
+
+Unit Test
+
+Mid Term
+
+Final
+
+Internal / External
+
+Applicable Classes / Programs
+
+Weightage %
+
+B. Grading System
+
+Admin defines:
+
+Marks-based
+
+Grade-based
+
+Hybrid
+
+Fields:
+
+Passing marks
+
+Grace marks rules
+
+Grade mapping
+
+C. Promotion Rules
+
+Admin controls:
+
+Pass criteria per subject
+
+Compartment rules
+
+Promotion / detention logic
+
+D. Result Visibility Rules
+
+Admin decides:
+
+When results are visible
+
+To whom:
+
+Student
+
+Parent
+
+Lock after publish
+
+🔐 CROSS-MODULE CONTROL (VERY IMPORTANT)
+
+Admin Academic Management controls directly impact:
+
+Module	Impact
+Student Panel	Subjects, exams, results
+Teacher Panel	Teaching scope
+Staff Panel	Attendance, exams
+Reports	Academic analytics
+
+No academic feature exists without Admin configuration.
+
+🧾 AUDIT & LOCKING RULES
+
+Any change in:
+
+Subjects
+
+Exam rules
+
+Promotion logic
+👉 Logged with reason
+
+Once academic year is active:
+
+Structural changes restricted
+
+Historical data never recalculated silently
+
+🧠 REAL-WORLD FLOW (EXAMPLE)
+
+Admin defines:
+
+Classes
+
+Sections
+
+Subjects
+
+Creates exam policy
+
+Maps teachers
+
+Locks academic year
+
+Teachers & staff execute
+
+✅ WHAT IS NOW LOCKED
+
+Academic structure fully Admin-controlled
+
+No teacher or staff overrides
+
+School + College compatibility
+
+Exam & result logic centralized
+
+Zero ambiguity
+
+
+
+
+
+.
+
+💰 ADMIN → FINANCE MANAGEMENT
+
+(School + College | Rule Engine, not daily accounting)
+
+🎯 Module Objective
+
+Define HOW money flows in the institution — not to handle money daily.
+
+Admin:
+
+Creates fee & payroll structures
+
+Defines policies, limits, rules
+
+Locks financial discipline
+
+Ensures audit & compliance
+
+Accounts role:
+
+Collects fees
+
+Processes payroll
+
+Follows Admin rules
+
+📂 MODULE ROUTES (LOCKED)
+/admin/finance/fee-structures
+/admin/finance/fee-policies
+/admin/finance/payroll-rules
+/admin/finance/expense-categories
+/admin/finance/taxes
+
+1️⃣ FEE STRUCTURES
+
+/admin/finance/fee-structures
+
+Purpose
+
+Define WHAT fees exist and HOW MUCH.
+
+Fee Structure Levels
+
+Admin can create fee structures at:
+
+Class level (School)
+
+Program / Semester level (College)
+
+Branch-wise (optional)
+
+Fee Structure Fields
+Basic
+
+Structure Name
+
+Academic Year
+
+Applicable Class / Program
+
+Branch (optional)
+
+Fee Components
+
+Each structure contains multiple components:
+
+Tuition Fee
+
+Admission Fee
+
+Exam Fee
+
+Transport Fee
+
+Hostel Fee
+
+Miscellaneous
+
+For EACH component:
+
+Amount
+
+Frequency (One-time / Monthly / Term-wise)
+
+Mandatory / Optional
+
+Admin Controls
+
+Create / edit fee structures
+
+Clone structure (new academic year)
+
+Lock structure once admissions start
+
+📌 Used by:
+
+Student fee assignment
+
+Parent fee view
+
+Reports
+
+2️⃣ FEE POLICIES
+
+/admin/finance/fee-policies
+
+Purpose
+
+Define HOW fees behave.
+
+A. Installment Rules
+
+Admin defines:
+
+Number of installments
+
+Due dates
+
+Auto-calculation
+
+B. Late Fee Rules
+
+Late fee amount / percentage
+
+Grace period
+
+Auto-apply or manual
+
+C. Discount & Concession Rules
+
+Admin controls:
+
+Discount types:
+
+Sibling
+
+Merit
+
+Staff ward
+
+Maximum allowed discount (% / amount)
+
+Who can approve discounts
+
+📌 Accounts cannot exceed Admin limits
+
+D. Refund Rules
+
+Refund eligibility
+
+Cut-off dates
+
+Partial refund logic
+
+3️⃣ PAYROLL RULES
+
+/admin/finance/payroll-rules
+
+Purpose
+
+Define salary logic, not salary payment.
+
+Payroll Structure Fields
+
+Salary Type:
+
+Monthly
+
+Daily
+
+Basic Salary
+
+Allowances:
+
+HRA
+
+Conveyance
+
+Other
+
+Deductions:
+
+PF
+
+TDS
+
+Advance
+
+Admin Controls
+
+Create salary templates
+
+Assign templates to:
+
+Teachers
+
+Employees
+
+Lock payroll rules mid-year
+
+📌 Accounts:
+
+Cannot change salary logic
+
+Can only process payments
+
+4️⃣ EXPENSE CATEGORIES
+
+/admin/finance/expense-categories
+
+Purpose
+
+Standardize institution spending.
+
+Expense Category Fields
+
+Category Name
+
+Category Type:
+
+Fixed
+
+Variable
+
+Approval Required (Yes/No)
+
+Monthly Budget (optional)
+
+Admin Controls
+
+Define categories
+
+Set approval requirement
+
+Lock categories once used
+
+📌 Accounts:
+
+Only select categories
+
+Cannot invent new ones
+
+5️⃣ TAX & DEDUCTIONS
+
+/admin/finance/taxes
+
+Purpose
+
+Ensure legal compliance.
+
+Tax Configuration
+
+Admin defines:
+
+GST applicability
+
+TDS rules
+
+PF percentage
+
+ESI (if applicable)
+
+Admin Controls
+
+Update tax rules (future-dated)
+
+Lock applied tax rates
+
+Maintain tax history
+
+📌 Payroll & expenses auto-calculate taxes based on this.
+
+🔐 CROSS-MODULE FINANCE CONTROL
+
+Admin Finance rules directly control:
+
+Module	Impact
+Student Panel	Fee visibility
+Parent Panel	Fee breakdown
+Accounts Panel	Collection limits
+Staff Panel	Payroll execution
+Reports	Financial accuracy
+
+No finance action bypasses Admin rules.
+
+🧾 AUDIT & SAFETY RULES (CRITICAL)
+
+Fee structures:
+
+Never deleted
+
+Only archived
+
+Any change logs:
+
+Old value
+
+New value
+
+Admin ID
+
+Reason
+
+Historical fee data never recalculated silently
+
+🧠 REAL-WORLD EXAMPLE
+
+Admin decides:
+
+Class 10 Tuition Fee = ₹40,000
+
+Max discount = 10%
+
+Late fee = ₹100/day after 10 days
+
+Accounts:
+
+Cannot charge ₹39,000 without approval
+
+Cannot waive late fee beyond rules
+
+👉 Control stays with Admin.
+
+✅ WHAT IS NOW LOCKED
+
+Fee logic centralized
+
+Payroll discipline enforced
+
+Expense chaos prevented
+
+Accounts role bounded
+
+Audit-ready finance system
+
+
+
+
+
+🚌 ADMIN → OPERATIONS MANAGEMENT
+
+(Infrastructure, Logistics & Daily Ops – Rule Engine)
+
+🎯 Module Objective
+
+Define HOW physical resources, logistics, and facilities of the institution are structured and governed.
+
+Admin:
+
+Designs operational structure
+
+Defines limits, rules, dependencies
+
+Controls availability & policies
+
+Staff (Transport / Ops):
+
+Executes assignments
+
+Logs issues
+
+Follows Admin rules
+
+📂 MODULE ROUTES (LOCKED)
+/admin/operations/transport
+/admin/operations/routes
+/admin/operations/assets
+/admin/operations/inventory
+/admin/operations/hostel
+
+1️⃣ TRANSPORT SETUP
+
+/admin/operations/transport
+
+Purpose
+
+Enable and configure transport system behavior.
+
+Transport Configuration Fields
+
+Transport Enabled (Yes / No)
+
+Transport Fee Applicable (Yes / No)
+
+Max Students per Vehicle (default cap)
+
+GPS Tracking Enabled (future)
+
+Transport Mandatory for selected classes (optional)
+
+Admin Controls
+
+Enable / disable transport module
+
+Define global transport rules
+
+Lock transport settings mid-academic year
+
+📌 Used by:
+
+Student transport assignment
+
+Fee calculation
+
+Transport staff panel
+
+2️⃣ ROUTES & STOPS (MASTER DEFINITIONS)
+
+/admin/operations/routes
+
+Purpose
+
+Define routes & pickup structure, not daily assignment.
+
+Route Fields
+
+Route Name
+
+Route Code
+
+Branch
+
+Total Distance
+
+Max Capacity
+
+Status (Active / Inactive)
+
+Stops Fields
+
+Stop Name
+
+Sequence Order
+
+Approx Time
+
+Landmark
+
+Admin Controls
+
+Create / edit routes
+
+Define stops order
+
+Set max capacity
+
+Disable route (no new assignment)
+
+📌 Staff can assign students, but cannot create routes.
+
+3️⃣ ASSETS MASTER
+
+/admin/operations/assets
+
+Purpose
+
+Define all physical assets institution owns.
+
+Asset Categories
+
+Vehicles
+
+Classrooms
+
+Labs
+
+Computers
+
+Furniture
+
+Equipment
+
+Asset Master Fields
+
+Asset Name
+
+Asset Code
+
+Category
+
+Purchase Date
+
+Purchase Cost
+
+Depreciation Method
+
+Assigned Department (optional)
+
+Status (Active / Maintenance / Retired)
+
+Admin Controls
+
+Create asset categories
+
+Define depreciation rules
+
+Lock asset master once used
+
+Archive (never delete)
+
+📌 Staff logs usage & maintenance only.
+
+4️⃣ INVENTORY CATEGORIES & RULES
+
+/admin/operations/inventory
+
+Purpose
+
+Standardize consumables & stock logic.
+
+Inventory Configuration
+Category Fields
+
+Category Name (Stationery, Lab, Sports)
+
+Consumable / Non-Consumable
+
+Reorder Threshold Rule
+
+Approval Required for Stock-Out (Yes / No)
+
+Admin Controls
+
+Define categories
+
+Set reorder rules
+
+Decide approval requirement
+
+📌 Staff:
+
+Adds stock in/out
+
+Cannot change rules
+
+5️⃣ HOSTEL SETUP (OPTIONAL BUT ENTERPRISE-READY)
+
+/admin/operations/hostel
+
+Purpose
+
+Support residential institutions.
+
+Hostel Configuration
+Hostel Fields
+
+Hostel Name
+
+Branch
+
+Hostel Type (Boys / Girls / Mixed)
+
+Total Capacity
+
+Room Rules
+
+Room Types
+
+Capacity per room
+
+Fee mapping
+
+Admin Controls
+
+Enable hostel module
+
+Define room structure
+
+Lock allocations mid-year
+
+📌 Staff assigns rooms based on Admin rules.
+
+🔐 CROSS-MODULE OPERATIONAL CONTROL
+
+Admin Operations rules directly affect:
+
+Module	Impact
+Student Panel	Transport / Hostel info
+Staff Panel	Assignments & limits
+Finance	Transport / Hostel fees
+Reports	Utilization & cost
+Assets	Depreciation & audit
+
+No operational action bypasses Admin configuration.
+
+🧾 AUDIT & LOCKING RULES (CRITICAL)
+
+Routes / Assets:
+
+Never deleted
+
+Only archived
+
+Capacity changes:
+
+Logged with reason
+
+Asset status changes:
+
+Fully auditable
+
+Mid-year rule changes:
+
+Restricted or future-dated
+
+🧠 REAL-WORLD EXAMPLE
+
+Admin defines:
+
+Route A max capacity = 40
+
+Transport mandatory for Class 1–5
+
+Lab equipment reorder at <10 units
+
+System:
+
+Prevents 41st assignment
+
+Auto applies transport fee
+
+Flags inventory shortage
+
+👉 No manual policing required.
+
+✅ WHAT IS NOW LOCKED
+
+Transport structure centralized
+
+Assets lifecycle controlled
+
+Inventory chaos prevented
+
+Hostel management ready
+
+Staff roles bounded
+
+
+
+
+
+
+🚌 ADMIN → OPERATIONS MANAGEMENT
+
+(Infrastructure, Logistics & Daily Ops – Rule Engine)
+
+🎯 Module Objective
+
+Define HOW physical resources, logistics, and facilities of the institution are structured and governed.
+
+Admin:
+
+Designs operational structure
+
+Defines limits, rules, dependencies
+
+Controls availability & policies
+
+Staff (Transport / Ops):
+
+Executes assignments
+
+Logs issues
+
+Follows Admin rules
+
+📂 MODULE ROUTES (LOCKED)
+/admin/operations/transport
+/admin/operations/routes
+/admin/operations/assets
+/admin/operations/inventory
+/admin/operations/hostel
+
+1️⃣ TRANSPORT SETUP
+
+/admin/operations/transport
+
+Purpose
+
+Enable and configure transport system behavior.
+
+Transport Configuration Fields
+
+Transport Enabled (Yes / No)
+
+Transport Fee Applicable (Yes / No)
+
+Max Students per Vehicle (default cap)
+
+GPS Tracking Enabled (future)
+
+Transport Mandatory for selected classes (optional)
+
+Admin Controls
+
+Enable / disable transport module
+
+Define global transport rules
+
+Lock transport settings mid-academic year
+
+📌 Used by:
+
+Student transport assignment
+
+Fee calculation
+
+Transport staff panel
+
+2️⃣ ROUTES & STOPS (MASTER DEFINITIONS)
+
+/admin/operations/routes
+
+Purpose
+
+Define routes & pickup structure, not daily assignment.
+
+Route Fields
+
+Route Name
+
+Route Code
+
+Branch
+
+Total Distance
+
+Max Capacity
+
+Status (Active / Inactive)
+
+Stops Fields
+
+Stop Name
+
+Sequence Order
+
+Approx Time
+
+Landmark
+
+Admin Controls
+
+Create / edit routes
+
+Define stops order
+
+Set max capacity
+
+Disable route (no new assignment)
+
+📌 Staff can assign students, but cannot create routes.
+
+3️⃣ ASSETS MASTER
+
+/admin/operations/assets
+
+Purpose
+
+Define all physical assets institution owns.
+
+Asset Categories
+
+Vehicles
+
+Classrooms
+
+Labs
+
+Computers
+
+Furniture
+
+Equipment
+
+Asset Master Fields
+
+Asset Name
+
+Asset Code
+
+Category
+
+Purchase Date
+
+Purchase Cost
+
+Depreciation Method
+
+Assigned Department (optional)
+
+Status (Active / Maintenance / Retired)
+
+Admin Controls
+
+Create asset categories
+
+Define depreciation rules
+
+Lock asset master once used
+
+Archive (never delete)
+
+📌 Staff logs usage & maintenance only.
+
+4️⃣ INVENTORY CATEGORIES & RULES
+
+/admin/operations/inventory
+
+Purpose
+
+Standardize consumables & stock logic.
+
+Inventory Configuration
+Category Fields
+
+Category Name (Stationery, Lab, Sports)
+
+Consumable / Non-Consumable
+
+Reorder Threshold Rule
+
+Approval Required for Stock-Out (Yes / No)
+
+Admin Controls
+
+Define categories
+
+Set reorder rules
+
+Decide approval requirement
+
+📌 Staff:
+
+Adds stock in/out
+
+Cannot change rules
+
+5️⃣ HOSTEL SETUP (OPTIONAL BUT ENTERPRISE-READY)
+
+/admin/operations/hostel
+
+Purpose
+
+Support residential institutions.
+
+Hostel Configuration
+Hostel Fields
+
+Hostel Name
+
+Branch
+
+Hostel Type (Boys / Girls / Mixed)
+
+Total Capacity
+
+Room Rules
+
+Room Types
+
+Capacity per room
+
+Fee mapping
+
+Admin Controls
+
+Enable hostel module
+
+Define room structure
+
+Lock allocations mid-year
+
+📌 Staff assigns rooms based on Admin rules.
+
+🔐 CROSS-MODULE OPERATIONAL CONTROL
+
+Admin Operations rules directly affect:
+
+Module	Impact
+Student Panel	Transport / Hostel info
+Staff Panel	Assignments & limits
+Finance	Transport / Hostel fees
+Reports	Utilization & cost
+Assets	Depreciation & audit
+
+No operational action bypasses Admin configuration.
+
+🧾 AUDIT & LOCKING RULES (CRITICAL)
+
+Routes / Assets:
+
+Never deleted
+
+Only archived
+
+Capacity changes:
+
+Logged with reason
+
+Asset status changes:
+
+Fully auditable
+
+Mid-year rule changes:
+
+Restricted or future-dated
+
+🧠 REAL-WORLD EXAMPLE
+
+Admin defines:
+
+Route A max capacity = 40
+
+Transport mandatory for Class 1–5
+
+Lab equipment reorder at <10 units
+
+System:
+
+Prevents 41st assignment
+
+Auto applies transport fee
+
+Flags inventory shortage
+
+👉 No manual policing required.
+
+✅ WHAT IS NOW LOCKED
+
+Transport structure centralized
+
+Assets lifecycle controlled
+
+Inventory chaos prevented
+
+Hostel management ready
+
+Staff roles bounded
+
+
+
+
+
+📢 ADMIN → COMMUNICATION
+
+(Institution-Wide Communication Control Center)
+
+🎯 Module Objective
+
+Control WHAT is communicated, TO WHOM, WHEN, HOW, and WITH WHAT PRIORITY.
+
+Admin:
+
+Creates official communications
+
+Defines templates & rules
+
+Controls delivery channels
+
+Ensures compliance & traceability
+
+Other roles:
+
+Only consume / acknowledge / respond (where allowed)
+
+📂 MODULE ROUTES (LOCKED)
+/admin/communication/notices
+/admin/communication/announcements
+/admin/communication/templates
+/admin/communication/notification-rules
+
+1️⃣ NOTICES & CIRCULARS
+
+/admin/communication/notices
+
+Purpose
+
+Formal, official, record-worthy communication.
+
+Used for:
+
+Policy updates
+
+Exam schedules
+
+Fee deadlines
+
+Compliance instructions
+
+Emergency notices
+
+Notice Fields
+Basic
+
+Notice Title
+
+Category
+
+Academic
+
+Finance
+
+HR
+
+Operations
+
+Emergency
+
+Priority
+
+Normal
+
+Important
+
+Urgent
+
+Targeting (CRITICAL)
+
+Admin selects:
+
+Audience:
+
+Students
+
+Parents
+
+Teachers
+
+Staff (role-wise)
+
+Branch(es)
+
+Class / Program (optional)
+
+Content
+
+Rich text content
+
+Attachments (PDF/Image)
+
+Admin Controls
+
+Create / edit notice
+
+Schedule publish
+
+Expiry date (optional)
+
+Force acknowledgment (Yes / No)
+
+System Rules
+
+Urgent notices:
+
+Cannot be ignored
+
+Highlighted in all panels
+
+Acknowledgment:
+
+Logged (user, time)
+
+Visible to Admin
+
+📌 Staff / Students cannot reply to notices.
+
+2️⃣ ANNOUNCEMENTS
+
+/admin/communication/announcements
+
+Purpose
+
+Less formal, informational broadcasts.
+
+Used for:
+
+Events
+
+General updates
+
+Reminders
+
+Announcement Fields
+
+Title
+
+Audience
+
+Start & End date
+
+Visibility rules
+
+Content
+
+Difference from Notices
+Notices	Announcements
+Formal	Informal
+Acknowledgment possible	No acknowledgment
+Audit-critical	Informational
+Compliance-relevant	General
+3️⃣ EMAIL / SMS / PUSH TEMPLATES
+
+/admin/communication/templates
+
+Purpose
+
+Standardize outgoing communication format.
+
+Template Types
+
+Email
+
+SMS
+
+Push Notification
+
+WhatsApp (future-ready)
+
+Template Fields
+
+Template Name
+
+Channel
+
+Language
+
+Content with variables:
+
+{{StudentName}}
+
+{{FeeAmount}}
+
+{{DueDate}}
+
+{{Class}}
+
+Admin Controls
+
+Create / edit templates
+
+Activate / deactivate
+
+Lock templates once used in automation
+
+📌 Staff cannot change message wording.
+
+4️⃣ NOTIFICATION RULES (AUTOMATION ENGINE)
+
+/admin/communication/notification-rules
+
+Purpose
+
+Define WHEN system should auto-notify users.
+
+Trigger-Based Rules
+
+Admin defines rules for events like:
+
+Fee due / overdue
+
+Exam schedule published
+
+Result declared
+
+Document rejected
+
+Ticket updated
+
+Transport issue logged
+
+Rule Configuration Fields
+
+Trigger Event
+
+Target Audience
+
+Channel (Email / SMS / Push / In-App)
+
+Template to use
+
+Delay (Immediate / X days before/after)
+
+Quiet hours (Yes / No)
+
+Admin Controls
+
+Enable / disable rules
+
+Set escalation logic
+
+Control notification frequency
+
+📌 Example:
+
+Fee overdue → SMS to Parent after 3 days
+
+Exam published → Push to Student instantly
+
+🔐 CROSS-MODULE COMMUNICATION CONTROL
+
+Admin Communication directly affects:
+
+Module	Impact
+Student Panel	Alerts, notices
+Parent Panel	Fee reminders
+Teacher Panel	Academic notices
+Staff Panel	Policies, tasks
+Support	Ticket updates
+
+No module sends communication without Admin-defined rule or template.
+
+🧾 AUDIT & COMPLIANCE RULES
+
+Every notice:
+
+Creator
+
+Publish time
+
+Target audience
+
+Acknowledgment status
+
+Notification logs stored
+
+Failed deliveries tracked (future-ready)
+
+🧠 REAL-WORLD EXAMPLE
+
+Admin defines:
+
+“Fee Due” SMS template
+
+Rule: send reminder 5 days before due date
+
+Force acknowledgment for “Exam Guidelines” notice
+
+System:
+
+Automatically sends messages
+
+Tracks who saw what
+
+Escalates if ignored
+
+👉 No manual follow-ups required.
+
+✅ WHAT IS NOW LOCKED
+
+Single source of truth for communication
+
+Formal vs informal separation
+
+Automated notifications controlled
+
+Multi-channel ready
+
+Fully auditable
+
+
+
+
+📊 ADMIN → REPORTS & ANALYTICS
+
+(Enterprise Reporting | School + College | Read-Only, High Authority)
+
+🎯 Module Objective
+
+Give Admin a single, trusted source of truth to review performance, compliance, finance, and operations — without touching raw data.
+
+Admin:
+
+Reviews data
+
+Detects risks
+
+Takes policy decisions
+
+Prepares audits & management meetings
+
+No data entry. No edits. No execution.
+
+📂 MODULE ROUTES (LOCKED)
+/admin/reports
+/admin/reports/academic
+/admin/reports/finance
+/admin/reports/hr
+/admin/reports/operations
+/admin/reports/compliance
+/admin/reports/custom
+
+1️⃣ REPORTS HOME (CONTROL ENTRY)
+
+/admin/reports
+
+Purpose
+
+Single landing page for all report categories.
+
+Sections / Cards
+
+Academic Reports
+
+Finance Reports
+
+HR Reports
+
+Operations Reports
+
+Compliance Reports
+
+Custom Reports
+
+Each card shows:
+
+Key KPIs (summary)
+
+Last updated time
+
+2️⃣ ACADEMIC REPORTS
+
+/admin/reports/academic
+
+Purpose
+
+Measure academic performance & structure health.
+
+Report Types
+A. Student Strength Report
+
+Class-wise
+
+Section-wise
+
+Branch-wise
+
+Gender-wise (optional)
+
+B. Attendance Overview
+
+Average attendance %
+
+Chronic absentee list
+
+Branch comparison
+
+C. Exam & Result Reports
+
+Pass / Fail ratio
+
+Subject-wise performance
+
+Top / low performing classes
+
+D. Promotion & Retention
+
+Promoted students
+
+Detained students
+
+Dropout analysis
+
+📌 Data Source: Student + Attendance + Exams modules
+📌 Admin cannot change marks here
+
+3️⃣ FINANCE REPORTS
+
+/admin/reports/finance
+
+Purpose
+
+Give Admin full financial visibility without handling money.
+
+Report Types
+A. Fee Collection Summary
+
+Collected vs Pending
+
+Class-wise
+
+Branch-wise
+
+Period-wise
+
+B. Outstanding Dues
+
+Student-wise pending fees
+
+Overdue buckets (0–30, 30–60 days)
+
+C. Payroll Summary
+
+Teachers payroll
+
+Employees payroll
+
+Paid vs Pending
+
+D. Expense Reports
+
+Category-wise expenses
+
+Monthly / yearly trends
+
+E. Vendor & Liability Report
+
+Outstanding vendor payments
+
+GST-linked expenses
+
+📌 Export allowed (CSV / PDF)
+📌 Admin cannot mark payments here
+
+4️⃣ HR REPORTS
+
+/admin/reports/hr
+
+Purpose
+
+Understand human resource health.
+
+Report Types
+A. Staff Strength
+
+Teachers count
+
+Employees count
+
+Role-wise distribution
+
+B. Attrition Report
+
+Joins vs exits
+
+Reason tracking (if configured)
+
+C. Attendance Summary (Staff)
+
+Working days
+
+Leave trends
+
+Overtime summary (if applicable)
+
+D. Document Compliance (HR)
+
+Teachers with missing documents
+
+Employees pending verification
+
+📌 Used for audits & management review
+
+5️⃣ OPERATIONS REPORTS
+
+/admin/reports/operations
+
+Purpose
+
+Measure infrastructure & logistics efficiency.
+
+Report Types
+A. Transport Utilization
+
+Route occupancy
+
+Underutilized routes
+
+Transport issues count
+
+B. Asset Health Report
+
+Active assets
+
+Assets under maintenance
+
+Retired assets
+
+C. Inventory Status
+
+Low stock items
+
+Reorder alerts
+
+Category-wise usage
+
+D. Hostel Utilization (if enabled)
+
+Occupancy rate
+
+Vacant rooms
+
+Revenue vs capacity
+
+6️⃣ COMPLIANCE REPORTS
+
+/admin/reports/compliance
+
+Purpose
+
+Ensure legal, academic, and affiliation compliance.
+
+Report Types
+A. Student Document Compliance
+
+Complete vs pending
+
+Admission eligibility risks
+
+B. Teacher & Employee Compliance
+
+Qualification verified
+
+Contract uploaded
+
+Payroll-blocking issues
+
+C. Finance Compliance
+
+Fees without structure
+
+Payroll without rules
+
+Expenses without category
+
+D. Affiliation Compliance
+
+Board / University checklist
+
+Missing mandatory items
+
+📌 This report decides audit readiness
+
+7️⃣ CUSTOM REPORT BUILDER
+
+/admin/reports/custom
+
+Purpose
+
+Let Admin build ad-hoc reports without developers.
+
+Custom Report Features
+
+Admin can:
+
+Select entity:
+
+Students / Teachers / Fees / Payroll / Assets
+
+Choose fields
+
+Apply filters
+
+Save report template
+
+Export results
+
+Safeguards
+
+Read-only data
+
+Export limits
+
+Logged usage
+
+🔐 CROSS-MODULE REPORT GOVERNANCE
+
+Admin Reports pull data from:
+
+Module	Read
+Students	✅
+Teachers	✅
+Staff	✅
+Finance	✅
+Operations	✅
+Documents	✅
+Support	✅
+
+No module can hide data from Admin reports.
+
+🧾 AUDIT & DATA INTEGRITY RULES
+
+Reports are snapshot-based
+
+Historical data preserved
+
+No recalculation without admin-triggered reindex
+
+Every export logged
+
+🧠 REAL-WORLD ADMIN USE CASE
+
+Admin:
+
+Reviews finance report
+
+Notices high pending fees in Branch B
+
+Updates fee policy next academic year
+
+Sends reminder notice
+
+👉 Admin decides; system executes
+
+✅ WHAT IS NOW LOCKED
+
+Single source of truth
+
+No data tampering
+
+School + college ready
+
+Audit-safe reporting
+
+Scales to universities
