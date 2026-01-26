@@ -63,6 +63,7 @@ import CertificateTemplates from './pages/compliance/certificate-templates/Certi
 import HRReports from './pages/reports/hr/HRReports';
 import FinanceReports from './pages/reports/finance/FinanceReports';
 import OperationsReports from './pages/reports/operations/OperationsReports';
+import CustomReports from './pages/reports/custom/CustomReports';
 import RequiredDocumentsRules from './pages/compliance/required-documents/RequiredDocumentsRules';
 import VerificationPolicies from './pages/compliance/verification-policies/VerificationPolicies';
 
@@ -162,7 +163,7 @@ const adminRoutes = [
                     { path: 'reports/finance', element: <FinanceReports /> },
                     { path: 'reports/hr', element: <HRReports /> },
                     { path: 'reports/operations', element: <OperationsReports /> },
-                    { path: 'reports/custom', element: <PlaceholderPage /> },
+                    { path: 'reports/custom', element: <CustomReports /> },
 
                     // 11. System Settings (Renamed from 'system')
                     { path: 'settings/general', element: <PlaceholderPage /> },
