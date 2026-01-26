@@ -40,7 +40,7 @@ const AlertsPanel = () => {
                                 {alert.title}
                             </h3>
                             <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
-                            <Link to={alert.link} className="text-xs font-medium text-indigo-600 mt-2 block hover:underline flex items-center gap-1">
+                            <Link to={alert.link} className="text-xs font-medium text-blue-600 mt-2 block hover:underline flex items-center gap-1">
                                 View Details <ChevronRight size={12} />
                             </Link>
                         </div>

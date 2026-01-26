@@ -17,7 +17,7 @@ const RecentActivityLog = () => {
                     <FileText size={20} className="text-gray-600" />
                     Recent Activity
                 </h2>
-                <button className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                <button className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
                     View Full Audit <Eye size={12} />
                 </button>
             </div>

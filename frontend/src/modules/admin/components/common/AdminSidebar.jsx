@@ -37,21 +37,21 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed md:sticky top-0 left-0 h-screen bg-gradient-to-b from-indigo-600 to-indigo-800 
+                    fixed md:sticky top-0 left-0 h-screen bg-gradient-to-b from-black to-blue-900 
                     text-white w-72 flex flex-col z-50 transition-transform duration-300
                     ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                 `}
             >
                 {/* Header */}
-                <div className="p-6 border-b border-indigo-500/30 flex items-center justify-between">
+                <div className="p-6 border-b border-white/10 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold font-['Poppins']">Admin Panel</h1>
-                        <p className="text-indigo-200 text-sm mt-1">Super Controller</p>
+                        <p className="text-blue-200 text-sm mt-1">Super Controller</p>
                     </div>
                     {/* Close button for mobile */}
                     <button
                         onClick={onClose}
-                        className="md:hidden p-2 hover:bg-indigo-700 rounded-lg transition-colors"
+                        className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -76,19 +76,19 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                                                 w-full flex items-center justify-between px-4 py-3 rounded-lg
                                                 transition-all duration-200 group
                                                 ${isItemActive
-                                                    ? 'bg-white/20 text-white shadow-lg'
-                                                    : 'hover:bg-white/10 text-indigo-100'
+                                                    ? 'bg-blue-600 text-white shadow-lg'
+                                                    : 'hover:bg-white/10 text-gray-300'
                                                 }
                                             `}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <Icon size={20} className={isItemActive ? 'text-white' : 'text-indigo-200'} />
+                                                <Icon size={20} className={isItemActive ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
                                                 <span className="font-medium text-sm">{item.label}</span>
                                             </div>
                                             {isExpanded ? (
-                                                <ChevronDown size={16} className="text-indigo-200" />
+                                                <ChevronDown size={16} className="text-gray-400" />
                                             ) : (
-                                                <ChevronRight size={16} className="text-indigo-200" />
+                                                <ChevronRight size={16} className="text-gray-400" />
                                             )}
                                         </button>
                                     ) : (
@@ -99,19 +99,19 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                                                 flex items-center gap-3 px-4 py-3 rounded-lg
                                                 transition-all duration-200 group
                                                 ${isActive(item.path)
-                                                    ? 'bg-white/20 text-white shadow-lg'
-                                                    : 'hover:bg-white/10 text-indigo-100'
+                                                    ? 'bg-blue-600 text-white shadow-lg'
+                                                    : 'hover:bg-white/10 text-gray-300'
                                                 }
                                             `}
                                         >
-                                            <Icon size={20} className={isActive(item.path) ? 'text-white' : 'text-indigo-200'} />
+                                            <Icon size={20} className={isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
                                             <span className="font-medium text-sm">{item.label}</span>
                                         </Link>
                                     )}
 
                                     {/* Sub Menu Items */}
                                     {hasSubItems && isExpanded && (
-                                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-indigo-500/30 pl-4">
+                                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-white/10 pl-4">
                                             {item.subItems.map((subItem) => (
                                                 <Link
                                                     key={subItem.id}
@@ -121,8 +121,8 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                                                         block px-4 py-2.5 rounded-lg text-sm
                                                         transition-all duration-200
                                                         ${isActive(subItem.path)
-                                                            ? 'bg-white/15 text-white font-medium'
-                                                            : 'text-indigo-200 hover:bg-white/10 hover:text-white'
+                                                            ? 'bg-white/10 text-white font-medium'
+                                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                                         }
                                                     `}
                                                 >
@@ -138,9 +138,9 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-indigo-500/30">
-                    <div className="bg-white/10 rounded-lg p-3">
-                        <p className="text-xs text-indigo-200">Admin Version</p>
+                <div className="p-4 border-t border-white/10">
+                    <div className="bg-white/5 rounded-lg p-3 border border-white/5">
+                        <p className="text-xs text-gray-400">Admin Version</p>
                         <p className="text-sm font-semibold">v1.0.0</p>
                     </div>
                 </div>

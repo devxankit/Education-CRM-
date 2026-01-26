@@ -64,8 +64,14 @@ import HRReports from './pages/reports/hr/HRReports';
 import FinanceReports from './pages/reports/finance/FinanceReports';
 import OperationsReports from './pages/reports/operations/OperationsReports';
 import CustomReports from './pages/reports/custom/CustomReports';
+import GeneralSettings from './pages/settings/general/GeneralSettings';
+import AppConfiguration from './pages/settings/app-configuration/AppConfiguration';
+import Integrations from './pages/settings/integrations/Integrations';
+import BackupsRecovery from './pages/settings/backups/BackupsRecovery';
 import RequiredDocumentsRules from './pages/compliance/required-documents/RequiredDocumentsRules';
+import UserActivityAudit from './pages/audit/user-activity/UserActivityAudit';
 import VerificationPolicies from './pages/compliance/verification-policies/VerificationPolicies';
+import Checklists from './pages/compliance/checklists/Checklists';
 
 // Helper to render Outlet
 const OutletWrapper = () => <Outlet />;
@@ -150,7 +156,7 @@ const adminRoutes = [
                     { path: 'compliance/document-rules', element: <PlaceholderPage /> },
                     { path: 'compliance/verification-policies', element: <VerificationPolicies /> },
                     { path: 'compliance/certificate-templates', element: <CertificateTemplates /> },
-                    { path: 'compliance/checklists', element: <PlaceholderPage /> },
+                    { path: 'compliance/checklists', element: <Checklists /> },
 
                     // 9. Communication
                     { path: 'communication/notices', element: <Notices /> },
@@ -166,13 +172,13 @@ const adminRoutes = [
                     { path: 'reports/custom', element: <CustomReports /> },
 
                     // 11. System Settings (Renamed from 'system')
-                    { path: 'settings/general', element: <PlaceholderPage /> },
-                    { path: 'settings/app-config', element: <PlaceholderPage /> },
-                    { path: 'settings/integrations', element: <PlaceholderPage /> },
-                    { path: 'settings/backup', element: <PlaceholderPage /> },
+                    { path: 'settings/general', element: <GeneralSettings /> },
+                    { path: 'settings/app-config', element: <AppConfiguration /> },
+                    { path: 'settings/integrations', element: <Integrations /> },
+                    { path: 'settings/backup', element: <BackupsRecovery /> },
 
                     // 12. Security & Audit Logs (Renamed from 'security')
-                    { path: 'audit/user-activity', element: <PlaceholderPage /> },
+                    { path: 'audit/user-activity', element: <UserActivityAudit /> },
                     { path: 'audit/financial', element: <PlaceholderPage /> },
                     { path: 'audit/data-history', element: <PlaceholderPage /> },
                     { path: 'audit/security', element: <PlaceholderPage /> },

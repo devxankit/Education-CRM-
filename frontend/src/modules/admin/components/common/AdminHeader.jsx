@@ -47,7 +47,7 @@ const AdminHeader = ({ onMenuToggle }) => {
                             <p className="text-xs text-gray-500">admin@institution.com</p>
                         </div>
                         <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
                                 <User size={18} className="text-white" />
                             </div>
                             <ChevronDown size={16} className="text-gray-600 hidden md:block" />
