@@ -54,6 +54,17 @@ import StudentList from './pages/people/students/StudentList';
 import StudentAdmission from './pages/people/students/admission/StudentAdmission';
 import StudentProfile from './pages/people/students/profile/StudentProfile';
 import EmploymentTypes from './pages/people/employment-types/EmploymentTypes'; // New Import
+import Notices from './pages/communication/notices/Notices';
+import Announcements from './pages/communication/announcements/Announcements';
+import MessageTemplates from './pages/communication/templates/MessageTemplates';
+import NotificationRules from './pages/communication/notification-rules/NotificationRules';
+import AcademicReports from './pages/reports/academic/AcademicReports';
+import CertificateTemplates from './pages/compliance/certificate-templates/CertificateTemplates';
+import HRReports from './pages/reports/hr/HRReports';
+import FinanceReports from './pages/reports/finance/FinanceReports';
+import OperationsReports from './pages/reports/operations/OperationsReports';
+import RequiredDocumentsRules from './pages/compliance/required-documents/RequiredDocumentsRules';
+import VerificationPolicies from './pages/compliance/verification-policies/VerificationPolicies';
 
 // Helper to render Outlet
 const OutletWrapper = () => <Outlet />;
@@ -134,22 +145,23 @@ const adminRoutes = [
                     { path: 'operations/communication-rules', element: <CommunicationRules /> }, // Communication Governance
 
                     // 8. Documents & Compliance (Renamed from 'documents')
+                    { path: 'compliance/required-documents', element: <RequiredDocumentsRules /> },
                     { path: 'compliance/document-rules', element: <PlaceholderPage /> },
-                    { path: 'compliance/verification-policies', element: <PlaceholderPage /> },
-                    { path: 'compliance/certificate-templates', element: <PlaceholderPage /> },
+                    { path: 'compliance/verification-policies', element: <VerificationPolicies /> },
+                    { path: 'compliance/certificate-templates', element: <CertificateTemplates /> },
                     { path: 'compliance/checklists', element: <PlaceholderPage /> },
 
                     // 9. Communication
-                    { path: 'communication/notices', element: <PlaceholderPage /> },
-                    { path: 'communication/announcements', element: <PlaceholderPage /> },
-                    { path: 'communication/templates', element: <PlaceholderPage /> },
-                    { path: 'communication/notification-rules', element: <PlaceholderPage /> },
+                    { path: 'communication/notices', element: <Notices /> },
+                    { path: 'communication/announcements', element: <Announcements /> },
+                    { path: 'communication/templates', element: <MessageTemplates /> },
+                    { path: 'communication/notification-rules', element: <NotificationRules /> },
 
                     // 10. Reports & Analytics
-                    { path: 'reports/academic', element: <PlaceholderPage /> },
-                    { path: 'reports/finance', element: <PlaceholderPage /> },
-                    { path: 'reports/hr', element: <PlaceholderPage /> },
-                    { path: 'reports/operations', element: <PlaceholderPage /> },
+                    { path: 'reports/academic', element: <AcademicReports /> },
+                    { path: 'reports/finance', element: <FinanceReports /> },
+                    { path: 'reports/hr', element: <HRReports /> },
+                    { path: 'reports/operations', element: <OperationsReports /> },
                     { path: 'reports/custom', element: <PlaceholderPage /> },
 
                     // 11. System Settings (Renamed from 'system')

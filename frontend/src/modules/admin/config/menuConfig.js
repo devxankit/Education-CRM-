@@ -120,7 +120,7 @@ export const adminMenuConfig = [
         icon: FileText,
         path: '/admin/compliance',
         subItems: [
-            { id: 'document-rules', label: 'Required Documents Rules', path: '/admin/compliance/document-rules' },
+            { id: 'document-rules', label: 'Required Documents Rules', path: '/admin/compliance/required-documents' },
             { id: 'verification-policies', label: 'Verification Policies', path: '/admin/compliance/verification-policies' },
             { id: 'certificate-templates', label: 'Certificate Templates', path: '/admin/compliance/certificate-templates' },
             { id: 'checklists', label: 'Compliance Checklist', path: '/admin/compliance/checklists' }
