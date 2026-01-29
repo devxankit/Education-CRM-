@@ -26,7 +26,7 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Code & Name</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Type</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Category</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Level</th>
+                            <th className="px-6 py-4 font-medium border-b border-gray-100">Assigned Classes</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Status</th>
                             <th className="px-6 py-4 border-b border-gray-100"></th>
                         </tr>
@@ -53,8 +53,23 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
                                     </span>
                                 </td>
 
-                                <td className="px-6 py-4 capitalize text-gray-600">
-                                    {sub.level ? sub.level.replace('_', ' ') : '-'}
+                                <td className="px-6 py-4">
+                                    <div className="flex flex-wrap gap-1 max-w-xs">
+                                        {sub.assignedClasses && sub.assignedClasses.length > 0 ? (
+                                            sub.assignedClasses.slice(0, 3).map((cls, idx) => (
+                                                <span key={idx} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] border border-blue-100">
+                                                    {cls}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-400 text-xs italic">Unassigned</span>
+                                        )}
+                                        {sub.assignedClasses && sub.assignedClasses.length > 3 && (
+                                            <span className="text-xs text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">
+                                                +{sub.assignedClasses.length - 3} more
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
 
                                 <td className="px-6 py-4">

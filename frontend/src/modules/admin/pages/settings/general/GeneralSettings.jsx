@@ -6,7 +6,7 @@ import SettingsSection from './components/SettingsSection';
 import InstitutionIdentityForm from './components/InstitutionIdentityForm';
 import AcademicDefaultsForm from './components/AcademicDefaultsForm';
 import RegionalSettingsForm from './components/RegionalSettingsForm';
-import SystemDefaultsForm from './components/SystemDefaultsForm';
+
 import SecurityBaselineForm from './components/SecurityBaselineForm';
 import ChangeSummaryModal from './components/ChangeSummaryModal';
 
@@ -160,13 +160,7 @@ const GeneralSettings = () => {
                         <RegionalSettingsForm values={values} onChange={handleChange} />
                     </SettingsSection>
 
-                    <SettingsSection
-                        title="System Behavior"
-                        description="Control UI themes, pagination limits, and default landing pages."
-                        isDirty={values.themeMode !== originalValues.themeMode}
-                    >
-                        <SystemDefaultsForm values={values} onChange={handleChange} />
-                    </SettingsSection>
+
 
                     <SettingsSection
                         title="Security Baseline"

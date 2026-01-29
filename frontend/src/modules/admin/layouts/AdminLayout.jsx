@@ -36,7 +36,7 @@ const AdminLayout = () => {
                 </div>
 
                 {/* Page Content - Scrollable */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 pb-20 md:pb-6 px-4 md:px-6 pt-4 md:pt-6">
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 pb-20 md:pb-6 px-4 md:px-6">
                     <Outlet />
                 </main>
 

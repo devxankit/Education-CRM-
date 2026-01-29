@@ -50,7 +50,6 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'admins', label: 'Admin Users', path: '/admin/users/admins' },
             { id: 'roles', label: 'Staff Roles', path: '/admin/roles' },
-            { id: 'permissions', label: 'Permission Matrix', path: '/admin/permissions' },
             { id: 'access-control', label: 'Access Control Rules', path: '/admin/access-control' }
         ]
     },
@@ -110,8 +109,7 @@ export const adminMenuConfig = [
             { id: 'inventory', label: 'Inventory Categories', path: '/admin/operations/inventory' },
             { id: 'assets-master', label: 'Assets Master', path: '/admin/operations/inventory/assets' },
             { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
-            { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' },
-            { id: 'communication-rules', label: 'Communication Policy', path: '/admin/operations/communication-rules' }
+            { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' }
         ]
     },
     {
@@ -158,7 +156,6 @@ export const adminMenuConfig = [
         path: '/admin/settings',
         subItems: [
             { id: 'general', label: 'General Settings', path: '/admin/settings/general' },
-            { id: 'app-config', label: 'App Configuration', path: '/admin/settings/app-config' },
             { id: 'integrations', label: 'Integrations', path: '/admin/settings/integrations' },
             { id: 'backup', label: 'Backup & Recovery', path: '/admin/settings/backup' }
         ]

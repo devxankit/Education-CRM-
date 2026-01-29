@@ -84,19 +84,7 @@ const RoleDetailDrawer = ({
                         </div>
                     </div>
 
-                    {/* Permissions Preview (Mock) */}
-                    <div>
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Access Snapshot</h4>
-                        <div className="space-y-2">
-                            {/* Fake permission tags */}
-                            <div className="flex flex-wrap gap-2">
-                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded border border-gray-200">dashboard.view</span>
-                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded border border-gray-200">students.view</span>
-                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded border border-gray-200">attendance.mark</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-2">...and 15 more permissions.</p>
-                        </div>
-                    </div>
+
 
                     {/* Warning for System Role */}
                     {isSystemRole && (
@@ -113,14 +101,7 @@ const RoleDetailDrawer = ({
                 {/* Footer Actions */}
                 <div className="p-4 border-t border-gray-100 bg-gray-50 flex flex-col gap-3">
 
-                    {/* Primary: Configure Permissions */}
-                    <button
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm"
-                        onClick={() => alert(`Navigate to /admin/roles/${role.id}/permissions`)}
-                    >
-                        <Settings size={18} />
-                        Configure Permissions Matrix
-                    </button>
+
 
                     {/* Secondary: Deactivate/Activate */}
                     {isSuperAdmin && (

@@ -9,15 +9,20 @@ const SubjectsMaster = () => {
 
     // Mock Data
     const [subjects, setSubjects] = useState([
-        { id: 1, name: 'Mathematics', code: 'SUB_MATH_001', type: 'theory', category: 'core', level: 'school', status: 'active' },
-        { id: 2, name: 'Physics', code: 'SUB_PHY_001', type: 'theory_practical', category: 'core', level: 'school', status: 'active' },
-        { id: 3, name: 'Computer Science', code: 'SUB_CS_001', type: 'theory_practical', category: 'elective', level: 'school', status: 'active' },
-        { id: 4, name: 'Environmental Studies', code: 'SUB_EVS_001', type: 'theory', category: 'core', level: 'school', status: 'inactive' }
+        { id: 1, name: 'Mathematics', code: 'SUB_MATH_001', type: 'theory', category: 'core', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'] },
+        { id: 2, name: 'Physics', code: 'SUB_PHY_001', type: 'theory_practical', category: 'core', level: 'school', status: 'active', assignedClasses: ['Class 9', 'Class 10', 'Class 11', 'Class 12'] },
+        { id: 3, name: 'Computer Science', code: 'SUB_CS_001', type: 'theory_practical', category: 'elective', level: 'school', status: 'active', assignedClasses: ['Class 6', 'Class 7', 'Class 8'] },
+        { id: 4, name: 'Environmental Studies', code: 'SUB_EVS_001', type: 'theory', category: 'core', level: 'school', status: 'inactive', assignedClasses: ['Class 1', 'Class 2'] },
+        { id: 5, name: 'English Literature', code: 'SUB_ENG_001', type: 'theory', category: 'core', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'] }
     ]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
     const [filterLevel, setFilterLevel] = useState('all');
+    const [filterClass, setFilterClass] = useState('all');
+
+    // Mock Classes for Filter
+    const availableClasses = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
 
     // Handlers
     const handleCreate = (data) => {
@@ -31,7 +36,8 @@ const SubjectsMaster = () => {
                 ...data,
                 // generate code if new
                 code: `SUB_${data.name.substring(0, 3).toUpperCase()}_${Date.now().toString().slice(-3)}`,
-                status: 'active'
+                status: 'active',
+                assignedClasses: [] // Default empty
             };
             setSubjects(prev => [newSubject, ...prev]);
         }
@@ -57,6 +63,7 @@ const SubjectsMaster = () => {
     // Filter Logic
     const filteredSubjects = subjects.filter(sub => {
         if (filterLevel !== 'all' && sub.level !== filterLevel) return false;
+        if (filterClass !== 'all' && (!sub.assignedClasses || !sub.assignedClasses.includes(filterClass))) return false;
         return true;
     });
 
@@ -85,6 +92,8 @@ const SubjectsMaster = () => {
             <div className="flex flex-wrap justify-between items-center mb-4 bg-white p-3 rounded-lg border border-gray-200 gap-3">
                 <div className="flex items-center gap-2">
                     <Filter size={16} className="text-gray-400" />
+
+                    {/* Level Filter */}
                     <select
                         value={filterLevel}
                         onChange={(e) => setFilterLevel(e.target.value)}
@@ -94,6 +103,18 @@ const SubjectsMaster = () => {
                         <option value="school">School (K-12)</option>
                         <option value="ug">Undergraduate</option>
                         <option value="pg">Postgraduate</option>
+                    </select>
+
+                    {/* Class Filter */}
+                    <select
+                        value={filterClass}
+                        onChange={(e) => setFilterClass(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md border p-1.5 bg-gray-50 outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                        <option value="all">All Classes</option>
+                        {availableClasses.map(cls => (
+                            <option key={cls} value={cls}>{cls}</option>
+                        ))}
                     </select>
                 </div>
 

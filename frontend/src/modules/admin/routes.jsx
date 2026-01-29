@@ -18,7 +18,7 @@ import TimetableRules from './pages/institution/TimetableRules';
 
 // User & Role Pages
 import RolesList from './pages/roles/RolesList';
-import RolePermissions from './pages/roles/RolePermissions';
+
 import StaffUsers from './pages/users/StaffUsers';
 import AccessControl from './pages/users/AccessControl';
 
@@ -99,9 +99,7 @@ const adminRoutes = [
                     { path: 'users/admins', element: <StaffUsers /> },
 
                     { path: 'roles', element: <RolesList /> },
-                    // Both routes point to permission matrix for now to handle flow
-                    { path: 'permissions', element: <RolePermissions /> },
-                    { path: 'roles/:roleId', element: <RolePermissions /> },
+
                     { path: 'access-control', element: <AccessControl /> },
 
 

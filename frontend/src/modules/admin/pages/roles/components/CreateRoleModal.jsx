@@ -53,15 +53,19 @@ const CreateRoleModal = ({ isOpen, onClose, onCreate }) => {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
-                        <input
-                            type="text"
+                        <select
                             name="name"
-                            required
-                            placeholder="e.g. Lab Assistant"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                        />
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm"
+                        >
+                            <option value="">Select a Role...</option>
+                            <option value="Front Desk">Front Desk</option>
+                            <option value="Accounts Officer">Accounts Officer</option>
+                            <option value="Transport Coordinator">Transport Coordinator</option>
+                            <option value="Data Entry Operator">Data Entry Operator</option>
+                            <option value="Support Executive">Support Executive</option>
+                        </select>
                     </div>
 
                     <div>
@@ -96,9 +100,8 @@ const CreateRoleModal = ({ isOpen, onClose, onCreate }) => {
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm"
                             >
-                                <option value="/staff/dashboard">Staff Dash</option>
-                                <option value="/admin/dashboard">Admin Dash</option>
-                                <option value="/academic/dashboard">Academic Dash</option>
+                                <option value="/staff/dashboard">Staff Dashboard</option>
+                                <option value="/teacher/dashboard">Teacher Dashboard</option>
                             </select>
                         </div>
                         <div>

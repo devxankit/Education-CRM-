@@ -110,7 +110,6 @@ const RolesList = () => {
                     <p className="font-semibold">Security Logic Active</p>
                     <p className="opacity-80 mt-1">
                         New roles are created with <strong>Zero Privileges</strong> by default.
-                        After creation, select the role to configure its Permissions Matrix.
                     </p>
                 </div>
             </div>
