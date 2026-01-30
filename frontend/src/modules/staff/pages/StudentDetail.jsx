@@ -5,6 +5,7 @@ import {
     User, Phone, MapPin, Mail, CreditCard, FileText,
     Bus, Ticket, ArrowLeft, Shield, AlertCircle, Clock, Briefcase, CheckCircle, Upload
 } from 'lucide-react';
+import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import RoleBasedSection from '../components/students/RoleBasedSection';
 
