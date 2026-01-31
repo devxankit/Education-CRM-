@@ -1,28 +1,24 @@
 
 import React, { useState } from 'react';
 import { Plus, Download, Filter, Search } from 'lucide-react';
+import { useAdminStore } from '../../../../../store/adminStore';
 
 // Components
 import EmployeeTable from './components/EmployeeTable';
 import EmployeeProfileDrawer from './components/EmployeeProfileDrawer';
 
 const Employees = () => {
-
-    // Mock Data
-    const [employees, setEmployees] = useState([
-        { id: 1, name: 'John Doe', code: 'EMP-1023', employeeType: 'Teacher', department: 'Science', designation: 'Physics Lecturer', status: 'Active', dateOfJoining: '2022-06-15', email: 'john.d@school.edu' },
-        { id: 2, name: 'Jane Smith', code: 'EMP-1100', employeeType: 'Non-Teaching', department: 'Administration', designation: 'Registrar', status: 'Active', dateOfJoining: '2021-08-01', email: 'jane.s@school.edu' },
-        { id: 3, name: 'Robert Brown', code: 'EMP-2045', employeeType: 'Contract', department: 'Transport', designation: 'Bus Driver', status: 'Suspended', dateOfJoining: '2023-01-10', email: 'robert.b@school.edu' },
-        { id: 4, name: 'Emily Davis', code: 'EMP-1050', employeeType: 'Teacher', department: 'Mathematics', designation: 'Math Teacher', status: 'Draft', dateOfJoining: '2024-03-01', email: 'emily.d@school.edu' },
-    ]);
+    const employees = useAdminStore(state => state.employees);
+    const addEmployee = useAdminStore(state => state.addEmployee);
+    const updateEmployee = useAdminStore(state => state.updateEmployee);
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [viewingEmployee, setViewingEmployee] = useState(null); // If null but isDrawerOpen=true, then it's CREATE mode
+    const [viewingEmployee, setViewingEmployee] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     // Handlers
     const handleAdd = () => {
-        setViewingEmployee(null); // New
+        setViewingEmployee(null);
         setIsDrawerOpen(true);
     };
 
@@ -33,12 +29,9 @@ const Employees = () => {
 
     const handleSave = (empData) => {
         if (viewingEmployee) {
-            // Update
-            // Logic for update would go here
+            updateEmployee(viewingEmployee.id, empData);
         } else {
-            // Create
-            const newId = Date.now();
-            setEmployees(prev => [...prev, { ...empData, id: newId }]);
+            addEmployee(empData);
         }
         setIsDrawerOpen(false);
     };
@@ -49,10 +42,11 @@ const Employees = () => {
     };
 
     // Filter Logic
-    const filteredEmployees = employees.filter(emp =>
-        emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.code.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredEmployees = employees.filter(emp => {
+        const name = (emp.name || `${emp.firstName} ${emp.lastName}`).toLowerCase();
+        const code = (emp.code || emp.id || '').toLowerCase();
+        return name.includes(searchQuery.toLowerCase()) || code.includes(searchQuery.toLowerCase());
+    });
 
     return (
         <div className="h-full flex flex-col pb-10">

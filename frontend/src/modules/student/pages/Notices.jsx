@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BellOff } from 'lucide-react';
@@ -11,13 +12,38 @@ import NoticeCard from '../components/Notices/NoticeCard';
 import NoticeDetail from '../components/Notices/NoticeDetail';
 
 // Data
-import { notices } from '../data/noticesData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const Notices = () => {
+    const navigate = useNavigate();
+    const { id } = useParams();
     const [activeTab, setActiveTab] = useState('All');
-    const [filteredNotices, setFilteredNotices] = useState([]);
+
+    const allNotices = useStudentStore(state => state.notices);
+    const [filteredNotices, setFilteredNotices] = useState(allNotices);
     const [selectedNotice, setSelectedNotice] = useState(null);
+    const [loading, setLoading] = useState(false);
     const listRef = useRef(null);
+
+    // Initial Load & URL ID mapping
+    useEffect(() => {
+        if (id && allNotices.length > 0) {
+            const notice = allNotices.find(n => n.id === parseInt(id));
+            if (notice) {
+                setSelectedNotice(notice);
+            }
+        } else if (!id) {
+            setSelectedNotice(null);
+        }
+    }, [id, allNotices]);
+
+    const handleNoticeClick = (notice) => {
+        navigate(`${notice.id}`);
+    };
+
+    const handleCloseDetail = () => {
+        navigate('..', { relative: 'path' });
+    };
 
     // Smooth Scroll
     useEffect(() => {
@@ -39,9 +65,11 @@ const Notices = () => {
 
     // Filter Logic
     useEffect(() => {
-        let filtered = notices;
+        if (loading) return;
+
+        let filtered = allNotices;
         if (activeTab !== 'All') {
-            filtered = notices.filter(n =>
+            filtered = allNotices.filter(n =>
                 activeTab === 'Important' ? n.priority === 'Important' : n.type === activeTab
             );
         }
@@ -64,12 +92,17 @@ const Notices = () => {
                 <NoticeFilterTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
                 <div ref={listRef} className="pb-10">
-                    {filteredNotices.length > 0 ? (
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="mt-4 text-sm text-gray-500 font-medium">Loading Notices...</p>
+                        </div>
+                    ) : filteredNotices.length > 0 ? (
                         filteredNotices.map((notice) => (
                             <NoticeCard
                                 key={notice.id}
                                 notice={notice}
-                                onClick={setSelectedNotice}
+                                onClick={handleNoticeClick}
                             />
                         ))
                     ) : (
@@ -87,7 +120,7 @@ const Notices = () => {
                 {selectedNotice && (
                     <NoticeDetail
                         notice={selectedNotice}
-                        onClose={() => setSelectedNotice(null)}
+                        onClose={handleCloseDetail}
                     />
                 )}
             </AnimatePresence>

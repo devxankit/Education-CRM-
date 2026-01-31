@@ -10,89 +10,94 @@ import InfoSectionCard from '../components/Profile/InfoSectionCard';
 import DocumentsList from '../components/Profile/DocumentsList';
 import EmptyState from '../components/Attendance/EmptyState'; // Reuse or create new
 
-// Data
-import { profileData } from '../data/profileData';
+import { useStudentStore } from '../../../store/studentStore';
 
-// Helper for Academic Card (Simple enough to be inline or separate, let's keep it robust here)
-const AcademicInfoCard = ({ data }) => (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
-        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-1 h-5 bg-purple-500 rounded-full"></span>
-            Academic Details
-        </h3>
-        <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <div>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Institute</p>
-                    <p className="text-sm font-semibold text-gray-800">{data.instituteName}</p>
+// Helper for Academic Card
+const AcademicInfoCard = ({ data }) => {
+    if (!data) return null;
+    return (
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
+            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-purple-500 rounded-full"></span>
+                Academic Details
+            </h3>
+            <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Institute</p>
+                        <p className="text-sm font-semibold text-gray-800">{data.instituteName}</p>
+                    </div>
+                    <div className="p-2 bg-white rounded-lg text-purple-600">
+                        <Shield size={18} />
+                    </div>
                 </div>
-                <div className="p-2 bg-white rounded-lg text-purple-600">
-                    <Shield size={18} />
-                </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border border-gray-100 rounded-xl">
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">Stream</p>
-                    <p className="text-sm font-bold text-gray-800">{data.stream}</p>
-                </div>
-                <div className="p-3 border border-gray-100 rounded-xl">
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">Medium</p>
-                    <p className="text-sm font-bold text-gray-800">{data.medium}</p>
-                </div>
-                <div className="p-3 border border-gray-100 rounded-xl">
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">House</p>
-                    <p className="text-sm font-bold text-gray-800">{data.house}</p>
-                </div>
-                <div className="p-3 border border-gray-100 rounded-xl">
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">Since</p>
-                    <p className="text-sm font-bold text-gray-800">{new Date(data.admissionDate).getFullYear()}</p>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border border-gray-100 rounded-xl">
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Stream</p>
+                        <p className="text-sm font-bold text-gray-800">{data.stream}</p>
+                    </div>
+                    <div className="p-3 border border-gray-100 rounded-xl">
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Medium</p>
+                        <p className="text-sm font-bold text-gray-800">{data.medium}</p>
+                    </div>
+                    <div className="p-3 border border-gray-100 rounded-xl">
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">House</p>
+                        <p className="text-sm font-bold text-gray-800">{data.house}</p>
+                    </div>
+                    <div className="p-3 border border-gray-100 rounded-xl">
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Since</p>
+                        <p className="text-sm font-bold text-gray-800">{data.admissionDate ? new Date(data.admissionDate).getFullYear() : 'N/A'}</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 // Helper for Parent Card
-const ParentInfoCard = ({ data }) => (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
-        <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span className="w-1 h-5 bg-emerald-500 rounded-full"></span>
-            Parent / Guardian
-        </h3>
-        <div className="space-y-4">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
-                    {data.fatherName.charAt(0)}
+const ParentInfoCard = ({ data }) => {
+    if (!data) return null;
+    return (
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
+            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-emerald-500 rounded-full"></span>
+                Parent / Guardian
+            </h3>
+            <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
+                        {data.fatherName?.charAt(0)}
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-gray-900">{data.fatherName}</p>
+                        <p className="text-xs text-gray-500">Father • {data.guardianContact}</p>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-sm font-bold text-gray-900">{data.fatherName}</p>
-                    <p className="text-xs text-gray-500">Father • {data.guardianContact}</p>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
+                        {data.motherName?.charAt(0)}
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-gray-900">{data.motherName}</p>
+                        <p className="text-xs text-gray-500">Mother</p>
+                    </div>
                 </div>
+                {data.linkedAccount && (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-emerald-50/50 rounded-lg border border-emerald-100 text-xs text-emerald-800 font-medium">
+                        <Shield size={12} />
+                        Parent Account Linked
+                    </div>
+                )}
             </div>
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
-                    {data.motherName.charAt(0)}
-                </div>
-                <div>
-                    <p className="text-sm font-bold text-gray-900">{data.motherName}</p>
-                    <p className="text-xs text-gray-500">Mother</p>
-                </div>
-            </div>
-            {data.linkedAccount && (
-                <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-emerald-50/50 rounded-lg border border-emerald-100 text-xs text-emerald-800 font-medium">
-                    <Shield size={12} />
-                    Parent Account Linked
-                </div>
-            )}
         </div>
-    </div>
-);
+    );
+};
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState(null);
+    const data = useStudentStore(state => state.profile);
+    const [loading, setLoading] = useState(false);
 
     // Initial Load & Smooth Scroll
     useEffect(() => {
@@ -110,12 +115,6 @@ const ProfilePage = () => {
             requestAnimationFrame(raf);
         }
         requestAnimationFrame(raf);
-
-        // Simulate Fetch
-        setTimeout(() => {
-            setData(profileData);
-            setLoading(false);
-        }, 600);
 
         return () => lenis.destroy();
     }, []);

@@ -4,58 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Info, Calendar, Book, Award, HeadphonesIcon, Download, ChevronDown, ChevronUp, AlertOctagon, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FeeSummaryCard from '../components/fees/FeeSummaryCard';
-
-// MOCK DATA for Fee Structure
-// Status: Paid, Partial, Overdue, Due
-const MOCK_FEES = {
-    summary: {
-        total: 125000,
-        paid: 75000,
-        pending: 50000,
-        nextDue: '2023-11-15'
-    },
-    breakdown: [
-        {
-            id: 1,
-            head: 'Tuition Fee',
-            total: 80000,
-            paid: 40000,
-            pending: 40000,
-            status: 'Partial',
-            installments: [
-                { term: 'Term 1', amount: 40000, due: '2023-04-10', status: 'Paid', mode: 'Bank Transfer' },
-                { term: 'Term 2', amount: 40000, due: '2023-10-10', status: 'Overdue', mode: null }
-            ]
-        },
-        {
-            id: 2,
-            head: 'Annual Charges',
-            total: 25000,
-            paid: 25000,
-            pending: 0,
-            status: 'Paid',
-            installments: [
-                { term: 'Annual', amount: 25000, due: '2023-04-10', status: 'Paid', mode: 'Online' }
-            ]
-        },
-        {
-            id: 3,
-            head: 'Transport Fee',
-            total: 20000,
-            paid: 10000,
-            pending: 10000,
-            status: 'Due',
-            installments: [
-                { term: 'Term 1', amount: 10000, due: '2023-04-10', status: 'Paid', mode: 'Cheque' },
-                { term: 'Term 2', amount: 10000, due: '2023-10-10', status: 'Due', mode: null }
-            ]
-        }
-    ],
-    receipts: [
-        { id: 'REC-101', date: '2023-04-15', amount: 65000, mode: 'Online Transfer' },
-        { id: 'REC-102', date: '2023-04-12', amount: 10000, mode: 'Cheque' }
-    ]
-};
+import { useParentStore } from '../../../store/parentStore';
 
 const ParentFeesPage = () => {
     const navigate = useNavigate();
@@ -63,6 +12,8 @@ const ParentFeesPage = () => {
     const state = location.state || {};
     const { childId, highlightPendingFee, tab: initialTab } = state;
     const pendingRef = useRef(null);
+
+    const fees = useParentStore(state => state.fees);
 
     const [activeTab, setActiveTab] = useState(initialTab === 'history' ? 'Receipts' : 'Structure');
     const [expandedFeeId, setExpandedFeeId] = useState(null);
@@ -72,7 +23,6 @@ const ParentFeesPage = () => {
     useEffect(() => {
         if (!childId) {
             console.warn("No childId provided, redirected in prod.");
-            // navigate('/parent/dashboard');
         }
 
         if (highlightPendingFee && pendingRef.current) {
@@ -80,7 +30,7 @@ const ParentFeesPage = () => {
                 pendingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightPendingFee, navigate]);
+    }, [childId, highlightPendingFee]);
 
     // Handlers
     const handleBack = () => navigate(-1);
@@ -97,7 +47,7 @@ const ParentFeesPage = () => {
         navigate('/parent/support', { state: { childId, issueType: 'fees' } });
     };
 
-    const isOverdue = MOCK_FEES.summary.pending > 0;
+    const isOverdue = fees.summary.pending > 0;
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-24">
@@ -120,7 +70,7 @@ const ParentFeesPage = () => {
             <main className="max-w-md mx-auto p-4 space-y-6">
 
                 {/* 2. Summary Card */}
-                <FeeSummaryCard summary={MOCK_FEES.summary} />
+                <FeeSummaryCard summary={fees.summary} />
 
                 {/* 6. Overdue Warning */}
                 {isOverdue && (
@@ -129,7 +79,7 @@ const ParentFeesPage = () => {
                         <div className="flex-1">
                             <h3 className="text-sm font-bold text-gray-900">Payment Due</h3>
                             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                                You have pending dues of ₹{MOCK_FEES.summary.pending.toLocaleString()}. Please clear them by {MOCK_FEES.summary.nextDue} to avoid late charges.
+                                You have pending dues of ₹{fees.summary.pending.toLocaleString()}. Please clear them by {fees.summary.nextDue} to avoid late charges.
                             </p>
                             <button
                                 onClick={handleSupportClick}
@@ -158,7 +108,7 @@ const ParentFeesPage = () => {
                 {/* 3. Fee Breakdown */}
                 {activeTab === 'Structure' && (
                     <div className="space-y-3">
-                        {MOCK_FEES.breakdown.map(fee => (
+                        {fees.breakdown.map(fee => (
                             <div key={fee.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm transition-all">
                                 <div
                                     onClick={() => toggleExpand(fee.id)}
@@ -170,7 +120,7 @@ const ParentFeesPage = () => {
                                     </div>
                                     <div className="text-right">
                                         <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase mb-1 ${fee.status === 'Paid' ? 'bg-green-50 text-green-700' :
-                                                fee.status === 'Overdue' ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'
+                                            fee.status === 'Overdue' ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'
                                             }`}>
                                             {fee.status}
                                         </span>
@@ -211,8 +161,8 @@ const ParentFeesPage = () => {
                 {/* 5. Receipts */}
                 {activeTab === 'Receipts' && (
                     <div className="space-y-3">
-                        {MOCK_FEES.receipts.length > 0 ? (
-                            MOCK_FEES.receipts.map(rec => (
+                        {fees.receipts.length > 0 ? (
+                            fees.receipts.map(rec => (
                                 <div key={rec.id} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-green-50 text-green-600 rounded-lg">

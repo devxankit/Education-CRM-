@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CreditCard, Clock, FileText, Activity } from 'lucide-react';
 
@@ -13,20 +13,43 @@ const StudentProfile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('academic');
+    const [student, setStudent] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Fetch
-    const student = {
-        id: id,
-        name: 'Rahul Sharma',
-        admissionNo: 'ADM-2024-1005',
-        class: '10',
-        section: 'A',
-        rollNo: '24',
-        gender: 'Male',
-        age: 15,
-        parentMobile: '+91 98765 43210',
-        address: '#42, Palm Avenue, Green City'
-    };
+    // Fetch student data based on ID
+    useEffect(() => {
+        const fetchStudentById = async () => {
+            setLoading(true);
+            try {
+                // TODO: Replace with actual API call when backend is ready
+                // const response = await api.get(`/students/${id}`);
+                // setStudent(response.data);
+
+                // Mock data for now - will be replaced by API response
+                const mockStudent = {
+                    id: id,
+                    name: 'Rahul Sharma',
+                    admissionNo: 'ADM-2024-1005',
+                    class: '10',
+                    section: 'A',
+                    rollNo: '24',
+                    gender: 'Male',
+                    age: 15,
+                    parentMobile: '+91 98765 43210',
+                    address: '#42, Palm Avenue, Green City'
+                };
+                setStudent(mockStudent);
+            } catch (error) {
+                console.error('Error fetching student:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchStudentById();
+        }
+    }, [id]);
 
     const tabs = [
         { id: 'academic', label: 'Academic & Attendance', icon: BookOpen },
@@ -34,6 +57,30 @@ const StudentProfile = () => {
         { id: 'documents', label: 'Documents', icon: FileText },
         { id: 'activity', label: 'Activity Log', icon: Activity },
     ];
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="text-gray-500">Loading student profile...</div>
+            </div>
+        );
+    }
+
+    // No student found
+    if (!student) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center">
+                <div className="text-gray-500 mb-4">Student not found</div>
+                <button
+                    onClick={() => navigate('/admin/people/students')}
+                    className="text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                    Back to Student List
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col pb-6">

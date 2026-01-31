@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Settings, Printer, Lock, Download } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
 
 import FeeStructureList from './components/fee-structures/FeeStructureList';
 import FeeStructureForm from './components/fee-structures/FeeStructureForm';
@@ -9,55 +10,18 @@ import InstallmentScheduler from './components/fee-structures/InstallmentSchedul
 import FeeStructureStatusBadge from './components/fee-structures/FeeStructureStatusBadge';
 
 const FeeStructures = () => {
-
-    // Mock Data
-    const [structures, setStructures] = useState([
-        {
-            id: 1,
-            name: 'Class 10 Annual Fee',
-            academicYear: '2025-26',
-            classOrProgram: 'Class 10',
-            branch: 'Main Campus',
-            status: 'active',
-            totalAmount: 45000,
-            components: [
-                { id: 101, name: 'Tuition Fee', amount: 30000, frequency: 'Term', isMandatory: true },
-                { id: 102, name: 'Lab Charges', amount: 5000, frequency: 'Annual', isMandatory: true },
-                { id: 103, name: 'Development Fund', amount: 10000, frequency: 'Annual', isMandatory: true },
-            ],
-            installments: [
-                { id: 1, name: 'Term 1', dueDate: '2025-04-10', amount: 22500 },
-                { id: 2, name: 'Term 2', dueDate: '2025-10-10', amount: 22500 },
-            ]
-        },
-        {
-            id: 2,
-            name: 'B.Tech CS First Year',
-            academicYear: '2025-26',
-            classOrProgram: 'B.Tech CS',
-            branch: 'Main Campus',
-            status: 'draft',
-            totalAmount: 120000,
-            components: [
-                { id: 201, name: 'Tuition Fee', amount: 80000, frequency: 'Semester', isMandatory: true },
-                { id: 202, name: 'University Fee', amount: 15000, frequency: 'Annual', isMandatory: true },
-                { id: 203, name: 'Hostel Security', amount: 25000, frequency: 'One-time', isMandatory: false },
-            ],
-            installments: [
-                { id: 1, name: 'Semester 1', dueDate: '2025-08-01', amount: 60000 },
-                { id: 2, name: 'Semester 2', dueDate: '2026-01-01', amount: 60000 },
-            ]
-        }
-    ]);
+    const feeStructures = useAdminStore(state => state.feeStructures);
+    const addFeeStructure = useAdminStore(state => state.addFeeStructure);
+    const updateFeeStructure = useAdminStore(state => state.updateFeeStructure);
 
     const [selectedId, setSelectedId] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
     const [filter, setFilter] = useState({ year: '', status: '' });
 
     // Derived
-    const selectedStructure = structures.find(s => s.id === selectedId);
+    const selectedStructure = feeStructures.find(s => s.id === selectedId);
 
-    const filteredStructures = structures.filter(s => {
+    const filteredStructures = feeStructures.filter(s => {
         if (filter.year && s.academicYear !== filter.year) return false;
         if (filter.status && s.status !== filter.status) return false;
         return true;
@@ -65,14 +29,11 @@ const FeeStructures = () => {
 
     // Handlers
     const handleCreate = (data) => {
-        const newStructure = {
-            id: Date.now(),
+        addFeeStructure({
             ...data,
             status: 'draft'
-        };
-        setStructures(prev => [newStructure, ...prev]);
+        });
         setIsCreating(false);
-        setSelectedId(newStructure.id);
     };
 
     const handleFilterChange = (key, value) => {
@@ -82,7 +43,7 @@ const FeeStructures = () => {
     const handleLock = () => {
         if (!selectedStructure) return;
         if (window.confirm("Locking this fee structure makes it Active and Immutable. Continue?")) {
-            setStructures(prev => prev.map(s => s.id === selectedId ? { ...s, status: 'active' } : s));
+            updateFeeStructure(selectedId, { status: 'active' });
         }
     };
 

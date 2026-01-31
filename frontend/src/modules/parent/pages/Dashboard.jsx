@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_PARENT_DATA } from '../data/mockData';
+import { useParentStore } from '../../../store/parentStore';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import ChildSelector from '../components/dashboard/ChildSelector';
 import ChildOverviewCard from '../components/dashboard/ChildOverviewCard';
@@ -15,21 +15,22 @@ import { Calendar, BookOpen, FileText, CreditCard, HeadphonesIcon } from 'lucide
 const ParentDashboard = () => {
     const navigate = useNavigate();
 
-    // 1. Initialize State with Persistence
-    const [selectedChildId, setSelectedChildId] = useState(() => {
-        return localStorage.getItem('selectedChildId') || MOCK_PARENT_DATA.children[0]?.id;
-    });
+    // Store Selectors
+    const user = useParentStore(state => state.user);
+    const children = useParentStore(state => state.children);
+    const selectedChildId = useParentStore(state => state.selectedChildId);
+    const setSelectedChildId = useParentStore(state => state.setSelectedChild);
+
     const [isLoading, setIsLoading] = useState(true);
 
-    const activeChild = MOCK_PARENT_DATA.children.find(c => c.id === selectedChildId) || MOCK_PARENT_DATA.children[0];
+    const activeChild = children.find(c => c.id === selectedChildId) || children[0];
 
-    // 2. Persist Selection
+    // Persist Selection logic handled by store now, but we keep the handler for UI
     const handleChildSelect = (id) => {
         setSelectedChildId(id);
-        localStorage.setItem('selectedChildId', id);
     };
 
-    // 3. Navigation Handlers
+    // Navigation Handlers
     const handleNotificationClick = () => {
         navigate('/parent/notices', { state: { childId: selectedChildId, filter: 'unread' } });
     };
@@ -52,10 +53,9 @@ const ParentDashboard = () => {
                 navigate('/parent/fees', { state: { ...state, highlightPendingFee: true } });
                 break;
             case 'exam':
-                navigate('/parent/exams', { state: { ...state, highlightLatestResult: true } }); // Mapped to exams route
+                navigate('/parent/exams', { state: { ...state, highlightLatestResult: true } });
                 break;
             default:
-                // Fallback for general alerts or notices
                 navigate('/parent/notices', { state: { ...state, highlightId: alert.id } });
         }
     };
@@ -68,7 +68,6 @@ const ParentDashboard = () => {
     };
 
     const handleFeesClick = (action) => {
-        // action: 'pay' | 'receipts'
         navigate('/parent/fees', {
             state: {
                 childId: selectedChildId,
@@ -82,7 +81,7 @@ const ParentDashboard = () => {
     };
 
     useEffect(() => {
-        setTimeout(() => setIsLoading(false), 800);
+        setTimeout(() => setIsLoading(false), 500);
     }, [selectedChildId]);
 
     useEffect(() => {
@@ -103,15 +102,15 @@ const ParentDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50/50 pb-28">
             <DashboardHeader
-                parentName={MOCK_PARENT_DATA.user.name}
+                parentName={user.name}
                 onNotificationClick={handleNotificationClick}
             />
 
             {/* Child Selector */}
-            {MOCK_PARENT_DATA.children.length > 1 && (
+            {children.length > 1 && (
                 <div className="dashboard-item">
                     <ChildSelector
-                        children={MOCK_PARENT_DATA.children}
+                        children={children}
                         selectedChildId={selectedChildId}
                         onSelect={handleChildSelect}
                     />

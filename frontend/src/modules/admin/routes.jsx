@@ -4,8 +4,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
 
 // Pages
+import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
-import PlaceholderPage from './pages/PlaceholderPage';
 
 
 // Institution Pages
@@ -27,6 +27,7 @@ import FeeStructures from './pages/finance/FeeStructures';
 import FeePolicies from './pages/finance/FeePolicies';
 import PayrollRules from './pages/finance/PayrollRules';
 import ExpenseCategories from './pages/finance/ExpenseCategories';
+import Taxes from './pages/finance/Taxes';
 
 // Academic Management Pages
 import ClassesSections from './pages/academics/ClassesSections';
@@ -49,11 +50,12 @@ import AssetsMaster from './pages/operations/AssetsMaster';
 import Employees from './pages/people/employees/Employees';
 import Teachers from './pages/people/teachers/Teachers';
 import Parents from './pages/people/parents/Parents';
-import Departments from './pages/people/departments/Departments'; // New Import
+import Departments from './pages/people/departments/Departments';
 import StudentList from './pages/people/students/StudentList';
 import StudentAdmission from './pages/people/students/admission/StudentAdmission';
 import StudentProfile from './pages/people/students/profile/StudentProfile';
-import EmploymentTypes from './pages/people/employment-types/EmploymentTypes'; // New Import
+import EmploymentTypes from './pages/people/employment-types/EmploymentTypes';
+import BulkImport from './pages/people/bulk-import/BulkImport';
 import Notices from './pages/communication/notices/Notices';
 import Announcements from './pages/communication/announcements/Announcements';
 import MessageTemplates from './pages/communication/templates/MessageTemplates';
@@ -69,7 +71,11 @@ import AppConfiguration from './pages/settings/app-configuration/AppConfiguratio
 import Integrations from './pages/settings/integrations/Integrations';
 import BackupsRecovery from './pages/settings/backups/BackupsRecovery';
 import RequiredDocumentsRules from './pages/compliance/required-documents/RequiredDocumentsRules';
+import DocumentRulesCompliance from './pages/compliance/document-rules/DocumentRulesCompliance';
 import UserActivityAudit from './pages/audit/user-activity/UserActivityAudit';
+import FinancialAudit from './pages/audit/financial/FinancialAudit';
+import DataHistory from './pages/audit/data-history/DataHistory';
+import SecurityAudit from './pages/audit/security/SecurityAudit';
 import VerificationPolicies from './pages/compliance/verification-policies/VerificationPolicies';
 import Checklists from './pages/compliance/checklists/Checklists';
 
@@ -81,6 +87,7 @@ const adminRoutes = [
         path: 'admin',
         element: <OutletWrapper />,
         children: [
+            { path: 'login', element: <Login /> },
             // Protected Routes
             {
                 element: <AdminLayout />,
@@ -128,14 +135,14 @@ const adminRoutes = [
                     { path: 'people/employment-types', element: <EmploymentTypes /> }, // New Route
                     { path: 'people/parents', element: <Parents /> },
                     { path: 'people/departments', element: <Departments /> }, // New Route
-                    { path: 'people/bulk-import', element: <PlaceholderPage /> },
+                    { path: 'people/bulk-import', element: <BulkImport /> },
 
                     // 6. Finance Management
                     { path: 'finance/fee-structures', element: <FeeStructures /> },
                     { path: 'finance/fee-policies', element: <FeePolicies /> },
                     { path: 'finance/payroll-rules', element: <PayrollRules /> },
                     { path: 'finance/expense-categories', element: <ExpenseCategories /> },
-                    { path: 'finance/taxes', element: <PlaceholderPage /> },
+                    { path: 'finance/taxes', element: <Taxes /> },
 
                     // 7. Operations Management
                     { path: 'operations/admissions-rules', element: <AdmissionRules /> },
@@ -151,7 +158,7 @@ const adminRoutes = [
 
                     // 8. Documents & Compliance (Renamed from 'documents')
                     { path: 'compliance/required-documents', element: <RequiredDocumentsRules /> },
-                    { path: 'compliance/document-rules', element: <PlaceholderPage /> },
+                    { path: 'compliance/document-rules', element: <DocumentRulesCompliance /> },
                     { path: 'compliance/verification-policies', element: <VerificationPolicies /> },
                     { path: 'compliance/certificate-templates', element: <CertificateTemplates /> },
                     { path: 'compliance/checklists', element: <Checklists /> },
@@ -177,9 +184,9 @@ const adminRoutes = [
 
                     // 12. Security & Audit Logs (Renamed from 'security')
                     { path: 'audit/user-activity', element: <UserActivityAudit /> },
-                    { path: 'audit/financial', element: <PlaceholderPage /> },
-                    { path: 'audit/data-history', element: <PlaceholderPage /> },
-                    { path: 'audit/security', element: <PlaceholderPage /> },
+                    { path: 'audit/financial', element: <FinancialAudit /> },
+                    { path: 'audit/data-history', element: <DataHistory /> },
+                    { path: 'audit/security', element: <SecurityAudit /> },
 
                     { path: '*', element: <Navigate to="/admin/dashboard" replace /> }
                 ]

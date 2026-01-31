@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, CheckSquare } from 'lucide-react';
@@ -11,17 +11,18 @@ import HomeworkDetail from '../components/Homework/HomeworkDetail';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 import EmptyState from '../components/Attendance/EmptyState';
 
-// Data
-import { homeworkData, homeworkStats } from '../data/homeworkData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const TABS = ['All', 'Pending', 'Submitted', 'Overdue'];
 
 const HomeworkPage = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState([]);
+
+    const data = useStudentStore(state => state.homeworkList);
     const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('Pending');
     const [selectedHomework, setSelectedHomework] = useState(null);
 
@@ -42,17 +43,37 @@ const HomeworkPage = () => {
         }
         requestAnimationFrame(raf);
 
-        // Simulate Fetch
-        setTimeout(() => {
-            setData(homeworkData);
-            setStats(homeworkStats);
-            setLoading(false);
-        }, 800);
+        // Map stats from data
+        const newStats = {
+            All: data.length,
+            Pending: data.filter(h => h.status === 'Pending').length,
+            Submitted: data.filter(h => h.status === 'Submitted' || h.status === 'Checked').length,
+            Overdue: data.filter(h => h.status === 'Overdue' || h.status === 'Late').length
+        };
+        setStats(newStats);
 
         return () => lenis.destroy();
-    }, []);
+    }, [data]);
 
-    // Filter Logic
+    // Update selected homework if ID changes
+    useEffect(() => {
+        if (id && data.length > 0) {
+            const hw = data.find(item => item.id === id);
+            if (hw) {
+                setSelectedHomework(hw);
+            }
+        } else if (!id) {
+            setSelectedHomework(null);
+        }
+    }, [id, data]);
+
+    const handleHomeworkClick = (hw) => {
+        navigate(`${hw.id}`);
+    };
+
+    const handleCloseDetail = () => {
+        navigate('..', { relative: 'path' });
+    };
     const filteredData = data.filter(item => {
         if (activeTab === 'All') return true;
         if (activeTab === 'Pending') return item.status === 'Pending';
@@ -123,7 +144,7 @@ const HomeworkPage = () => {
                                             key={hw.id}
                                             homework={hw}
                                             index={index}
-                                            onClick={setSelectedHomework}
+                                            onClick={handleHomeworkClick}
                                         />
                                     ))
                                 ) : (
@@ -142,18 +163,8 @@ const HomeworkPage = () => {
                 {selectedHomework && (
                     <HomeworkDetail
                         homework={selectedHomework}
-                        onClose={() => setSelectedHomework(null)}
-                        onRefresh={() => {
-                            // Mock Refresh - update status locally for demo
-                            const newData = data.map(d =>
-                                d.id === selectedHomework.id
-                                    ? { ...d, status: 'Submitted', submission: { date: new Date().toISOString(), files: [{ name: 'Uploaded_File.pdf' }] } }
-                                    : d
-                            );
-                            setData(newData);
-                            // Update stats mock
-                            setStats(prev => ({ ...prev, pending: prev.pending - 1, submitted: prev.submitted + 1 }));
-                        }}
+                        onClose={handleCloseDetail}
+                        onRefresh={() => { }} // No-op as store is reactive
                     />
                 )}
             </AnimatePresence>

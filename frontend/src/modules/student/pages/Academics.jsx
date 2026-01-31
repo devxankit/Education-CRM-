@@ -6,12 +6,13 @@ import ClassInfoCard from '../components/Academics/ClassInfoCard';
 import TimetableSection from '../components/Academics/TimetableSection';
 import SubjectsGrid from '../components/Academics/SubjectsGrid';
 
-// Mock Data
-import { classInfo, subjects, timetable } from '../data/academicsData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const Academics = () => {
     const navigate = useNavigate();
+    const data = useStudentStore(state => state.academics);
     const [activeDay, setActiveDay] = useState(new Date().toLocaleDateString('en-US', { weekday: 'short' })); // Default to today
+    const [loading, setLoading] = useState(false);
 
     // Fallback if today is Sunday -> Mon
     useEffect(() => {
@@ -36,13 +37,21 @@ const Academics = () => {
         return () => lenis.destroy();
     }, []);
 
+    if (loading || !data) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50/50 pb-24">
             <PageHeader title="Academics" />
 
             <main className="px-4 pt-4 max-w-md mx-auto">
                 {/* Class Info */}
-                <ClassInfoCard info={classInfo} />
+                <ClassInfoCard info={data.classInfo} />
 
                 {/* Contextual Attendance Link */}
                 <div className="mb-6 flex justify-end">
@@ -56,13 +65,13 @@ const Academics = () => {
 
                 {/* Timetable */}
                 <TimetableSection
-                    timetable={timetable}
+                    timetable={data.timetable}
                     activeDay={activeDay}
                     setActiveDay={setActiveDay}
                 />
 
                 {/* Subjects */}
-                <SubjectsGrid subjects={subjects} />
+                <SubjectsGrid subjects={data.subjects} />
             </main>
 
             {/* Navigation */}

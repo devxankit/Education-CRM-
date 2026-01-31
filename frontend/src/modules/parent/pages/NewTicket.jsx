@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Send, Paperclip, X } from 'lucide-react';
+import { useParentStore } from '../../../store/parentStore';
 
 const NewTicketPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const state = location.state || {};
+    const addTicket = useParentStore(state => state.addTicket);
 
     // Auto-fill form based on source context
     const [formData, setFormData] = useState({
@@ -21,10 +22,12 @@ const NewTicketPage = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API call
+
+        addTicket(formData);
+
         setTimeout(() => {
             navigate('/parent/support');
-        }, 1500);
+        }, 800);
     };
 
     return (
@@ -48,8 +51,8 @@ const NewTicketPage = () => {
                                     key={cat}
                                     onClick={() => setFormData(p => ({ ...p, category: cat }))}
                                     className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all ${formData.category === cat
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
                                         }`}
                                 >
                                     {cat}

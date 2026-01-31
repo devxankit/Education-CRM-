@@ -5,39 +5,7 @@ import { ChevronLeft, Info, Calendar, Book, Award, HeadphonesIcon, TrendingUp, C
 import { motion, AnimatePresence } from 'framer-motion';
 import ResultCard from '../components/exams/ResultCard';
 
-// MOCK DATA
-const MOCK_EXAMS = [
-    {
-        id: 1,
-        title: 'Mid-Term Examination',
-        type: 'Mid-Term',
-        date: 'Oct 2023',
-        status: 'Passed',
-        overall: '85%',
-        grade: 'A',
-        isLatest: true
-    },
-    {
-        id: 2,
-        title: 'Unit Test 1',
-        type: 'Unit Test',
-        date: 'Aug 2023',
-        status: 'Passed',
-        overall: '78%',
-        grade: 'B+',
-        isLatest: false
-    },
-    {
-        id: 3,
-        title: 'Unit Test 2',
-        type: 'Unit Test',
-        date: 'Sep 2023',
-        status: 'Needs Improvement',
-        overall: '60%',
-        grade: 'C',
-        isLatest: false
-    }
-];
+import { useParentStore } from '../../../store/parentStore';
 
 const ParentExamsPage = () => {
     const navigate = useNavigate();
@@ -46,6 +14,7 @@ const ParentExamsPage = () => {
     const { childId, highlightLatestResult } = state;
     const latestExamRef = useRef(null);
 
+    const exams = useParentStore(state => state.exams);
     const [activeTab, setActiveTab] = useState('All');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
@@ -75,7 +44,7 @@ const ParentExamsPage = () => {
     };
 
     // Filter Logic
-    const filteredExams = MOCK_EXAMS.filter(exam => {
+    const filteredExams = exams.filter(exam => {
         if (activeTab === 'All') return true;
         return exam.type === activeTab;
     });

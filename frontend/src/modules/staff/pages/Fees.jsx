@@ -1,49 +1,24 @@
+
 import React, { useState } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
-import { Search, Filter, AlertCircle, FileText, CheckCircle, ChevronDown, ChevronRight, X, ArrowLeft, Wallet } from 'lucide-react';
-
-const MOCK_FEES_DATA = [
-    {
-        id: '1', studentId: 'ST-001', name: 'Aarav Gupta', class: '10-A',
-        totalDue: 125000, paid: 75000, pending: 50000, status: 'Partial',
-        installments: [
-            { id: 1, title: 'Term 1 Fee', amount: 45000, dueDate: '2024-04-10', status: 'Paid', receipt: 'REC-101' },
-            { id: 2, title: 'Term 2 Fee', amount: 40000, dueDate: '2024-08-10', status: 'Paid', receipt: 'REC-205' },
-            { id: 3, title: 'Term 3 Fee', amount: 40000, dueDate: '2024-12-10', status: 'Due' },
-        ]
-    },
-    {
-        id: '2', studentId: 'ST-002', name: 'Zara Khan', class: '8-B',
-        totalDue: 90000, paid: 90000, pending: 0, status: 'Paid',
-        installments: [
-            { id: 1, title: 'Annual Fee', amount: 90000, dueDate: '2024-04-10', status: 'Paid', receipt: 'REC-098' }
-        ]
-    },
-    {
-        id: '3', studentId: 'ST-003', name: 'Rohan Verma', class: '12-C',
-        totalDue: 150000, paid: 50000, pending: 100000, status: 'Overdue',
-        installments: [
-            { id: 1, title: 'Term 1 Fee', amount: 50000, dueDate: '2024-04-10', status: 'Paid', receipt: 'REC-110' },
-            { id: 2, title: 'Term 2 Fee', amount: 50000, dueDate: '2024-08-10', status: 'Overdue' },
-            { id: 3, title: 'Term 3 Fee', amount: 50000, dueDate: '2024-12-10', status: 'Due' },
-        ]
-    }
-];
+import { Search, Filter, AlertCircle, CheckCircle, ChevronRight, CreditCard, Clock, Download, ArrowLeft, Wallet, FileText } from 'lucide-react';
+import { useStaffStore } from '../../../store/staffStore';
 
 const Fees = () => {
     const { user } = useStaffAuth();
-    const canEdit = user?.role === STAFF_ROLES.ACCOUNTS;
+    const students = useStaffStore(state => state.students);
+    const canEdit = user?.role === STAFF_ROLES.ACCOUNTS || user?.role === STAFF_ROLES.ADMIN;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [selectedStudent, setSelectedStudent] = useState(null);
 
     // Filter Logic
-    const filteredFees = MOCK_FEES_DATA.filter(student => {
+    const filteredFees = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'All' || student.status === filterStatus;
+            student.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = filterStatus === 'All' || student.feeStatus === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
@@ -58,19 +33,13 @@ const Fees = () => {
     };
 
     return (
-        <div className="max-w-md mx-auto pb-24 md:pb-6 relative min-h-screen">
-
+        <div className="max-w-md mx-auto pb-24 md:pb-6 relative min-h-screen p-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">Fees</h1>
                     <p className="text-xs text-gray-500">Collection Management</p>
                 </div>
-                {canEdit && (
-                    <div className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-indigo-100 flex items-center gap-1.5">
-                        <Wallet size={12} /> Pending: ₹1.5L
-                    </div>
-                )}
             </div>
 
             {/* Compact Search & Filter */}
@@ -115,17 +84,17 @@ const Fees = () => {
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900">{student.name}</h3>
-                                <p className="text-[10px] text-gray-500">{student.studentId} • {student.class}</p>
-                                <div className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${getStatusColor(student.status)}`}>
-                                    {student.status}
+                                <p className="text-[10px] text-gray-500">{student.id} • {student.class}</p>
+                                <div className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${getStatusColor(student.feeStatus)}`}>
+                                    {student.feeStatus}
                                 </div>
                             </div>
                         </div>
 
                         <div className="text-right">
                             <p className="text-[10px] text-gray-400 font-medium uppercase mb-0.5">Pending</p>
-                            <p className={`text-sm font-bold ${student.pending > 0 ? 'text-gray-900' : 'text-emerald-600'}`}>
-                                ₹{student.pending.toLocaleString()}
+                            <p className={`text-sm font-bold ${student.fees?.pending > 0 ? 'text-gray-900' : 'text-emerald-600'}`}>
+                                ₹{(student.fees?.pending || 0).toLocaleString()}
                             </p>
                             <ChevronRight size={16} className="text-gray-300 ml-auto mt-1" />
                         </div>
@@ -163,7 +132,7 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
                 </button>
                 <div className="flex-1">
                     <h2 className="text-base font-bold text-gray-900 leading-none">{student.name}</h2>
-                    <p className="text-xs text-gray-500 mt-0.5">{student.studentId}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{student.id}</p>
                 </div>
                 <div className={`text-xs font-bold px-2 py-1 rounded bg-gray-100`}>
                     {student.class}
@@ -175,19 +144,19 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
                 {/* Summary Card */}
                 <div className="bg-slate-900 text-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-200">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Outstanding</p>
-                    <h1 className="text-3xl font-bold mb-4">₹{student.pending.toLocaleString()}</h1>
+                    <h1 className="text-3xl font-bold mb-4">₹{(student.fees?.pending || 0).toLocaleString()}</h1>
 
                     <div className="space-y-2">
                         <div className="flex justify-between text-xs text-slate-300">
                             <span>Paid</span>
-                            <span className="text-emerald-400 font-bold">₹{student.paid.toLocaleString()}</span>
+                            <span className="text-emerald-400 font-bold">₹{(student.fees?.paid || 0).toLocaleString()}</span>
                         </div>
                         <div className="w-full bg-white/10 rounded-full h-1.5">
-                            <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: `${(student.paid / student.totalDue) * 100}%` }}></div>
+                            <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: `${((student.fees?.paid || 0) / (student.fees?.total || 1)) * 100}%` }}></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-slate-500">
                             <span>0%</span>
-                            <span>Total Due: ₹{student.totalDue.toLocaleString()}</span>
+                            <span>Total Due: ₹{(student.fees?.total || 0).toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -195,16 +164,16 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
                 {/* Installments List */}
                 <h3 className="text-sm font-bold text-gray-900 mb-3 ml-1">Installments</h3>
                 <div className="space-y-3">
-                    {student.installments.map((inst) => (
+                    {student.installments?.map((inst) => (
                         <InstallmentCard key={inst.id} installment={inst} canEdit={canEdit} />
                     ))}
                 </div>
             </div>
 
             {/* Bottom Action Bar (Context Aware) */}
-            {canEdit && student.pending > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
-                    <button className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+            {canEdit && (student.fees?.pending || 0) > 0 && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+                    <button onClick={() => alert('Collecting Fees Logic')} className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 transition-transform">
                         <Wallet size={18} /> Collect Fees
                     </button>
                 </div>
@@ -224,7 +193,7 @@ const InstallmentCard = ({ installment, canEdit }) => {
                     <h4 className={`font-bold text-sm ${isPaid ? 'text-gray-600' : 'text-gray-900'}`}>{installment.title}</h4>
                     <p className="text-[10px] text-gray-500">Due: {installment.dueDate}</p>
                 </div>
-                <span className={`text-sm font-bold ${isPaid ? 'text-emerald-600 decoration-emerald-600' : 'text-gray-900'}`}>
+                <span className={`text-sm font-bold ${isPaid ? 'text-emerald-600' : 'text-gray-900'}`}>
                     ₹{installment.amount.toLocaleString()}
                 </span>
             </div>
@@ -236,7 +205,7 @@ const InstallmentCard = ({ installment, canEdit }) => {
                     {installment.status}
                 </span>
 
-                {isPaid && (
+                {isPaid && installment.receipt && (
                     <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium bg-white px-2 py-0.5 rounded border border-gray-200">
                         <FileText size={10} /> {installment.receipt}
                     </div>
@@ -245,4 +214,5 @@ const InstallmentCard = ({ installment, canEdit }) => {
         </div>
     );
 };
+
 export default Fees;

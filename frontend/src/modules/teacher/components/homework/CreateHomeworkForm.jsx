@@ -1,9 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, UploadCloud, Calendar, FileText, Check, Trash2 } from 'lucide-react';
+import { useTeacherStore } from '../../../../store/teacherStore';
 
 const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
+    const addHomework = useTeacherStore(state => state.addHomework);
     const [selectedClassId, setSelectedClassId] = useState(null);
+    const [title, setTitle] = useState('');
+    const [instructions, setInstructions] = useState('');
     const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = useRef(null);
@@ -21,13 +25,35 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
     };
 
     const handlePublish = () => {
-        if (!selectedClassId) {
-            alert("Please select a class first.");
+        if (!selectedClassId || !title) {
+            alert("Please fill all required fields (Class and Title)");
             return;
         }
+        
+        const newHomework = {
+            id: `HW-${Date.now()}`,
+            title,
+            description: instructions,
+            class: classes.find(c => c.id === selectedClassId)?.name || selectedClassId,
+            subject: classes.find(c => c.id === selectedClassId)?.subject || '',
+            dueDate,
+            status: 'Active',
+            submissionCount: 0,
+            totalStudents: classes.find(c => c.id === selectedClassId)?.students || 0,
+            attachments: selectedFile ? [selectedFile.name] : []
+        };
+
+        console.log('Publishing:', newHomework);
+        addHomework(newHomework);
+
         // Mock API call simulation
         setTimeout(() => {
             alert("Homework Published Successfully!");
+            // Reset form
+            setTitle('');
+            setInstructions('');
+            setSelectedClassId(null);
+            setSelectedFile(null);
             onClose();
         }, 300);
     };
@@ -92,6 +118,8 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5 px-1">Assignment Title</label>
                         <input
                             type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
                             placeholder="e.g. Chapter 4 Exercises"
                             className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                         />
@@ -102,6 +130,8 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5 px-1">Instructions</label>
                         <textarea
                             rows={4}
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
                             placeholder="Detailed instructions for students..."
                             className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
                         ></textarea>

@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Upload, Save, CheckCircle } from 'lucide-react';
+import { useStaffStore } from '../../../store/staffStore';
 
 const NewAdmission = () => {
     const navigate = useNavigate();
+    const { studentId } = useParams();
+    const isEditMode = !!studentId;
+
+    const { students, addStudent, updateStudent } = useStaffStore(state => ({
+        students: state.students,
+        addStudent: state.addStudent,
+        updateStudent: state.updateStudent
+    }));
+
     const [loading, setLoading] = useState(false);
 
-    // Mock Form State
+    // Form State
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -20,6 +30,22 @@ const NewAdmission = () => {
         address: ''
     });
 
+    // Fetch data for edit mode
+    useEffect(() => {
+        if (isEditMode) {
+            const student = students.find(s => s.id === studentId);
+            if (student) {
+                const names = student.name ? student.name.split(' ') : ['', ''];
+                setFormData({
+                    ...student,
+                    firstName: names[0] || '',
+                    lastName: names.slice(1).join(' ') || '',
+                    phone: student.contact || '',
+                });
+            }
+        }
+    }, [isEditMode, studentId, students]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -27,24 +53,36 @@ const NewAdmission = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate API call
+
         setTimeout(() => {
+            const finalData = {
+                ...formData,
+                name: `${formData.firstName} ${formData.lastName}`,
+                contact: formData.phone
+            };
+
+            if (isEditMode) {
+                updateStudent(studentId, finalData);
+            } else {
+                addStudent(finalData);
+            }
+
             setLoading(false);
-            alert('Student Admission Created Successfully (Mock)');
+            alert(`Student record ${isEditMode ? 'updated' : 'created'} successfully!`);
             navigate('/staff/students');
-        }, 1500);
+        }, 1000);
     };
 
     return (
-        <div className="max-w-2xl mx-auto pb-20 md:pb-6 min-h-screen">
+        <div className="max-w-2xl mx-auto pb-20 md:pb-6 min-h-screen p-4">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <ArrowLeft size={20} className="text-gray-600" />
                 </button>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">New Admission</h1>
-                    <p className="text-xs text-gray-500">Enter student details</p>
+                    <h1 className="text-xl font-bold text-gray-900">{isEditMode ? 'Edit Admission' : 'New Admission'}</h1>
+                    <p className="text-xs text-gray-500">{isEditMode ? 'Update student records' : 'Enter student details'}</p>
                 </div>
             </div>
 
@@ -96,6 +134,10 @@ const NewAdmission = () => {
                                 <option>III</option>
                                 <option>IV</option>
                                 <option>V</option>
+                                <option>VI</option>
+                                <option>VII</option>
+                                <option>VIII</option>
+                                <option>IX</option>
                                 <option>X</option>
                                 <option>XI</option>
                                 <option>XII</option>
@@ -185,7 +227,7 @@ const NewAdmission = () => {
                     >
                         {loading ? 'Processing...' : (
                             <>
-                                <CheckCircle size={20} /> Submit Admission
+                                <CheckCircle size={20} /> {isEditMode ? 'Update Record' : 'Submit Admission'}
                             </>
                         )}
                     </button>

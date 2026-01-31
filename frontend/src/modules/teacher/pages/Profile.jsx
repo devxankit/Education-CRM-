@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { LogOut, HelpCircle, ShieldCheck } from 'lucide-react';
 import gsap from 'gsap';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 // Components
 import ProfileSummaryCard from '../components/profile/ProfileSummaryCard';
@@ -10,11 +11,29 @@ import AssignedSubjectsCard from '../components/profile/AssignedSubjectsCard';
 import SettingsCard from '../components/profile/SettingsCard';
 
 // Data
-import { teacherProfileData } from '../data/profileData';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
+    const profile = useTeacherStore(state => state.profile);
+
+    // Initial Mock Preferences/Academic for display if not in profile
+    const academicInfo = profile.academic || {
+        department: profile.department,
+        designation: profile.designation || profile.role,
+        joinedDate: "15 June 2022",
+        employeeId: profile.id,
+        subjects: [
+            { id: 1, name: "Mathematics", classes: ["10-A", "10-B", "9-C"] },
+            { id: 2, name: "Physics", classes: ["11-A"] }
+        ]
+    };
+
+    const securityInfo = profile.security || {
+        lastLogin: "Today, 09:24 AM",
+        passwordLastChanged: "2 months ago",
+        twoFactorEnabled: true
+    };
 
     // Smooth Scroll
     useEffect(() => {
@@ -80,15 +99,37 @@ const ProfilePage = () => {
             <main className="max-w-md mx-auto px-4 pt-4">
 
                 <div className="profile-section">
-                    <ProfileSummaryCard profile={teacherProfileData.personal} />
+                    <ProfileSummaryCard profile={profile} />
                 </div>
 
                 <div className="profile-section">
-                    <AssignedSubjectsCard academic={teacherProfileData.academic} />
+                    <AssignedSubjectsCard academic={academicInfo} />
                 </div>
 
                 <div className="profile-section">
-                    <SettingsCard preferences={teacherProfileData.preferences} />
+                    <SettingsCard preferences={profile.preferences || {}} />
+                </div>
+
+                <div className="profile-section">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Login Security</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between py-2 border-b border-gray-50">
+                                <span className="text-xs text-gray-500 font-medium">Last Login</span>
+                                <span className="text-xs font-bold text-gray-900">{securityInfo.lastLogin}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2 border-b border-gray-50">
+                                <span className="text-xs text-gray-500 font-medium">Password Changed</span>
+                                <span className="text-xs font-bold text-gray-900">{securityInfo.passwordLastChanged}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2">
+                                <span className="text-xs text-gray-500 font-medium">2FA Status</span>
+                                <span className={`text-xs font-bold ${securityInfo.twoFactorEnabled ? 'text-emerald-600' : 'text-orange-600'}`}>
+                                    {securityInfo.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="profile-section space-y-3">

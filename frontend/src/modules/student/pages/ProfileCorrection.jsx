@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, AlertTriangle, Send, Upload } from 'lucide-react';
+import { useStudentStore } from '../../../store/studentStore';
 
 const ProfileCorrection = () => {
     const navigate = useNavigate();
+    const submitCorrection = useStudentStore(state => state.submitCorrection);
     const [selectedField, setSelectedField] = useState('name');
     const [currentValue, setCurrentValue] = useState('');
     const [newValue, setNewValue] = useState('');
@@ -19,13 +21,20 @@ const ProfileCorrection = () => {
         { id: 'contact', label: 'Contact Number' }
     ];
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setSubmitted(true);
-        // Mock API call
-        setTimeout(() => {
-            // In real app, redirect or show toast
-        }, 2000);
+        try {
+            const data = {
+                field: selectedField,
+                newValue,
+                reason
+            };
+            submitCorrection(data);
+            setSubmitted(true);
+        } catch (error) {
+            console.error("Error submitting correction:", error);
+            alert("Failed to submit request. Please try again.");
+        }
     };
 
     if (submitted) {

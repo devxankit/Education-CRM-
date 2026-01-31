@@ -48,3 +48,9 @@ export const timetable = {
     ],
     Sat: [] // Holiday example
 };
+
+export const academicsData = {
+    classInfo,
+    subjects,
+    timetable
+};

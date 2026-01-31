@@ -14,45 +14,13 @@ import InfoTooltip from '../components/Attendance/InfoTooltip';
 import EmptyState from '../components/Attendance/EmptyState';
 
 // Data
-import { attendanceData } from '../data/attendanceData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const AttendancePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState(null);
-
-    // Initialize Smooth Scroll
-    useEffect(() => {
-        const lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            orientation: 'vertical',
-            gestureOrientation: 'vertical',
-            smoothWheel: true,
-            touchMultiplier: 2,
-        });
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-
-        requestAnimationFrame(raf);
-
-        return () => {
-            lenis.destroy();
-        };
-    }, []);
-
-    // Simulate Data Fetch
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setData(attendanceData);
-            setLoading(false);
-        }, 800);
-        return () => clearTimeout(timer);
-    }, []);
+    const data = useStudentStore(state => state.attendance);
+    const [loading, setLoading] = useState(false);
 
     return (
         <div ref={containerRef} className="min-h-screen bg-white md:bg-gray-50 pb-24">

@@ -4,18 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, Download, ChevronRight, User } from 'lucide-react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
-
-// Mock Data
-const MOCK_STUDENTS = [
-    { id: 'STU-2024-001', name: 'Aarav Gupta', class: 'X-A', status: 'Active', contact: '9876543210', feeStatus: 'Paid', route: 'Route-A', docsStatus: 'Verified' },
-    { id: 'STU-2024-002', name: 'Ishita Sharma', class: 'X-A', status: 'Active', contact: '9876543211', feeStatus: 'Due', route: 'Route-B', docsStatus: 'Pending' },
-    { id: 'STU-2024-003', name: 'Rohan Mehta', class: 'IX-B', status: 'Inactive', contact: '9876543212', feeStatus: 'Overdue', route: 'Unassigned', docsStatus: 'Missing' },
-    { id: 'STU-2024-004', name: 'Sanya Kapoor', class: 'XI-C', status: 'Active', contact: '9876543213', feeStatus: 'Paid', route: 'Route-A', docsStatus: 'Verified' },
-    { id: 'STU-2024-005', name: 'Vihaan Singh', class: 'XI-C', status: 'Active', contact: '9876543214', feeStatus: 'Due', route: 'Route-C', docsStatus: 'Pending' },
-];
+import { useStaffStore } from '../../../store/staffStore';
 
 const StaffStudentsPage = () => {
     const navigate = useNavigate();
+    const students = useStaffStore(state => state.students);
     const { user } = useStaffAuth();
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
 
@@ -23,7 +16,7 @@ const StaffStudentsPage = () => {
     const [filterClass, setFilterClass] = useState('All');
 
     // 1. Filtering Logic
-    const filteredStudents = MOCK_STUDENTS.filter(student => {
+    const filteredStudents = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             student.id.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesClass = filterClass === 'All' || student.class === filterClass;

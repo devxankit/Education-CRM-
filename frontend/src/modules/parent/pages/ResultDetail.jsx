@@ -3,39 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Download, Award, AlertTriangle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const MOCK_RESULT_DETAILS = {
-    1: {
-        id: 1,
-        title: 'Mid-Term Examination',
-        date: 'October 2023',
-        status: 'Passed',
-        overall: '85%',
-        grade: 'A',
-        totalMarks: 500,
-        obtainedMarks: 425,
-        remarks: 'Excellent performance. Keep it up!',
-        subjects: [
-            { name: 'Mathematics', marks: 95, total: 100, grade: 'A+', remark: 'Outstanding' },
-            { name: 'Science', marks: 88, total: 100, grade: 'A', remark: 'Very Good' },
-            { name: 'English', marks: 82, total: 100, grade: 'A', remark: 'Good effort' },
-            { name: 'History', marks: 75, total: 100, grade: 'B+', remark: 'Can do better' },
-            { name: 'Computer', marks: 85, total: 100, grade: 'A', remark: 'Good' }
-        ]
-    }
-    // Add others
-};
+import { useParentStore } from '../../../store/parentStore';
 
 const ResultDetailPage = () => {
     const { examId } = useParams();
     const navigate = useNavigate();
+    const results = useParentStore(state => state.results);
     const [result, setResult] = useState(null);
     const [expandedSubject, setExpandedSubject] = useState(null);
 
     useEffect(() => {
-        const data = MOCK_RESULT_DETAILS[examId] || MOCK_RESULT_DETAILS[1];
+        const data = results[examId] || results[1];
         setResult(data);
-    }, [examId]);
+    }, [examId, results]);
 
     const toggleSubject = (name) => {
         if (expandedSubject === name) setExpandedSubject(null);

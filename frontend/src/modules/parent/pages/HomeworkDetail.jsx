@@ -3,47 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Calendar, User, Download, FileText, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-// Separate this into a real file in production
-const MOCK_HOMEWORK_DETAILS = {
-    1: {
-        id: 1,
-        subject: 'Mathematics',
-        title: 'Algebra: Linear Equations',
-        dueDate: '2023-10-25',
-        status: 'Pending',
-        teacher: 'Mr. Sharma',
-        description: 'Complete exercises 4.1 to 4.3 from the textbook. Ensure you show all working steps. This assignment counts towards 10% of your final grade.',
-        attachments: [
-            { name: 'Algebra_Worksheet.pdf', size: '2.5 MB' }
-        ],
-        remarks: null
-    },
-    2: {
-        id: 2,
-        subject: 'Science',
-        title: 'Physics Lab Report',
-        dueDate: '2023-10-22',
-        status: 'Submitted',
-        teacher: 'Mrs. Gupta',
-        description: 'Submit the report on laws of motion.',
-        attachments: [],
-        remarks: 'Good work, but chart alignment needs improvement.'
-    }
-    // Add others if needed
-};
+import { useParentStore } from '../../../store/parentStore';
 
 const HomeworkDetailPage = () => {
     const { homeworkId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const homeworkDetails = useParentStore(state => state.homeworkDetails);
     const [homework, setHomework] = useState(null);
 
     useEffect(() => {
-        // Simulate fetch
-        const data = MOCK_HOMEWORK_DETAILS[homeworkId] || MOCK_HOMEWORK_DETAILS[1];
+        const data = homeworkDetails[homeworkId] || homeworkDetails[1];
         setHomework(data);
-    }, [homeworkId]);
+    }, [homeworkId, homeworkDetails]);
 
     if (!homework) return <div className="p-10 text-center"><span className="loading loading-spinner text-indigo-600"></span></div>;
 

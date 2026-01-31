@@ -4,32 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Info, Calendar, PieChart, AlertTriangle, Book, Award, HeadphonesIcon, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AttendanceOverview from '../components/attendance/AttendanceOverview';
-
-// Mock Data (Replace with API)
-const MOCK_ATTENDANCE = {
-    overall: 88,
-    required: 75,
-    totalDays: 120,
-    presentDays: 106,
-    absentDays: 14,
-    monthly: [
-        { month: 'Oct', percentage: 92, present: 22, absent: 2 },
-        { month: 'Sep', percentage: 85, present: 20, absent: 4 },
-        { month: 'Aug', percentage: 88, present: 21, absent: 3 },
-        { month: 'Jul', percentage: 70, present: 16, absent: 6, isLow: true }
-    ],
-    subjects: [ // Optional subject-wise if needed
-        { name: 'Mathematics', percentage: 95 },
-        { name: 'Science', percentage: 85 },
-        { name: 'English', percentage: 80 }
-    ],
-    history: [
-        { date: '2023-10-25', status: 'Present', type: 'Regular' },
-        { date: '2023-10-24', status: 'Present', type: 'Regular' },
-        { date: '2023-10-23', status: 'Absent', type: 'Sick Leave' },
-        { date: '2023-10-22', status: 'Holiday', type: 'Sunday' }
-    ]
-};
+import { useParentStore } from '../../../store/parentStore';
 
 const ParentAttendancePage = () => {
     const navigate = useNavigate();
@@ -38,14 +13,14 @@ const ParentAttendancePage = () => {
     const { childId, highlightLowAttendance } = state;
     const scrollRef = useRef(null);
 
+    const attendance = useParentStore(state => state.attendance);
+
     const [selectedMonth, setSelectedMonth] = useState('Oct');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     // 1. Entry Check & Scrolling
     useEffect(() => {
         if (!childId) {
-            // Uncomment in production
-            // navigate('/parent/dashboard');
             console.warn("No childId provided, redirected in prod.");
         }
 
@@ -54,7 +29,7 @@ const ParentAttendancePage = () => {
                 scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightLowAttendance, navigate]);
+    }, [childId, highlightLowAttendance]);
 
     // Handlers
     const handleBack = () => navigate(-1);
@@ -86,10 +61,10 @@ const ParentAttendancePage = () => {
             <main className="max-w-md mx-auto p-4 space-y-6">
 
                 {/* 2. Overview Card */}
-                <AttendanceOverview data={MOCK_ATTENDANCE} />
+                <AttendanceOverview data={attendance} />
 
                 {/* 6. Low Attendance Warning */}
-                {(MOCK_ATTENDANCE.overall < MOCK_ATTENDANCE.required || highlightLowAttendance) && (
+                {(attendance.overall < attendance.required || highlightLowAttendance) && (
                     <div ref={scrollRef} className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                         <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
                         <div>
@@ -122,7 +97,7 @@ const ParentAttendancePage = () => {
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
-                        {MOCK_ATTENDANCE.monthly.filter(m => m.month === selectedMonth).map((data, idx) => (
+                        {attendance.monthly.filter(m => m.month === selectedMonth).map((data, idx) => (
                             <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
@@ -154,11 +129,11 @@ const ParentAttendancePage = () => {
                 <div>
                     <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Recent History</h2>
                     <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                        {MOCK_ATTENDANCE.history.map((day, i) => (
+                        {attendance.history.map((day, i) => (
                             <div key={i} className="flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${day.status === 'Present' ? 'bg-green-100 text-green-700' :
-                                            day.status === 'Absent' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                                        day.status === 'Absent' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
                                         }`}>
                                         {day.date.split('-')[2]}
                                     </div>

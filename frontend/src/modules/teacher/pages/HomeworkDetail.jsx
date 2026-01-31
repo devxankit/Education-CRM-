@@ -2,14 +2,25 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Info, Calendar, FileText, Users, Link } from 'lucide-react';
-import { homeworkData } from '../data/homeworkData';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 const HomeworkDetailPage = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const homeworkList = useTeacherStore(state => state.homeworkList);
 
-    // In a real app, fetch based on ID. Here we just take the first one or mock it.
-    const homework = homeworkData.list[0] || {};
+    const homework = homeworkList.find(hw => hw.id === id) || {};
+
+    if (!homework.id) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-900">Homework not found</h2>
+                    <button onClick={() => navigate(-1)} className="mt-4 text-indigo-600 font-medium">Go Back</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -60,9 +71,25 @@ const HomeworkDetailPage = () => {
 
                     <div className="space-y-3">
                         <h3 className="text-sm font-bold text-gray-900">Attachments</h3>
-                        <div
-                            onClick={() => alert("Downloading attachment... (Mock)")}
-                            className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group"
+                        <button
+                            onClick={() => {
+                                const fileName = "Worksheet_Ch4.pdf";
+                                console.log('Initiating download for:', fileName);
+                                
+                                // Create a dummy blob and download it
+                                const blob = new Blob(["Mock PDF content for homework " + homework.id], { type: 'application/pdf' });
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', fileName);
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                                window.URL.revokeObjectURL(url);
+                                
+                                alert(`Downloading ${fileName}...`);
+                            }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer group text-left"
                         >
                             <div className="p-2 bg-red-50 text-red-600 rounded-lg">
                                 <FileText size={18} />
@@ -71,7 +98,7 @@ const HomeworkDetailPage = () => {
                                 <span className="block text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Worksheet_Ch4.pdf</span>
                                 <span className="text-xs text-gray-400">2.4 MB</span>
                             </div>
-                        </div>
+                        </button>
                     </div>
                 </div>
 

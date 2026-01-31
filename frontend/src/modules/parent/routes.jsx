@@ -6,6 +6,7 @@ import { Navigate } from 'react-router-dom';
 import ParentLayout from './layouts/ParentLayout';
 
 // Pages
+import Login from './pages/auth/Login';
 import ParentDashboard from './pages/Dashboard';
 import ChildrenPage from './pages/Children';
 import AttendancePage from './pages/Attendance';
@@ -27,6 +28,7 @@ const parentRoutes = [
     {
         path: 'parent',
         children: [
+            { path: 'login', element: <Login /> },
             {
                 index: true,
                 element: <Navigate to="dashboard" replace />,
@@ -40,6 +42,7 @@ const parentRoutes = [
                     { path: 'homework', element: <HomeworkPage /> },
                     { path: 'homework/:homeworkId', element: <HomeworkDetailPage /> },
                     { path: 'exams', element: <ExamsResultsPage /> },
+                    { path: 'results', element: <ExamsResultsPage /> },
                     { path: 'results/:examId', element: <ResultDetailPage /> },
                     { path: 'fees', element: <FeesPaymentsPage /> },
                     { path: 'notices', element: <NoticesPage /> },

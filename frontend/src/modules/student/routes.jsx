@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 
 // Placeholder Lazy loading components
 import StudentDashboard from './pages/Dashboard';
+import Login from './pages/auth/Login';
 import Academics from './pages/Academics';
 import Homework from './pages/Homework';
 import Notices from './pages/Notices';
@@ -39,6 +40,7 @@ const studentRoutes = [
     {
         path: 'student',
         children: [
+            { path: 'login', element: <Login /> },
             {
                 index: true,
                 element: <Navigate to="dashboard" replace />,
@@ -63,15 +65,23 @@ const studentRoutes = [
                         element: <StudentHomework />,
                     },
                     {
+                        path: 'homework/:id',
+                        element: <StudentHomework />,
+                    },
+                    {
                         path: 'notices',
                         element: <StudentNotices />,
                     },
                     {
-                        path: 'profile',
-                        element: <ProfilePage />,
+                        path: 'notices/:id',
+                        element: <StudentNotices />,
                     },
                     {
                         path: 'exams',
+                        element: <StudentExams />,
+                    },
+                    {
+                        path: 'exams/:id',
                         element: <StudentExams />,
                     },
                     {
@@ -89,6 +99,10 @@ const studentRoutes = [
                     {
                         path: 'notifications',
                         element: <StudentNotifications />,
+                    },
+                    {
+                        path: 'profile',
+                        element: <ProfilePage />,
                     },
                     {
                         path: 'help',

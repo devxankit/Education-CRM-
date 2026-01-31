@@ -12,16 +12,15 @@ import DocumentViewerModal from '../components/Documents/DocumentViewerModal';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 import EmptyState from '../components/Attendance/EmptyState';
 
-// Data
-import { documentsData } from '../data/documentsData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const TABS = ['All', 'Academic', 'Certificates', 'Identity', 'Financial'];
 
 const DocumentsPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState([]);
+    const data = useStudentStore(state => state.documents);
+    const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('All');
     const [showRequestModal, setShowRequestModal] = useState(false);
     const [selectedDoc, setSelectedDoc] = useState(null);
@@ -42,12 +41,6 @@ const DocumentsPage = () => {
             requestAnimationFrame(raf);
         }
         requestAnimationFrame(raf);
-
-        // Simulate Fetch
-        setTimeout(() => {
-            setData(documentsData);
-            setLoading(false);
-        }, 800);
 
         return () => lenis.destroy();
     }, []);

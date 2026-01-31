@@ -37,7 +37,7 @@ export const adminNotices = [
 
 export const todayClasses = [
     {
-        id: "CLS-101",
+        id: "CLS-10A",
         time: "09:00 AM - 10:00 AM",
         classSection: "Class 10-A",
         subject: "Mathematics",
@@ -46,7 +46,7 @@ export const todayClasses = [
         attendance: null
     },
     {
-        id: "CLS-102",
+        id: "CLS-9B",
         time: "10:15 AM - 11:15 AM",
         classSection: "Class 9-B",
         subject: "Mathematics",
@@ -55,7 +55,7 @@ export const todayClasses = [
         attendance: "92%"
     },
     {
-        id: "CLS-103",
+        id: "CLS-11C",
         time: "12:00 PM - 01:00 PM",
         classSection: "Class 11-C",
         subject: "Applied Maths",

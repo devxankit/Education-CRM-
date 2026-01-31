@@ -24,6 +24,7 @@ export const alerts = [
         message: 'Physics Assignment due today.',
         icon: 'Clock',
         color: 'bg-orange-50 text-orange-700 border-orange-100',
+        link: '/student/homework'
     },
     {
         id: 3,
@@ -32,6 +33,7 @@ export const alerts = [
         message: 'Quarterly fees due in 5 days.',
         icon: 'CreditCard',
         color: 'bg-blue-50 text-blue-700 border-blue-100',
+        link: '/student/fees'
     }
 ];
 
@@ -89,4 +91,12 @@ export const performance = {
     weeklyAttendanceChange: +5, // percentage
     homeworkCompletion: 92, // percentage
     message: "You're doing great! 🌟 Your attendance improved by 5% this week."
+};
+
+export const dashboardData = {
+    studentProfile,
+    alerts,
+    todayClasses,
+    stats,
+    performance
 };

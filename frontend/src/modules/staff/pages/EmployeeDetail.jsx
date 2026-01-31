@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
@@ -8,38 +8,115 @@ import {
 } from 'lucide-react';
 import RoleBasedSection from '../components/students/RoleBasedSection';
 
-// --- MOCK DETAILS ---
-const MOCK_EMPLOYEE_DETAIL = {
-    id: 'EMP-2024-001',
-    name: 'Ramesh Singh',
-    employeeId: 'EMP-D-101',
-    doj: '2022-01-10',
-    type: 'Full-time',
-    status: 'Active',
-    designation: 'Senior Driver',
-    department: 'Transport',
-    contact: { phone: '9876543210', emergency: '9988776655', address: '12, Transport Nagar, Delhi' },
-    assignment: { bus: 'DL-1PC-4502', route: 'Route-A' },
-    payroll: { salary: 22000, type: 'Monthly', deductions: 500, status: 'Paid' },
-    documents: [
-        { name: 'Driving License', status: 'Verified' },
-        { name: 'Police Verification', status: 'Pending' },
-        { name: 'Aadhaar Card', status: 'Verified' }
-    ],
-    attendance: { present: 24, leave: 2, overtime: '8 hrs' }
-};
+// --- MOCK DATA (Multiple employees for filtering by ID) ---
+const MOCK_EMPLOYEES_DATA = [
+    {
+        id: 'EMP-2024-001',
+        name: 'Ramesh Singh',
+        employeeId: 'EMP-D-101',
+        doj: '2022-01-10',
+        type: 'Full-time',
+        status: 'Active',
+        designation: 'Senior Driver',
+        department: 'Transport',
+        contact: { phone: '9876543210', emergency: '9988776655', address: '12, Transport Nagar, Delhi' },
+        assignment: { bus: 'DL-1PC-4502', route: 'Route-A' },
+        payroll: { salary: 22000, type: 'Monthly', deductions: 500, status: 'Paid' },
+        documents: [
+            { name: 'Driving License', status: 'Verified' },
+            { name: 'Police Verification', status: 'Pending' },
+            { name: 'Aadhaar Card', status: 'Verified' }
+        ],
+        attendance: { present: 24, leave: 2, overtime: '8 hrs' }
+    },
+    {
+        id: 'EMP-2024-002',
+        name: 'Sunil Yadav',
+        employeeId: 'EMP-D-102',
+        doj: '2021-06-15',
+        type: 'Full-time',
+        status: 'Active',
+        designation: 'Helper',
+        department: 'Transport',
+        contact: { phone: '9876543220', emergency: '9988776600', address: '45, Saket, Delhi' },
+        assignment: { bus: 'DL-1PC-4503', route: 'Route-B' },
+        payroll: { salary: 15000, type: 'Monthly', deductions: 300, status: 'Paid' },
+        documents: [
+            { name: 'Aadhaar Card', status: 'Verified' }
+        ],
+        attendance: { present: 22, leave: 4, overtime: '4 hrs' }
+    },
+    {
+        id: 'EMP-2024-003',
+        name: 'Meera Devi',
+        employeeId: 'EMP-A-201',
+        doj: '2020-03-01',
+        type: 'Part-time',
+        status: 'Active',
+        designation: 'Sweeper',
+        department: 'Maintenance',
+        contact: { phone: '9876543230', emergency: '9988776611', address: '78, Janakpuri, Delhi' },
+        assignment: { bus: '-', route: '-' },
+        payroll: { salary: 12000, type: 'Monthly', deductions: 200, status: 'Pending' },
+        documents: [
+            { name: 'Aadhaar Card', status: 'Pending' }
+        ],
+        attendance: { present: 20, leave: 6, overtime: '0 hrs' }
+    }
+];
 
 const EmployeeDetail = () => {
     const { employeeId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
 
-    // In real app, fetch execution would be here
-    const [employee, setEmployee] = useState(MOCK_EMPLOYEE_DETAIL);
-
-    if (!employee) return <div className="p-10 text-center">Loading...</div>;
+    const [employee, setEmployee] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
+
+    // Fetch employee data based on ID from URL
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Simulate API call - In real app, replace with actual API fetch
+        setTimeout(() => {
+            const foundEmployee = MOCK_EMPLOYEES_DATA.find(e => e.id === employeeId);
+            if (foundEmployee) {
+                setEmployee(foundEmployee);
+            } else {
+                setError('Employee not found');
+            }
+            setLoading(false);
+        }, 300);
+    }, [employeeId]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-5xl mx-auto p-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading employee details...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !employee) {
+        return (
+            <div className="max-w-5xl mx-auto p-10 text-center">
+                <p className="text-red-600 font-bold">{error || 'Employee not found'}</p>
+                <button
+                    onClick={() => navigate('/staff/employees')}
+                    className="mt-4 text-indigo-600 hover:underline"
+                >
+                    ← Back to Employees
+                </button>
+            </div>
+        );
+    }
 
     // Helper for consistency
     const InfoField = ({ label, value, icon: Icon }) => (

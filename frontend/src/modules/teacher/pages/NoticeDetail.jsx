@@ -1,13 +1,23 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Calendar } from 'lucide-react';
 import { noticesData } from '../data/noticesData';
 
 const NoticeDetail = () => {
-    // In a real app, use useParams() to fetch the specific notice
-    // const { id } = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
-    const notice = noticesData[0]; // MOCK: Always show first for demo
+    const notice = noticesData.find(n => n.id === id);
+
+    if (!notice) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-900">Notice not found</h2>
+                    <button onClick={() => navigate(-1)} className="mt-4 text-indigo-600 font-medium">Go Back</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white">

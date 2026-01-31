@@ -1,28 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
-import { STAFF_ROLES } from '../config/roles';
-import { Search, Plus, MessageSquare, Clock, CheckCircle, AlertCircle, Filter, ChevronRight } from 'lucide-react';
-
-const MOCK_TICKETS = [
-    { id: 'TKT-1001', subject: 'Fee Payment Issue', entity: 'Aarav Patel (Student)', status: 'Open', priority: 'High', date: '2 hrs ago', unread: true },
-    { id: 'TKT-1002', subject: 'Bus Route Change Request', entity: 'Zara Khan (Student)', status: 'In Progress', priority: 'Medium', date: '5 hrs ago', unread: false },
-    { id: 'TKT-1003', subject: 'Library Fine Dispute', entity: 'Rohan Sharma (Student)', status: 'Closed', priority: 'Low', date: 'Yesterday', unread: false },
-    { id: 'TKT-1004', subject: 'IT Lab PC Malfunction', entity: 'Suresh Kumar (Teacher)', status: 'Open', priority: 'Medium', date: 'Yesterday', unread: true },
-];
+import { Search, Filter, Plus, Clock, CheckCircle, AlertCircle, ChevronRight, User, MessageSquare } from 'lucide-react';
+import { useStaffStore } from '../../../store/staffStore';
 
 const Support = () => {
-    const { user } = useStaffAuth();
     const navigate = useNavigate();
+    const tickets = useStaffStore(state => state.tickets);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
 
     // Access: Support (Full), Admin (Full), Others (View/Create Own)
     // For now, let's assume all staff can access the dashboard to see tickets relevant to them or generally.
 
-    const filteredTickets = MOCK_TICKETS.filter(t => {
-        const matchesSearch = t.subject.toLowerCase().includes(searchTerm.toLowerCase()) || t.entity.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'All' || t.status === filterStatus;
+    const filteredTickets = tickets.filter(ticket => {
+        const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = filterStatus === 'All' || ticket.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
 

@@ -1,25 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, User, Phone, Mail, MapPin, Briefcase, BookOpen, Clock } from 'lucide-react';
+import { useStaffStore } from '../../../store/staffStore';
 
 const AddTeacher = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+    const { teacherId } = useParams();
+    const isEditMode = !!teacherId;
 
-    // Redirect if not authorized (Safety Check)
-    React.useEffect(() => {
-        if (user && user.role !== STAFF_ROLES.DATA_ENTRY) {
-            navigate('/staff/teachers');
-        }
-    }, [user, navigate]);
+    const { teachers, addTeacher, updateTeacher } = useStaffStore(state => ({
+        teachers: state.teachers,
+        addTeacher: state.addTeacher,
+        updateTeacher: state.updateTeacher
+    }));
+
+    const [isLoading, setIsLoading] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
+        name: '',
         employeeId: '',
         doj: '',
         type: 'Permanent',
@@ -30,20 +32,61 @@ const AddTeacher = () => {
         qualification: ''
     });
 
+    // Handle Edit Mode Data Fetching
+    useEffect(() => {
+        if (isEditMode) {
+            const teacher = teachers.find(t => t.id === teacherId);
+            if (teacher) {
+                setFormData({
+                    ...teacher,
+                    name: teacher.name || '',
+                    employeeId: teacher.employeeId || '',
+                    doj: teacher.doj || '',
+                    type: teacher.type || 'Permanent',
+                    email: teacher.contact?.email || '',
+                    phone: teacher.contact?.phone || '',
+                    address: teacher.contact?.address || '',
+                    subjects: teacher.subjects || [],
+                    qualification: teacher.qualification || ''
+                });
+            }
+        }
+    }, [isEditMode, teacherId, teachers]);
+
+    // Redirect if not authorized (Safety Check)
+    useEffect(() => {
+        if (user && user.role !== STAFF_ROLES.DATA_ENTRY && user.role !== STAFF_ROLES.ADMIN) {
+            navigate('/staff/teachers');
+        }
+    }, [user, navigate]);
+
     const handleSubjectChange = (e) => {
-        // Simple comma separated logic for MVP
         const val = e.target.value;
-        setFormData({ ...formData, subjects: val.split(',').map(s => s.trim()) });
+        setFormData({ ...formData, subjects: val.split(',').map(s => s.trim()).filter(s => s !== '') });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Mock API Call
         setTimeout(() => {
+            const finalData = {
+                ...formData,
+                contact: {
+                    phone: formData.phone,
+                    email: formData.email,
+                    address: formData.address
+                }
+            };
+
+            if (isEditMode) {
+                updateTeacher(teacherId, finalData);
+            } else {
+                addTeacher(finalData);
+            }
+
             setIsLoading(false);
-            // In real app: await api.createTeacher(formData);
+            alert(`Teacher Record ${isEditMode ? 'Updated' : 'Created'} Successfully`);
             navigate('/staff/teachers');
         }, 1200);
     };
@@ -56,8 +99,8 @@ const AddTeacher = () => {
                     <ArrowLeft size={20} />
                 </button>
                 <div>
-                    <h1 className="text-lg font-bold text-gray-900">Add New Teacher</h1>
-                    <p className="text-xs text-gray-500">Create a new faculty record</p>
+                    <h1 className="text-lg font-bold text-gray-900">{isEditMode ? 'Edit Teacher Record' : 'Add New Teacher'}</h1>
+                    <p className="text-xs text-gray-500">{isEditMode ? 'Update faculty details' : 'Create a new faculty record'}</p>
                 </div>
             </div>
 
@@ -69,8 +112,9 @@ const AddTeacher = () => {
                         <User size={16} className="text-indigo-600" /> Basic Information
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputField label="First Name" name="firstName" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
-                        <InputField label="Last Name" name="lastName" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required />
+                        <div className="md:col-span-2">
+                            <InputField label="Full Name" name="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                        </div>
                         <InputField label="Employee ID" name="employeeId" value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} placeholder="e.g. EMP-T-101" required />
                         <InputField label="Date of Joining" name="doj" type="date" value={formData.doj} onChange={(e) => setFormData({ ...formData, doj: e.target.value })} required />
 

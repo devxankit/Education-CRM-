@@ -1,39 +1,122 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, AlertTriangle, FileText, Download, Clock } from 'lucide-react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 
-const MOCK_NOTICE = {
-    id: 'N-2024-001',
-    title: 'Emergency: School Closed Tomorrow due to Heavy Rain Forecast',
-    category: 'Emergency',
-    priority: 'Urgent',
-    date: '10 Oct 2024, 02:30 PM',
-    sender: 'Principal\'s Office',
-    content: `
-        <p>Dear Staff,</p>
-        <p>Due to the red alert issued by the meteorological department regarding heavy rainfall, the school administration has decided to keep the school <strong>closed tomorrow, 11th October 2024</strong>.</p>
-        <p>This applies to all students and non-essential staff. Essential maintenance team members are requested to remain on standby.</p>
-        <p>Online classes will proceed as per the schedule shared by the academic coordinator.</p>
-        <p>Stay safe.</p>
-        <br/>
-        <p>Regards,<br/>Principal</p>
-    `,
-    attachments: [
-        { name: 'District_Order_Circular.pdf', size: '1.2 MB' }
-    ],
-    status: 'Pending' // or 'Read'
-};
+// --- MOCK DATA (Multiple notices for filtering by ID) ---
+const MOCK_NOTICES_DATA = [
+    {
+        id: 'N-2024-001',
+        title: 'Emergency: School Closed Tomorrow due to Heavy Rain Forecast',
+        category: 'Emergency',
+        priority: 'Urgent',
+        date: '10 Oct 2024, 02:30 PM',
+        sender: 'Principal\'s Office',
+        content: `
+            <p>Dear Staff,</p>
+            <p>Due to the red alert issued by the meteorological department regarding heavy rainfall, the school administration has decided to keep the school <strong>closed tomorrow, 11th October 2024</strong>.</p>
+            <p>This applies to all students and non-essential staff. Essential maintenance team members are requested to remain on standby.</p>
+            <p>Online classes will proceed as per the schedule shared by the academic coordinator.</p>
+            <p>Stay safe.</p>
+            <br/>
+            <p>Regards,<br/>Principal</p>
+        `,
+        attachments: [
+            { name: 'District_Order_Circular.pdf', size: '1.2 MB' }
+        ],
+        status: 'Pending'
+    },
+    {
+        id: 'N-2024-002',
+        title: 'Annual Day Celebration Schedule',
+        category: 'Event',
+        priority: 'Normal',
+        date: '08 Oct 2024, 10:00 AM',
+        sender: 'Cultural Committee',
+        content: `
+            <p>Dear Staff,</p>
+            <p>The Annual Day celebration is scheduled for <strong>25th November 2024</strong>.</p>
+            <p>Please submit your program proposals by 20th October.</p>
+            <br/>
+            <p>Regards,<br/>Cultural Committee</p>
+        `,
+        attachments: [],
+        status: 'Read'
+    },
+    {
+        id: 'N-2024-003',
+        title: 'Salary Revision Notification',
+        category: 'HR',
+        priority: 'Important',
+        date: '05 Oct 2024, 04:00 PM',
+        sender: 'HR Department',
+        content: `
+            <p>Dear Staff,</p>
+            <p>We are pleased to announce a salary revision effective from November 2024.</p>
+            <p>Individual letters will be shared via email.</p>
+            <br/>
+            <p>Regards,<br/>HR Department</p>
+        `,
+        attachments: [
+            { name: 'Salary_Revision_Policy.pdf', size: '850 KB' }
+        ],
+        status: 'Pending'
+    }
+];
 
 const NoticeDetail = () => {
     const { noticeId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
-    const [status, setStatus] = useState(MOCK_NOTICE.status);
+
+    const [notice, setNotice] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [status, setStatus] = useState('Pending');
     const [isAcknowledging, setIsAcknowledging] = useState(false);
 
-    // In a real app, you'd fetch the notice by noticeId
-    const notice = MOCK_NOTICE;
+    // Fetch notice data based on ID from URL
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Simulate API call - In real app, replace with actual API fetch
+        setTimeout(() => {
+            const foundNotice = MOCK_NOTICES_DATA.find(n => n.id === noticeId);
+            if (foundNotice) {
+                setNotice(foundNotice);
+                setStatus(foundNotice.status);
+            } else {
+                setError('Notice not found');
+            }
+            setLoading(false);
+        }, 300);
+    }, [noticeId]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-3xl mx-auto p-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading notice...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !notice) {
+        return (
+            <div className="max-w-3xl mx-auto p-10 text-center">
+                <p className="text-red-600 font-bold">{error || 'Notice not found'}</p>
+                <button
+                    onClick={() => navigate('/staff/notices')}
+                    className="mt-4 text-indigo-600 hover:underline"
+                >
+                    ← Back to Notices
+                </button>
+            </div>
+        );
+    }
 
     const handleAcknowledge = () => {
         setIsAcknowledging(true);

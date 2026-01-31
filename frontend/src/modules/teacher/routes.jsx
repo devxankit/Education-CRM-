@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import TeacherLayout from './layouts/TeacherLayout';
+import Login from './pages/auth/Login';
 import TeacherDashboard from './pages/Dashboard';
 import ClassesPage from './pages/Classes';
 import AttendancePage from './pages/Attendance';
@@ -14,11 +15,14 @@ import SupportPage from './pages/Support';
 import TeacherHelpPage from './pages/TeacherHelp';
 import HomeworkDetailPage from './pages/HomeworkDetail';
 import SubmissionsPage from './pages/Submissions';
+import ClassDetailPage from './pages/ClassDetail';
+import ExamDetailPage from './pages/ExamDetail';
 
 const teacherRoutes = [
     {
         path: 'teacher',
         children: [
+            { path: 'login', element: <Login /> },
             {
                 index: true,
                 element: <Navigate to="dashboard" replace />,
@@ -28,11 +32,13 @@ const teacherRoutes = [
                 children: [
                     { path: 'dashboard', element: <TeacherDashboard /> },
                     { path: 'classes', element: <ClassesPage /> },
+                    { path: 'classes/:id', element: <ClassDetailPage /> },
                     { path: 'attendance', element: <AttendancePage /> },
                     { path: 'homework', element: <HomeworkPage /> },
                     { path: 'homework/:id', element: <HomeworkDetailPage /> },
                     { path: 'homework/submissions', element: <SubmissionsPage /> },
                     { path: 'exams', element: <ExamsPage /> },
+                    { path: 'exams/:id', element: <ExamDetailPage /> },
                     { path: 'reports', element: <ReportsPage /> },
                     { path: 'profile', element: <ProfilePage /> },
                     { path: 'notices', element: <NoticesPage /> },

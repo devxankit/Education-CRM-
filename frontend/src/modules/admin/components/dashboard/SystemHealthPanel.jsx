@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { Activity, Database, Server, Wifi } from 'lucide-react';
+import { systemHealth } from '../../data/dashboardData';
 
 const SystemHealthPanel = () => {
     const metrics = [
-        { label: 'API Status', value: 'Operational', status: 'healthy', icon: Wifi },
+        { label: 'API Status', value: systemHealth.server, status: 'healthy', icon: Wifi },
         { label: 'Integrations', value: '4/4 Active', status: 'healthy', icon: Server },
-        { label: 'Last Backup', value: '15 mins ago', status: 'warning', icon: Database }, // Example warning
-        { label: 'Latency', value: '45ms', status: 'healthy', icon: Activity },
+        { label: 'Last Backup', value: systemHealth.lastBackup, status: 'warning', icon: Database },
+        { label: 'Uptime', value: systemHealth.uptime, status: 'healthy', icon: Activity },
     ];
 
     return (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { Info, Calendar as CalendarIcon, Users } from 'lucide-react';
 import gsap from 'gsap';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 // Components
 import ClassSubjectSelector from '../components/attendance/ClassSubjectSelector';
@@ -16,25 +17,27 @@ const AttendancePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const listRef = useRef(null);
+    const todayClasses = useTeacherStore(state => state.todayClasses);
+    const submitAttendanceAction = useTeacherStore(state => state.submitAttendance);
 
     const [selectedClass, setSelectedClass] = useState(null);
     const [attendanceState, setAttendanceState] = useState({});
 
     // Initialize State
     useEffect(() => {
-        // Default to first class
-        if (attendanceData.classes.length > 0 && !selectedClass) {
-            setSelectedClass(attendanceData.classes[0]);
+        // Default to first class from today's timetable
+        if (todayClasses.length > 0 && !selectedClass) {
+            setSelectedClass(todayClasses[0]);
         }
 
-        // Initialize attendance map
+        // Initialize attendance map from existing mock student list
         const initialMap = {};
         attendanceData.students.forEach(s => {
-            initialMap[s.id] = 'Present'; // Default present
+            initialMap[s.id] = 'Present';
         });
         setAttendanceState(initialMap);
 
-    }, []);
+    }, [todayClasses]);
 
     // Smooth Scroll
     useEffect(() => {
@@ -71,6 +74,17 @@ const AttendancePage = () => {
     const handleSubmit = () => {
         const confirm = window.confirm("Are you sure you want to submit attendance? This action will be logged.");
         if (confirm) {
+            const record = {
+                id: `ATT-${Date.now()}`,
+                classId: selectedClass?.id,
+                className: selectedClass?.classSection,
+                subject: selectedClass?.subject,
+                date: new Date().toISOString(),
+                attendance: attendanceState,
+                stats
+            };
+
+            submitAttendanceAction(record);
             alert("Attendance Submitted Successfully!");
             navigate('/teacher/dashboard');
         }

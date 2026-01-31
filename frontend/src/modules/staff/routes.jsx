@@ -69,9 +69,13 @@ const staffRoutes = [
                             { path: 'students', element: <Students /> },
                             { path: 'students/new', element: <NewAdmission /> },
                             { path: 'students/:studentId', element: <StudentDetail /> },
+                            { path: 'students/:studentId/edit', element: <NewAdmission /> }, // Reusing NewAdmission for Edit
+
                             { path: 'teachers', element: <Teachers /> },
                             { path: 'teachers/new', element: <AddTeacher /> },
                             { path: 'teachers/:teacherId', element: <TeacherDetail /> },
+                            { path: 'teachers/:teacherId/edit', element: <AddTeacher /> }, // Reusing AddTeacher for Edit
+
                             { path: 'fees', element: <Fees /> },
                             { path: 'documents', element: <Documents /> },
                             { path: 'transport', element: <Transport /> },
@@ -81,6 +85,7 @@ const staffRoutes = [
                             { path: 'support', element: <Support /> },
                             { path: 'support/new', element: <NewTicket /> },
                             { path: 'support/:ticketId', element: <TicketDetail /> },
+                            { path: 'support/:ticketId/edit', element: <NewTicket /> }, // Reusing NewTicket for Edit
 
                             { path: 'reports', element: <Reports /> },
                             { path: 'profile', element: <Profile /> },
@@ -89,6 +94,8 @@ const staffRoutes = [
                             { path: 'employees', element: <Employees /> },
                             { path: 'employees/new', element: <AddEmployee /> },
                             { path: 'employees/:employeeId', element: <EmployeeDetail /> },
+                            { path: 'employees/:employeeId/edit', element: <AddEmployee /> }, // Reusing AddEmployee for Edit
+
                             { path: 'payroll', element: <Payroll /> },
                             { path: 'payroll/:rollId', element: <PayrollDetail /> },
                             { path: 'expenses', element: <Expenses /> },
@@ -100,9 +107,12 @@ const staffRoutes = [
                             { path: 'transport/routes/:routeId', element: <RouteDetail /> },
                             { path: 'transport/students', element: <StudentTransport /> },
                             { path: 'transport/issues', element: <TransportIssues /> },
+
                             { path: 'assets', element: <Assets /> },
                             { path: 'assets/new', element: <AddAsset /> },
                             { path: 'assets/:assetId', element: <AssetDetail /> },
+                            { path: 'assets/:assetId/edit', element: <AddAsset /> }, // Reusing AddAsset for Edit
+
                             { path: 'inventory', element: <Inventory /> },
                             { path: 'inventory/new', element: <AddInventoryItem /> },
 

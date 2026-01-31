@@ -1,22 +1,23 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdmissionWizard from './components/AdmissionWizard';
 import { CheckCircle } from 'lucide-react';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 const StudentAdmission = () => {
-
     const navigate = useNavigate();
     const [isComplete, setIsComplete] = useState(false);
     const [submittedId, setSubmittedId] = useState(null);
+    const addStudent = useAdminStore(state => state.addStudent);
 
     const handleComplete = (data) => {
         // Here you would make the API call to save data
         console.log("Submitting Admission Data:", data);
 
-        // Mock Success
+        // Mock Success and persist
         setTimeout(() => {
-            setSubmittedId(data.admissionNo);
+            addStudent(data);
+            setSubmittedId(data.admissionNo || `ADM-${Date.now()}`);
             setIsComplete(true);
         }, 1000);
     };

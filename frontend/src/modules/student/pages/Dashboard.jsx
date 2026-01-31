@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
@@ -11,11 +11,15 @@ import TodayClasses from '../components/Dashboard/TodayClasses';
 import StatsSection from '../components/Dashboard/StatsSection';
 import PerformanceCard from '../components/Dashboard/PerformanceCard';
 
-// Data
-import { studentProfile, alerts, todayClasses, stats, performance } from '../data/dashboardData';
+// Data Service
+import { useStudentStore } from '../../../store/studentStore';
 
 const Dashboard = () => {
     const containerRef = useRef(null);
+    const profile = useStudentStore(state => state.profile);
+    const dashboardData = useStudentStore(state => state.dashboard);
+
+    const [loading, setLoading] = useState(false); // Default false since we have persistence and initial data
 
     // Initialize Smooth Scroll (Lenis)
     useEffect(() => {
@@ -56,16 +60,24 @@ const Dashboard = () => {
         return () => ctx.revert();
     }, []);
 
+    if (loading || !dashboardData) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50/50 pb-24" ref={containerRef}>
             {/* Header - Sticky */}
-            <Header user={studentProfile} />
+            <Header user={profile || dashboardData.studentProfile} />
 
             <main className="space-y-1">
 
                 {/* Alerts Section (Swipeable) */}
                 <div className="dashboard-item">
-                    <AlertSection alerts={alerts} />
+                    <AlertSection alerts={dashboardData.alerts} />
                 </div>
 
                 {/* Quick Actions Row */}
@@ -75,17 +87,17 @@ const Dashboard = () => {
 
                 {/* Today's Timeline */}
                 <div className="dashboard-item">
-                    <TodayClasses classes={todayClasses} />
+                    <TodayClasses classes={dashboardData.todayClasses} />
                 </div>
 
                 {/* Stats Grid */}
                 <div className="dashboard-item">
-                    <StatsSection stats={stats} />
+                    <StatsSection stats={dashboardData.stats} />
                 </div>
 
                 {/* Performance / Motivation */}
                 <div className="dashboard-item">
-                    <PerformanceCard data={performance} />
+                    <PerformanceCard data={dashboardData.performance} />
                 </div>
 
             </main>

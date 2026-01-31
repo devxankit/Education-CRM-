@@ -3,51 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Calendar, User, Download, FileText, Share2, CheckSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const MOCK_NOTICE_DETAILS = {
-    1: {
-        id: 1,
-        title: 'Annual Sports Day 2023',
-        category: 'Event',
-        date: '18 Oct 2023',
-        issuedBy: 'Principal Office',
-        content: `Dear Parents,
-        
-        We are excited to announce our Annual Sports Day scheduled for October 25th, 2023. This year, we have planned a variety of track and field events for students across all grades.
-        
-        Please ensure your ward arrives in full sports uniform by 8:00 AM. Refreshments will be provided. Parents are cordially invited to cheer for the students.
-        
-        We look forward to your presence.
-        
-        Regards,
-        School Administration`,
-        attachments: [
-            { name: 'Event_Schedule.pdf', size: '1.2 MB' }
-        ],
-        requiresAck: false,
-        ackStatus: null
-    },
-    2: {
-        id: 2,
-        title: 'Revised Fee Structure',
-        category: 'Fee',
-        date: '15 Oct 2023',
-        issuedBy: 'Accounts Department',
-        content: `Dear Parents,
-        
-        This is to inform you about the revised fee structure applicable from the next academic term. Due to increased operational costs and new facility upgrades, there will be a marginal increase of 5% in tuition fees.
-        
-        The detailed breakdown is attached. We appreciate your cooperation.
-        
-        Please acknowledge receipt of this information.`,
-        attachments: [
-            { name: 'Fee_Structure_2024.pdf', size: '0.8 MB' }
-        ],
-        requiresAck: true,
-        ackStatus: null // null: pending, date string: acknowledged
-    }
-    // Add others
-};
+import { MOCK_NOTICE_DETAILS } from '../data/mockData';
 
 const NoticeDetailPage = () => {
     const { noticeId } = useParams();

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { useTeacherStore } from '../../../../store/teacherStore';
 
 const MarksEntryTable = ({ exam, students, isOpen, onClose }) => {
+    const { saveMarksDraft, submitMarks } = useTeacherStore();
     // Local state for marks to allow inputs
     const [marksData, setMarksData] = useState(
         students ? students.reduce((acc, st) => ({ ...acc, [st.id]: st.marks || '' }), {}) : {}
@@ -14,6 +16,38 @@ const MarksEntryTable = ({ exam, students, isOpen, onClose }) => {
         // Simple numeric validation (allow empty string)
         if (value === '' || (/^\d+$/.test(value) && parseInt(value) <= exam.totalMarks)) {
             setMarksData(prev => ({ ...prev, [id]: value }));
+        }
+    };
+
+    const handleSaveDraft = () => {
+        const record = {
+            examId: exam.id,
+            subject: exam.subject,
+            title: exam.title,
+            marks: marksData,
+            status: 'Draft',
+            updatedAt: new Date().toISOString()
+        };
+        console.log('Saving draft:', record);
+        saveMarksDraft(record);
+        alert('Draft saved!');
+    };
+
+    const handleSubmitMarks = () => {
+        const confirm = window.confirm("Are you sure you want to submit marks? This action cannot be undone.");
+        if (confirm) {
+            const record = {
+                examId: exam.id,
+                subject: exam.subject,
+                title: exam.title,
+                marks: marksData,
+                status: 'Submitted',
+                updatedAt: new Date().toISOString()
+            };
+            console.log('Submitting marks:', record);
+            submitMarks(record);
+            alert('Marks submitted successfully!');
+            onClose();
         }
     };
 
@@ -82,10 +116,16 @@ const MarksEntryTable = ({ exam, students, isOpen, onClose }) => {
 
                 {/* Footer Actions */}
                 <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 flex gap-3 shrink-0">
-                    <button className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">
+                    <button
+                        onClick={handleSaveDraft}
+                        className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50"
+                    >
                         Save Draft
                     </button>
-                    <button className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
+                    <button
+                        onClick={handleSubmitMarks}
+                        className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                    >
                         <Save size={16} /> Submit Marks
                     </button>
                 </div>

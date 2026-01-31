@@ -3,25 +3,97 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, Paperclip, CheckCircle, Clock, MoreVertical, Lock, User } from 'lucide-react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 
-const MOCK_CONVERSATION = [
-    { id: 1, sender: 'Parent (Rajesh Patel)', type: 'customer', message: 'Hi, I paid the fees via online portal but it is still showing pending.', time: '10:00 AM' },
-    { id: 2, sender: 'System', type: 'system', message: 'Ticket Created. ID: TKT-1001', time: '10:00 AM' },
-    { id: 3, sender: 'Staff (You)', type: 'staff', message: 'Hello Mr. Patel, let me check the transaction records with the accounts team.', time: '10:15 AM' },
-];
+// --- MOCK DATA (Multiple tickets for filtering by ID) ---
+const MOCK_TICKETS_DATA = {
+    'TKT-1001': {
+        id: 'TKT-1001',
+        title: 'Fee Payment Issue',
+        student: { name: 'Aarav Patel', id: 'STU-2024-001' },
+        messages: [
+            { id: 1, sender: 'Parent (Rajesh Patel)', type: 'customer', message: 'Hi, I paid the fees via online portal but it is still showing pending.', time: '10:00 AM' },
+            { id: 2, sender: 'System', type: 'system', message: 'Ticket Created. ID: TKT-1001', time: '10:00 AM' },
+            { id: 3, sender: 'Staff (You)', type: 'staff', message: 'Hello Mr. Patel, let me check the transaction records with the accounts team.', time: '10:15 AM' },
+        ]
+    },
+    'TKT-1002': {
+        id: 'TKT-1002',
+        title: 'Transport Schedule Change',
+        student: { name: 'Ishita Sharma', id: 'STU-2024-002' },
+        messages: [
+            { id: 1, sender: 'Parent (Mrs. Sharma)', type: 'customer', message: 'Can you change the pickup time to 7:30 AM?', time: '09:00 AM' },
+            { id: 2, sender: 'System', type: 'system', message: 'Ticket Created. ID: TKT-1002', time: '09:00 AM' },
+        ]
+    },
+    'TKT-1003': {
+        id: 'TKT-1003',
+        title: 'Document Verification Pending',
+        student: { name: 'Rohan Mehta', id: 'STU-2024-003' },
+        messages: [
+            { id: 1, sender: 'Parent (Mr. Mehta)', type: 'customer', message: 'I submitted the documents last week but status is still pending.', time: '11:30 AM' },
+            { id: 2, sender: 'System', type: 'system', message: 'Ticket Created. ID: TKT-1003', time: '11:30 AM' },
+        ]
+    }
+};
 
 const TicketDetail = () => {
     const { ticketId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
-    const [messages, setMessages] = useState(MOCK_CONVERSATION);
+
+    const [ticket, setTicket] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [newMessage, setNewMessage] = useState('');
     const [status, setStatus] = useState('Open');
     const [showResolveModal, setShowResolveModal] = useState(false);
     const [resolutionNote, setResolutionNote] = useState('');
-
     const [isInternal, setIsInternal] = useState(false);
     const [assignedDept, setAssignedDept] = useState('Support');
     const messagesEndRef = useRef(null);
+
+    // Fetch ticket data based on ID from URL
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Simulate API call - In real app, replace with actual API fetch
+        setTimeout(() => {
+            const foundTicket = MOCK_TICKETS_DATA[ticketId];
+            if (foundTicket) {
+                setTicket(foundTicket);
+                setMessages(foundTicket.messages);
+            } else {
+                setError('Ticket not found');
+            }
+            setLoading(false);
+        }, 300);
+    }, [ticketId]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-3xl mx-auto p-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading ticket...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !ticket) {
+        return (
+            <div className="max-w-3xl mx-auto p-10 text-center">
+                <p className="text-red-600 font-bold">{error || 'Ticket not found'}</p>
+                <button
+                    onClick={() => navigate('/staff/support')}
+                    className="mt-4 text-indigo-600 hover:underline"
+                >
+                    ← Back to Support
+                </button>
+            </div>
+        );
+    }
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,7 +153,7 @@ const TicketDetail = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-sm font-bold text-gray-900 line-clamp-1">Fee Payment Issue</h1>
+                        <h1 className="text-sm font-bold text-gray-900 line-clamp-1">{ticket.title}</h1>
                         <p className="text-xs text-gray-500 font-mono flex items-center gap-1.5 flex-wrap">
                             {ticketId} •
                             <span className={`px-1.5 rounded text-[10px] font-bold ${status === 'Open' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>{status}</span>
@@ -122,14 +194,14 @@ const TicketDetail = () => {
                 <div className="flex items-center gap-4 min-w-max">
                     <div className="flex items-center gap-2 text-xs text-indigo-800 shrink-0">
                         <User size={14} />
-                        <span className="font-bold">Aarav Patel</span>
+                        <span className="font-bold">{ticket.student.name}</span>
                         <span className="opacity-70">(Student)</span>
                     </div>
 
                     <div className="h-4 w-px bg-indigo-200"></div>
 
                     <div className="flex gap-2">
-                        <button onClick={() => navigate('/staff/students/STU-2024-001')} className="px-2 py-1 bg-white hover:bg-indigo-600 hover:text-white rounded border border-indigo-100 text-[10px] font-bold text-indigo-600 transition-colors">
+                        <button onClick={() => navigate(`/staff/students/${ticket.student.id}`)} className="px-2 py-1 bg-white hover:bg-indigo-600 hover:text-white rounded border border-indigo-100 text-[10px] font-bold text-indigo-600 transition-colors">
                             Profile
                         </button>
                         <button onClick={() => navigate('/staff/fees')} className="px-2 py-1 bg-white hover:bg-indigo-600 hover:text-white rounded border border-indigo-100 text-[10px] font-bold text-indigo-600 transition-colors">

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import Lenis from 'lenis';
 import { motion } from 'framer-motion';
-import gsap from 'gsap';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 // Components
 import TeacherHeader from '../components/common/TeacherHeader';
@@ -11,11 +11,44 @@ import PendingTasksCard from '../components/dashboard/PendingTasksCard';
 import QuickActionsRow from '../components/dashboard/QuickActionsRow';
 import PerformanceSnapshot from '../components/dashboard/PerformanceSnapshot';
 
-// Data
-import { teacherProfile, adminNotices, todayClasses, pendingActions, performanceStats } from '../data/dashboardData';
-
 const TeacherDashboard = () => {
     const containerRef = useRef(null);
+    const profile = useTeacherStore(state => state.profile);
+    const notices = useTeacherStore(state => state.notices);
+    const todayClasses = useTeacherStore(state => state.todayClasses);
+    const homeworkList = useTeacherStore(state => state.homeworkList);
+    const queries = useTeacherStore(state => state.queries);
+
+    // Dynamic Pending Actions
+    const pendingActions = [
+        {
+            id: "ACT-1",
+            title: "Attendance Pending",
+            count: todayClasses.filter(c => c.status === 'Pending').length,
+            type: "attendance",
+            color: "text-orange-600 bg-orange-50"
+        },
+        {
+            id: "ACT-2",
+            title: "Homework Reviews",
+            count: homeworkList.filter(h => h.status === 'Pending').length || 15,
+            type: "homework",
+            color: "text-purple-600 bg-purple-50"
+        },
+        {
+            id: "ACT-3",
+            title: "Queries Unanswered",
+            count: queries.filter(q => q.status === 'Open').length,
+            type: "query",
+            color: "text-blue-600 bg-blue-50"
+        }
+    ];
+
+    const performanceStats = {
+        attendanceCompletion: Math.round((todayClasses.filter(c => c.status === 'Marked').length / todayClasses.length) * 100) || 85,
+        homeworkReviewed: 60,
+        engagementScore: 4.2
+    };
 
     // Smooth Scroll
     useEffect(() => {
@@ -37,12 +70,12 @@ const TeacherDashboard = () => {
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-20">
             {/* 1. Header */}
-            <TeacherHeader user={teacherProfile} />
+            <TeacherHeader user={profile} />
 
             <main className="max-w-2xl mx-auto px-4 pt-4">
 
                 {/* 2. Admin Notices (Swipeable) */}
-                <AdminNoticeCard notices={adminNotices} />
+                <AdminNoticeCard notices={notices} />
 
                 {/* 3. Pending Actions (Critical) */}
                 <PendingTasksCard actions={pendingActions} />
@@ -57,8 +90,6 @@ const TeacherDashboard = () => {
                 <PerformanceSnapshot stats={performanceStats} />
 
             </main>
-
-            {/* 7. Navigation removed (handled by Layout) */}
         </div>
     );
 };

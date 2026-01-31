@@ -7,7 +7,7 @@ const ClassCard = ({ classData }) => {
     const navigate = useNavigate();
     return (
         <div
-            onClick={() => navigate('/teacher/classes')}
+            onClick={() => navigate(`/teacher/classes/${classData.id}`)}
             className="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-3 last:mb-0 hover:bg-white hover:shadow-sm transition-all group cursor-pointer"
         >
             <div className="flex justify-between items-start mb-3">
@@ -44,7 +44,7 @@ const ClassCard = ({ classData }) => {
                     <span className="text-[9px] font-medium text-gray-500">Marks</span>
                 </button>
                 <button
-                    onClick={(e) => { e.stopPropagation(); navigate('/teacher/classes'); }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/teacher/classes/${classData.id}`); }}
                     className="flex flex-col items-center gap-1 p-1 hover:bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50" title="View Class"
                 >
                     <div className="p-1.5 bg-gray-100 text-gray-500 rounded-md group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors"><ArrowRight size={14} /></div>

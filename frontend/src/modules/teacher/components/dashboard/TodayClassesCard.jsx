@@ -17,7 +17,7 @@ const TodayClassesCard = ({ classes }) => {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: idx * 0.1 }}
                             key={cls.id}
-                            onClick={() => navigate(`/teacher/classes`)} // In real app, /teacher/classes/${cls.id}
+                            onClick={() => navigate(`/teacher/classes/${cls.id}`)}
                             className={`bg-white p-4 rounded-xl border ${cls.status === 'Pending' ? 'border-orange-200 bg-orange-50/10' : 'border-gray-100'} shadow-sm flex items-center justify-between group active:scale-[0.99] transition-all cursor-pointer`}
                         >
                             <div className="flex-1 min-w-0">
@@ -40,7 +40,7 @@ const TodayClassesCard = ({ classes }) => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (cls.status === 'Pending') navigate('/teacher/attendance');
-                                    else navigate(`/teacher/classes`);
+                                    else navigate(`/teacher/classes/${cls.id}`);
                                 }}
                                 className={`ml-3 px-4 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm whitespace-nowrap
                                     ${cls.status === 'Pending'

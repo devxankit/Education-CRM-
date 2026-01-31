@@ -4,6 +4,7 @@ import Lenis from 'lenis';
 import { Filter, Info } from 'lucide-react';
 import gsap from 'gsap';
 import { AnimatePresence } from 'framer-motion';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 // Components
 import ExamTabs from '../components/exams/ExamTabs';
@@ -17,6 +18,9 @@ const ExamsPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const listRef = useRef(null);
+    const marksRecords = useTeacherStore(state => state.marksRecords);
+    const exams = useTeacherStore(state => state.exams);
+    const examStudentsMap = useTeacherStore(state => state.examStudents);
 
     const [activeTab, setActiveTab] = useState('active');
     const [selectedExam, setSelectedExam] = useState(null);
@@ -37,7 +41,10 @@ const ExamsPage = () => {
     }, []);
 
     // Filter Logic
-    const filteredExams = examsData.list.filter(exam => {
+    const filteredExams = exams.map(exam => {
+        const record = marksRecords.find(r => r.examId === exam.id);
+        return record ? { ...exam, status: record.status } : exam;
+    }).filter(exam => {
         if (activeTab === 'all') return true;
         return exam.status.toLowerCase() === activeTab;
     });
@@ -90,6 +97,7 @@ const ExamsPage = () => {
                                 key={exam.id}
                                 exam={exam}
                                 onEnterMarks={handleEnterMarks}
+                                onClick={() => navigate(`/teacher/exams/${exam.id}`)}
                             />
                         ))
                     ) : (
@@ -110,7 +118,7 @@ const ExamsPage = () => {
                         isOpen={!!selectedExam}
                         onClose={() => setSelectedExam(null)}
                         exam={selectedExam}
-                        students={examsData.students['EX-102'] || []} // Mocking specific students for demo
+                        students={examStudentsMap[selectedExam?.id] || []}
                     />
                 )}
             </AnimatePresence>

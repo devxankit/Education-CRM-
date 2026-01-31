@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStaffAuth } from '../context/StaffAuthContext';
-import { Search, Filter, Bell, AlertTriangle, FileText, CheckCircle, Clock } from 'lucide-react';
-
-const MOCK_NOTICES = [
-    { id: 'N-2024-001', title: 'Emergency: School Closed Tomorrow due to Rain', category: 'Emergency', priority: 'Urgent', date: '10 Oct 2024', status: 'Pending' },
-    { id: 'N-2024-002', title: 'Revised Salary Structure for Q4', category: 'Finance', priority: 'Important', date: '08 Oct 2024', status: 'Read' },
-    { id: 'N-2024-003', title: 'New Library Rules for Staff', category: 'General', priority: 'Normal', date: '05 Oct 2024', status: 'Pending' },
-    { id: 'N-2024-004', title: 'Public Holiday: Diwali Break Schedule', category: 'HR', priority: 'Normal', date: '01 Oct 2024', status: 'Read' },
-];
+import { Search, Filter, Plus, Bell, ChevronRight, Clock, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useStaffStore } from '../../../store/staffStore';
 
 const Notices = () => {
     const navigate = useNavigate();
+    const notices = useStaffStore(state => state.notices);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('All');
     const [filterPriority, setFilterPriority] = useState('All');
 
-    const filteredNotices = MOCK_NOTICES.filter(notice => {
+    const filteredNotices = notices.filter(notice => {
         const matchesSearch = notice.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = filterCategory === 'All' || notice.category === filterCategory;
         const matchesPriority = filterPriority === 'All' || notice.priority === filterPriority;
-        return matchesSearch && matchesPriority;
+        return matchesSearch && matchesCategory && matchesPriority;
     });
 
     const getPriorityStyle = (priority) => {

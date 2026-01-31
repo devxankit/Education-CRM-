@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
@@ -6,37 +6,64 @@ import {
     ArrowLeft, User, Phone, MapPin, Mail, Briefcase, BookOpen, Clock,
     FileText, CheckCircle, Shield, AlertCircle, Calendar
 } from 'lucide-react';
-import RoleBasedSection from '../components/students/RoleBasedSection'; // Reuse this component
+import RoleBasedSection from '../components/students/RoleBasedSection';
+import { useStaffStore } from '../../../store/staffStore';
 
-// --- MOCK DETAILS ---
-const MOCK_TEACHER_DETAIL = {
-    id: 'TCH-2024-001',
-    name: 'Suresh Kumar',
-    employeeId: 'EMP-T-001',
-    doj: '2019-06-15',
-    type: 'Permanent',
-    status: 'Active',
-    contact: { phone: '9876543210', email: 'suresh.k@example.com', address: '45, Shastri Nagar, Delhi' },
-    academics: { subjects: ['Mathematics', 'Physics'], classes: ['10-A', '9-B', '12-A'] },
-    payroll: { salary: 45000, type: 'Monthly', deductions: 2000, status: 'Paid' },
-    documents: [
-        { name: 'M.Sc Degree', status: 'Verified' },
-        { name: 'B.Ed Certificate', status: 'Verified' },
-        { name: 'Aadhaar Card', status: 'Pending' }
-    ]
-};
+// --- MOCK DATA REMOVED ---
 
 const TeacherDetail = () => {
     const { teacherId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
+    const teachers = useStaffStore(state => state.teachers);
 
-    // In real app, fetch execution would be here
-    const [teacher, setTeacher] = useState(MOCK_TEACHER_DETAIL);
-
-    if (!teacher) return <div className="p-10 text-center">Loading...</div>;
+    const [teacher, setTeacher] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
+
+    // Fetch teacher data from store based on ID
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Simulate small delay for feel
+        setTimeout(() => {
+            const foundTeacher = teachers.find(t => t.id === teacherId);
+            if (foundTeacher) {
+                setTeacher(foundTeacher);
+            } else {
+                setError('Teacher not found');
+            }
+            setLoading(false);
+        }, 100);
+    }, [teacherId, teachers]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-5xl mx-auto p-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading teacher details...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !teacher) {
+        return (
+            <div className="max-w-5xl mx-auto p-10 text-center">
+                <p className="text-red-600 font-bold">{error || 'Teacher not found'}</p>
+                <button
+                    onClick={() => navigate('/staff/teachers')}
+                    className="mt-4 text-indigo-600 hover:underline"
+                >
+                    ← Back to Teachers
+                </button>
+            </div>
+        );
+    }
 
     const InfoField = ({ label, value, icon: Icon }) => (
         <div className="space-y-1">
@@ -72,6 +99,7 @@ const TeacherDetail = () => {
                     role={currentRole}
                     allowedRoles={Object.values(STAFF_ROLES)}
                     editable={currentRole === STAFF_ROLES.DATA_ENTRY}
+                    onEdit={() => navigate(`/staff/teachers/${teacherId}/edit`)}
                 >
                     <InfoField label="Full Name" value={teacher.name} icon={User} />
                     <InfoField label="Employee ID" value={teacher.employeeId} icon={Shield} />
@@ -116,6 +144,7 @@ const TeacherDetail = () => {
                     role={currentRole}
                     allowedRoles={[STAFF_ROLES.FRONT_DESK, STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ADMIN, STAFF_ROLES.SUPPORT]}
                     editable={currentRole === STAFF_ROLES.DATA_ENTRY}
+                    onEdit={() => navigate(`/staff/teachers/${teacherId}/edit`)}
                 >
                     <InfoField label="Mobile Number" value={teacher.contact.phone} icon={Phone} />
                     <InfoField label="Email Address" value={teacher.contact.email} icon={Mail} />
@@ -130,6 +159,7 @@ const TeacherDetail = () => {
                     role={currentRole}
                     allowedRoles={[STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN]}
                     editable={currentRole === STAFF_ROLES.ACCOUNTS}
+                    onEdit={() => navigate(`/staff/teachers/${teacherId}/edit`)}
                 >
                     <InfoField label="Base Salary" value={`₹${teacher.payroll.salary.toLocaleString()}`} icon={Briefcase} />
                     <InfoField label="Pay Cycle" value={teacher.payroll.type} icon={Clock} />
@@ -147,6 +177,7 @@ const TeacherDetail = () => {
                     role={currentRole}
                     allowedRoles={[STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN, STAFF_ROLES.SUPPORT]}
                     editable={currentRole === STAFF_ROLES.DATA_ENTRY}
+                    onEdit={() => navigate(`/staff/teachers/${teacherId}/edit`)}
                 >
                     <div className="col-span-1 md:col-span-2 space-y-3">
                         {teacher.documents.map((doc, idx) => (

@@ -10,14 +10,15 @@ import PaymentActionCard from '../components/Fees/PaymentActionCard';
 import { FeeBreakdownList, PaymentHistory } from '../components/Fees/FeeLists';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 
-// Data
-import { feesData } from '../data/feesData';
+// Data Service
+import { useStudentStore } from '../../../store/studentStore';
 
 const FeesPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState(null);
+    const data = useStudentStore(state => state.fees);
+    const payFee = useStudentStore(state => state.payFee);
+    const [loading, setLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Initial Load & Smooth Scroll
@@ -37,18 +38,12 @@ const FeesPage = () => {
         }
         requestAnimationFrame(raf);
 
-        // Simulate Fetch
-        setTimeout(() => {
-            setData(feesData);
-            setLoading(false);
-        }, 800);
-
         return () => lenis.destroy();
     }, []);
 
     const handlePaymentSuccess = (amount) => {
+        payFee(amount);
         setShowSuccessModal(true);
-        // In real app, re-fetch data here
     };
 
     return (

@@ -1,20 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Filter, Download, Search } from 'lucide-react';
+import { useAdminStore } from '../../../../../store/adminStore';
 
 // Components
 import TeacherTable from './components/TeacherTable';
 import TeacherProfileDrawer from './components/TeacherProfileDrawer';
 
 const Teachers = () => {
-
-    // Mock Data - Derived from Employees where Type = Teacher
-    const [teachers, setTeachers] = useState([
-        { id: 1, name: 'John Doe', code: 'EMP-1023', department: 'Science', designation: 'Physics Lecturer', academicLevel: 'School', eligibleSubjectsCount: 2, teachingStatus: 'Active' },
-        { id: 4, name: 'Emily Davis', code: 'EMP-1050', department: 'Mathematics', designation: 'Math Teacher', academicLevel: 'School', eligibleSubjectsCount: 1, teachingStatus: 'Active' },
-        { id: 5, name: 'Alan Turing', code: 'EMP-3001', department: 'Computer Science', designation: 'HOD', academicLevel: 'UG', eligibleSubjectsCount: 4, teachingStatus: 'On Leave' },
-    ]);
-
+    const teachers = useAdminStore(state => state.teachers);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -31,11 +25,14 @@ const Teachers = () => {
     };
 
     // Filter Logic
-    const filteredTeachers = teachers.filter(t =>
-        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.department.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredTeachers = teachers.filter(t => {
+        const name = (t.name || `${t.firstName} ${t.lastName}`).toLowerCase();
+        const code = (t.code || t.employeeId || '').toLowerCase();
+        const dept = (t.department || '').toLowerCase();
+        const query = searchQuery.toLowerCase();
+
+        return name.includes(query) || code.includes(query) || dept.includes(query);
+    });
 
     return (
         <div className="h-full flex flex-col pb-10">

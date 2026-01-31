@@ -1,56 +1,16 @@
 
 import React, { useState } from 'react';
 import { Plus, Download, ShieldCheck } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
 
 import RoleTable from './components/RoleTable';
 import CreateRoleModal from './components/CreateRoleModal';
 import RoleDetailDrawer from './components/RoleDetailDrawer';
 
 const RolesList = () => {
-
-    // Mock Data (System + Custom)
-    const [roles, setRoles] = useState([
-        {
-            id: 1,
-            name: 'Super Admin',
-            code: 'ROLE_SUPER_ADMIN',
-            type: 'system',
-            description: 'Full access to all modules.',
-            defaultDashboard: '/admin/dashboard',
-            status: 'active',
-            userCount: 2
-        },
-        {
-            id: 2,
-            name: 'Teacher',
-            code: 'ROLE_TEACHER',
-            type: 'system',
-            description: 'Can manage classes, attendance, and marks.',
-            defaultDashboard: '/staff/dashboard',
-            status: 'active',
-            userCount: 45
-        },
-        {
-            id: 3,
-            name: 'Accountant',
-            code: 'ROLE_ACCOUNTANT',
-            type: 'system',
-            description: 'Manage fees and payroll.',
-            defaultDashboard: '/finance/dashboard',
-            status: 'active',
-            userCount: 3
-        },
-        {
-            id: 4,
-            name: 'Lab Assistant',
-            code: 'ROLE_LAB_ASSISTANT',
-            type: 'custom',
-            description: 'Manage inventory for Science Labs.',
-            defaultDashboard: '/staff/dashboard',
-            status: 'active',
-            userCount: 0
-        }
-    ]);
+    const roles = useAdminStore(state => state.roles);
+    const addRole = useAdminStore(state => state.addRole);
+    const updateRole = useAdminStore(state => state.updateRole);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState(null);
@@ -58,15 +18,7 @@ const RolesList = () => {
 
     // Handlers
     const handleCreate = (newRoleData) => {
-        const newRole = {
-            id: Date.now(),
-            ...newRoleData,
-            type: 'custom',
-            status: 'active',
-            userCount: 0
-        };
-        setRoles(prev => [...prev, newRole]);
-        console.log("Created Role:", newRole);
+        addRole(newRoleData);
     };
 
     const handleRowClick = (role) => {
@@ -74,8 +26,7 @@ const RolesList = () => {
     };
 
     const handleStatusChange = (id, newStatus, reason) => {
-        console.log(`Role ${id} status change to ${newStatus}. Reason: ${reason}`);
-        setRoles(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+        updateRole(id, { status: newStatus });
         setSelectedRole(prev => (prev?.id === id ? { ...prev, status: newStatus } : prev));
     };
 

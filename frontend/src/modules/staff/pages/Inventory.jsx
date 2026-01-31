@@ -3,26 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { Search, Plus, ArrowLeft, Package, AlertCircle } from 'lucide-react';
-
-const MOCK_INVENTORY = [
-    { id: 'INV-001', name: 'Whiteboard Marker (Pack)', category: 'Stationery', qty: 45, reorder: 10, status: 'Available' },
-    { id: 'INV-002', name: 'A4 Paper Reams', category: 'Stationery', qty: 5, reorder: 20, status: 'Low Stock' },
-    { id: 'INV-003', name: 'HCL Acid (500ml)', category: 'Science Lab', qty: 2, reorder: 5, status: 'Low Stock' },
-    { id: 'INV-004', name: 'Football (Training)', category: 'Sports', qty: 12, reorder: 10, status: 'Available' },
-];
+import { useStaffStore } from '../../../store/staffStore';
 
 const Inventory = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
+    const inventory = useStaffStore(state => state.inventory);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCat, setFilterCat] = useState('All');
 
     // Access: Transport/Admin/Accounts (View)
-    const canEdit = [STAFF_ROLES.TRANSPORT, STAFF_ROLES.ADMIN].includes(user?.role); // Simplified: Using Transport/Admin as "Operations"
+    const canEdit = [STAFF_ROLES.TRANSPORT, STAFF_ROLES.ADMIN].includes(user?.role);
 
-    // Note: In real setup, maybe 'Store Manager' role exists. For now, defaulting to Transport/Admin as operations lead.
-
-    const filteredItems = MOCK_INVENTORY.filter(i => {
+    const filteredItems = inventory.filter(i => {
         const matchesSearch = i.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCat = filterCat === 'All' || i.category === filterCat;
         return matchesSearch && matchesCat;
@@ -70,6 +63,7 @@ const Inventory = () => {
                         <option value="Stationery">Stationery</option>
                         <option value="Science Lab">Science Lab</option>
                         <option value="Sports">Sports</option>
+                        <option value="Cleaning">Cleaning</option>
                     </select>
                 </div>
             </div>
@@ -78,7 +72,7 @@ const Inventory = () => {
                 {filteredItems.map(item => (
                     <div key={item.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center hover:bg-gray-50 transition-colors cursor-pointer active:scale-95">
                         <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.qty <= item.reorder ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${(item.stock || 0) <= 10 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
                                 <Package size={20} />
                             </div>
                             <div>
@@ -88,10 +82,10 @@ const Inventory = () => {
                         </div>
                         <div className="text-right">
                             <div className="flex items-center gap-2 justify-end">
-                                {item.qty <= item.reorder && <AlertCircle size={14} className="text-red-500" />}
-                                <span className={`text-lg font-bold ${item.qty <= item.reorder ? 'text-red-600' : 'text-gray-900'}`}>{item.qty}</span>
+                                {(item.stock || 0) <= 10 && <AlertCircle size={14} className="text-red-500" />}
+                                <span className={`text-lg font-bold ${(item.stock || 0) <= 10 ? 'text-red-600' : 'text-gray-900'}`}>{item.stock || 0}</span>
                             </div>
-                            <p className="text-[10px] text-gray-400">Available Units</p>
+                            <p className="text-[10px] text-gray-400">Available {item.unit || 'Units'}</p>
                         </div>
                     </div>
                 ))}

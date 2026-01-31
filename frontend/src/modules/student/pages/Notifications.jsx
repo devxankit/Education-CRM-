@@ -5,12 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Bell, CheckCircle, AlertTriangle, Info, Calendar, Clock, Check } from 'lucide-react';
 import Lenis from 'lenis';
 
-// Data
-import { notificationsData } from '../data/notificationsData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const Notifications = () => {
     const navigate = useNavigate();
-    const [notifications, setNotifications] = useState(notificationsData);
+    const notifications = useStudentStore(state => state.notifications);
+    const fetchNotifications = useStudentStore(state => state.fetchNotifications);
+    const markAsRead = useStudentStore(state => state.markAsRead);
+
+    // Initial Load
+    useEffect(() => {
+        if (notifications.length === 0) {
+            fetchNotifications();
+        }
+    }, [notifications.length, fetchNotifications]);
 
     // Smooth Scroll
     useEffect(() => {
@@ -32,13 +40,13 @@ const Notifications = () => {
     }, []);
 
     const markAllRead = () => {
-        const updated = notifications.map(n => ({ ...n, read: true }));
-        setNotifications(updated);
+        notifications.forEach(n => {
+            if (!n.read) markAsRead(n.id);
+        });
     };
 
-    const markRead = (id) => {
-        const updated = notifications.map(n => n.id === id ? ({ ...n, read: true }) : n);
-        setNotifications(updated);
+    const handleMarkRead = (id) => {
+        markAsRead(id);
     };
 
     const getIcon = (type) => {
@@ -96,10 +104,10 @@ const Notifications = () => {
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                onClick={() => markRead(note.id)}
+                                onClick={() => handleMarkRead(note.id)}
                                 className={`relative p-4 rounded-2xl border transition-all cursor-pointer ${note.read
-                                        ? 'bg-white border-gray-100'
-                                        : 'bg-white border-indigo-100 shadow-[0_4px_12px_-4px_rgba(99,102,241,0.1)]'
+                                    ? 'bg-white border-gray-100'
+                                    : 'bg-white border-indigo-100 shadow-[0_4px_12px_-4px_rgba(99,102,241,0.1)]'
                                     }`}
                             >
                                 <div className="flex gap-4">

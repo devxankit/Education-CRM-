@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info } from 'lucide-react';
@@ -13,16 +13,16 @@ import PerformanceOverview from '../components/Exams/PerformanceOverview';
 import InfoTooltip from '../components/Attendance/InfoTooltip'; // Reuse existing tooltip
 import EmptyState from '../components/Attendance/EmptyState'; // Reuse existing empty state
 
-// Data
-import { examsData } from '../data/examsData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const TABS = ['Upcoming Exams', 'Results', 'Performance'];
 
 const ExamsResultsPage = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState(null);
+    const data = useStudentStore(state => state.exams);
+    const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('Upcoming Exams');
     const [selectedResult, setSelectedResult] = useState(null);
 
@@ -43,14 +43,37 @@ const ExamsResultsPage = () => {
         }
         requestAnimationFrame(raf);
 
-        // Simulate Fetch
-        setTimeout(() => {
-            setData(examsData);
-            setLoading(false);
-        }, 800);
+        // Handle direct URL ID access
+        if (id && data?.results) {
+            const result = data.results.find(r => r.id === parseInt(id));
+            if (result) {
+                setSelectedResult(result);
+                setActiveTab('Results');
+            }
+        }
 
         return () => lenis.destroy();
-    }, []);
+    }, [id, data]);
+
+    // Update selected result if ID changes
+    useEffect(() => {
+        if (id && data?.results) {
+            const result = data.results.find(r => r.id === parseInt(id));
+            if (result) {
+                setSelectedResult(result);
+            }
+        } else if (!id) {
+            setSelectedResult(null);
+        }
+    }, [id, data]);
+
+    const handleResultClick = (result) => {
+        navigate(`${result.id}`);
+    };
+
+    const handleCloseDetail = () => {
+        navigate('..', { relative: 'path' });
+    };
 
     // Tab Content Renderer
     const renderContent = () => {
@@ -76,7 +99,7 @@ const ExamsResultsPage = () => {
                             key={result.id}
                             result={result}
                             index={index}
-                            onClick={setSelectedResult}
+                            onClick={handleResultClick}
                         />
                     ))}
                 </div>
@@ -159,7 +182,7 @@ const ExamsResultsPage = () => {
                 {selectedResult && (
                     <ResultDetailModal
                         result={selectedResult}
-                        onClose={() => setSelectedResult(null)}
+                        onClose={handleCloseDetail}
                     />
                 )}
             </AnimatePresence>

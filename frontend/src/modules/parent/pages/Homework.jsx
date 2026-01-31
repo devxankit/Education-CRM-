@@ -4,46 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Info, Search, Filter, Calendar, Book, Award, HeadphonesIcon, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import HomeworkCard from '../components/homework/HomeworkCard';
-
-// Mock Data
-const MOCK_HOMEWORK = [
-    {
-        id: 1,
-        subject: 'Mathematics',
-        title: 'Algebra: Linear Equations',
-        dueDate: '2023-10-25',
-        status: 'Pending',
-        teacher: 'Mr. Sharma',
-        description: 'Complete exercises 4.1 to 4.3 from the textbook.'
-    },
-    {
-        id: 2,
-        subject: 'Science',
-        title: 'Physics Lab Report',
-        dueDate: '2023-10-22',
-        status: 'Submitted',
-        teacher: 'Mrs. Gupta',
-        description: 'Submit the report on laws of motion.'
-    },
-    {
-        id: 3,
-        subject: 'English',
-        title: 'Essay on Environment',
-        dueDate: '2023-10-20',
-        status: 'Late',
-        teacher: 'Ms. Roy',
-        description: 'Write a 500-word essay on environmental conservation.'
-    },
-    {
-        id: 4,
-        subject: 'History',
-        title: 'Mughal Empire Timeline',
-        dueDate: '2023-10-18',
-        status: 'Submitted',
-        teacher: 'Mr. Khan',
-        description: 'Create a timeline of major Mughal emperors.'
-    },
-];
+import { useParentStore } from '../../../store/parentStore';
 
 const ParentHomeworkPage = () => {
     const navigate = useNavigate();
@@ -51,6 +12,7 @@ const ParentHomeworkPage = () => {
     const state = location.state || {};
     const { childId, filter: initialFilter } = state;
 
+    const homework = useParentStore(state => state.homework);
     const [activeTab, setActiveTab] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -59,7 +21,6 @@ const ParentHomeworkPage = () => {
     useEffect(() => {
         if (!childId) {
             console.warn("No childId provided, redirecting in prod.");
-            // navigate('/parent/dashboard');
         }
 
         if (initialFilter) {
@@ -72,14 +33,14 @@ const ParentHomeworkPage = () => {
     const handleBack = () => navigate(-1);
 
     // 2. Tab filtering logic
-    const filteredHomework = MOCK_HOMEWORK.filter(hw => {
+    const filteredHomework = homework.filter(hw => {
         const matchesTab = activeTab === 'All' || hw.status === activeTab;
         const matchesSearch = hw.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             hw.subject.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesTab && matchesSearch;
     });
 
-    const pendingCount = MOCK_HOMEWORK.filter(h => h.status === 'Pending' || h.status === 'Late').length;
+    const pendingCount = homework.filter(h => h.status === 'Pending' || h.status === 'Late').length;
 
     // 3. Navigation to Details
     const handleHomeworkClick = (id) => {

@@ -1,117 +1,160 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, MessageSquare } from 'lucide-react';
+import { useStaffStore } from '../../../store/staffStore';
 
 const NewTicket = () => {
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+    const { ticketId } = useParams();
+    const isEditMode = !!ticketId;
+
+    const { tickets, addTicket, updateTicket } = useStaffStore(state => ({
+        tickets: state.tickets,
+        addTicket: state.addTicket,
+        updateTicket: state.updateTicket
+    }));
+
+    const [loading, setLoading] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
-        subject: '',
-        entityType: 'Student',
-        entityId: '',
-        priority: 'Low',
-        message: ''
+        title: '',
+        priority: 'Medium',
+        category: 'General',
+        student: '',
+        description: ''
     });
+
+    // Fetch data for edit mode
+    useEffect(() => {
+        if (isEditMode) {
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (ticket) {
+                setFormData({
+                    title: ticket.title || '',
+                    priority: ticket.priority || 'Medium',
+                    category: ticket.category || 'General',
+                    student: ticket.student || '',
+                    description: ticket.description || ''
+                });
+            }
+        }
+    }, [isEditMode, ticketId, tickets]);
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        setIsLoading(true);
+        setLoading(true);
+
         setTimeout(() => {
-            setIsLoading(false);
+            if (isEditMode) {
+                updateTicket(ticketId, formData);
+            } else {
+                addTicket(formData);
+            }
+            setLoading(false);
+            alert(`Support Ticket ${isEditMode ? 'Updated' : 'Created'} Successfully!`);
             navigate('/staff/support');
         }, 1000);
     };
 
     return (
-        <div className="max-w-2xl mx-auto pb-20 md:pb-10 min-h-screen bg-gray-50">
-            <div className="bg-white px-5 py-4 border-b border-gray-200 sticky top-0 z-10 flex items-center gap-3">
-                <button onClick={() => navigate('/staff/support')} className="p-2 -ml-2 text-gray-500 hover:bg-gray-50 rounded-full">
-                    <ArrowLeft size={20} />
+        <div className="max-w-2xl mx-auto pb-20 md:pb-6 min-h-screen p-4">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6">
+                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <ArrowLeft size={20} className="text-gray-600" />
                 </button>
-                <h1 className="text-lg font-bold text-gray-900">Create New Ticket</h1>
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900">{isEditMode ? 'Edit Ticket' : 'Raise New Ticket'}</h1>
+                    <p className="text-xs text-gray-500">{isEditMode ? 'Update support request' : 'Submit a new support request'}</p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-5">
-
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Subject</label>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500">Subject / Title</label>
                         <input
                             required
+                            name="title"
+                            value={formData.title}
+                            onChange={handleChange}
                             type="text"
-                            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
-                            placeholder="e.g. Bus Route Issue due to Construction"
-                            value={formData.subject}
-                            onChange={e => setFormData({ ...formData, subject: e.target.value })}
+                            className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="e.g. Fee Payment Issue"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Related To</label>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-500">Priority</label>
                             <select
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
-                                value={formData.entityType}
-                                onChange={e => setFormData({ ...formData, entityType: e.target.value })}
+                                name="priority"
+                                value={formData.priority}
+                                onChange={handleChange}
+                                className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                             >
-                                <option>Student</option>
-                                <option>Teacher</option>
-                                <option>Employee</option>
-                                <option>General</option>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                                <option>Urgent</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">ID / Name</label>
-                            <input
-                                required
-                                type="text"
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
-                                placeholder="e.g. 10-A Aarav"
-                                value={formData.entityId}
-                                onChange={e => setFormData({ ...formData, entityId: e.target.value })}
-                            />
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-500">Category</label>
+                            <select
+                                name="category"
+                                value={formData.category}
+                                onChange={handleChange}
+                                className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                            >
+                                <option>General</option>
+                                <option>Fees</option>
+                                <option>Transport</option>
+                                <option>Academics</option>
+                                <option>IT Support</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Priority</label>
-                        <div className="flex gap-2">
-                            {['Low', 'Medium', 'High'].map(p => (
-                                <button
-                                    type="button"
-                                    key={p}
-                                    onClick={() => setFormData({ ...formData, priority: p })}
-                                    className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${formData.priority === p
-                                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                                            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    {p}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Message / Description</label>
-                        <textarea
-                            required
-                            rows={5}
-                            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none"
-                            placeholder="Describe the issue in detail..."
-                            value={formData.message}
-                            onChange={e => setFormData({ ...formData, message: e.target.value })}
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500">Student Name / ID (If applicable)</label>
+                        <input
+                            name="student"
+                            value={formData.student}
+                            onChange={handleChange}
+                            type="text"
+                            className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="e.g. Aarav Gupta (STU-101)"
                         />
                     </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500">Description</label>
+                        <textarea
+                            required
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            rows="4"
+                            className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="Describe the issue in detail..."
+                        ></textarea>
+                    </div>
                 </div>
 
-                <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 md:sticky md:bottom-0 md:rounded-xl z-20">
-                    <button type="submit" disabled={isLoading} className="w-full px-8 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2">
-                        {isLoading ? 'Creating...' : <><MessageSquare size={18} /> Create Ticket</>}
-                    </button>
-                </div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:bg-gray-400"
+                >
+                    <Save size={20} /> {loading ? 'Processing...' : (isEditMode ? 'Update Ticket' : 'Raise Ticket')}
+                </button>
             </form>
         </div>
     );

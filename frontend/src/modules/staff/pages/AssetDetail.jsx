@@ -1,35 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { ArrowLeft, Wrench, Clock, Plus, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 
-const MOCK_ASSET = {
-    id: 'AST-001',
-    name: 'School Bus 01',
-    type: 'Vehicle',
-    code: 'BUS-01',
-    location: 'Parking A',
-    assignedTo: 'Driver Ramesh',
-    purchaseDate: '2020-05-15',
-    cost: 2500000,
-    condition: 'Good',
-    status: 'Active',
-    logs: [
-        { id: 1, date: '2024-09-01', issue: 'Regular Service', cost: 15000, status: 'Resolved' },
-        { id: 2, date: '2024-05-10', issue: 'Tyre Replacement', cost: 45000, status: 'Resolved' },
-    ]
-};
+// --- MOCK DATA (Multiple assets for filtering by ID) ---
+const MOCK_ASSETS_DATA = [
+    {
+        id: 'AST-001',
+        name: 'School Bus 01',
+        type: 'Vehicle',
+        code: 'BUS-01',
+        location: 'Parking A',
+        assignedTo: 'Driver Ramesh',
+        purchaseDate: '2020-05-15',
+        cost: 2500000,
+        condition: 'Good',
+        status: 'Active',
+        logs: [
+            { id: 1, date: '2024-09-01', issue: 'Regular Service', cost: 15000, status: 'Resolved' },
+            { id: 2, date: '2024-05-10', issue: 'Tyre Replacement', cost: 45000, status: 'Resolved' },
+        ]
+    },
+    {
+        id: 'AST-002',
+        name: 'School Bus 02',
+        type: 'Vehicle',
+        code: 'BUS-02',
+        location: 'Parking A',
+        assignedTo: 'Driver Sunil',
+        purchaseDate: '2021-03-20',
+        cost: 2800000,
+        condition: 'Good',
+        status: 'Active',
+        logs: [
+            { id: 1, date: '2024-08-15', issue: 'Oil Change', cost: 8000, status: 'Resolved' },
+        ]
+    },
+    {
+        id: 'AST-003',
+        name: 'Projector - Room 101',
+        type: 'Electronics',
+        code: 'PROJ-101',
+        location: 'Room 101',
+        assignedTo: 'IT Department',
+        purchaseDate: '2022-01-10',
+        cost: 75000,
+        condition: 'Fair',
+        status: 'Under Maintenance',
+        logs: [
+            { id: 1, date: '2024-10-01', issue: 'Bulb Replacement', cost: 5000, status: 'Pending' },
+        ]
+    }
+];
 
 const AssetDetail = () => {
     const { assetId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
 
-    // In real app, fetch asset by ID
-    const asset = MOCK_ASSET;
+    const [asset, setAsset] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const canEdit = [STAFF_ROLES.TRANSPORT, STAFF_ROLES.ADMIN].includes(user?.role);
+
+    // Fetch asset data based on ID from URL
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Simulate API call - In real app, replace with actual API fetch
+        setTimeout(() => {
+            const foundAsset = MOCK_ASSETS_DATA.find(a => a.id === assetId);
+            if (foundAsset) {
+                setAsset(foundAsset);
+            } else {
+                setError('Asset not found');
+            }
+            setLoading(false);
+        }, 300);
+    }, [assetId]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-4xl mx-auto p-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading asset details...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !asset) {
+        return (
+            <div className="max-w-4xl mx-auto p-10 text-center">
+                <p className="text-red-600 font-bold">{error || 'Asset not found'}</p>
+                <button
+                    onClick={() => navigate('/staff/assets')}
+                    className="mt-4 text-indigo-600 hover:underline"
+                >
+                    ← Back to Assets
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">

@@ -5,18 +5,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search, FileText, Download, Clock, BookOpen, Filter } from 'lucide-react';
 import Lenis from 'lenis';
 
-// Data
-import { notesData, subjects } from '../data/notesData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const Notes = () => {
     const navigate = useNavigate();
+    const data = useStudentStore(state => state.notes);
+    const [loading, setLoading] = useState(false);
+    const [notes, setNotes] = useState(data);
+    const [subjects, setSubjects] = useState(['All', ...new Set(data.map(n => n.subject))]);
     const [activeTab, setActiveTab] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [dateSort, setDateSort] = useState('newest'); // newest, oldest
     const [showFilters, setShowFilters] = useState(false);
 
+    // Update local state if store data changes
+    useEffect(() => {
+        setNotes(data);
+        const uniqueSubjects = ['All', ...new Set(data.map(n => n.subject))];
+        setSubjects(uniqueSubjects);
+    }, [data]);
+
     // Filtered & Sorted Data
-    const filteredNotes = notesData
+    const filteredNotes = notes
         .filter(note => {
             const matchesTab = activeTab === 'All' || note.subject === activeTab;
             const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,8 +107,8 @@ const Notes = () => {
                                         key={sort}
                                         onClick={() => setDateSort(sort)}
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize border transition-colors ${dateSort === sort
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                             }`}
                                     >
                                         {sort === 'newest' ? 'Newest First' : 'Oldest First'}
@@ -116,8 +126,8 @@ const Notes = () => {
                             key={subject}
                             onClick={() => setActiveTab(subject)}
                             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all ${activeTab === subject
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
                             {subject}
@@ -129,7 +139,18 @@ const Notes = () => {
             {/* Content */}
             <main className="px-4 max-w-md mx-auto space-y-3 pt-2">
                 <AnimatePresence mode="popLayout">
-                    {filteredNotes.length > 0 ? (
+                    {loading ? (
+                        <motion.div
+                            key="loader"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-20"
+                        >
+                            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="mt-4 text-sm text-gray-500 font-medium">Loading Notes...</p>
+                        </motion.div>
+                    ) : filteredNotes.length > 0 ? (
                         filteredNotes.map((note, index) => (
                             <motion.div
                                 key={note.id}
@@ -143,8 +164,8 @@ const Notes = () => {
                                 <div className="flex items-start justify-between">
                                     <div className="flex gap-3">
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${note.type === 'PDF' ? 'bg-red-50 text-red-600' :
-                                                note.type === 'PPT' ? 'bg-orange-50 text-orange-600' :
-                                                    'bg-blue-50 text-blue-600'
+                                            note.type === 'PPT' ? 'bg-orange-50 text-orange-600' :
+                                                'bg-blue-50 text-blue-600'
                                             }`}>
                                             <FileText size={20} />
                                         </div>

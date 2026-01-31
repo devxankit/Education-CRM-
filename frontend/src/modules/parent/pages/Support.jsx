@@ -3,28 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Plus, MessageCircle, Clock, CheckCircle, ChevronRight, FileText } from 'lucide-react';
 
-const MOCK_TICKETS = [
-    {
-        id: 'TKT-1025',
-        category: 'Fees',
-        subject: 'Payment receipt not generated',
-        status: 'Open',
-        date: '17 Oct 2023'
-    },
-    {
-        id: 'TKT-998',
-        category: 'Attendance',
-        subject: 'Leave application correction',
-        status: 'Resolved',
-        date: '10 Oct 2023'
-    }
-];
+import { useParentStore } from '../../../store/parentStore';
 
 const ParentSupportPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const state = location.state || {}; // { childId, issueType } passed from other pages
 
+    const tickets = useParentStore(state => state.tickets);
     const [activeTab, setActiveTab] = useState('My Tickets');
 
     const handleCreateTicket = () => {
@@ -74,8 +60,8 @@ const ParentSupportPage = () => {
                 {/* Ticket List */}
                 {activeTab === 'My Tickets' && (
                     <div className="space-y-3">
-                        {MOCK_TICKETS.length > 0 ? (
-                            MOCK_TICKETS.map(ticket => (
+                        {tickets.length > 0 ? (
+                            tickets.map(ticket => (
                                 <div
                                     key={ticket.id}
                                     className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:border-indigo-100 transition-all cursor-pointer"
@@ -95,7 +81,7 @@ const ParentSupportPage = () => {
                                     <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
                                         <span className="text-xs font-mono text-gray-400">#{ticket.id}</span>
                                         <div className="flex items-center gap-1 text-xs text-gray-400">
-                                            <span className="font-medium">{ticket.date}</span>
+                                            <span className="font-medium">{new Date(ticket.date).toLocaleDateString()}</span>
                                             <ChevronRight size={14} />
                                         </div>
                                     </div>

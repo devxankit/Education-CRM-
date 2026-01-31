@@ -8,9 +8,8 @@ import ModulePermissionMatrix from './components/permissions/ModulePermissionMat
 import ActionPermissionPanel from './components/permissions/ActionPermissionPanel';
 
 const RolePermissions = () => {
-    // const { roleId } = useParams(); // In real app
+    const { roleId } = useParams();
     const navigate = useNavigate();
-    const roleId = 'mock_id_1'; // Mock ID
 
     // State
     const [activeTab, setActiveTab] = useState('modules');

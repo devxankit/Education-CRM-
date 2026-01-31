@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Users, GraduationCap, UsersRound, Calendar, FileText } from 'lucide-react';
+import { useAdminStore } from '../../../store/adminStore';
 
 // Components
 import KpiCard from '../components/dashboard/KpiCard';
@@ -11,6 +12,15 @@ import SystemHealthPanel from '../components/dashboard/SystemHealthPanel';
 import RecentActivityLog from '../components/dashboard/RecentActivityLog';
 
 const Dashboard = () => {
+    const students = useAdminStore(state => state.students);
+    const teachers = useAdminStore(state => state.teachers);
+    const employees = useAdminStore(state => state.employees);
+
+    // Derived counts
+    const totalStudents = students.length || 1245; // Fallback to mock if empty for now
+    const totalTeachers = teachers.length;
+    const totalEmployees = employees.length;
+
     return (
         <div className="space-y-6 pb-10">
             {/* Header Section */}
@@ -37,21 +47,21 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KpiCard
                     label="Total Students"
-                    value="1,245"
+                    value={totalStudents.toLocaleString()}
                     icon={GraduationCap}
                     color="bg-blue-600"
                     link="/admin/people/students"
                 />
                 <KpiCard
                     label="Total Teachers"
-                    value="84"
+                    value={totalTeachers.toLocaleString()}
                     icon={UsersRound}
                     color="bg-blue-500"
                     link="/admin/people/teachers"
                 />
                 <KpiCard
                     label="Support Staff"
-                    value="32"
+                    value={totalEmployees.toLocaleString()}
                     icon={Users}
                     color="bg-sky-500"
                     link="/admin/people/employees"

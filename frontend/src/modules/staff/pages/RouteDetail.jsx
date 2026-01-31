@@ -1,43 +1,121 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Users, Bus, Navigation, Trash2, Edit2, UserPlus } from 'lucide-react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 
-// Mock Data
-const MOCK_ROUTE_DETAIL = {
-    id: 'RT-001',
-    name: 'Route 1: City Center',
-    bus: 'DL-1PC-4502',
-    driver: 'Ramesh Singh',
-    helper: 'Lalu Prasad',
-    phone: '9876543210',
-    capacity: 50,
-    status: 'Active',
-    stops: [
-        { id: 1, name: 'Main Gate', time: '07:00 AM' },
-        { id: 2, name: 'Sector 15 Market', time: '07:15 AM' },
-        { id: 3, name: 'City Center Metro', time: '07:30 AM' },
-        { id: 4, name: 'Golf Course Road', time: '07:45 AM' },
-    ],
-    students: [
-        { id: 'S001', name: 'Aarav Patel', class: '10-A', stop: 'Sector 15 Market', parent: 'Rajesh Patel' },
-        { id: 'S002', name: 'Zara Khan', class: '8-B', stop: 'City Center Metro', parent: 'Imran Khan' },
-        { id: 'S003', name: 'Ishaan Gupta', class: '5-C', stop: 'Golf Course Road', parent: 'Priya Gupta' },
-        // ... more
-    ]
-};
+// --- MOCK DATA (Multiple routes for filtering by ID) ---
+const MOCK_ROUTES_DATA = [
+    {
+        id: 'RT-001',
+        name: 'Route 1: City Center',
+        bus: 'DL-1PC-4502',
+        driver: 'Ramesh Singh',
+        helper: 'Lalu Prasad',
+        phone: '9876543210',
+        capacity: 50,
+        status: 'Active',
+        stops: [
+            { id: 1, name: 'Main Gate', time: '07:00 AM' },
+            { id: 2, name: 'Sector 15 Market', time: '07:15 AM' },
+            { id: 3, name: 'City Center Metro', time: '07:30 AM' },
+            { id: 4, name: 'Golf Course Road', time: '07:45 AM' },
+        ],
+        students: [
+            { id: 'S001', name: 'Aarav Patel', class: '10-A', stop: 'Sector 15 Market', parent: 'Rajesh Patel' },
+            { id: 'S002', name: 'Zara Khan', class: '8-B', stop: 'City Center Metro', parent: 'Imran Khan' },
+            { id: 'S003', name: 'Ishaan Gupta', class: '5-C', stop: 'Golf Course Road', parent: 'Priya Gupta' },
+        ]
+    },
+    {
+        id: 'RT-002',
+        name: 'Route 2: South Extension',
+        bus: 'DL-1PC-4503',
+        driver: 'Sunil Yadav',
+        helper: 'Mohan Lal',
+        phone: '9876543220',
+        capacity: 45,
+        status: 'Active',
+        stops: [
+            { id: 1, name: 'Main Gate', time: '07:00 AM' },
+            { id: 2, name: 'South Extension', time: '07:20 AM' },
+            { id: 3, name: 'Greater Kailash', time: '07:35 AM' },
+        ],
+        students: [
+            { id: 'S004', name: 'Ishita Sharma', class: '9-A', stop: 'South Extension', parent: 'Mr. Sharma' },
+        ]
+    },
+    {
+        id: 'RT-003',
+        name: 'Route 3: West Delhi',
+        bus: 'DL-1PC-4504',
+        driver: 'Rajan Kumar',
+        helper: 'Shyam Singh',
+        phone: '9876543230',
+        capacity: 40,
+        status: 'Inactive',
+        stops: [
+            { id: 1, name: 'Main Gate', time: '07:00 AM' },
+            { id: 2, name: 'Rajouri Garden', time: '07:25 AM' },
+        ],
+        students: []
+    }
+];
 
 const RouteDetail = () => {
     const { routeId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
-    const [activeTab, setActiveTab] = useState('Stops'); // Stops | Students
+    const [activeTab, setActiveTab] = useState('Stops');
 
-    const route = MOCK_ROUTE_DETAIL; // In real app, fetch based on routeId
+    const [route, setRoute] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Permissions
     const canEdit = [STAFF_ROLES.TRANSPORT, STAFF_ROLES.ADMIN].includes(user?.role);
+
+    // Fetch route data based on ID from URL
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Simulate API call - In real app, replace with actual API fetch
+        setTimeout(() => {
+            const foundRoute = MOCK_ROUTES_DATA.find(r => r.id === routeId);
+            if (foundRoute) {
+                setRoute(foundRoute);
+            } else {
+                setError('Route not found');
+            }
+            setLoading(false);
+        }, 300);
+    }, [routeId]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-4xl mx-auto p-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading route details...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !route) {
+        return (
+            <div className="max-w-4xl mx-auto p-10 text-center">
+                <p className="text-red-600 font-bold">{error || 'Route not found'}</p>
+                <button
+                    onClick={() => navigate('/staff/transport/routes')}
+                    className="mt-4 text-indigo-600 hover:underline"
+                >
+                    ← Back to Routes
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">

@@ -1,6 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, HelpCircle } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { initialSections } from '../../data/academicData';
 
 import ClassesTable from './components/classes/ClassesTable';
 import SectionsTable from './components/classes/SectionsTable';
@@ -8,63 +10,73 @@ import ClassFormModal from './components/classes/ClassFormModal';
 import SectionFormModal from './components/classes/SectionFormModal';
 
 const ClassesSections = () => {
+    const classes = useAdminStore(state => state.classes);
+    const sections = useAdminStore(state => state.sections);
+    const addClass = useAdminStore(state => state.addClass);
+    const updateClass = useAdminStore(state => state.updateClass);
+    const archiveClass = useAdminStore(state => state.deleteClass); // In store it's delete, but we use as archive logic
+    const setSections = useAdminStore(state => state.setSections);
+    const addSection = useAdminStore(state => state.addSection);
 
-    // Mock Data
-    const [classes, setClasses] = useState([
-        { id: 1, name: 'Class 1', code: 'CLS_001', level: 'primary', board: 'CBSE', status: 'active' },
-        { id: 2, name: 'Class 10', code: 'CLS_010', level: 'secondary', board: 'CBSE', status: 'active' },
-        { id: 3, name: 'Class 12 (Sci)', code: 'CLS_012_SCI', level: 'senior_secondary', board: 'CBSE', status: 'active' }
-    ]);
-
-    const [sections, setSections] = useState({
-        1: [
-            { id: 101, name: 'A', capacity: 40, teacherName: 'Sarah Jen', status: 'active' },
-            { id: 102, name: 'B', capacity: 40, teacherName: '', status: 'active' }
-        ],
-        2: [
-            { id: 201, name: 'Rose', capacity: 35, teacherName: 'Vikram Singh', status: 'active' }
-        ],
-        3: []
-    });
+    // Initialize segments if empty
+    useEffect(() => {
+        if (Object.keys(sections).length === 0) {
+            Object.entries(initialSections).forEach(([classId, data]) => {
+                setSections(classId, data);
+            });
+        }
+    }, []);
 
     // State
     const [selectedClassId, setSelectedClassId] = useState(null);
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
     const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+    const [editingSection, setEditingSection] = useState(null);
 
     // Derived
-    const selectedClass = classes.find(c => c.id === selectedClassId);
+    const selectedClass = classes.find(c => c.id == selectedClassId); // Use == for mixed type matching (string/number)
     const displayedSections = selectedClassId ? (sections[selectedClassId] || []) : [];
 
     // Handlers
     const handleAddClass = (data) => {
-        const newClass = {
-            id: Date.now(),
-            ...data,
-            code: `CLS_${data.name.toUpperCase().replace(/[^A-Z0-9]/g, '')}_${Date.now().toString().slice(-4)}`,
-            status: 'active'
-        };
-        setClasses(prev => [...prev, newClass]);
-        setSections(prev => ({ ...prev, [newClass.id]: [] }));
+        addClass(data);
     };
 
     const handleAddSection = (data) => {
         if (!selectedClassId) return;
-        const newSection = {
-            id: Date.now(),
-            ...data,
-            status: 'active'
-        };
-        setSections(prev => ({
-            ...prev,
-            [selectedClassId]: [...(prev[selectedClassId] || []), newSection]
-        }));
+        addSection(selectedClassId, data);
     };
 
     const handleArchiveClass = (cls) => {
         if (window.confirm(`Archive ${cls.name}? It will be hidden from new admissions.`)) {
-            setClasses(prev => prev.map(c => c.id === cls.id ? { ...c, status: 'archived' } : c));
+            updateClass(cls.id, { status: 'archived' });
         }
+    };
+
+    // Handler for editing a section
+    const handleEditSection = (section) => {
+        setEditingSection(section);
+        setIsSectionModalOpen(true);
+    };
+
+    // Handler for deactivating a section
+    const handleDeactivateSection = (section) => {
+        if (window.confirm(`Deactivate Section '${section.name}'? Students will need to be reassigned.`)) {
+            const updatedSections = (sections[selectedClassId] || []).map(sec =>
+                sec.id === section.id ? { ...sec, status: 'inactive' } : sec
+            );
+            setSections(selectedClassId, updatedSections);
+        }
+    };
+
+    // Handler for updating a section (from modal)
+    const handleUpdateSection = (data) => {
+        if (!selectedClassId || !editingSection) return;
+        const updatedSections = (sections[selectedClassId] || []).map(sec =>
+            sec.id === editingSection.id ? { ...sec, ...data } : sec
+        );
+        setSections(selectedClassId, updatedSections);
+        setEditingSection(null);
     };
 
     return (
@@ -132,8 +144,8 @@ const ClassesSections = () => {
                                 className={selectedClass.name}
                                 sections={displayedSections}
                                 onAdd={() => setIsSectionModalOpen(true)}
-                                onEdit={() => { }}
-                                onDeactivate={() => { }}
+                                onEdit={handleEditSection}
+                                onDeactivate={handleDeactivateSection}
                             />
                         ) : (
                             <div className="h-full flex items-center justify-center text-gray-400 text-sm">
@@ -154,8 +166,12 @@ const ClassesSections = () => {
 
             <SectionFormModal
                 isOpen={isSectionModalOpen}
-                onClose={() => setIsSectionModalOpen(false)}
-                onCreate={handleAddSection}
+                onClose={() => {
+                    setIsSectionModalOpen(false);
+                    setEditingSection(null);
+                }}
+                onCreate={editingSection ? handleUpdateSection : handleAddSection}
+                initialData={editingSection}
             />
         </div>
     );

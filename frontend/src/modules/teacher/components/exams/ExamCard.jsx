@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Layers, FileDigit, BarChart2, CheckCircle, Lock, ArrowRight } from 'lucide-react';
 
-const ExamCard = ({ exam, onEnterMarks }) => {
+const ExamCard = ({ exam, onEnterMarks, onClick }) => {
     const isLocked = exam.status === 'Locked';
     const isActive = exam.status === 'Active';
 
@@ -17,7 +17,8 @@ const ExamCard = ({ exam, onEnterMarks }) => {
     return (
         <motion.div
             whileTap={{ scale: 0.98 }}
-            className={`bg-white p-5 rounded-2xl border mb-4 relative overflow-hidden transition-all group hover:shadow-md ${isActive ? 'border-indigo-100 shadow-sm' : 'border-gray-100'}`}
+            onClick={onClick}
+            className={`bg-white p-5 rounded-2xl border mb-4 relative overflow-hidden transition-all group hover:shadow-md cursor-pointer ${isActive ? 'border-indigo-100 shadow-sm' : 'border-gray-100'}`}
         >
             {/* Status Badge */}
             <div className="flex justify-between items-start mb-3">
@@ -63,7 +64,7 @@ const ExamCard = ({ exam, onEnterMarks }) => {
             <div className="pt-3 border-t border-gray-50 flex justify-end">
                 {isActive ? (
                     <button
-                        onClick={() => onEnterMarks(exam)}
+                        onClick={(e) => { e.stopPropagation(); onEnterMarks(exam); }}
                         className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all"
                     >
                         Enter Marks <ArrowRight size={14} />
@@ -71,7 +72,7 @@ const ExamCard = ({ exam, onEnterMarks }) => {
                 ) : (
                     <button
                         disabled={isLocked}
-                        onClick={() => onEnterMarks(exam)} // Reusing the same modal for viewing or navigate to report
+                        onClick={(e) => { e.stopPropagation(); onEnterMarks(exam); }} // Reusing the same modal for viewing or navigate to report
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${isLocked ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                     >
                         {isLocked ? <><Lock size={14} /> View Result</> : 'View Details'}

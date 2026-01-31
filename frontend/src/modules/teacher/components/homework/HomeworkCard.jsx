@@ -34,6 +34,12 @@ const HomeworkCard = ({ homework, onClick }) => {
                     {homework.title}
                 </h3>
 
+                {homework.description && (
+                    <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
+                        {homework.description}
+                    </p>
+                )}
+
                 <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium mb-3">
                     <span className={`flex items-center gap-1 ${isLate ? 'text-red-500' : ''}`}>
                         <Clock size={12} />

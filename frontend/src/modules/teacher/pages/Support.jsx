@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, CheckCircle, Clock } from 'lucide-react';
-import { queriesData } from '../data/supportData';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 const SupportPage = () => {
     const navigate = useNavigate();
+    const { queries, resolveQuery } = useTeacherStore();
     const [activeTab, setActiveTab] = useState('Open');
-    const [queries, setQueries] = useState(queriesData);
 
     const handleResolve = (id) => {
-        // Optimistic update
-        const updatedQueries = queries.map(q =>
-            q.id === id ? { ...q, status: 'Resolved' } : q
-        );
-        setQueries(updatedQueries);
+        resolveQuery(id);
+        console.log('Resolving Query:', id);
         alert("Query marked as resolved!");
     };
 

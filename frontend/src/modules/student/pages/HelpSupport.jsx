@@ -12,14 +12,19 @@ import TicketCard from '../components/HelpSupport/TicketCard';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 import EmptyState from '../components/Attendance/EmptyState';
 
-// Data
-import { supportData } from '../data/supportData';
+import { useStudentStore } from '../../../store/studentStore';
 
 const HelpSupportPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [data, setData] = useState(null);
+    const supportData = useStudentStore(state => state.support);
+    const persistentTickets = useStudentStore(state => state.tickets);
+    const addTicket = useStudentStore(state => state.addTicket);
+
+    // Combine mock tickets with persistent ones for UI
+    const allTickets = [...persistentTickets, ...supportData.tickets];
+
+    const [loading, setLoading] = useState(false);
     const [showRaiseModal, setShowRaiseModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [viewMode, setViewMode] = useState('help'); // 'help' or 'tickets'
@@ -41,12 +46,6 @@ const HelpSupportPage = () => {
         }
         requestAnimationFrame(raf);
 
-        // Simulate Fetch
-        setTimeout(() => {
-            setData(supportData);
-            setLoading(false);
-        }, 600);
-
         return () => lenis.destroy();
     }, []);
 
@@ -55,12 +54,10 @@ const HelpSupportPage = () => {
         setShowRaiseModal(true);
     };
 
-    const handleTicketSubmit = (ticketDetails) => {
-        // Mock submission logic
-        console.log("Submitted:", ticketDetails);
+    const handleTicketSubmit = async (ticketDetails) => {
+        addTicket(ticketDetails);
         setShowRaiseModal(false);
-        alert("Ticket Raised Successfully! Reference: TKT-MOCK-NEW");
-        setViewMode('tickets'); // Switch to tracking view
+        setViewMode('tickets');
     };
 
     return (
@@ -117,9 +114,9 @@ const HelpSupportPage = () => {
                                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-2 ${viewMode === 'tickets' ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 My Tickets
-                                {data.tickets.filter(t => t.status !== 'Closed').length > 0 && (
+                                {allTickets.filter(t => t.status !== 'Closed').length > 0 && (
                                     <span className={`text-[10px] px-1.5 rounded-full ${viewMode === 'tickets' ? 'bg-white text-gray-900' : 'bg-red-100 text-red-600'}`}>
-                                        {data.tickets.filter(t => t.status !== 'Closed').length}
+                                        {allTickets.filter(t => t.status !== 'Closed').length}
                                     </span>
                                 )}
                             </button>
@@ -135,7 +132,7 @@ const HelpSupportPage = () => {
                                     transition={{ duration: 0.2 }}
                                 >
                                     <QuickHelpCards onSelectCategory={handleCommonIssueClick} />
-                                    <FAQAccordion data={data.faq} />
+                                    <FAQAccordion data={supportData.faq} />
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -145,9 +142,9 @@ const HelpSupportPage = () => {
                                     exit={{ opacity: 0, x: 10 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    {data.tickets.length > 0 ? (
+                                    {allTickets.length > 0 ? (
                                         <div className="space-y-3">
-                                            {data.tickets.map(ticket => (
+                                            {allTickets.map(ticket => (
                                                 <TicketCard key={ticket.id} ticket={ticket} />
                                             ))}
                                         </div>
@@ -180,7 +177,7 @@ const HelpSupportPage = () => {
             <AnimatePresence>
                 {showRaiseModal && (
                     <RaiseTicketForm
-                        categories={data.categories}
+                        categories={supportData.categories}
                         defaultCategory={selectedCategory}
                         onClose={() => setShowRaiseModal(false)}
                         onSubmit={handleTicketSubmit}

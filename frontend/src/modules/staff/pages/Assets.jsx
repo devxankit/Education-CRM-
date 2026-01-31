@@ -3,17 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { Search, Plus, Monitor, Truck, Box, Filter, AlertCircle, CheckCircle, Package } from 'lucide-react';
-
-const MOCK_ASSETS = [
-    { id: 'AST-001', name: 'School Bus 01', type: 'Vehicle', code: 'BUS-01', location: 'Parking A', condition: 'Good', status: 'Active' },
-    { id: 'AST-002', name: 'Computer Lab PC-04', type: 'IT', code: 'IT-PC-04', location: 'Lab 1', condition: 'Needs Repair', status: 'Active' },
-    { id: 'AST-003', name: 'Staff Room Sofa', type: 'Furniture', code: 'FUR-SF-02', location: 'Staff Room', condition: 'Good', status: 'Active' },
-    { id: 'AST-004', name: 'Projector Hall A', type: 'Equipment', code: 'EQ-PR-01', location: 'Hall A', condition: 'Out of Service', status: 'Inactive' },
-];
+import { useStaffStore } from '../../../store/staffStore';
 
 const Assets = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
+    const assets = useStaffStore(state => state.assets);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('All');
 
@@ -23,7 +18,7 @@ const Assets = () => {
 
     if (!hasAccess) return <AccessDenied />;
 
-    const filteredAssets = MOCK_ASSETS.filter(a => {
+    const filteredAssets = assets.filter(a => {
         const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) || a.code.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = filterType === 'All' || a.type === filterType;
         return matchesSearch && matchesType;

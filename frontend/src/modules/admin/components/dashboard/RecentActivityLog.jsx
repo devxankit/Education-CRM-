@@ -1,14 +1,10 @@
 
 import React from 'react';
 import { FileText, Eye } from 'lucide-react';
+import { recentActivities } from '../../data/dashboardData';
 
 const RecentActivityLog = () => {
-    const logs = [
-        { id: 1, user: 'Super Admin', action: 'Locked Academic Year 2024-25', time: '10 mins ago' },
-        { id: 2, user: 'Academics Head', action: 'Published Final Exam Schedule', time: '1 hour ago' },
-        { id: 3, user: 'Finance Manager', action: 'Updated Fee Structure Class 10', time: '3 hours ago' },
-        { id: 4, user: 'System', action: 'Auto-backup completed', time: '4 hours ago' }
-    ];
+    const logs = recentActivities;
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">

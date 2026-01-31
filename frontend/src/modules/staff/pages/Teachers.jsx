@@ -3,41 +3,12 @@ import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, Briefcase, User, MoreVertical, BookOpen, Clock, AlertCircle } from 'lucide-react';
-
-// --- MOCK TEACHER DATA ---
-const MOCK_TEACHERS = [
-    {
-        id: 'TCH-2024-001',
-        name: 'Suresh Kumar',
-        employeeId: 'EMP-T-001',
-        subjects: ['Mathematics', 'Physics'],
-        type: 'Permanent',
-        status: 'Active',
-        doj: '2019-06-15'
-    },
-    {
-        id: 'TCH-2024-002',
-        name: 'Meera Iyer',
-        employeeId: 'EMP-T-002',
-        subjects: ['English', 'History'],
-        type: 'Permanent',
-        status: 'Active',
-        doj: '2020-04-01'
-    },
-    {
-        id: 'TCH-2024-003',
-        name: 'Rajesh Verma',
-        employeeId: 'EMP-T-005',
-        subjects: ['Computer Science'],
-        type: 'Contract',
-        status: 'On Leave',
-        doj: '2023-01-10'
-    },
-];
+import { useStaffStore } from '../../../store/staffStore';
 
 const Teachers = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
+    const teachers = useStaffStore(state => state.teachers);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('All'); // All | Permanent | Contract
 
@@ -45,7 +16,7 @@ const Teachers = () => {
     const canAddTeacher = user?.role === STAFF_ROLES.DATA_ENTRY;
 
     // Filter logic
-    const filteredTeachers = MOCK_TEACHERS.filter(teacher => {
+    const filteredTeachers = teachers.filter(teacher => {
         const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             teacher.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = filterType === 'All' || teacher.type === filterType;

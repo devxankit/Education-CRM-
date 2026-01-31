@@ -4,6 +4,7 @@ import Lenis from 'lenis';
 import { Plus, Filter } from 'lucide-react';
 import gsap from 'gsap';
 import { AnimatePresence } from 'framer-motion';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 // Components
 import TeacherHeader from '../components/common/TeacherHeader';
@@ -19,6 +20,7 @@ const HomeworkPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const listRef = useRef(null);
+    const homeworkList = useTeacherStore(state => state.homeworkList);
 
     const [activeTab, setActiveTab] = useState('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -41,7 +43,7 @@ const HomeworkPage = () => {
 
     // Filter Logic
     useEffect(() => {
-        const filtered = homeworkData.list.filter(hw => {
+        const filtered = homeworkList.filter(hw => {
             if (activeTab === 'all') return true;
             if (activeTab === 'active') return hw.status === 'Active';
             if (activeTab === 'past') return hw.status === 'Closed';
@@ -49,7 +51,7 @@ const HomeworkPage = () => {
             return true;
         });
         setFilteredHomework(filtered);
-    }, [activeTab]);
+    }, [activeTab, homeworkList]);
 
     // Animation on Filter Change
     useEffect(() => {

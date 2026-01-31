@@ -3,16 +3,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Filter, Eye, X, FileText } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { submissionsData } from '../data/submissionsData';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 const SubmissionsPage = () => {
     const navigate = useNavigate();
+    const submissions = useTeacherStore(state => state.submissions);
     const [filter, setFilter] = useState('All'); // All, Submitted, Pending, Late
     const [searchText, setSearchText] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
 
-    const filteredList = submissionsData.filter(sub => {
+    const filteredList = submissions.filter(sub => {
         const matchesStatus =
             filter === 'All' ? true :
                 filter === 'Submitted' ? sub.status === 'Submitted' :
