@@ -11,8 +11,6 @@ export const createTeacher = async (req, res) => {
             password, phone, branchId, department,
             designation, roleId, experience, joiningDate,
             teachingStatus, status
-            phone, branchId, department,
-            designation
         } = req.body;
         const instituteId = req.user._id;
 
