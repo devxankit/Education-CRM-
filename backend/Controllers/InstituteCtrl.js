@@ -1,6 +1,6 @@
 import Institute from "../Models/InstituteModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
-import { uploadToCloudinary } from "../Helpers/cloudinaryHelper.js";
+import { uploadToCloudinary, uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 
 // ================= REGISTER INSTITUTE =================
 export const registerInstitute = async (req, res) => {
@@ -112,11 +112,25 @@ export const getInstituteDetails = async (req, res) => {
 export const updateInstituteDetails = async (req, res) => {
   try {
     const id = req.user._id;
-    const updateData = req.body;
+    const updateData = { ...req.body };
 
     // Prevention of updating sensitive fields if necessary
     delete updateData.password;
     delete updateData.email;
+
+    // Handle Branding Base64 uploads
+    const brandingFields = ['logoLight', 'logoDark', 'letterheadHeader', 'letterheadFooter'];
+    for (const field of brandingFields) {
+      if (updateData[field] && updateData[field].startsWith('data:')) {
+        try {
+          const imageUrl = await uploadBase64ToCloudinary(updateData[field], `institutes/${id}/branding`);
+          updateData[field] = imageUrl;
+        } catch (uploadError) {
+          console.error(`Error uploading ${field} to Cloudinary:`, uploadError);
+          // Optionally handle error or keep existing value
+        }
+      }
+    }
 
     const institute = await Institute.findByIdAndUpdate(
       id,

@@ -71,11 +71,11 @@ const BranchListTable = ({ branches, onRowClick }) => {
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-3 text-xs text-gray-500">
                                         <span title="Total Students">
-                                            <strong className="text-gray-900">{branch.stats.students}</strong> Students
+                                            <strong className="text-gray-900">{branch.stats?.students || 0}</strong> Students
                                         </span>
                                         <span className="w-px h-3 bg-gray-300"></span>
                                         <span title="Total Staff">
-                                            <strong className="text-gray-900">{branch.stats.staff}</strong> Staff
+                                            <strong className="text-gray-900">{branch.stats?.staff || 0}</strong> Staff
                                         </span>
                                     </div>
                                 </td>
