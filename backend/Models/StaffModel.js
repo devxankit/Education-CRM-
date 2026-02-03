@@ -29,7 +29,7 @@ const staffSchema = new mongoose.Schema(
             ref: "Role",
             required: true,
         },
-        branchScope: {
+        branchId: {
             type: String, // "all" or Branch ObjectId as string
             default: "all",
         },

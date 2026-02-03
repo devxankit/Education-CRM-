@@ -31,8 +31,8 @@ export const isInstitute = asyncHandler(async (req, res, next) => {
 
   const { email } = req.user;
   const user = await Institute.findOne({ email });
-  if (!user || user.role !== "superadmin") {
-    return res.status(401).json({ message: "You are not an admin!" });
+  if (!user || user.role !== "institute") {
+    return res.status(401).json({ message: "You are not an institute!" });
   }
 
   next();

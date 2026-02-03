@@ -1,5 +1,6 @@
 import Institute from "../Models/InstituteModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
+import { uploadToCloudinary } from "../Helpers/cloudinaryHelper.js";
 
 // ================= REGISTER INSTITUTE =================
 export const registerInstitute = async (req, res) => {
@@ -133,6 +134,48 @@ export const updateInstituteDetails = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Institute updated successfully",
+      data: institute,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ================= UPDATE BRANDING (LOGOS & LETTERHEADS) =================
+export const updateInstituteBranding = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const files = req.files;
+    const updateData = {};
+
+    if (!files || Object.keys(files).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files uploaded",
+      });
+    }
+
+    // Upload each provided file to Cloudinary
+    const uploadPromises = Object.keys(files).map(async (key) => {
+      const file = files[key][0];
+      const imageUrl = await uploadToCloudinary(file.buffer, `institutes/${id}/branding`);
+      updateData[key] = imageUrl;
+    });
+
+    await Promise.all(uploadPromises);
+
+    const institute = await Institute.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Branding updated successfully",
       data: institute,
     });
   } catch (error) {
