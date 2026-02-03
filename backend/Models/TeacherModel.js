@@ -88,4 +88,8 @@ teacherSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
+// Core Indexes
+teacherSchema.index({ instituteId: 1, branchId: 1 });
+teacherSchema.index({ employeeId: 1 }, { unique: true });
+
 export default mongoose.model("Teacher", teacherSchema);

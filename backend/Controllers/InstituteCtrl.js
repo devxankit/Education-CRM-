@@ -30,7 +30,7 @@ export const registerInstitute = async (req, res) => {
 
     await institute.save();
 
-    const token = generateToken(institute._id);
+    const token = generateToken(institute._id, "institute");
 
     res.status(201).json({
       success: true,
@@ -67,7 +67,7 @@ export const loginSuperAdmin = async (req, res) => {
       });
     }
 
-    const token = generateToken(institute._id);
+    const token = generateToken(institute._id, "institute");
 
     res.status(200).json({
       success: true,
