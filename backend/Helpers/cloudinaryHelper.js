@@ -29,3 +29,17 @@ export const uploadToCloudinary = (fileBuffer, folder = 'institute_branding') =>
         streamifier.createReadStream(fileBuffer).pipe(uploadStream);
     });
 };
+
+// Helper function to upload Base64 to Cloudinary
+export const uploadBase64ToCloudinary = (base64String, folder = 'institute_branding') => {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload(
+            base64String,
+            { folder },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }
+        );
+    });
+};

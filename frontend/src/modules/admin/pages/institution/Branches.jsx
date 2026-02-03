@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Plus,
     Search,
@@ -8,69 +8,45 @@ import {
 } from 'lucide-react';
 import BranchListTable from './components/branches/BranchListTable';
 import BranchDetailDrawer from './components/branches/BranchDetailDrawer';
+import { API_URL } from '../../../../app/api';
 
 const Branches = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedBranch, setSelectedBranch] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
 
     // Role Mock (Admin Context)
     const isSuperAdmin = true;
 
-    // Mock Data State
-    const [branches, setBranches] = useState([
-        {
-            id: 1,
-            name: 'Main Campus - Sunshine School',
-            code: 'M-001',
-            type: 'school',
-            city: 'Pune',
-            state: 'Maharashtra',
-            headName: 'Dr. Rajesh Kumar',
-            status: 'active',
-            stats: { students: 1200, staff: 85 },
-            address: '123, Knowledge Park',
-            phone: '+91 98765 43210',
-            email: 'main@sunshine.edu',
-            establishedYear: '1995',
-            allowAdmissions: true,
-            allowFeeCollection: true
-        },
-        {
-            id: 2,
-            name: 'North Wing - Primary',
-            code: 'N-002',
-            type: 'school',
-            city: 'Pune',
-            state: 'Maharashtra',
-            headName: 'Mrs. Anita Desai',
-            status: 'active',
-            stats: { students: 450, staff: 30 },
-            address: '45, North Avenue',
-            phone: '+91 98765 43211',
-            email: 'north@sunshine.edu',
-            establishedYear: '2010',
-            allowAdmissions: true,
-            allowFeeCollection: true
-        },
-        {
-            id: 3,
-            name: 'East City Center (Coaching)',
-            code: 'E-003',
-            type: 'training_center',
-            city: 'Kharadi',
-            state: 'Maharashtra',
-            headName: 'Mr. Vivek Singh',
-            status: 'inactive',
-            stats: { students: 0, staff: 5 },
-            address: '88, East Road',
-            phone: '+91 98765 43212',
-            email: 'east@sunshine.edu',
-            establishedYear: '2022',
-            allowAdmissions: false,
-            allowFeeCollection: false
+    // Data State
+    const [branches, setBranches] = useState([]);
+
+    useEffect(() => {
+        fetchBranches();
+    }, []);
+
+    const fetchBranches = async () => {
+        setFetching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/branch`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setBranches(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching branches:', error);
+            alert('Failed to load branches');
+        } finally {
+            setFetching(false);
         }
-    ]);
+    };
 
     const handleRowClick = (branch) => {
         setSelectedBranch(branch);
@@ -82,39 +58,70 @@ const Branches = () => {
         setSelectedBranch(null);
     };
 
-    const handleSave = (formData) => {
-        // Mock API Call
-        console.log("Saved Branch:", formData);
+    const handleSave = async (formData) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const method = formData._id ? 'PUT' : 'POST';
+            const url = formData._id 
+                ? `${API_URL}/branch/${formData._id}` 
+                : `${API_URL}/branch`;
 
-        if (formData.id) {
-            // Update
-            setBranches(prev => prev.map(b => b.id === formData.id ? { ...b, ...formData } : b));
-        } else {
-            // Create
-            const newBranch = {
-                ...formData,
-                id: Date.now(),
-                stats: { students: 0, staff: 0 } // Init empty stats
-            };
-            setBranches(prev => [...prev, newBranch]);
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert(formData._id ? 'Branch Updated Successfully' : 'Branch Created Successfully');
+                fetchBranches();
+                handleCloseDrawer();
+            } else {
+                alert(data.message || 'Failed to save branch');
+            }
+        } catch (error) {
+            console.error('Error saving branch:', error);
+            alert('An error occurred while saving');
+        } finally {
+            setLoading(false);
         }
-
-        handleCloseDrawer();
-        // Here we would trigger a toast "Branch Saved Successfully"
     };
 
-    const handleDeactivate = (id, reason) => {
-        console.log(`Deactivating Branch ${id}. Reason: ${reason}`);
-        // Toggle status logic
-        setBranches(prev => prev.map(b => {
-            if (b.id === id) {
-                const newStatus = b.status === 'active' ? 'inactive' : 'active';
-                return { ...b, status: newStatus };
+    const handleDeactivate = async (id, reason) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const branch = branches.find(b => b._id === id);
+            const newStatus = branch.status === 'active' ? 'inactive' : 'active';
+            
+            const response = await fetch(`${API_URL}/branch/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus, deactivationReason: reason })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert(`Branch ${newStatus === 'active' ? 'Activated' : 'Deactivated'} Successfully`);
+                fetchBranches();
+                handleCloseDrawer();
+            } else {
+                alert(data.message || 'Failed to update status');
             }
-            return b;
-        }));
-        // We'd send audit log to backend here
-        handleCloseDrawer();
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('An error occurred while updating status');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Derived State
@@ -169,10 +176,16 @@ const Branches = () => {
             </div>
 
             {/* List Table */}
-            <BranchListTable
-                branches={filteredBranches}
-                onRowClick={handleRowClick}
-            />
+            {fetching ? (
+                <div className="flex justify-center items-center p-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            ) : (
+                <BranchListTable
+                    branches={filteredBranches}
+                    onRowClick={handleRowClick}
+                />
+            )}
 
             {/* Count Footer */}
             <div className="mt-4 text-xs text-center text-gray-400">
