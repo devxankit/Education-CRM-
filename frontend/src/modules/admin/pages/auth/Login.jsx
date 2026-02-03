@@ -2,23 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
-
-// Mock Auth Function
-const mockLogin = (adminId, password) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (adminId && password) {
-                resolve({
-                    adminId,
-                    name: 'Super Admin',
-                    role: 'admin'
-                });
-            } else {
-                reject('Invalid credentials');
-            }
-        }, 1200);
-    });
-};
+import { API_URL } from '../../../../app/api';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
@@ -43,11 +27,35 @@ const AdminLogin = () => {
         setError('');
 
         try {
-            await mockLogin(formData.adminId, formData.password);
-            // In a real app, we would update a global auth state here
-            navigate('/admin/dashboard', { replace: true });
+            const response = await fetch(`${API_URL}/institute/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: formData.adminId,
+                    password: formData.password
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
+
+            if (data.success) {
+                // Save token and user details
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.data));
+                
+                // Navigate to dashboard
+                navigate('/admin/dashboard', { replace: true });
+            } else {
+                throw new Error(data.message || 'Login failed');
+            }
         } catch (err) {
-            setError(err || 'Login failed. Please try again.');
+            setError(err.message || 'Login failed. Please try again.');
         } finally {
             setIsLoading(false);
         }

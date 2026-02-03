@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Save,
     Lock,
@@ -11,36 +11,68 @@ import IdentitySection from './components/IdentitySection';
 import LegalDetailsSection from './components/LegalDetailsSection';
 import ContactSection from './components/ContactSection';
 import BrandingUploader from './components/BrandingUploader';
+import { API_URL } from '../../../../app/api';
 
 const InstitutionProfile = () => {
     // State simulating backend data
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
     const [isLocked, setIsLocked] = useState(false); // Controls "Super Admin Lock"
     const [activeSessionExists, setActiveSessionExists] = useState(false); // Simulates academic year running
+    const [activeUploadField, setActiveUploadField] = useState(null);
+    const fileInputRef = useRef(null);
 
-    // Mock initial data
+    // Initial data
     const [formData, setFormData] = useState({
-        legalName: 'Sunshine International School',
-        shortName: 'SIS',
+        legalName: '',
+        shortName: '',
         type: 'school',
-        affiliations: ['CBSE'],
-        affiliationNumber: 'CBSE/2024/998877',
-        establishedYear: '1995',
-        panNumber: 'ABCDE1234F',
-        gstNumber: '27ABCDE1234F1Z5',
-        registrationNumber: 'REG-101-209',
-        address: '123, Knowledge Park',
-        city: 'Pune',
-        state: 'Maharashtra',
-        pincode: '411057',
-        phone: '+91 98765 43210',
-        email: 'admin@sunshine.edu',
-        website: 'www.sunshine.edu',
+        affiliations: [],
+        affiliationNumber: '',
+        establishedYear: '',
+        panNumber: '',
+        gstNumber: '',
+        registrationNumber: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        phone: '',
+        email: '',
+        website: '',
         logoLight: null,
         logoDark: null,
         letterheadHeader: null,
         letterheadFooter: null
     });
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const fetchProfile = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/institute/profile`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                setFormData(prev => ({
+                    ...prev,
+                    ...data.data
+                }));
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+            alert('Failed to load profile data');
+        } finally {
+            setFetching(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -60,20 +92,52 @@ const InstitutionProfile = () => {
         }
     };
 
-    // Generic uploader handler (mock)
+    // Generic uploader handler
     const handleUpload = (field) => {
-        console.log(`Open file picker for ${field}`);
-        // Mock success
-        const mockUrl = "https://via.placeholder.com/150";
-        setFormData(prev => ({ ...prev, [field]: mockUrl }));
+        setActiveUploadField(field);
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
     };
 
-    const handleSave = () => {
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && activeUploadField) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, [activeUploadField]: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        }
+        // Reset input value so same file can be selected again if needed
+        e.target.value = '';
+    };
+
+    const handleSave = async () => {
         setLoading(true);
-        setTimeout(() => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/institute/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Settings Saved Successfully');
+            } else {
+                alert(data.message || 'Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            alert('An error occurred while saving');
+        } finally {
             setLoading(false);
-            alert('Settings Saved Successfully');
-        }, 1000);
+        }
     };
 
     const handleLockToggle = () => {
@@ -89,14 +153,32 @@ const InstitutionProfile = () => {
         }
     };
 
+    if (fetching) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <span className="ml-3 text-gray-600">Loading Profile...</span>
+            </div>
+        );
+    }
+
     return (
         <div className="pb-20 relative">
+            {/* Hidden File Input for Branding */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+            />
+
             {/* Sticky Top Action Bar */}
             <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 mb-6 -mx-6 md:-mx-8 flex items-center justify-between shadow-sm">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900 font-['Poppins']">Institution Profile</h1>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span>ID: INST-5501</span>
+                        <span>ID: {formData._id || 'Loading...'}</span>
                         <span>•</span>
                         <span>Last Updated: 21 Jan 2026</span>
                     </div>
