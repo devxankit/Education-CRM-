@@ -4,7 +4,7 @@ import { generateToken } from "../Helpers/generateToken.js";
 // ================= CREATE STAFF USER =================
 export const createStaff = async (req, res) => {
     try {
-        const { name, email, password, roleId, branchScope, phone } = req.body;
+        const { name, email, password, roleId, branchId, phone } = req.body;
         const instituteId = req.user._id;
 
         const existingStaff = await Staff.findOne({ email });
@@ -21,7 +21,7 @@ export const createStaff = async (req, res) => {
             email,
             password,
             roleId,
-            branchScope,
+            branchId,
             phone
         });
 
