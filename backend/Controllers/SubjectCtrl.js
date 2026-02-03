@@ -3,7 +3,7 @@ import Subject from "../Models/SubjectModel.js";
 // ================= CREATE SUBJECT =================
 export const createSubject = async (req, res) => {
     try {
-        const { name, code, type, category, level, branchId, classIds, courseIds } = req.body;
+        const { name, code, type, level, branchId, classIds, courseIds } = req.body;
         const instituteId = req.user._id;
 
         if (!branchId) {

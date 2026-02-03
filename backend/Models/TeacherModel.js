@@ -16,7 +16,6 @@ const teacherSchema = new mongoose.Schema(
         employeeId: {
             type: String,
             required: true,
-            unique: true,
             trim: true,
         },
         firstName: {
@@ -43,9 +42,9 @@ const teacherSchema = new mongoose.Schema(
         phone: {
             type: String,
         },
-        roleId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Role",
+        role: {
+            type: String,
+            default: "teacher"
         },
         department: {
             type: String,

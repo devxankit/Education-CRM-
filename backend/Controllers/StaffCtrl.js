@@ -1,10 +1,12 @@
 import Staff from "../Models/StaffModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
+import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
+import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
 
 // ================= CREATE STAFF USER =================
 export const createStaff = async (req, res) => {
     try {
-        const { name, email, password, roleId, branchId, phone } = req.body;
+        const { name, email, roleId, branchId, phone } = req.body;
         const instituteId = req.user._id;
 
         const existingStaff = await Staff.findOne({ email });
@@ -15,11 +17,15 @@ export const createStaff = async (req, res) => {
             });
         }
 
+        // Generate Random Password
+        const generatedPassword = "123456"
+        // const generatedPassword = generateRandomPassword();
+
         const staff = new Staff({
             instituteId,
             name,
             email,
-            password,
+            password: generatedPassword,
             roleId,
             branchId,
             phone
@@ -27,10 +33,20 @@ export const createStaff = async (req, res) => {
 
         await staff.save();
 
+        // Send Email with credentials
+        // Use a background process or don't await if you don't want to block the response
+        // but for now we'll just fire and forget or simple await
+        sendLoginCredentialsEmail(email, generatedPassword, name, "Staff");
+
         res.status(201).json({
             success: true,
-            message: "Staff user created successfully",
-            data: staff,
+            message: "Staff user created successfully and credentials sent to email",
+            data: {
+                _id: staff._id,
+                name: staff.name,
+                email: staff.email,
+                roleId: staff.roleId
+            },
         });
     } catch (error) {
         res.status(500).json({

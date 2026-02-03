@@ -28,11 +28,6 @@ const subjectSchema = new mongoose.Schema(
             enum: ["theory", "practical", "theory_practical"],
             default: "theory",
         },
-        category: {
-            type: String,
-            enum: ["core", "elective", "vocational"],
-            default: "core",
-        },
         level: {
             type: String,
             enum: ["school", "ug", "pg"],

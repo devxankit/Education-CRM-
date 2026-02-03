@@ -1,5 +1,7 @@
 import Teacher from "../Models/TeacherModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
+import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
+import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
 
 // ================= CREATE TEACHER =================
 export const createTeacher = async (req, res) => {
@@ -9,6 +11,8 @@ export const createTeacher = async (req, res) => {
             password, phone, branchId, department,
             designation, roleId, experience, joiningDate,
             teachingStatus, status
+            phone, branchId, department,
+            designation
         } = req.body;
         const instituteId = req.user._id;
 
@@ -23,6 +27,10 @@ export const createTeacher = async (req, res) => {
             });
         }
 
+        // Generate Random Password
+        // const generatedPassword = generateRandomPassword();
+        const generatedPassword = "123456"
+
         const teacher = new Teacher({
             instituteId,
             branchId,
@@ -30,7 +38,7 @@ export const createTeacher = async (req, res) => {
             firstName,
             lastName,
             email,
-            password,
+            password: generatedPassword,
             phone,
             department,
             designation,
@@ -43,10 +51,20 @@ export const createTeacher = async (req, res) => {
 
         await teacher.save();
 
+        // Send Email
+        const fullName = `${firstName} ${lastName}`;
+        sendLoginCredentialsEmail(email, generatedPassword, fullName, "Teacher");
+
         res.status(201).json({
             success: true,
-            message: "Teacher added successfully",
-            data: teacher,
+            message: "Teacher added successfully and credentials sent to email",
+            data: {
+                _id: teacher._id,
+                firstName: teacher.firstName,
+                lastName: teacher.lastName,
+                email: teacher.email,
+                employeeId: teacher.employeeId
+            },
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -24,6 +24,14 @@ import TaxRouter from "./Routers/TaxRouter.js";
 import UploadRouter from "./Routers/UploadRouter.js";
 import NoticeRouter from "./Routers/NoticeRouter.js";
 import AnnouncementRouter from "./Routers/AnnouncementRouter.js";
+import AdmissionRuleRouter from "./Routers/AdmissionRuleRouter.js";
+import TransportRouteRouter from "./Routers/TransportRouteRouter.js";
+import TransportConfigRouter from "./Routers/TransportConfigRouter.js";
+import HostelConfigRouter from "./Routers/HostelConfigRouter.js";
+import AssetCategoryRouter from "./Routers/AssetCategoryRouter.js";
+import AssetRuleRouter from "./Routers/AssetRuleRouter.js";
+import SupportRuleRouter from "./Routers/SupportRuleRouter.js";
+import DocumentRuleRouter from "./Routers/DocumentRuleRouter.js";
 
 const router = Router();
 
@@ -51,5 +59,13 @@ router.use("/api/v1/tax", TaxRouter);
 router.use("/api/v1/upload", UploadRouter);
 router.use("/api/v1/notice", NoticeRouter);
 router.use("/api/v1/announcement", AnnouncementRouter);
+router.use("/api/v1/admission-rule", AdmissionRuleRouter);
+router.use("/api/v1/transport-route", TransportRouteRouter);
+router.use("/api/v1/transport-config", TransportConfigRouter);
+router.use("/api/v1/hostel-config", HostelConfigRouter);
+router.use("/api/v1/asset-category", AssetCategoryRouter);
+router.use("/api/v1/asset-rule", AssetRuleRouter);
+router.use("/api/v1/support-rule", SupportRuleRouter);
+router.use("/api/v1/document-rule", DocumentRuleRouter);
 
 export default router;
