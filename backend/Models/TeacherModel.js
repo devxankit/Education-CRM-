@@ -16,7 +16,6 @@ const teacherSchema = new mongoose.Schema(
         employeeId: {
             type: String,
             required: true,
-            unique: true,
             trim: true,
         },
         firstName: {

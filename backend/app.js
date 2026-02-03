@@ -24,6 +24,7 @@ import TaxRouter from "./Routers/TaxRouter.js";
 import UploadRouter from "./Routers/UploadRouter.js";
 import NoticeRouter from "./Routers/NoticeRouter.js";
 import AnnouncementRouter from "./Routers/AnnouncementRouter.js";
+import AdmissionRuleRouter from "./Routers/AdmissionRuleRouter.js";
 
 const router = Router();
 
@@ -51,5 +52,6 @@ router.use("/api/v1/tax", TaxRouter);
 router.use("/api/v1/upload", UploadRouter);
 router.use("/api/v1/notice", NoticeRouter);
 router.use("/api/v1/announcement", AnnouncementRouter);
+router.use("/api/v1/admission-rule", AdmissionRuleRouter);
 
 export default router;

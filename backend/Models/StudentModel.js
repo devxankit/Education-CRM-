@@ -16,7 +16,6 @@ const studentSchema = new mongoose.Schema(
         admissionNo: {
             type: String,
             required: true,
-            unique: true,
             trim: true,
         },
         rollNo: {
