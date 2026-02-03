@@ -42,9 +42,9 @@ const teacherSchema = new mongoose.Schema(
         phone: {
             type: String,
         },
-        roleId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Role",
+        role: {
+            type: String,
+            default: "teacher"
         },
         department: {
             type: String,
