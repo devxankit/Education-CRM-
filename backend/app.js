@@ -14,6 +14,8 @@ import CourseRouter from "./Routers/CourseRouter.js";
 import TeacherMappingRouter from "./Routers/TeacherMappingRouter.js";
 import TeacherRouter from "./Routers/TeacherRouter.js";
 import StudentRouter from "./Routers/StudentRouter.js";
+import ParentRouter from "./Routers/ParentRouter.js";
+import DepartmentRouter from "./Routers/DepartmentRouter.js";
 
 const router = Router();
 
@@ -31,5 +33,7 @@ router.use("/api/v1/course", CourseRouter);
 router.use("/api/v1/teacher-mapping", TeacherMappingRouter);
 router.use("/api/v1/teacher", TeacherRouter);
 router.use("/api/v1/student", StudentRouter);
+router.use("/api/v1/parent", ParentRouter);
+router.use("/api/v1/department", DepartmentRouter);
 
 export default router;
