@@ -21,6 +21,9 @@ import FeePolicyRouter from "./Routers/FeePolicyRouter.js";
 import PayrollRuleRouter from "./Routers/PayrollRuleRouter.js";
 import ExpenseCategoryRouter from "./Routers/ExpenseCategoryRouter.js";
 import TaxRouter from "./Routers/TaxRouter.js";
+import UploadRouter from "./Routers/UploadRouter.js";
+import NoticeRouter from "./Routers/NoticeRouter.js";
+import AnnouncementRouter from "./Routers/AnnouncementRouter.js";
 
 const router = Router();
 
@@ -45,5 +48,8 @@ router.use("/api/v1/fee-policy", FeePolicyRouter);
 router.use("/api/v1/payroll-rule", PayrollRuleRouter);
 router.use("/api/v1/expense-category", ExpenseCategoryRouter);
 router.use("/api/v1/tax", TaxRouter);
+router.use("/api/v1/upload", UploadRouter);
+router.use("/api/v1/notice", NoticeRouter);
+router.use("/api/v1/announcement", AnnouncementRouter);
 
 export default router;
