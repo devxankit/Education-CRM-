@@ -75,7 +75,7 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'students', label: 'Students (Master View)', path: '/admin/people/students' },
             { id: 'teachers', label: 'Teachers', path: '/admin/people/teachers' },
-            { id: 'employees', label: 'Employee Directory', path: '/admin/people/employees' },
+
             { id: 'parents', label: 'Parents', path: '/admin/people/parents' },
             { id: 'departments', label: 'Departments & Roles', path: '/admin/people/departments' },
             { id: 'employment-types', label: 'Employment Types & Rules', path: '/admin/people/employment-types' },

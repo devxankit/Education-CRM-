@@ -22,7 +22,6 @@ const AddTeacher = () => {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
-        employeeId: '',
         doj: '',
         type: 'Permanent',
         email: '',
@@ -40,7 +39,6 @@ const AddTeacher = () => {
                 setFormData({
                     ...teacher,
                     name: teacher.name || '',
-                    employeeId: teacher.employeeId || '',
                     doj: teacher.doj || '',
                     type: teacher.type || 'Permanent',
                     email: teacher.contact?.email || '',
@@ -115,8 +113,9 @@ const AddTeacher = () => {
                         <div className="md:col-span-2">
                             <InputField label="Full Name" name="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                         </div>
-                        <InputField label="Employee ID" name="employeeId" value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} placeholder="e.g. EMP-T-101" required />
-                        <InputField label="Date of Joining" name="doj" type="date" value={formData.doj} onChange={(e) => setFormData({ ...formData, doj: e.target.value })} required />
+                        <div className="md:col-span-2">
+                            <InputField label="Date of Joining" name="doj" type="date" value={formData.doj} onChange={(e) => setFormData({ ...formData, doj: e.target.value })} required />
+                        </div>
 
                         <div className="md:col-span-2">
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Employment Type</label>

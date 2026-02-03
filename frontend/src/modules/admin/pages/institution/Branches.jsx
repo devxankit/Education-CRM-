@@ -14,6 +14,7 @@ const Branches = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedBranch, setSelectedBranch] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
 
@@ -92,12 +93,10 @@ const Branches = () => {
         }
     };
 
-    const handleDeactivate = async (id, reason) => {
+    const handleDeactivate = async (id, reason, newIsActive) => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const branch = branches.find(b => b._id === id);
-            const newStatus = branch.status === 'active' ? 'inactive' : 'active';
             
             const response = await fetch(`${API_URL}/branch/${id}`, {
                 method: 'PUT',
@@ -105,12 +104,12 @@ const Branches = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ status: newStatus, deactivationReason: reason })
+                body: JSON.stringify({ isActive: newIsActive, deactivationReason: reason })
             });
 
             const data = await response.json();
             if (data.success) {
-                alert(`Branch ${newStatus === 'active' ? 'Activated' : 'Deactivated'} Successfully`);
+                alert(`Branch ${newIsActive ? 'Activated' : 'Deactivated'} Successfully`);
                 fetchBranches();
                 handleCloseDrawer();
             } else {
@@ -125,10 +124,16 @@ const Branches = () => {
     };
 
     // Derived State
-    const filteredBranches = branches.filter(b =>
-        b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.code.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredBranches = branches.filter(b => {
+        const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            b.code.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesStatus = statusFilter === 'all' || 
+            (statusFilter === 'active' && b.isActive) || 
+            (statusFilter === 'inactive' && !b.isActive);
+            
+        return matchesSearch && matchesStatus;
+    });
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -167,7 +172,11 @@ const Branches = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <Filter size={16} className="text-gray-400" />
-                    <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-700 outline-none">
+                    <select 
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-700 outline-none"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
                         <option value="all">Every Status</option>
                         <option value="active">Active Only</option>
                         <option value="inactive">Inactive Only</option>
@@ -200,6 +209,7 @@ const Branches = () => {
                 onSave={handleSave}
                 onDeactivate={handleDeactivate}
                 isSuperAdmin={isSuperAdmin}
+                loading={loading}
             />
         </div>
     );

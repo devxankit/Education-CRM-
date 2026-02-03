@@ -20,54 +20,57 @@ const ParentsTable = ({ parents, onView }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {parents.map((parent) => (
-                            <tr key={parent.id} className="hover:bg-gray-50 transition-colors group">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100">
-                                            {parent.name.charAt(0)}
+                        {parents.map((parent) => {
+                            const parentId = parent._id || parent.id;
+                            return (
+                                <tr key={parentId} className="hover:bg-gray-50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100">
+                                                {(parent.name || 'P').charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{parent.name || 'N/A'}</p>
+                                                <p className="text-xs text-gray-500 font-mono">{parent.code || 'N/A'}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-gray-900">{parent.name}</p>
-                                            <p className="text-xs text-gray-500 font-mono">{parent.code}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="text-gray-700 font-medium text-xs bg-gray-100 px-2 py-1 rounded">{parent.relationship}</span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-xs text-gray-600 flex items-center gap-1">
-                                            <Phone size={10} /> {parent.mobile}
-                                        </span>
-                                        {parent.email && (
-                                            <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                                                <Mail size={10} /> {parent.email}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-gray-700 font-medium text-xs bg-gray-100 px-2 py-1 rounded">{parent.relationship || 'N/A'}</span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-xs text-gray-600 flex items-center gap-1">
+                                                <Phone size={10} /> {parent.mobile || 'N/A'}
                                             </span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1 text-gray-600">
-                                        <Users size={14} />
-                                        <span className="font-bold text-xs">{parent.studentCount}</span>
-                                        <span className="text-[10px] text-gray-400">Students</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <ParentStatusBadge status={parent.status} />
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <button
-                                        onClick={() => onView(parent)}
-                                        className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                                    >
-                                        <Eye size={18} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                            {parent.email && (
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                    <Mail size={10} /> {parent.email}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-1 text-gray-600">
+                                            <Users size={14} />
+                                            <span className="font-bold text-xs">{parent.studentCount || 0}</span>
+                                            <span className="text-[10px] text-gray-400">Students</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <ParentStatusBadge status={parent.status || 'Active'} />
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button
+                                            onClick={() => onView(parent)}
+                                            className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

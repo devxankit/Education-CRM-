@@ -1,19 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Download, Filter, Search } from 'lucide-react';
+import { useAdminStore } from '../../../../../store/adminStore';
 
 // Components
 import ParentsTable from './components/ParentsTable';
 import ParentDetailDrawer from './components/ParentDetailDrawer';
 
 const Parents = () => {
+    const { parents, fetchParents } = useAdminStore();
 
-    // Mock Data
-    const [parents, setParents] = useState([
-        { id: 1, name: 'Robert Smith', code: 'PRT-1001', relationship: 'Father', mobile: '9876543210', email: 'robert.s@example.com', studentCount: 2, status: 'Active', linkedStudents: [{ id: 101, studentName: 'John Smith', class: 'Class 5-A' }] },
-        { id: 2, name: 'Alice Brown', code: 'PRT-1002', relationship: 'Mother', mobile: '9988776655', email: 'alice.b@example.com', studentCount: 1, status: 'Active', linkedStudents: [] },
-        { id: 3, name: 'Grandpa Joe', code: 'PRT-2005', relationship: 'Guardian', mobile: '8877665544', email: '', studentCount: 3, status: 'Inactive', linkedStudents: [] },
-    ]);
+    useEffect(() => {
+        fetchParents();
+    }, [fetchParents]);
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [viewingParent, setViewingParent] = useState(null);
@@ -31,31 +30,17 @@ const Parents = () => {
     };
 
     const handleSave = (parentData) => {
-        if (viewingParent) {
-            // Update
-            setParents(prev => prev.map(p => p.id === viewingParent.id ? {
-                ...parentData,
-                id: p.id,
-                studentCount: parentData.linkedStudents?.length || 0
-            } : p));
-        } else {
-            // Create
-            const newId = Date.now();
-            setParents(prev => [...prev, {
-                ...parentData,
-                id: newId,
-                code: `PRT-${Math.floor(Math.random() * 10000)}`,
-                studentCount: parentData.linkedStudents?.length || 0
-            }]);
-        }
+        // Since we are now using backend, handleSave should ideally call an API
+        // For now, let's just refresh the list after save
         setIsDrawerOpen(false);
+        fetchParents();
     };
 
     // Filter Logic
-    const filteredParents = parents.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.mobile.includes(searchQuery)
+    const filteredParents = (parents || []).filter(p =>
+        (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.code || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.mobile || '').includes(searchQuery)
     );
 
     return (

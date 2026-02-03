@@ -8,21 +8,14 @@ const StudentTable = () => {
     const navigate = useNavigate();
     const students = useAdminStore(state => state.students);
 
-    // Initial Mock Data for visual reference if store is empty
-    const DISPLAY_STUDENTS = students.length > 0 ? students : [
-        { id: 1, admNo: 'A-2024-001', name: 'Aarav Sharma', firstName: 'Aarav', lastName: 'Sharma', class: '10', section: 'A', roll: 12, parent: 'Rajiv Sharma', contact: '9876543210', status: 'Active' },
-        { id: 2, admNo: 'A-2024-005', name: 'Ishita Patel', firstName: 'Ishita', lastName: 'Patel', class: '10', section: 'A', roll: 13, parent: 'Nilesh Patel', contact: '9876543211', status: 'Active' },
-        { id: 3, admNo: 'A-2024-012', name: 'Rohan Mehta', firstName: 'Rohan', lastName: 'Mehta', class: '9', section: 'B', roll: "08", parent: 'Sanjay Mehta', contact: '9876543212', status: 'Fees Due' },
-        { id: 4, admNo: 'A-2024-045', name: 'Ananya Gupta', firstName: 'Ananya', lastName: 'Gupta', class: '9', section: 'B', roll: "09", parent: 'Vikram Gupta', contact: '9876543213', status: 'Active' },
-        { id: 5, admNo: 'A-2024-102', name: 'Kabir Singh', firstName: 'Kabir', lastName: 'Singh', class: '8', section: 'C', roll: 21, parent: 'Preeti Singh', contact: '9876543214', status: 'Inactive' },
-    ];
+    const DISPLAY_STUDENTS = students;
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case 'Active': return 'bg-green-100 text-green-700';
-            case 'Fees Due': return 'bg-amber-100 text-amber-700';
-            case 'Inactive': return 'bg-gray-100 text-gray-600';
-            default: return 'bg-gray-100 text-gray-600';
+        switch (status?.toLowerCase()) {
+            case 'active': return 'bg-green-100 text-green-700';
+            case 'fees due': return 'bg-amber-100 text-amber-700';
+            case 'inactive': return 'bg-gray-100 text-gray-600';
+            default: return 'bg-green-100 text-green-700';
         }
     };
 
@@ -43,10 +36,11 @@ const StudentTable = () => {
                     <tbody className="divide-y divide-gray-100">
                         {DISPLAY_STUDENTS.map((student) => {
                             const fullName = student.name || `${student.firstName} ${student.lastName}`;
+                            const studentId = student._id || student.id;
                             return (
                                 <tr
-                                    key={student.id}
-                                    onClick={() => navigate(`/admin/people/students/${student.id}`)}
+                                    key={studentId}
+                                    onClick={() => navigate(`/admin/people/students/${studentId}`)}
                                     className="hover:bg-gray-50 transition-colors group cursor-pointer"
                                 >
                                     <td className="px-6 py-4">
@@ -56,13 +50,15 @@ const StudentTable = () => {
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-gray-900">{fullName}</p>
-                                                <p className="text-xs text-gray-500">ID: {student.id}</p>
+                                                <p className="text-xs text-gray-500">ID: {studentId}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-gray-900 font-medium">{student.class} - {student.section}</p>
-                                        <p className="text-xs text-gray-500">Roll: {student.roll || 'N/A'}</p>
+                                        <p className="text-gray-900 font-medium">
+                                            {student.classId?.name || student.class || 'N/A'} - {student.sectionId?.name || student.section || 'N/A'}
+                                        </p>
+                                        <p className="text-xs text-gray-500">Roll: {student.rollNo || student.roll || 'N/A'}</p>
                                     </td>
                                     <td className="px-6 py-4">
                                         <p className="text-gray-900">{student.parent || student.parentName || 'N/A'}</p>

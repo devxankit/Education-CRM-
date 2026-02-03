@@ -30,7 +30,8 @@ import ExpenseCategories from './pages/finance/ExpenseCategories';
 import Taxes from './pages/finance/Taxes';
 
 // Academic Management Pages
-import ClassesSections from './pages/academics/ClassesSections';
+import Classes from './pages/academics/Classes';
+import Sections from './pages/academics/Sections';
 import SubjectsMaster from './pages/academics/SubjectsMaster';
 import ProgramsMaster from './pages/academics/ProgramsMaster';
 import TeacherMapping from './pages/academics/TeacherMapping';
@@ -47,7 +48,7 @@ import SupportRules from './pages/operations/SupportRules';
 import TransportRoutes from './pages/operations/TransportRoutes';
 import InventoryCategories from './pages/operations/InventoryCategories';
 import AssetsMaster from './pages/operations/AssetsMaster';
-import Employees from './pages/people/employees/Employees';
+
 import Teachers from './pages/people/teachers/Teachers';
 import Parents from './pages/people/parents/Parents';
 import Departments from './pages/people/departments/Departments';
@@ -116,9 +117,8 @@ const adminRoutes = [
                     // ... (Rest of code)
 
                     // 4. Academic Management (Changed 'academic' to 'academics')
-                    // Both routes point to the same Master-Detail Controller
-                    { path: 'academics/classes', element: <ClassesSections /> },
-                    { path: 'academics/sections', element: <ClassesSections /> },
+                    { path: 'academics/classes', element: <Classes /> },
+                    { path: 'academics/sections', element: <Sections /> },
 
                     { path: 'academics/subjects', element: <SubjectsMaster /> },
                     { path: 'academics/programs', element: <ProgramsMaster /> },
@@ -131,7 +131,7 @@ const adminRoutes = [
                     { path: 'people/students/:id', element: <StudentProfile /> }, // New Route
                     { path: 'people/students', element: <StudentList /> },
                     { path: 'people/teachers', element: <Teachers /> },
-                    { path: 'people/employees', element: <Employees /> },
+
                     { path: 'people/employment-types', element: <EmploymentTypes /> }, // New Route
                     { path: 'people/parents', element: <Parents /> },
                     { path: 'people/departments', element: <Departments /> }, // New Route

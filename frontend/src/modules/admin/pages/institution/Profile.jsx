@@ -17,6 +17,7 @@ const InstitutionProfile = () => {
     // State simulating backend data
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [fileReading, setFileReading] = useState(false); // New state for file reading
     const [isLocked, setIsLocked] = useState(false); // Controls "Super Admin Lock"
     const [activeSessionExists, setActiveSessionExists] = useState(false); // Simulates academic year running
     const [activeUploadField, setActiveUploadField] = useState(null);
@@ -24,11 +25,13 @@ const InstitutionProfile = () => {
 
     // Initial data
     const [formData, setFormData] = useState({
+        adminName: '',
         legalName: '',
         shortName: '',
         type: 'school',
         affiliations: [],
-        affiliationNumber: '',
+        affiliationCode: '',
+        medium: 'english',
         establishedYear: '',
         panNumber: '',
         gstNumber: '',
@@ -81,9 +84,10 @@ const InstitutionProfile = () => {
             // Very simple multi-select logic just for Affiliation array
             if (name === 'affiliations') {
                 setFormData(prev => {
+                    const currentAffiliations = prev.affiliations || [];
                     const newAff = checked
-                        ? [...prev.affiliations, value]
-                        : prev.affiliations.filter(x => x !== value);
+                        ? [...currentAffiliations, value]
+                        : currentAffiliations.filter(x => x !== value);
                     return { ...prev, affiliations: newAff };
                 });
             }
@@ -103,9 +107,21 @@ const InstitutionProfile = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file && activeUploadField) {
+            // Check file size (optional but good practice)
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                alert('File is too large. Please select a file smaller than 10MB.');
+                return;
+            }
+
             const reader = new FileReader();
+            reader.onloadstart = () => setFileReading(true);
             reader.onloadend = () => {
                 setFormData(prev => ({ ...prev, [activeUploadField]: reader.result }));
+                setFileReading(false);
+            };
+            reader.onerror = () => {
+                alert('Failed to read file');
+                setFileReading(false);
             };
             reader.readAsDataURL(file);
         }
@@ -117,18 +133,27 @@ const InstitutionProfile = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
+            
+            // Sanitize data before sending
+            const { _id, createdAt, updatedAt, __v, email, password, ...sanitizedData } = formData;
+            
             const response = await fetch(`${API_URL}/institute/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(sanitizedData)
             });
             const data = await response.json();
             
             if (data.success) {
                 alert('Settings Saved Successfully');
+                // Update formData with returned data (Cloudinary URLs)
+                setFormData(prev => ({
+                    ...prev,
+                    ...data.data
+                }));
             } else {
                 alert(data.message || 'Failed to save settings');
             }
@@ -256,7 +281,8 @@ const InstitutionProfile = () => {
                     <BrandingUploader
                         data={formData}
                         onUpload={handleUpload}
-                        isLocked={false} // Branding usually allows updates even if profile "Identity" is locked, based on user spec "Once locked... Only branding updates allowed"
+                        isLocked={false} 
+                        fileReading={fileReading}
                     />
 
                     {/* System Metadata Card */}

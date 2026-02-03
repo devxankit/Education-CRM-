@@ -1,14 +1,27 @@
 
 import React from 'react';
 import { Users, UserPlus, UserCheck, AlertCircle } from 'lucide-react';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 const StudentStatsCards = () => {
+    const students = useAdminStore(state => state.students);
+
+    const totalStudents = students.length;
+    const activeStudents = students.filter(s => s.status === 'Active').length;
+    const inactiveStudents = students.filter(s => s.status === 'Inactive' || s.status === 'Leaver').length;
+    // Assuming new admissions are students added in last 30 days or just a placeholder for now
+    const newAdmissions = students.filter(s => {
+        const createdAt = s.createdAt ? new Date(s.createdAt) : new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return createdAt > thirtyDaysAgo;
+    }).length;
 
     const stats = [
-        { title: 'Total Students', value: '2,845', change: '+12%', icon: Users, color: 'blue' },
-        { title: 'New Admissions', value: '142', change: '+5%', icon: UserPlus, color: 'green' },
-        { title: 'Active', value: '2,780', change: '98%', icon: UserCheck, color: 'indigo' },
-        { title: 'Inactive / Leavers', value: '65', change: '-2%', icon: AlertCircle, color: 'red' }
+        { title: 'Total Students', value: totalStudents.toLocaleString(), change: 'Total', icon: Users, color: 'blue' },
+        { title: 'New Admissions', value: newAdmissions.toLocaleString(), change: 'Last 30d', icon: UserPlus, color: 'green' },
+        { title: 'Active', value: activeStudents.toLocaleString(), change: `${totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0}%`, icon: UserCheck, color: 'indigo' },
+        { title: 'Inactive / Leavers', value: inactiveStudents.toLocaleString(), change: 'Total', icon: AlertCircle, color: 'red' }
     ];
 
     return (

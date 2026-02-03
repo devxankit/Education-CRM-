@@ -8,19 +8,17 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData }) => {
         name: '',
         code: '', // auto-generated if empty
         type: 'theory',
-        category: 'core',
         level: 'school'
     });
 
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData);
+            setFormData({ ...initialData });
         } else {
             setFormData({
                 name: '',
                 code: '',
                 type: 'theory',
-                category: 'core',
                 level: 'school'
             });
         }
@@ -76,7 +74,7 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData }) => {
                             </div>
                         )}
 
-                        <div>
+                        <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                             <select
                                 name="type" required
@@ -86,19 +84,6 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData }) => {
                                 <option value="theory">Theory Only</option>
                                 <option value="practical">Practical Only</option>
                                 <option value="theory_practical">Theory + Practical</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select
-                                name="category" required
-                                value={formData.category} onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
-                            >
-                                <option value="core">Core (Compulsory)</option>
-                                <option value="elective">Elective / Optional</option>
-                                <option value="vocational">Vocational</option>
                             </select>
                         </div>
 

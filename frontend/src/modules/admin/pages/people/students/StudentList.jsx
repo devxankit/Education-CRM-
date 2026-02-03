@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAdminStore } from '../../../../../store/adminStore';
 
 // Components
 import StudentStatsCards from './components/StudentStatsCards';
@@ -10,6 +11,11 @@ import StudentTable from './components/StudentTable';
 
 const StudentList = () => {
     const navigate = useNavigate();
+    const fetchStudents = useAdminStore(state => state.fetchStudents);
+
+    useEffect(() => {
+        fetchStudents();
+    }, [fetchStudents]);
 
     return (
         <div className="h-full flex flex-col pb-10">

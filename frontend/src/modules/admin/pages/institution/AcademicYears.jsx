@@ -1,93 +1,150 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, History } from 'lucide-react';
 import AcademicYearTable from './components/academic-years/AcademicYearTable';
 import CreateYearModal from './components/academic-years/CreateYearModal';
 import ActivateYearModal from './components/academic-years/ActivateYearModal';
 import CloseYearModal from './components/academic-years/CloseYearModal';
+import { API_URL } from '../../../../app/api';
 
 const AcademicYears = () => {
-    // Mock Role
+    // Role (Admin Context)
     const isSuperAdmin = true;
 
-    // Mock Data
-    const [years, setYears] = useState([
-        {
-            id: 1,
-            name: '2024-2025',
-            startDate: '2024-04-01',
-            endDate: '2025-03-31',
-            status: 'active',
-            createdOn: '2024-01-15',
-            createdBy: 'System Admin'
-        },
-        {
-            id: 2,
-            name: '2025-2026',
-            startDate: '2025-04-01',
-            endDate: '2026-03-31',
-            status: 'upcoming',
-            createdOn: '2024-12-01',
-            createdBy: 'Super Admin'
-        },
-        {
-            id: 3,
-            name: '2023-2024',
-            startDate: '2023-04-01',
-            endDate: '2024-03-31',
-            status: 'closed',
-            createdOn: '2023-01-10',
-            createdBy: 'System Admin'
-        }
-    ]);
+    // Data State
+    const [years, setYears] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
 
     // Modal States
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [activationTarget, setActivationTarget] = useState(null);
     const [closureTarget, setClosureTarget] = useState(null);
 
+    // Fetch academic years on component mount
+    useEffect(() => {
+        fetchAcademicYears();
+    }, []);
+
+    const fetchAcademicYears = async () => {
+        setFetching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/academic-year`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Transform backend data to match frontend expected format
+                const transformedYears = data.data.map(year => ({
+                    id: year._id,
+                    _id: year._id,
+                    name: year.name,
+                    startDate: year.startDate?.split('T')[0] || year.startDate,
+                    endDate: year.endDate?.split('T')[0] || year.endDate,
+                    status: year.status,
+                    createdOn: year.createdAt?.split('T')[0] || new Date(year.createdAt).toISOString().split('T')[0],
+                    createdBy: 'System Admin' // Can be populated from backend if needed
+                }));
+                setYears(transformedYears);
+            }
+        } catch (error) {
+            console.error('Error fetching academic years:', error);
+            alert('Failed to load academic years');
+        } finally {
+            setFetching(false);
+        }
+    };
+
     // -- Handlers --
 
-    const handleCreate = (data) => {
-        const newYear = {
-            id: Date.now(),
-            ...data,
-            status: 'upcoming',
-            createdOn: new Date().toISOString().split('T')[0],
-            createdBy: 'Super Admin'
-        };
-        setYears(prev => [...prev, newYear]);
-        setIsCreateOpen(false);
-        // Toast Success here
-        console.log("Created Year:", newYear);
+    const handleCreate = async (data) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/academic-year`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Academic Year created successfully');
+                fetchAcademicYears();
+                setIsCreateOpen(false);
+            } else {
+                alert(result.message || 'Failed to create academic year');
+            }
+        } catch (error) {
+            console.error('Error creating academic year:', error);
+            alert('An error occurred while creating academic year');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleActivate = (id, reason) => {
-        console.log(`Activating Year ${id}. Reason: ${reason}`);
+    const handleActivate = async (id, reason) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/academic-year/activate/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ reason })
+            });
 
-        setYears(prev => prev.map(y => {
-            // Target becomes active
-            if (y.id === id) return { ...y, status: 'active' };
-            // Previous active becomes closed
-            if (y.status === 'active') return { ...y, status: 'closed' };
-
-            return y;
-        }));
-
-        setActivationTarget(null);
-        // Toast Success here
+            const result = await response.json();
+            if (result.success) {
+                alert('Academic Year activated successfully');
+                fetchAcademicYears();
+                setActivationTarget(null);
+            } else {
+                alert(result.message || 'Failed to activate academic year');
+            }
+        } catch (error) {
+            console.error('Error activating academic year:', error);
+            alert('An error occurred while activating academic year');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleClose = (id, reason) => {
-        console.log(`Closing Year ${id}. Reason: ${reason}`);
+    const handleClose = async (id, reason) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/academic-year/close/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ reason })
+            });
 
-        setYears(prev => prev.map(y => {
-            if (y.id === id) return { ...y, status: 'closed' };
-            return y;
-        }));
-
-        setClosureTarget(null);
-        // Toast Success here
+            const result = await response.json();
+            if (result.success) {
+                alert('Academic Year closed successfully');
+                fetchAcademicYears();
+                setClosureTarget(null);
+            } else {
+                alert(result.message || 'Failed to close academic year');
+            }
+        } catch (error) {
+            console.error('Error closing academic year:', error);
+            alert('An error occurred while closing academic year');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleViewDetails = (year) => {
@@ -120,13 +177,19 @@ const AcademicYears = () => {
             </div>
 
             {/* Main Table */}
-            <AcademicYearTable
-                years={years}
-                onActivate={(year) => setActivationTarget(year)}
-                onCloseYear={(year) => setClosureTarget(year)}
-                onView={handleViewDetails}
-                isSuperAdmin={isSuperAdmin}
-            />
+            {fetching ? (
+                <div className="flex justify-center items-center p-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            ) : (
+                <AcademicYearTable
+                    years={years}
+                    onActivate={(year) => setActivationTarget(year)}
+                    onCloseYear={(year) => setClosureTarget(year)}
+                    onView={handleViewDetails}
+                    isSuperAdmin={isSuperAdmin}
+                />
+            )}
 
             {/* Count Footer */}
             <div className="mt-4 text-xs text-center text-gray-400">

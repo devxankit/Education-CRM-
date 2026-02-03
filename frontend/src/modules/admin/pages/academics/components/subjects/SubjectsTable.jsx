@@ -25,7 +25,6 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
                         <tr>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Code & Name</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Type</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Category</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Assigned Classes</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Status</th>
                             <th className="px-6 py-4 border-b border-gray-100"></th>
@@ -44,12 +43,6 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
                                 <td className="px-6 py-4">
                                     <span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded text-xs capitalize">
                                         {sub.type.replace('_', ' + ')}
-                                    </span>
-                                </td>
-
-                                <td className="px-6 py-4">
-                                    <span className={`text-xs px-2 py-0.5 rounded border ${sub.category === 'core' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                                        {sub.category}
                                     </span>
                                 </td>
 

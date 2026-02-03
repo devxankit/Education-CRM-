@@ -29,7 +29,7 @@ const MappingTable = ({ mappings, onAssignClick, onRemove }) => {
 
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded flex items-center justify-center text-white font-bold text-xs ${row.category === 'core' ? 'bg-indigo-500' : 'bg-amber-500'}`}>
+                                    <div className={`w-8 h-8 rounded flex items-center justify-center text-white font-bold text-xs bg-indigo-500`}>
                                         {row.subjectName.charAt(0)}
                                     </div>
                                     <div>
@@ -42,9 +42,6 @@ const MappingTable = ({ mappings, onAssignClick, onRemove }) => {
                             <td className="px-6 py-4">
                                 <div className="flex flex-col gap-1">
                                     <span className="text-xs text-gray-500 capitalize">{row.type.replace('_', ' + ')}</span>
-                                    <span className={`text-[10px] uppercase font-bold tracking-wider w-fit px-1.5 rounded ${row.category === 'core' ? 'text-indigo-600 bg-indigo-50' : 'text-amber-600 bg-amber-50'}`}>
-                                        {row.category}
-                                    </span>
                                 </div>
                             </td>
 

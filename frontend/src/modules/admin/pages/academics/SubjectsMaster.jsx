@@ -9,11 +9,11 @@ const SubjectsMaster = () => {
 
     // Mock Data
     const [subjects, setSubjects] = useState([
-        { id: 1, name: 'Mathematics', code: 'SUB_MATH_001', type: 'theory', category: 'core', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'] },
-        { id: 2, name: 'Physics', code: 'SUB_PHY_001', type: 'theory_practical', category: 'core', level: 'school', status: 'active', assignedClasses: ['Class 9', 'Class 10', 'Class 11', 'Class 12'] },
-        { id: 3, name: 'Computer Science', code: 'SUB_CS_001', type: 'theory_practical', category: 'elective', level: 'school', status: 'active', assignedClasses: ['Class 6', 'Class 7', 'Class 8'] },
-        { id: 4, name: 'Environmental Studies', code: 'SUB_EVS_001', type: 'theory', category: 'core', level: 'school', status: 'inactive', assignedClasses: ['Class 1', 'Class 2'] },
-        { id: 5, name: 'English Literature', code: 'SUB_ENG_001', type: 'theory', category: 'core', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'] }
+        { id: 1, name: 'Mathematics', code: 'SUB_MATH_001', type: 'theory', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'] },
+        { id: 2, name: 'Physics', code: 'SUB_PHY_001', type: 'theory_practical', level: 'school', status: 'active', assignedClasses: ['Class 9', 'Class 10', 'Class 11', 'Class 12'] },
+        { id: 3, name: 'Computer Science', code: 'SUB_CS_001', type: 'theory_practical', level: 'school', status: 'active', assignedClasses: ['Class 6', 'Class 7', 'Class 8'] },
+        { id: 4, name: 'Environmental Studies', code: 'SUB_EVS_001', type: 'theory', level: 'school', status: 'inactive', assignedClasses: ['Class 1', 'Class 2'] },
+        { id: 5, name: 'English Literature', code: 'SUB_ENG_001', type: 'theory', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'] }
     ]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);

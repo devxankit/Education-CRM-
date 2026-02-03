@@ -1,86 +1,180 @@
 
-import React, { useState } from 'react';
-import { UserPlus, Search, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { UserPlus, Search } from 'lucide-react';
 
 import StaffUsersTable from './components/StaffUsersTable';
 import CreateStaffUserModal from './components/CreateStaffUserModal';
 import ChangeRoleModal from './components/ChangeRoleModal';
 import UserDetailDrawer from './components/UserDetailDrawer';
+import { API_URL } from '../../../../app/api';
 
 const StaffUsers = () => {
-    // Mock Data
-    const [users, setUsers] = useState([
-        {
-            id: 1,
-            name: 'Vikram Singh',
-            email: 'vikram.singh@edu.crm',
-            roleId: 'role_admin',
-            roleName: 'Super Admin',
-            branchScope: 'all',
-            status: 'active',
-            lastLogin: 'Today, 10:30 AM'
-        },
-        {
-            id: 2,
-            name: 'Sarah Jen',
-            email: 'sarah.j@edu.crm',
-            roleId: 'role_teacher',
-            roleName: 'Teacher',
-            branchScope: 'branch_1',
-            status: 'active',
-            lastLogin: 'Yesterday'
-        },
-        {
-            id: 3,
-            name: 'Amit Kumar',
-            email: 'amit.accounts@edu.crm',
-            roleId: 'role_accountant',
-            roleName: 'Accountant',
-            branchScope: 'all',
-            status: 'suspended',
-            lastLogin: '2 days ago'
-        }
-    ]);
+    // Data States
+    const [users, setUsers] = useState([]);
+    const [activeRoles, setActiveRoles] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [fetching, setFetching] = useState(true);
+    const [loading, setLoading] = useState(false);
 
-    // Mock Roles for Assign
-    const activeRoles = [
-        { id: 'role_admin', name: 'Super Admin', code: 'ROLE_ADMIN' },
-        { id: 'role_teacher', name: 'Teacher', code: 'ROLE_TEACHER' },
-        { id: 'role_accountant', name: 'Accountant', code: 'ROLE_ACCOUNTANT' }
-    ];
-
+    // UI States
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [isRoleChangeOpen, setIsRoleChangeOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const isSuperAdmin = true;
 
-    // Handlers
-    const handleCreate = (data) => {
-        const newUser = {
-            id: Date.now(),
-            ...data,
-            roleName: activeRoles.find(r => r.id === data.roleId)?.name || 'Unknown',
-            status: 'active',
-            lastLogin: null
-        };
-        setUsers(prev => [newUser, ...prev]);
+    // -- API Calls --
+
+    const fetchAllData = useCallback(async () => {
+        setFetching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const headers = { 'Authorization': `Bearer ${token}` };
+
+            // Fetch Staff, Roles and Branches in parallel
+            const [staffRes, rolesRes, branchesRes] = await Promise.all([
+                fetch(`${API_URL}/staff`, { headers }),
+                fetch(`${API_URL}/role`, { headers }),
+                fetch(`${API_URL}/branch`, { headers })
+            ]);
+
+            const staffData = await staffRes.json();
+            const rolesData = await rolesRes.json();
+            const branchesData = await branchesRes.json();
+
+            if (staffData.success) {
+                // Transform data for table
+                const transformed = staffData.data.map(u => ({
+                    id: u._id,
+                    _id: u._id,
+                    name: u.name,
+                    email: u.email,
+                    roleId: u.roleId?._id || u.roleId,
+                    roleName: u.roleId?.name || 'No Role',
+                    branchScope: u.branchId || 'all',
+                    status: u.status,
+                    lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never logged in'
+                }));
+                setUsers(transformed);
+            }
+
+            if (rolesData.success) {
+                const transformedRoles = rolesData.data.map(r => ({ ...r, id: r._id }));
+                setActiveRoles(transformedRoles);
+            }
+
+            if (branchesData.success) {
+                setBranches(branchesData.data);
+            }
+
+        } catch (error) {
+            console.error('Error fetching staff data:', error);
+            alert('Failed to load staff management data');
+        } finally {
+            setFetching(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchAllData();
+    }, [fetchAllData]);
+
+    // -- Handlers --
+
+    const handleCreate = async (data) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Staff user created successfully');
+                fetchAllData();
+                setIsCreateOpen(false);
+            } else {
+                alert(result.message || 'Failed to create staff');
+            }
+        } catch (error) {
+            console.error('Error creating staff:', error);
+            alert('An error occurred while creating staff');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleStatusChange = (userId, newStatus) => {
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-        setSelectedUser(prev => prev ? { ...prev, status: newStatus } : null);
+    const handleStatusChange = async (userId, newStatus) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert(`User ${newStatus} successfully`);
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, status: newStatus } : u));
+                setSelectedUser(prev => prev ? { ...prev, status: newStatus } : null);
+            } else {
+                alert(result.message || 'Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('An error occurred while updating status');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleChangeRole = (userId, newRoleId, reason) => {
-        console.log(`Role Change for User ${userId} to ${newRoleId}. Reason: ${reason}`);
+    const handleChangeRole = async (userId, newRoleId, reason) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ roleId: newRoleId, auditReason: reason })
+            });
 
-        const roleName = activeRoles.find(r => r.id === newRoleId)?.name;
-
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, roleId: newRoleId, roleName } : u));
-        setSelectedUser(null);
-        // Toast success
+            const result = await response.json();
+            if (result.success) {
+                alert('Role updated successfully');
+                fetchAllData();
+                setIsRoleChangeOpen(false);
+                setSelectedUser(null);
+            } else {
+                alert(result.message || 'Failed to change role');
+            }
+        } catch (error) {
+            console.error('Error changing role:', error);
+            alert('An error occurred while changing role');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    // Filter Logic
+    const filteredUsers = users.filter(u =>
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -97,6 +191,8 @@ const StaffUsers = () => {
                         <input
                             type="text"
                             placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64"
                         />
                     </div>
@@ -106,9 +202,9 @@ const StaffUsers = () => {
             {/* Top Action Bar */}
             <div className="flex justify-between items-center mb-4 bg-white p-3 rounded-lg border border-gray-200">
                 <div className="flex gap-2">
-                    {/* Filters placeholder */}
-                    <select className="text-sm border-gray-300 rounded-md border p-1 bg-gray-50"><option>All Roles</option></select>
-                    <select className="text-sm border-gray-300 rounded-md border p-1 bg-gray-50"><option>All Status</option></select>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-md border border-gray-100 font-medium">
+                        Total Staff: {users.length}
+                    </div>
                 </div>
                 <button
                     onClick={() => setIsCreateOpen(true)}
@@ -119,10 +215,16 @@ const StaffUsers = () => {
             </div>
 
             {/* List */}
-            <StaffUsersTable
-                users={users}
-                onRowClick={setSelectedUser}
-            />
+            {fetching ? (
+                <div className="flex justify-center items-center p-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            ) : (
+                <StaffUsersTable
+                    users={filteredUsers}
+                    onRowClick={(u) => setSelectedUser(u)}
+                />
+            )}
 
             {/* Modals */}
             <CreateStaffUserModal
@@ -130,6 +232,8 @@ const StaffUsers = () => {
                 onClose={() => setIsCreateOpen(false)}
                 onCreate={handleCreate}
                 activeRoles={activeRoles}
+                branches={branches}
+                loading={loading}
             />
 
             <UserDetailDrawer
@@ -139,6 +243,7 @@ const StaffUsers = () => {
                 onChangeStatus={handleStatusChange}
                 onChangeRole={() => setIsRoleChangeOpen(true)}
                 isSuperAdmin={isSuperAdmin}
+                loading={loading}
             />
 
             <ChangeRoleModal
@@ -147,9 +252,11 @@ const StaffUsers = () => {
                 user={selectedUser}
                 roles={activeRoles}
                 onConfirm={handleChangeRole}
+                loading={loading}
             />
         </div>
     );
 };
 
 export default StaffUsers;
+

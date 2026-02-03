@@ -7,7 +7,8 @@ export const createTeacher = async (req, res) => {
         const {
             employeeId, firstName, lastName, email,
             password, phone, branchId, department,
-            designation, roleId
+            designation, roleId, experience, joiningDate,
+            teachingStatus, status
         } = req.body;
         const instituteId = req.user._id;
 
@@ -33,7 +34,11 @@ export const createTeacher = async (req, res) => {
             phone,
             department,
             designation,
-            roleId
+            roleId,
+            experience,
+            joiningDate: joiningDate || new Date(),
+            teachingStatus: teachingStatus || 'Active',
+            status: status || 'active'
         });
 
         await teacher.save();

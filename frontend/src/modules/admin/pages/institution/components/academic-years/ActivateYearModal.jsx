@@ -8,17 +8,11 @@ const ActivateYearModal = ({ isOpen, onClose, year, onConfirm }) => {
 
     if (!isOpen || !year) return null;
 
-    // Mock Checklist
-    const checks = [
-        { label: 'Institution Profile Locked', status: true },
-        { label: 'At least 1 Branch Configured', status: true },
-        { label: 'Classes & Sections Defined', status: true }, // Ideally checking real data
-        { label: 'Fee Structures Approved', status: false } // Example failing check (visual only for now)
-    ];
+
 
     const handleConfirm = () => {
-        if (confirmed && reason.length > 5) {
-            onConfirm(year.id, reason);
+        if (confirmed && reason.length >= 2) {
+            onConfirm(year._id || year.id, reason);
         }
     };
 
@@ -41,25 +35,11 @@ const ActivateYearModal = ({ isOpen, onClose, year, onConfirm }) => {
                         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X size={20} /></button>
                     </div>
 
-                    {/* Prerequisite Checklist */}
+                    {/* Information about activation */}
                     <div className="bg-gray-50 rounded-lg p-4 mb-5 border border-gray-200">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                            System Readiness Check
-                        </h4>
-                        <div className="space-y-2">
-                            {checks.map((check, i) => (
-                                <div key={i} className="flex items-center gap-2 text-sm">
-                                    {check.status ? (
-                                        <CheckCircle2 size={16} className="text-green-500" />
-                                    ) : (
-                                        <AlertTriangle size={16} className="text-amber-500" />
-                                    )}
-                                    <span className={check.status ? 'text-gray-700' : 'text-amber-700 font-medium'}>
-                                        {check.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
+                        <p className="text-sm text-gray-600 font-medium">
+                            Setting a year as Active will make it the default session for admissions, attendance, and fee collection across the entire system.
+                        </p>
                     </div>
 
                     {/* Critical Warning */}
@@ -101,7 +81,7 @@ const ActivateYearModal = ({ isOpen, onClose, year, onConfirm }) => {
                         <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">Cancel</button>
                         <button
                             onClick={handleConfirm}
-                            disabled={!confirmed || reason.length < 5}
+                            disabled={!confirmed || reason.length < 2}
                             className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg shadow-sm text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ShieldCheck size={16} /> Confirm Activation

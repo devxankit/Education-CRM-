@@ -1,17 +1,22 @@
 
-import React, { useState } from 'react';
-import { History } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { History, Loader2 } from 'lucide-react';
 
 import RuleLockBanner from './components/timetable-rules/RuleLockBanner';
 import GlobalTimeSettings from './components/timetable-rules/GlobalTimeSettings';
 import PeriodRules from './components/timetable-rules/PeriodRules';
 import WorkloadRules from './components/timetable-rules/WorkloadRules';
 import ConflictRules from './components/timetable-rules/ConflictRules';
+import { API_URL } from '../../../../app/api';
 
 const TimetableRules = () => {
     // State simulating backend configuration
     const [isLocked, setIsLocked] = useState(true); // Default locked for safety
     const [hasActiveSession, setHasActiveSession] = useState(true); // Mock Active Session
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('');
 
     const [rules, setRules] = useState({
         // Global
@@ -38,29 +43,142 @@ const TimetableRules = () => {
         allowExamOverride: false
     });
 
+    const fetchBranches = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/branch`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setBranches(data.data);
+                if (data.data.length > 0) {
+                    setSelectedBranchId(data.data[0]._id);
+                } else {
+                    setFetching(false);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching branches:', error);
+            setFetching(false);
+        }
+    }, []);
+
+    const fetchRules = useCallback(async (branchId) => {
+        if (!branchId) return;
+        setFetching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/timetable-rule?branchId=${branchId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success && data.data) {
+                setRules(prev => ({ ...prev, ...data.data }));
+                setIsLocked(data.data.isLocked);
+                setHasActiveSession(data.data.hasActiveSession !== false);
+            }
+        } catch (error) {
+            console.error('Error fetching timetable rules:', error);
+        } finally {
+            setFetching(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        if (selectedBranchId) {
+            fetchRules(selectedBranchId);
+        }
+    }, [selectedBranchId, fetchRules]);
+
     const handleChange = (key, value) => {
         setRules(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleToggleLock = () => {
+    const handleToggleLock = async () => {
+        if (!selectedBranchId) return;
+        let reason = '';
         if (isLocked) {
-            const reason = window.prompt("To UNLOCK rules, please provide an Admin Reason for the audit log:");
-            if (reason) {
-                // Log logic
-                setIsLocked(false);
-            }
+            reason = window.prompt("To UNLOCK rules, please provide an Admin Reason for the audit log:");
+            if (!reason) return;
         } else {
             const confirm = window.confirm("Are you sure you want to LOCK the rules? This will finalize the timetable constraints.");
-            if (confirm) setIsLocked(true);
+            if (!confirm) return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/timetable-rule/lock?branchId=${selectedBranchId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ isLocked: !isLocked, reason })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setIsLocked(!isLocked);
+                alert(`Rules ${!isLocked ? 'Locked' : 'Unlocked'} Successfully`);
+            } else {
+                alert(data.message || 'Failed to toggle lock');
+            }
+        } catch (error) {
+            console.error('Error toggling lock:', error);
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleSave = () => {
-        // Mock API
-        console.log("Saving Rules:", rules);
-        alert("Timetable Rules Saved Successfully.");
-        setIsLocked(true); // Auto lock after save
+    const handleSave = async () => {
+        if (!selectedBranchId) return;
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const { _id, instituteId, branchId, createdAt, updatedAt, __v, ...pureRules } = rules;
+            const response = await fetch(`${API_URL}/timetable-rule?branchId=${selectedBranchId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(pureRules)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert("Timetable Rules Saved Successfully.");
+                setIsLocked(true); // Auto lock after save
+            } else {
+                alert(data.message || 'Failed to save rules');
+            }
+        } catch (error) {
+            console.error('Error saving rules:', error);
+            alert('An error occurred while saving');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (fetching) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+                <p className="text-gray-500 font-medium italic">Loading timetable rules...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full relative pb-10">
@@ -70,9 +188,33 @@ const TimetableRules = () => {
                 onToggleLock={handleToggleLock}
                 onSave={handleSave}
                 hasActiveSession={hasActiveSession}
+                loading={loading}
             />
 
             <div className="max-w-7xl mx-auto space-y-6">
+                {/* Branch Selector */}
+                <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-indigo-100 p-2 rounded-lg">
+                            <History className="text-indigo-600" size={20} />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-900">Select Campus/Branch</h2>
+                            <p className="text-xs text-gray-500">Rules are configured per branch</p>
+                        </div>
+                    </div>
+                    <select
+                        value={selectedBranchId}
+                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none min-w-[200px]"
+                    >
+                        {branches.map(branch => (
+                            <option key={branch._id} value={branch._id}>
+                                {branch.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
                 {/* Intro Text */}
                 <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-lg flex items-start gap-3">

@@ -146,7 +146,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                 </div>
             </aside>
 
-            <style jsx>{`
+            <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 6px;
                 }

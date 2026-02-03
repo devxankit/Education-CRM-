@@ -34,7 +34,7 @@ const HolidayTable = ({ holidays, onEdit, onDeactivate, isSuperAdmin }) => {
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {sorted.map((holiday) => (
-                            <tr key={holiday.id} className={`hover:bg-gray-50 transition-colors ${holiday.status === 'inactive' ? 'opacity-50 bg-gray-50' : ''}`}>
+                            <tr key={holiday._id || holiday.id} className={`hover:bg-gray-50 transition-colors ${holiday.status === 'inactive' ? 'opacity-50 bg-gray-50' : ''}`}>
                                 <td className="px-6 py-4 font-mono text-gray-600">
                                     {holiday.date}
                                 </td>

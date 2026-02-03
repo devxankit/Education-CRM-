@@ -42,7 +42,7 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {sortedYears.map((year) => (
-                            <tr key={year.id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={year._id || year.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">

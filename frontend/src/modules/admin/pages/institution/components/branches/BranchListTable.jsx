@@ -38,7 +38,7 @@ const BranchListTable = ({ branches, onRowClick }) => {
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {branches.map((branch) => (
                             <tr
-                                key={branch.id}
+                                key={branch._id}
                                 onClick={() => onRowClick(branch)}
                                 className="group hover:bg-indigo-50/30 transition-colors cursor-pointer"
                             >
@@ -65,7 +65,7 @@ const BranchListTable = ({ branches, onRowClick }) => {
                                 </td>
 
                                 <td className="px-6 py-4">
-                                    <BranchStatusBadge status={branch.status} />
+                                    <BranchStatusBadge isActive={branch.isActive} />
                                 </td>
 
                                 <td className="px-6 py-4 text-right">

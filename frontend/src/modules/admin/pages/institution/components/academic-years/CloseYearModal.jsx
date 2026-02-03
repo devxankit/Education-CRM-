@@ -9,8 +9,8 @@ const CloseYearModal = ({ isOpen, onClose, year, onConfirm }) => {
     if (!isOpen || !year) return null;
 
     const handleConfirm = () => {
-        if (confirmed && reason.length > 5) {
-            onConfirm(year.id, reason);
+        if (confirmed && reason.length >= 2) {
+            onConfirm(year._id || year.id, reason);
         }
     };
 
@@ -33,22 +33,11 @@ const CloseYearModal = ({ isOpen, onClose, year, onConfirm }) => {
                         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X size={20} /></button>
                     </div>
 
-                    {/* Pending Data Warning - Mock */}
+                    {/* Information about closing */}
                     <div className="bg-gray-50 rounded-lg p-4 mb-5 border border-gray-200">
-                        <div className="flex justify-between items-center mb-2">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase">Data Snapshot Status</h4>
-                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded">Ready to Archive</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                                <span className="text-gray-400 block">Pending Fee</span>
-                                <span className="font-semibold text-gray-800">INR 2,40,000</span>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 block">Results Published</span>
-                                <span className="font-semibold text-green-600">Yes (All Classes)</span>
-                            </div>
-                        </div>
+                        <p className="text-sm text-gray-600">
+                            Closing an academic year is a final step. Please ensure all examinations are completed and final reports are generated before proceeding.
+                        </p>
                     </div>
 
                     {/* Critical Warning */}
@@ -90,7 +79,7 @@ const CloseYearModal = ({ isOpen, onClose, year, onConfirm }) => {
                         <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">Cancel</button>
                         <button
                             onClick={handleConfirm}
-                            disabled={!confirmed || reason.length < 5}
+                            disabled={!confirmed || reason.length < 2}
                             className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg shadow-sm text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <FileCheck size={16} /> Confirm Closure

@@ -3,7 +3,7 @@ import React from 'react';
 import { BookOpen, GraduationCap, Archive, HelpCircle } from 'lucide-react';
 import AcademicLevelBadge from './AcademicLevelBadge';
 
-const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive }) => {
+const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, hideFooter = false }) => {
 
     if (!classes || classes.length === 0) {
         return (
@@ -80,9 +80,11 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive })
                 </table>
             </div>
 
-            <div className="p-3 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-400 flex items-center gap-1 justify-center">
-                <HelpCircle size={12} /> Select a class to view sections
-            </div>
+            {!hideFooter && (
+                <div className="p-3 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-400 flex items-center gap-1 justify-center">
+                    <HelpCircle size={12} /> Select a class to view sections
+                </div>
+            )}
         </div>
     );
 };

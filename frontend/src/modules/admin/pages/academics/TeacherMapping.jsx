@@ -14,10 +14,10 @@ const TeacherMapping = () => {
 
     // Mock Data for View
     const [mappings, setMappings] = useState([
-        { subjectId: 1, subjectName: 'Mathematics', subjectCode: 'SUB_MATH_001', type: 'theory', category: 'core', teacherId: 1, teacherName: 'Sarah Jen' },
-        { subjectId: 2, subjectName: 'Physics', subjectCode: 'SUB_PHY_001', type: 'theory_practical', category: 'core', teacherId: 2, teacherName: 'Vikram Singh' },
-        { subjectId: 3, subjectName: 'English Literature', subjectCode: 'SUB_ENG_001', type: 'theory', category: 'core', teacherId: null, teacherName: null },
-        { subjectId: 4, subjectName: 'Computer Science', subjectCode: 'SUB_CS_001', type: 'practical', category: 'elective', teacherId: null, teacherName: null },
+        { subjectId: 1, subjectName: 'Mathematics', subjectCode: 'SUB_MATH_001', type: 'theory', teacherId: 1, teacherName: 'Sarah Jen' },
+        { subjectId: 2, subjectName: 'Physics', subjectCode: 'SUB_PHY_001', type: 'theory_practical', teacherId: 2, teacherName: 'Vikram Singh' },
+        { subjectId: 3, subjectName: 'English Literature', subjectCode: 'SUB_ENG_001', type: 'theory', teacherId: null, teacherName: null },
+        { subjectId: 4, subjectName: 'Computer Science', subjectCode: 'SUB_CS_001', type: 'practical', teacherId: null, teacherName: null },
     ]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);

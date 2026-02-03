@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import axios from 'axios';
+import { API_URL } from '../app/api';
 import { initialTaxes, feeStructures as initialFeeStructures } from '../modules/admin/data/financeData';
 import { initialClasses, initialSections } from '../modules/admin/data/academicData';
 import { initialEmployees, initialTeachers } from '../modules/admin/data/peopleData';
@@ -12,6 +14,7 @@ export const useAdminStore = create(
             sections: initialSections,
             taxes: initialTaxes,
             students: [],
+            parents: [],
             teachers: initialTeachers,
             employees: initialEmployees,
             feeStructures: initialFeeStructures,
@@ -23,11 +26,47 @@ export const useAdminStore = create(
             ],
 
             // Actions: Students
+            setStudents: (students) => set({ students }),
+            fetchStudents: async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ students: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching students:', error);
+                }
+            },
             addStudent: (student) => set((state) => ({
                 students: [...state.students, { ...student, id: `ADM-${Date.now()}` }]
             })),
             updateStudent: (id, data) => set((state) => ({
                 students: state.students.map(s => s.id === id ? { ...s, ...data } : s)
+            })),
+
+            // Actions: Parents
+            setParents: (parents) => set({ parents }),
+            fetchParents: async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ parents: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching parents:', error);
+                }
+            },
+            addParent: (parent) => set((state) => ({
+                parents: [...state.parents, parent]
+            })),
+            updateParent: (id, data) => set((state) => ({
+                parents: state.parents.map(p => p._id === id ? { ...p, ...data } : p)
             })),
 
             // Actions: Teachers

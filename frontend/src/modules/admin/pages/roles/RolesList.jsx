@@ -1,33 +1,111 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Download, ShieldCheck } from 'lucide-react';
-import { useAdminStore } from '../../../../store/adminStore';
 
 import RoleTable from './components/RoleTable';
 import CreateRoleModal from './components/CreateRoleModal';
 import RoleDetailDrawer from './components/RoleDetailDrawer';
+import { API_URL } from '../../../../app/api';
 
 const RolesList = () => {
-    const roles = useAdminStore(state => state.roles);
-    const addRole = useAdminStore(state => state.addRole);
-    const updateRole = useAdminStore(state => state.updateRole);
+    // Data States
+    const [roles, setRoles] = useState([]);
+    const [fetching, setFetching] = useState(true);
+    const [loading, setLoading] = useState(false);
 
+    // UI States
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState(null);
-    const isSuperAdmin = true; // Context
+    const isSuperAdmin = true;
 
-    // Handlers
-    const handleCreate = (newRoleData) => {
-        addRole(newRoleData);
+    // -- API Calls --
+
+    const fetchRoles = useCallback(async () => {
+        setFetching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/role`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Ensure backend data matches frontend expectations (id vs _id)
+                const transformed = data.data.map(r => ({
+                    ...r,
+                    id: r._id // Map _id to id for table/component compatibility
+                }));
+                setRoles(transformed);
+            }
+        } catch (error) {
+            console.error('Error fetching roles:', error);
+            alert('Failed to load roles');
+        } finally {
+            setFetching(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRoles();
+    }, [fetchRoles]);
+
+    // -- Handlers --
+
+    const handleCreate = async (newRoleData) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/role`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(newRoleData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Role created successfully');
+                fetchRoles();
+                setIsCreateOpen(false);
+            } else {
+                alert(result.message || 'Failed to create role');
+            }
+        } catch (error) {
+            console.error('Error creating role:', error);
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleRowClick = (role) => {
-        setSelectedRole(role);
-    };
+    const handleStatusChange = async (id, newStatus, reason) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/role/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus, auditReason: reason })
+            });
 
-    const handleStatusChange = (id, newStatus, reason) => {
-        updateRole(id, { status: newStatus });
-        setSelectedRole(prev => (prev?.id === id ? { ...prev, status: newStatus } : prev));
+            const result = await response.json();
+            if (result.success) {
+                alert('Role status updated successfully');
+                setRoles(prev => prev.map(r => r._id === id ? { ...r, status: newStatus } : r));
+                setSelectedRole(prev => (prev?._id === id ? { ...prev, status: newStatus } : prev));
+            } else {
+                alert(result.message || 'Failed to update role');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -40,7 +118,7 @@ const RolesList = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-opacity-50 cursor-not-allowed">
                         <Download size={16} /> Export Map
                     </button>
                     {isSuperAdmin && (
@@ -66,10 +144,16 @@ const RolesList = () => {
             </div>
 
             {/* Main Table */}
-            <RoleTable
-                roles={roles}
-                onRowClick={handleRowClick}
-            />
+            {fetching ? (
+                <div className="flex justify-center items-center p-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            ) : (
+                <RoleTable
+                    roles={roles}
+                    onRowClick={(role) => setSelectedRole(role)}
+                />
+            )}
 
             {/* Stats */}
             <div className="mt-4 text-xs text-center text-gray-400">
@@ -81,6 +165,7 @@ const RolesList = () => {
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 onCreate={handleCreate}
+                loading={loading}
             />
 
             <RoleDetailDrawer
@@ -89,9 +174,11 @@ const RolesList = () => {
                 role={selectedRole}
                 onStatusChange={handleStatusChange}
                 isSuperAdmin={isSuperAdmin}
+                loading={loading}
             />
         </div>
     );
 };
 
 export default RolesList;
+

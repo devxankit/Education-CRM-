@@ -5,10 +5,17 @@ import { X, GraduationCap, Archive } from 'lucide-react';
 const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
 
     const [formData, setFormData] = useState({
+        branchId: 'main',
         name: '',
         level: 'primary',
         board: 'CBSE'
     });
+
+    const mockBranches = [
+        { id: 'main', name: 'Main Campus' },
+        { id: 'north', name: 'North Branch' },
+        { id: 'south', name: 'South Branch' }
+    ];
 
     if (!isOpen) return null;
 
@@ -20,7 +27,7 @@ const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
         e.preventDefault();
         onCreate(formData);
         onClose();
-        setFormData({ name: '', level: 'primary', board: 'CBSE' });
+        setFormData({ branchId: 'main', name: '', level: 'primary', board: 'CBSE' });
     };
 
     return (
@@ -36,6 +43,19 @@ const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Branch</label>
+                        <select
+                            name="branchId" required
+                            value={formData.branchId} onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
+                        >
+                            {mockBranches.map(branch => (
+                                <option key={branch.id} value={branch.id}>{branch.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>

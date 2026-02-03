@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, HelpCircle } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
@@ -6,15 +5,11 @@ import { initialSections } from '../../data/academicData';
 
 import ClassesTable from './components/classes/ClassesTable';
 import SectionsTable from './components/classes/SectionsTable';
-import ClassFormModal from './components/classes/ClassFormModal';
 import SectionFormModal from './components/classes/SectionFormModal';
 
-const ClassesSections = () => {
+const Sections = () => {
     const classes = useAdminStore(state => state.classes);
     const sections = useAdminStore(state => state.sections);
-    const addClass = useAdminStore(state => state.addClass);
-    const updateClass = useAdminStore(state => state.updateClass);
-    const archiveClass = useAdminStore(state => state.deleteClass); // In store it's delete, but we use as archive logic
     const setSections = useAdminStore(state => state.setSections);
     const addSection = useAdminStore(state => state.addSection);
 
@@ -29,37 +24,23 @@ const ClassesSections = () => {
 
     // State
     const [selectedClassId, setSelectedClassId] = useState(null);
-    const [isClassModalOpen, setIsClassModalOpen] = useState(false);
     const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
 
     // Derived
-    const selectedClass = classes.find(c => c.id == selectedClassId); // Use == for mixed type matching (string/number)
+    const selectedClass = classes.find(c => c.id == selectedClassId);
     const displayedSections = selectedClassId ? (sections[selectedClassId] || []) : [];
 
     // Handlers
-    const handleAddClass = (data) => {
-        addClass(data);
+    const handleAddSection = (classId, data) => {
+        addSection(classId, data);
     };
 
-    const handleAddSection = (data) => {
-        if (!selectedClassId) return;
-        addSection(selectedClassId, data);
-    };
-
-    const handleArchiveClass = (cls) => {
-        if (window.confirm(`Archive ${cls.name}? It will be hidden from new admissions.`)) {
-            updateClass(cls.id, { status: 'archived' });
-        }
-    };
-
-    // Handler for editing a section
     const handleEditSection = (section) => {
         setEditingSection(section);
         setIsSectionModalOpen(true);
     };
 
-    // Handler for deactivating a section
     const handleDeactivateSection = (section) => {
         if (window.confirm(`Deactivate Section '${section.name}'? Students will need to be reassigned.`)) {
             const updatedSections = (sections[selectedClassId] || []).map(sec =>
@@ -69,7 +50,6 @@ const ClassesSections = () => {
         }
     };
 
-    // Handler for updating a section (from modal)
     const handleUpdateSection = (data) => {
         if (!selectedClassId || !editingSection) return;
         const updatedSections = (sections[selectedClassId] || []).map(sec =>
@@ -84,20 +64,19 @@ const ClassesSections = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Classes & Sections</h1>
-                    <p className="text-gray-500 text-sm">Define the academic hierarchy structure.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Class Sections</h1>
+                    <p className="text-gray-500 text-sm">Manage sections and divisions for each academic class.</p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                         <HelpCircle size={16} /> Help
                     </button>
-                    {/* Only show Add Class, Sections added via right panel */}
                     <button
-                        onClick={() => setIsClassModalOpen(true)}
+                        onClick={() => setIsSectionModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm shadow-sm"
                     >
-                        <Plus size={18} /> New Class
+                        <Plus size={18} /> New Section
                     </button>
                 </div>
             </div>
@@ -105,13 +84,13 @@ const ClassesSections = () => {
             {/* Split View */}
             <div className="flex flex-col lg:flex-row gap-6 h-[600px]">
 
-                {/* Left Panel: Classes */}
+                {/* Left Panel: Class Selector */}
                 <div className="w-full lg:w-1/3 min-w-[300px]">
                     <ClassesTable
                         classes={classes}
                         selectedClassId={selectedClassId}
                         onSelect={(cls) => setSelectedClassId(cls.id)}
-                        onArchive={handleArchiveClass}
+                        onArchive={() => {}} // Archive disabled in sections view
                     />
                 </div>
 
@@ -124,17 +103,9 @@ const ClassesSections = () => {
                                 {selectedClass ? `${selectedClass.name} Sections` : 'Section Details'}
                             </h2>
                             <p className="text-xs text-gray-500">
-                                {selectedClass ? 'Manage divisions and capacity.' : 'Select a class to view details.'}
+                                {selectedClass ? 'Manage divisions and capacity.' : 'Select a class to view sections.'}
                             </p>
                         </div>
-                        {selectedClass && selectedClass.status !== 'archived' && (
-                            <button
-                                onClick={() => setIsSectionModalOpen(true)}
-                                className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-100 transition-colors"
-                            >
-                                <Plus size={14} /> Add Section
-                            </button>
-                        )}
                     </div>
 
                     {/* Content */}
@@ -158,12 +129,6 @@ const ClassesSections = () => {
             </div>
 
             {/* Modals */}
-            <ClassFormModal
-                isOpen={isClassModalOpen}
-                onClose={() => setIsClassModalOpen(false)}
-                onCreate={handleAddClass}
-            />
-
             <SectionFormModal
                 isOpen={isSectionModalOpen}
                 onClose={() => {
@@ -172,9 +137,11 @@ const ClassesSections = () => {
                 }}
                 onCreate={editingSection ? handleUpdateSection : handleAddSection}
                 initialData={editingSection}
+                classes={classes}
+                initialClassId={selectedClassId}
             />
         </div>
     );
 };
 
-export default ClassesSections;
+export default Sections;

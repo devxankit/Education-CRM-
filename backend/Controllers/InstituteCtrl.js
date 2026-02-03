@@ -114,9 +114,9 @@ export const updateInstituteDetails = async (req, res) => {
     const id = req.user._id;
     const updateData = { ...req.body };
 
-    // Prevention of updating sensitive fields if necessary
-    delete updateData.password;
-    delete updateData.email;
+    // Prevention of updating sensitive or internal fields
+    const fieldsToExclude = ['password', 'email', '_id', 'createdAt', 'updatedAt', '__v', 'role'];
+    fieldsToExclude.forEach(field => delete updateData[field]);
 
     // Handle Branding Base64 uploads
     const brandingFields = ['logoLight', 'logoDark', 'letterheadHeader', 'letterheadFooter'];

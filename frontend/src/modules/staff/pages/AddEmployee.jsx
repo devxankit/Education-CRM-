@@ -17,7 +17,7 @@ const AddEmployee = () => {
     }, [user, navigate]);
 
     const [formData, setFormData] = useState({
-        firstName: '', lastName: '', employeeId: '', doj: '', type: 'Full-time',
+        firstName: '', lastName: '', doj: '', type: 'Full-time',
         designation: '', department: 'Office',
         phone: '', address: '', emergencyContact: ''
     });
@@ -54,8 +54,9 @@ const AddEmployee = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField label="First Name" name="firstName" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} required />
                         <InputField label="Last Name" name="lastName" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} required />
-                        <InputField label="Employee ID" name="employeeId" value={formData.employeeId} onChange={e => setFormData({ ...formData, employeeId: e.target.value })} required placeholder="e.g. EMP-D-102" />
-                        <InputField label="Date of Joining" name="doj" type="date" value={formData.doj} onChange={e => setFormData({ ...formData, doj: e.target.value })} required />
+                        <div className="md:col-span-2">
+                            <InputField label="Date of Joining" name="doj" type="date" value={formData.doj} onChange={e => setFormData({ ...formData, doj: e.target.value })} required />
+                        </div>
                     </div>
                 </div>
 

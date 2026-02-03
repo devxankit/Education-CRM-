@@ -2,11 +2,12 @@
 import React from 'react';
 import { Upload, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 
-const BrandingUploader = ({ data, onUpload, isLocked }) => {
+const BrandingUploader = ({ data, onUpload, isLocked, fileReading }) => {
 
     // Helper for upload slot
     const UploadSlot = ({ label, field, recommended, aspect }) => {
         const hasImage = !!data[field];
+        const isCurrentUploading = fileReading; // Since we only upload one at a time
 
         return (
             <div className="space-y-2">
@@ -15,11 +16,16 @@ const BrandingUploader = ({ data, onUpload, isLocked }) => {
                     className={`
                         border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center transition-all
                         ${hasImage ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-indigo-400'}
-                        ${isLocked ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
+                        ${(isLocked || isCurrentUploading) ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
                     `}
-                    onClick={() => !isLocked && onUpload(field)}
+                    onClick={() => !isLocked && !isCurrentUploading && onUpload(field)}
                 >
-                    {hasImage ? (
+                    {isCurrentUploading ? (
+                        <div className="py-2">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                            <span className="text-xs text-gray-500 block">Processing...</span>
+                        </div>
+                    ) : hasImage ? (
                         <div className="relative w-full h-24 flex items-center justify-center">
                             <img src={data[field]} alt="Preview" className="max-h-full max-w-full object-contain" />
                             <div className="absolute top-0 right-0 p-1 bg-white rounded-full shadow-sm text-green-600">

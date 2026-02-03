@@ -15,6 +15,19 @@ const IdentitySection = ({ data, onChange, isLocked, hasActiveSession }) => {
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Administrator Name <span className="text-red-500">*</span></label>
+                    <input
+                        type="text"
+                        name="adminName"
+                        value={data.adminName}
+                        onChange={onChange}
+                        disabled={isLocked}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
+                        placeholder="Full name of the institution head/admin"
+                    />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-medium text-gray-700">Institution Legal Name <span className="text-red-500">*</span></label>
                     <input
                         type="text"
@@ -56,6 +69,7 @@ const IdentitySection = ({ data, onChange, isLocked, hasActiveSession }) => {
                         <option value="college">College</option>
                         <option value="university">University</option>
                         <option value="coaching">Coaching Institute</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
 
@@ -96,6 +110,9 @@ const IdentitySection = ({ data, onChange, isLocked, hasActiveSession }) => {
                         <option value="english">English</option>
                         <option value="hindi">Hindi</option>
                         <option value="regional">Regional</option>
+                        <option value="Marathi">Marathi</option>
+                        <option value="Gujarati">Gujarati</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
             </div>

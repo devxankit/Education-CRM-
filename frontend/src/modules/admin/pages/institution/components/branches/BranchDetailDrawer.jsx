@@ -10,10 +10,10 @@ const BranchDetailDrawer = ({
     branch,             // If null, it's "New Mode"
     onSave,
     onDeactivate,
-    isSuperAdmin
+    isSuperAdmin,
+    loading
 }) => {
     const [formData, setFormData] = useState({});
-    const [loading, setLoading] = useState(false);
 
     // Reset form when branch changes
     useEffect(() => {
@@ -33,7 +33,7 @@ const BranchDetailDrawer = ({
                 email: '',
                 allowAdmissions: true,
                 allowFeeCollection: true,
-                status: 'active'
+                isActive: true
             });
         }
     }, [branch, isOpen]);
@@ -47,18 +47,18 @@ const BranchDetailDrawer = ({
     };
 
     const handleSaveClick = () => {
-        setLoading(true);
-        // Simulate Logic
-        setTimeout(() => {
-            onSave(formData);
-            setLoading(false);
-        }, 800);
+        onSave(formData);
     };
 
     const handleDeactivateClick = () => {
-        const reason = window.prompt("To Deactivate this branch, please type the reason for the Audit Log:");
-        if (reason) {
-            onDeactivate(formData.id, reason);
+        const isActivating = !branch.isActive;
+        if (isActivating) {
+            onDeactivate(branch._id, 'Re-activation', true);
+        } else {
+            const reason = window.prompt("To Deactivate this branch, please type the reason for the Audit Log:");
+            if (reason) {
+                onDeactivate(branch._id, reason, false);
+            }
         }
     };
 
@@ -81,7 +81,7 @@ const BranchDetailDrawer = ({
                         {branch && <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
                             <span className="font-mono">{branch.code}</span>
                             <span>•</span>
-                            <BranchStatusBadge status={branch.status} />
+                            <BranchStatusBadge isActive={branch.isActive} />
                         </div>}
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
@@ -127,10 +127,11 @@ const BranchDetailDrawer = ({
                         {branch && isSuperAdmin && (
                             <button
                                 onClick={handleDeactivateClick}
-                                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                             >
                                 <Power size={16} />
-                                {branch.status === 'active' ? 'Deactivate Campus' : 'Re-Activate Campus'}
+                                {branch.isActive ? 'Deactivate Campus' : 'Re-Activate Campus'}
                             </button>
                         )}
                     </div>
