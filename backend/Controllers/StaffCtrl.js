@@ -27,7 +27,7 @@ export const createStaff = async (req, res) => {
             email,
             password: generatedPassword,
             roleId,
-            branchId,
+            branchId: branchId === 'all' ? null : branchId,
             phone
         });
 
@@ -60,7 +60,9 @@ export const createStaff = async (req, res) => {
 export const getStaffList = async (req, res) => {
     try {
         const instituteId = req.user._id;
-        const staff = await Staff.find({ instituteId }).populate('roleId', 'name code');
+        const staff = await Staff.find({ instituteId })
+            .populate('roleId', 'name code')
+            .populate('branchId', 'name');
 
         res.status(200).json({
             success: true,

@@ -51,7 +51,7 @@ const UserDetailDrawer = ({ isOpen, onClose, user, onChangeStatus, onChangeRole,
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 flex flex-col gap-3">
                         <div className="flex items-center gap-3 text-sm text-gray-600">
                             <MapPin size={16} className="text-gray-400" />
-                            <span>Branch Scope: <strong>{user.branchScope === 'all' ? 'Global' : 'Restricted'}</strong></span>
+                            <span>Branch Scope: <strong>{user.branchScope}</strong></span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-600">
                             <Clock size={16} className="text-gray-400" />

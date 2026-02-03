@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
-import { X, UserPlus, Shield, Phone, Mail, Calendar, GraduationCap } from 'lucide-react';
+import { X, UserPlus, Shield, Phone, Mail, Calendar, GraduationCap, Loader2 } from 'lucide-react';
 
-const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = [] }) => {
+const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = [], loading = false }) => {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         email: '',
         phone: '',
+        roleId: '',
         branchId: '',
         department: '',
         designation: '',
@@ -27,7 +28,6 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
     const handleSubmit = (e) => {
         e.preventDefault();
         onCreate(formData);
-        onClose();
     };
 
     return (
@@ -105,11 +105,27 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                             <select
                                 name="branchId" required
                                 value={formData.branchId} onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium"
                             >
                                 <option value="">Select Branch</option>
                                 {branches.map(b => (
                                     <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                <Shield size={14} className="text-gray-400" /> Assign Role *
+                            </label>
+                            <select
+                                name="roleId" required
+                                value={formData.roleId} onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium"
+                            >
+                                <option value="">Select Role</option>
+                                {roles.map(role => (
+                                    <option key={role._id} value={role._id}>{role.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -190,14 +206,23 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                         <button
                             type="button" onClick={onClose}
                             className="px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            disabled={loading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-8 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all"
+                            disabled={loading}
+                            className="px-8 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:bg-indigo-400 disabled:cursor-not-allowed"
                         >
-                            Confirm Add Teacher
+                            {loading ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                'Confirm Add Teacher'
+                            )}
                         </button>
                     </div>
                 </form>

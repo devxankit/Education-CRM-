@@ -61,7 +61,7 @@ const StaffUsersTable = ({ users, onRowClick }) => {
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-1.5 text-gray-500 text-xs">
                                         <MapPin size={14} />
-                                        {user.branchScope === 'all' ? 'All Branches' : `${user.branchScope.length} Branches`}
+                                        {user.branchScope}
                                     </div>
                                 </td>
 

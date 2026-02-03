@@ -52,7 +52,7 @@ const StaffUsers = () => {
                     email: u.email,
                     roleId: u.roleId?._id || u.roleId,
                     roleName: u.roleId?.name || 'No Role',
-                    branchScope: u.branchId || 'all',
+                    branchScope: u.branchId?.name || (u.branchId === 'all' || !u.branchId ? 'All Branches' : 'Single Branch'),
                     status: u.status,
                     lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never logged in'
                 }));
@@ -252,7 +252,6 @@ const StaffUsers = () => {
                 user={selectedUser}
                 roles={activeRoles}
                 onConfirm={handleChangeRole}
-                loading={loading}
             />
         </div>
     );

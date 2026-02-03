@@ -8,6 +8,7 @@ const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches
         name: '',
         email: '',
         mobile: '',
+        roleId: '',
         branchScope: 'all', // 'all' or ['branchId']
     });
 
@@ -23,7 +24,12 @@ const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onCreate(formData);
+        // Map branchScope to branchId for backend consistency
+        const submissionData = {
+            ...formData,
+            branchId: formData.branchScope === 'all' ? null : formData.branchScope
+        };
+        onCreate(submissionData);
         onClose();
         // Reset Logic would be here
     };
@@ -87,6 +93,20 @@ const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches
                                 <option value="all">Global Access (All Branches)</option>
                                 {branches.map(branch => (
                                     <option key={branch._id} value={branch._id}>{branch.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Assign Role</label>
+                            <select
+                                name="roleId" required
+                                value={formData.roleId} onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                            >
+                                <option value="">Select Role</option>
+                                {activeRoles.map(role => (
+                                    <option key={role._id} value={role._id}>{role.name}</option>
                                 ))}
                             </select>
                         </div>
