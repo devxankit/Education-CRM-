@@ -2,23 +2,14 @@
 import React, { useState } from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
 
-const LateFeeRulesPanel = ({ isLocked }) => {
-
-    const [rules, setRules] = useState({
-        enabled: true,
-        gracePeriod: 7,
-        type: 'flat', // flat | percentage
-        value: 50,
-        frequency: 'daily', // one-time | daily | weekly
-        maxCap: 1000
-    });
+const LateFeeRulesPanel = ({ isLocked, data = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...data, [field]: value });
     };
 
-    if (!rules.enabled) {
+    if (!data.enabled) {
         return (
             <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 flex justify-between items-center opacity-75">
                 <div className="flex items-center gap-3">
@@ -65,7 +56,7 @@ const LateFeeRulesPanel = ({ isLocked }) => {
                     <div className="flex items-center gap-2">
                         <input
                             type="number"
-                            value={rules.gracePeriod}
+                            value={data.gracePeriod || 0}
                             disabled={isLocked}
                             onChange={(e) => handleChange('gracePeriod', Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:border-indigo-500"
@@ -77,12 +68,12 @@ const LateFeeRulesPanel = ({ isLocked }) => {
                 <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Fine Type</label>
                     <select
-                        value={rules.type}
+                        value={data.type || 'flat'}
                         disabled={isLocked}
                         onChange={(e) => handleChange('type', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white outline-none"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white outline-none cursor-pointer"
                     >
-                        <option value="flat">Flat Amount ($)</option>
+                        <option value="flat">Flat Amount (₹)</option>
                         <option value="percentage">Percentage (%)</option>
                     </select>
                 </div>
@@ -92,13 +83,13 @@ const LateFeeRulesPanel = ({ isLocked }) => {
                     <div className="relative">
                         <input
                             type="number"
-                            value={rules.value}
+                            value={data.value || 0}
                             disabled={isLocked}
                             onChange={(e) => handleChange('value', Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:border-indigo-500"
                         />
                         <span className="absolute right-3 top-2 text-xs text-gray-400 font-bold">
-                            {rules.type === 'percentage' ? '%' : '$'}
+                            {data.type === 'percentage' ? '%' : '₹'}
                         </span>
                     </div>
                 </div>
@@ -106,10 +97,10 @@ const LateFeeRulesPanel = ({ isLocked }) => {
                 <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Frequency</label>
                     <select
-                        value={rules.frequency}
+                        value={data.frequency || 'daily'}
                         disabled={isLocked}
                         onChange={(e) => handleChange('frequency', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white outline-none"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white outline-none cursor-pointer"
                     >
                         <option value="one-time">One-time Fine</option>
                         <option value="daily">Daily (Per Day)</option>
@@ -128,7 +119,7 @@ const LateFeeRulesPanel = ({ isLocked }) => {
                     <div className="w-32 bg-white rounded border border-orange-200">
                         <input
                             type="number"
-                            value={rules.maxCap}
+                            value={data.maxCap || 0}
                             disabled={isLocked}
                             onChange={(e) => handleChange('maxCap', Number(e.target.value))}
                             className="w-full px-2 py-1 text-sm bg-transparent outline-none text-right font-mono"

@@ -2,22 +2,15 @@
 import React, { useState } from 'react';
 import { RotateCcw, Info } from 'lucide-react';
 
-const RefundRulesPanel = ({ isLocked }) => {
-
-    const [rules, setRules] = useState({
-        allowed: false,
-        windowDays: 30, // Request window
-        deductionPercent: 10, // Default admin charge
-        allowPartial: false
-    });
+const RefundRulesPanel = ({ isLocked, data = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...data, [field]: value });
     };
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm font-['Inter']">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
                 <RotateCcw className="text-gray-500" size={20} />
                 <div>
@@ -31,22 +24,22 @@ const RefundRulesPanel = ({ isLocked }) => {
                 <div className="flex items-center gap-2 mb-4">
                     <input
                         type="checkbox" id="allowRefund"
-                        checked={rules.allowed}
+                        checked={data.allowed || false}
                         onChange={(e) => handleChange('allowed', e.target.checked)}
                         disabled={isLocked}
-                        className="w-4 h-4 text-indigo-600 rounded"
+                        className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
                     />
-                    <label htmlFor="allowRefund" className="text-sm font-semibold text-gray-700">Enable Refund Operations</label>
+                    <label htmlFor="allowRefund" className="text-sm font-semibold text-gray-700 cursor-pointer">Enable Refund Operations</label>
                 </div>
 
-                {rules.allowed && (
+                {data.allowed && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-in">
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Max Eligibility Window</label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="number"
-                                    value={rules.windowDays}
+                                    value={data.windowDays || 0}
                                     disabled={isLocked}
                                     onChange={(e) => handleChange('windowDays', Number(e.target.value))}
                                     className="w-24 px-3 py-2 border border-gray-300 rounded text-sm focus:border-indigo-500"
@@ -61,7 +54,7 @@ const RefundRulesPanel = ({ isLocked }) => {
                             <div className="flex items-center gap-2">
                                 <input
                                     type="number"
-                                    value={rules.deductionPercent}
+                                    value={data.deductionPercent || 0}
                                     disabled={isLocked}
                                     onChange={(e) => handleChange('deductionPercent', Number(e.target.value))}
                                     className="w-24 px-3 py-2 border border-gray-300 rounded text-sm focus:border-indigo-500"

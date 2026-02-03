@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { Users, Info } from 'lucide-react';
 
-const SeatCapacityPanel = ({ isLocked }) => {
+const SeatCapacityPanel = ({ isLocked, data, onChange }) => {
 
-    const [rules, setRules] = useState({
+    const rules = data || {
         strictCapacity: true,
         waitlistEnabled: true,
         autoPromoteWaitlist: false
-    });
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...rules, [field]: value });
     };
 
     return (

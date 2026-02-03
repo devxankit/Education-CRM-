@@ -19,12 +19,11 @@ const StopsManager = ({ stops, onChange }) => {
     };
 
     const handleRemove = (id) => {
-        // Prevent if students assigned (mock logic handled by parent usually, but here UI only)
-        onChange(stops.filter(s => s.id !== id));
+        onChange(stops.filter(s => (s._id || s.id) !== id));
     };
 
     const handleChange = (id, field, value) => {
-        onChange(stops.map(s => s.id === id ? { ...s, [field]: value } : s));
+        onChange(stops.map(s => (s._id || s.id) === id ? { ...s, [field]: value } : s));
     };
 
     return (
@@ -44,14 +43,14 @@ const StopsManager = ({ stops, onChange }) => {
 
             <div className="space-y-2">
                 {stops.map((stop, index) => (
-                    <div key={stop.id} className="bg-white border border-gray-200 rounded-lg p-3 flex gap-3 items-start group shadow-sm">
-
+                    <div key={stop._id || stop.id} className="bg-white border border-gray-200 rounded-lg p-3 flex gap-3 items-start group shadow-sm">
+                        {/* ... existing GripVertical ... */}
                         <div className="mt-2 text-gray-400 cursor-move">
                             <GripVertical size={16} />
                         </div>
 
                         <div className="flex-1 grid grid-cols-12 gap-2">
-                            {/* Seq */}
+                            {/* ... existing Seq ... */}
                             <div className="col-span-1 flex items-center justify-center">
                                 <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold">
                                     {index + 1}
@@ -64,7 +63,7 @@ const StopsManager = ({ stops, onChange }) => {
                                 <input
                                     type="text"
                                     value={stop.name}
-                                    onChange={(e) => handleChange(stop.id, 'name', e.target.value)}
+                                    onChange={(e) => handleChange(stop._id || stop.id, 'name', e.target.value)}
                                     placeholder="Enter Stop Name"
                                     className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:border-indigo-500 outline-none"
                                 />
@@ -77,7 +76,7 @@ const StopsManager = ({ stops, onChange }) => {
                                     <input
                                         type="time"
                                         value={stop.pickupTime}
-                                        onChange={(e) => handleChange(stop.id, 'pickupTime', e.target.value)}
+                                        onChange={(e) => handleChange(stop._id || stop.id, 'pickupTime', e.target.value)}
                                         className="w-full text-xs border border-gray-300 rounded pl-6 pr-1 py-1.5 focus:border-indigo-500 outline-none"
                                     />
                                     <Clock size={10} className="absolute left-1.5 top-2 text-gray-400" />
@@ -91,7 +90,7 @@ const StopsManager = ({ stops, onChange }) => {
                                     <input
                                         type="time"
                                         value={stop.dropTime}
-                                        onChange={(e) => handleChange(stop.id, 'dropTime', e.target.value)}
+                                        onChange={(e) => handleChange(stop._id || stop.id, 'dropTime', e.target.value)}
                                         className="w-full text-xs border border-gray-300 rounded pl-6 pr-1 py-1.5 focus:border-indigo-500 outline-none"
                                     />
                                     <Clock size={10} className="absolute left-1.5 top-2 text-gray-400" />
@@ -103,7 +102,7 @@ const StopsManager = ({ stops, onChange }) => {
                         {/* Actions */}
                         <div className="mt-1">
                             <button
-                                onClick={() => handleRemove(stop.id)}
+                                onClick={() => handleRemove(stop._id || stop.id)}
                                 disabled={stop.students > 0}
                                 title={stop.students > 0 ? "Cannot remove stop with assigned students" : "Remove Stop"}
                                 className={`p-1.5 rounded transition-colors ${stop.students > 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-300 hover:text-red-500 hover:bg-gray-100'}`}

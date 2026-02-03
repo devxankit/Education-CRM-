@@ -1,27 +1,78 @@
-
-import React, { useState } from 'react';
-import { Filter, Save, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Filter, Save, HelpCircle, AlertCircle } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 import MappingTable from './components/mapping/MappingTable';
 import AssignTeacherModal from './components/mapping/AssignTeacherModal';
 
 const TeacherMapping = () => {
+    const {
+        classes, fetchClasses,
+        sections, fetchSections,
+        teachers, fetchTeachers,
+        academicYears, fetchAcademicYears,
+        teacherMappings, fetchTeacherMappings,
+        assignTeacherMapping, removeTeacherMapping
+    } = useAdminStore();
 
-    // Mock Selections
-    const [selectedLevel, setSelectedLevel] = useState('Secondary');
-    const [selectedClassId, setSelectedClassId] = useState('10');
-    const [selectedSectionId, setSelectedSectionId] = useState('A');
+    const user = useAppStore(state => state.user);
 
-    // Mock Data for View
-    const [mappings, setMappings] = useState([
-        { subjectId: 1, subjectName: 'Mathematics', subjectCode: 'SUB_MATH_001', type: 'theory', teacherId: 1, teacherName: 'Sarah Jen' },
-        { subjectId: 2, subjectName: 'Physics', subjectCode: 'SUB_PHY_001', type: 'theory_practical', teacherId: 2, teacherName: 'Vikram Singh' },
-        { subjectId: 3, subjectName: 'English Literature', subjectCode: 'SUB_ENG_001', type: 'theory', teacherId: null, teacherName: null },
-        { subjectId: 4, subjectName: 'Computer Science', subjectCode: 'SUB_CS_001', type: 'practical', teacherId: null, teacherName: null },
-    ]);
+    // Selections
+    const [selectedClassId, setSelectedClassId] = useState('');
+    const [selectedSectionId, setSelectedSectionId] = useState('');
+    const [selectedYearId, setSelectedYearId] = useState('');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeSubject, setActiveSubject] = useState(null);
+
+    // Initial Fetch
+    useEffect(() => {
+        const branchId = user?.branchId || 'main';
+        fetchClasses(branchId);
+        fetchAcademicYears();
+        fetchTeachers();
+    }, [user, fetchClasses, fetchAcademicYears, fetchTeachers]);
+
+    // Set Active Year initially
+    useEffect(() => {
+        if (academicYears.length > 0 && !selectedYearId) {
+            const active = academicYears.find(y => y.status === 'active');
+            if (active) setSelectedYearId(active._id);
+            else setSelectedYearId(academicYears[0]._id);
+        }
+    }, [academicYears, selectedYearId]);
+
+    // Fetch Sections when Class changes
+    useEffect(() => {
+        if (selectedClassId) {
+            fetchSections(selectedClassId);
+            setSelectedSectionId(''); // Reset section
+        }
+    }, [selectedClassId, fetchSections]);
+
+    // Auto-select first section
+    const currentSections = sections[selectedClassId] || [];
+    useEffect(() => {
+        if (currentSections.length > 0 && !selectedSectionId) {
+            setSelectedSectionId(currentSections[0]._id);
+        }
+    }, [currentSections, selectedSectionId]);
+
+    // Fetch Mappings when context changes
+    const loadMappings = useCallback(() => {
+        if (selectedYearId && selectedSectionId) {
+            fetchTeacherMappings({
+                academicYearId: selectedYearId,
+                sectionId: selectedSectionId,
+                classId: selectedClassId
+            });
+        }
+    }, [selectedYearId, selectedSectionId, selectedClassId, fetchTeacherMappings]);
+
+    useEffect(() => {
+        loadMappings();
+    }, [loadMappings]);
 
     // Handlers
     const handleAssignClick = (row) => {
@@ -29,25 +80,39 @@ const TeacherMapping = () => {
         setIsModalOpen(true);
     };
 
-    const handleAssignConfirm = (teacher) => {
-        if (!activeSubject) return;
+    const handleAssignConfirm = async (teacher) => {
+        if (!activeSubject || !selectedYearId || !selectedSectionId) return;
 
-        setMappings(prev => prev.map(m =>
-            m.subjectId === activeSubject.subjectId
-                ? { ...m, teacherId: teacher.id, teacherName: teacher.name }
-                : m
-        ));
-    };
+        const success = await assignTeacherMapping({
+            academicYearId: selectedYearId,
+            branchId: user?.branchId || 'main',
+            classId: selectedClassId,
+            sectionId: selectedSectionId,
+            subjectId: activeSubject.subjectId,
+            teacherId: teacher.id || teacher._id
+        });
 
-    const handleRemove = (row) => {
-        if (window.confirm(`Remove ${row.teacherName} from ${row.subjectName}?`)) {
-            setMappings(prev => prev.map(m =>
-                m.subjectId === row.subjectId
-                    ? { ...m, teacherId: null, teacherName: null }
-                    : m
-            ));
+        if (success) {
+            loadMappings();
+            setIsModalOpen(false);
         }
     };
+
+    const handleRemove = async (row) => {
+        if (!row.teacherId) return;
+
+        if (window.confirm(`Remove ${row.teacherName} from ${row.subjectName}?`)) {
+            const success = await removeTeacherMapping({
+                academicYearId: selectedYearId,
+                sectionId: selectedSectionId,
+                subjectId: row.subjectId
+            });
+            if (success) loadMappings();
+        }
+    };
+
+    const activeYear = academicYears.find(y => y._id === selectedYearId);
+    const selectedClass = classes.find(c => c._id === selectedClassId);
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -62,9 +127,8 @@ const TeacherMapping = () => {
                     <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                         <HelpCircle size={16} /> Help
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm shadow-sm">
-                        <Save size={18} /> Save Changes
-                    </button>
+                    {/* Save Changes button not strictly needed as each assignment is saved individually in this implementation, 
+                        but we can keep it for UX consistency or global validation if needed */}
                 </div>
             </div>
 
@@ -72,14 +136,14 @@ const TeacherMapping = () => {
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Level</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
                     <select
-                        value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}
+                        value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)}
                         className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                        <option value="Primary">Primary</option>
-                        <option value="Secondary">Secondary</option>
-                        <option value="Senior Secondary">Senior Secondary</option>
+                        {academicYears.map(year => (
+                            <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(Active)' : ''}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -87,12 +151,12 @@ const TeacherMapping = () => {
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Class</label>
                     <select
                         value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)}
-                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[120px] outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                        <option value="9">Class 9</option>
-                        <option value="10">Class 10</option>
-                        <option value="11">Class 11</option>
-                        <option value="12">Class 12</option>
+                        <option value="">-- Select Class --</option>
+                        {classes.map(cls => (
+                            <option key={cls._id} value={cls._id}>{cls.name}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -100,27 +164,38 @@ const TeacherMapping = () => {
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Section</label>
                     <select
                         value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)}
-                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-500"
+                        disabled={!selectedClassId}
+                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                     >
-                        <option value="A">Section A</option>
-                        <option value="B">Section B</option>
-                        <option value="C">Section C</option>
+                        <option value="">-- Select Section --</option>
+                        {currentSections.map(sec => (
+                            <option key={sec._id} value={sec._id}>{sec.name}</option>
+                        ))}
                     </select>
                 </div>
 
-                <div className="ml-auto flex items-center gap-2 text-sm text-gray-500 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
-                    <span className="font-bold text-blue-700">Year 2025-26</span> (Active)
-                </div>
+                {activeYear && (
+                    <div className="ml-auto flex items-center gap-2 text-sm text-gray-500 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                        <span className="font-bold text-blue-700">Year {activeYear.name}</span> ({activeYear.status === 'active' ? 'Active' : 'Closed'})
+                    </div>
+                )}
 
             </div>
 
             {/* Grid */}
             <div className="flex-1">
-                <MappingTable
-                    mappings={mappings}
-                    onAssignClick={handleAssignClick}
-                    onRemove={handleRemove}
-                />
+                {selectedSectionId ? (
+                    <MappingTable
+                        mappings={teacherMappings}
+                        onAssignClick={handleAssignClick}
+                        onRemove={handleRemove}
+                    />
+                ) : (
+                    <div className="h-full flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center">
+                        <AlertCircle className="text-gray-300 mb-3" size={48} />
+                        <p className="text-gray-500">Select a Class and Section to manage teacher allocations.</p>
+                    </div>
+                )}
             </div>
 
             {/* Modal */}
@@ -129,7 +204,8 @@ const TeacherMapping = () => {
                 onClose={() => setIsModalOpen(false)}
                 onAssign={handleAssignConfirm}
                 subjectName={activeSubject?.subjectName}
-                className={`Class ${selectedClassId} - ${selectedSectionId}`}
+                teachersList={teachers}
+                className={`${selectedClass?.name || ''} - ${currentSections.find(s => s._id === selectedSectionId)?.name || ''}`}
             />
 
         </div>

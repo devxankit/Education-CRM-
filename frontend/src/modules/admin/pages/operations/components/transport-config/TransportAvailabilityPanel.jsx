@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { Bus, Power, MapPin } from 'lucide-react';
 
-const TransportAvailabilityPanel = ({ isLocked }) => {
+const TransportAvailabilityPanel = ({ isLocked, data, onChange }) => {
 
-    const [config, setConfig] = useState({
+    const config = data || {
         isEnabled: true,
         isMandatory: false,
-        scope: 'all' // all | selected
-    });
+        scope: 'all'
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setConfig(prev => ({ ...prev, [field]: value }));
+        onChange({ ...config, [field]: value });
     };
 
     return (

@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, GraduationCap, Archive } from 'lucide-react';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
 
@@ -11,11 +12,14 @@ const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
         board: 'CBSE'
     });
 
-    const mockBranches = [
-        { id: 'main', name: 'Main Campus' },
-        { id: 'north', name: 'North Branch' },
-        { id: 'south', name: 'South Branch' }
-    ];
+    const branches = useAdminStore(state => state.branches);
+    const fetchBranches = useAdminStore(state => state.fetchBranches);
+
+    React.useEffect(() => {
+        if (isOpen && branches.length === 0) {
+            fetchBranches();
+        }
+    }, [isOpen, branches, fetchBranches]);
 
     if (!isOpen) return null;
 
@@ -51,8 +55,9 @@ const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
                             value={formData.branchId} onChange={handleChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
                         >
-                            {mockBranches.map(branch => (
-                                <option key={branch.id} value={branch.id}>{branch.name}</option>
+                            <option value="main">Main Branch</option>
+                            {branches.map(branch => (
+                                <option key={branch._id || branch.id} value={branch._id || branch.id}>{branch.name}</option>
                             ))}
                         </select>
                     </div>

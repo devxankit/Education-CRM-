@@ -28,10 +28,11 @@ const ProgramsTable = ({ programs, selectedProgramId, onSelect, onEdit, onDeacti
                 <table className="w-full text-left border-collapse">
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {programs.map((prog) => {
-                            const isSelected = prog.id === selectedProgramId;
+                            const id = prog._id || prog.id;
+                            const isSelected = id === selectedProgramId;
                             return (
                                 <tr
-                                    key={prog.id}
+                                    key={id}
                                     onClick={() => onSelect(prog)}
                                     className={`
                                         cursor-pointer transition-colors group relative

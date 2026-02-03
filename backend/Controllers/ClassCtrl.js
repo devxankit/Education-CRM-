@@ -41,7 +41,17 @@ export const getClasses = async (req, res) => {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
 
-        const classes = await Class.find({ instituteId, branchId, status: "active" });
+        // Basic validation to avoid CastError 500
+        if (branchId.length !== 24 && branchId !== 'main') {
+            return res.status(200).json({ success: true, data: [] });
+        }
+
+        const query = { instituteId, status: "active" };
+        if (branchId !== 'main') {
+            query.branchId = branchId;
+        }
+
+        const classes = await Class.find(query);
 
         res.status(200).json({
             success: true,
@@ -107,7 +117,17 @@ export const createSection = async (req, res) => {
 export const getSectionsByClass = async (req, res) => {
     try {
         const { classId } = req.params;
-        const sections = await Section.find({ classId }).populate('teacherId', 'name');
+
+        if (classId.length !== 24 && classId !== 'main') {
+            return res.status(200).json({ success: true, data: [] });
+        }
+
+        const query = {};
+        if (classId !== 'main') {
+            query.classId = classId;
+        }
+
+        const sections = await Section.find(query).populate('teacherId', 'name');
 
         res.status(200).json({
             success: true,

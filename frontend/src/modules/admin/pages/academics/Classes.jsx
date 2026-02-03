@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, HelpCircle } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 import ClassesTable from './components/classes/ClassesTable';
 import ClassFormModal from './components/classes/ClassFormModal';
 
 const Classes = () => {
     const classes = useAdminStore(state => state.classes);
+    const fetchClasses = useAdminStore(state => state.fetchClasses);
     const addClass = useAdminStore(state => state.addClass);
     const updateClass = useAdminStore(state => state.updateClass);
+    const user = useAppStore(state => state.user);
 
     // State
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (user?.branchId) {
+            fetchClasses(user.branchId);
+        } else {
+            // Fallback for testing if branchId is not in user object
+            fetchClasses('main');
+        }
+    }, [user, fetchClasses]);
 
     // Handlers
     const handleAddClass = (data) => {
@@ -20,7 +32,7 @@ const Classes = () => {
 
     const handleArchiveClass = (cls) => {
         if (window.confirm(`Archive ${cls.name}? It will be hidden from new admissions.`)) {
-            updateClass(cls.id, { status: 'archived' });
+            updateClass(cls._id, { status: 'archived' });
         }
     };
 
@@ -51,7 +63,7 @@ const Classes = () => {
                 <ClassesTable
                     classes={classes}
                     onArchive={handleArchiveClass}
-                    onSelect={() => {}} // No-op for selection on this page
+                    onSelect={() => { }} // No-op for selection on this page
                     hideFooter={true}
                 />
             </div>

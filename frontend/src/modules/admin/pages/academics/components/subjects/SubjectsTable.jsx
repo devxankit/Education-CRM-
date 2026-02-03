@@ -32,7 +32,7 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {subjects.map((sub) => (
-                            <tr key={sub.id} className="group hover:bg-gray-50/50 transition-colors">
+                            <tr key={sub._id || sub.id} className="group hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-gray-900">{sub.name}</span>
@@ -42,24 +42,24 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
 
                                 <td className="px-6 py-4">
                                     <span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded text-xs capitalize">
-                                        {sub.type.replace('_', ' + ')}
+                                        {sub.type?.replace('_', ' + ') || 'Theory'}
                                     </span>
                                 </td>
 
                                 <td className="px-6 py-4">
                                     <div className="flex flex-wrap gap-1 max-w-xs">
-                                        {sub.assignedClasses && sub.assignedClasses.length > 0 ? (
-                                            sub.assignedClasses.slice(0, 3).map((cls, idx) => (
+                                        {(sub.classIds || sub.assignedClasses) && (sub.classIds || sub.assignedClasses).length > 0 ? (
+                                            (sub.classIds || sub.assignedClasses).slice(0, 3).map((cls, idx) => (
                                                 <span key={idx} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] border border-blue-100">
-                                                    {cls}
+                                                    {cls.name || cls}
                                                 </span>
                                             ))
                                         ) : (
                                             <span className="text-gray-400 text-xs italic">Unassigned</span>
                                         )}
-                                        {sub.assignedClasses && sub.assignedClasses.length > 3 && (
+                                        {(sub.classIds || sub.assignedClasses) && (sub.classIds || sub.assignedClasses).length > 3 && (
                                             <span className="text-xs text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">
-                                                +{sub.assignedClasses.length - 3} more
+                                                +{(sub.classIds || sub.assignedClasses).length - 3} more
                                             </span>
                                         )}
                                     </div>

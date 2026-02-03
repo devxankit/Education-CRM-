@@ -2,24 +2,29 @@
 import React, { useState, useEffect } from 'react';
 import { X, BookOpen, AlertCircle } from 'lucide-react';
 
-const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData }) => {
+const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = [] }) => {
 
     const [formData, setFormData] = useState({
         name: '',
         code: '', // auto-generated if empty
         type: 'theory',
-        level: 'school'
+        level: 'school',
+        classIds: []
     });
 
     useEffect(() => {
         if (initialData) {
-            setFormData({ ...initialData });
+            setFormData({
+                ...initialData,
+                classIds: initialData.classIds ? (initialData.classIds.map(c => c._id || c)) : []
+            });
         } else {
             setFormData({
                 name: '',
                 code: '',
                 type: 'theory',
-                level: 'school'
+                level: 'school',
+                classIds: []
             });
         }
     }, [initialData, isOpen]);
@@ -98,7 +103,32 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData }) => {
                                 <option value="ug">Undergraduate</option>
                                 <option value="pg">Postgraduate</option>
                             </select>
-                            <p className="text-xs text-gray-500 mt-1">Defines where this subject can be mapped (e.g., School classes vs College semesters).</p>
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Classes</label>
+                            <div className="border border-gray-200 rounded-lg p-3 max-h-32 overflow-y-auto grid grid-cols-2 gap-2 bg-gray-50/30">
+                                {classes.map(cls => (
+                                    <label key={cls._id || cls.id} className="flex items-center gap-2 text-xs text-gray-600 hover:text-indigo-600 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.classIds.includes(cls._id || cls.id)}
+                                            onChange={(e) => {
+                                                const id = cls._id || cls.id;
+                                                const currentIds = [...formData.classIds];
+                                                if (e.target.checked) {
+                                                    setFormData({ ...formData, classIds: [...currentIds, id] });
+                                                } else {
+                                                    setFormData({ ...formData, classIds: currentIds.filter(i => i !== id) });
+                                                }
+                                            }}
+                                            className="rounded text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        {cls.name}
+                                    </label>
+                                ))}
+                                {classes.length === 0 && <span className="text-gray-400 italic col-span-2">No classes available.</span>}
+                            </div>
                         </div>
                     </div>
 

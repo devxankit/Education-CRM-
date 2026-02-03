@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { GitCommit, AlertTriangle } from 'lucide-react';
 
-const RouteRulesPanel = ({ isLocked }) => {
+const RouteRulesPanel = ({ isLocked, data, onChange }) => {
 
-    const [limits, setLimits] = useState({
+    const limits = data || {
         maxRoutes: 15,
         maxStops: 25,
         dynamicStops: false
-    });
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setLimits(prev => ({ ...prev, [field]: value }));
+        onChange({ ...limits, [field]: value });
     };
 
     return (

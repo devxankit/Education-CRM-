@@ -62,7 +62,7 @@ const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClas
                         >
                             <option value="" disabled>-- Select Class --</option>
                             {classes.map(cls => (
-                                <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                <option key={cls._id || cls.id} value={cls._id || cls.id}>{cls.name}</option>
                             ))}
                         </select>
                     </div>

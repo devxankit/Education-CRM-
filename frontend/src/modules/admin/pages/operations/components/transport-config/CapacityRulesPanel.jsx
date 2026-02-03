@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { Users, Truck } from 'lucide-react';
 
-const CapacityRulesPanel = ({ isLocked }) => {
+const CapacityRulesPanel = ({ isLocked, data, onChange }) => {
 
-    const [rules, setRules] = useState({
+    const rules = data || {
         maxCapacity: 40,
         bufferPercent: 10,
         allowOverbooking: false
-    });
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...rules, [field]: value });
     };
 
     return (

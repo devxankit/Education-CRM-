@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { DollarSign, Link } from 'lucide-react';
 
-const TransportFeeLinkPanel = ({ isLocked }) => {
+const TransportFeeLinkPanel = ({ isLocked, data, onChange }) => {
 
-    const [config, setConfig] = useState({
+    const config = data || {
         isLinked: true,
-        feeType: 'route', // flat | route | distance
+        feeType: 'route',
         paymentCycle: 'monthly'
-    });
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setConfig(prev => ({ ...prev, [field]: value }));
+        onChange({ ...config, [field]: value });
     };
 
     return (

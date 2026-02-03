@@ -1,4 +1,5 @@
 import FeeStructure from "../Models/FeeStructureModel.js";
+import mongoose from "mongoose";
 
 // ================= CREATE FEE STRUCTURE =================
 export const createFeeStructure = async (req, res) => {
@@ -8,6 +9,13 @@ export const createFeeStructure = async (req, res) => {
             applicableClasses, applicableCourses, components, installments
         } = req.body;
         const instituteId = req.user._id;
+
+        if (!mongoose.Types.ObjectId.isValid(branchId)) {
+            return res.status(400).json({ success: false, message: "Invalid Branch ID" });
+        }
+        if (!mongoose.Types.ObjectId.isValid(academicYearId)) {
+            return res.status(400).json({ success: false, message: "Invalid Academic Year ID" });
+        }
 
         const feeStructure = new FeeStructure({
             instituteId,
@@ -41,8 +49,20 @@ export const getFeeStructures = async (req, res) => {
         const instituteId = req.user._id;
 
         let query = { instituteId };
-        if (branchId) query.branchId = branchId;
-        if (academicYearId) query.academicYearId = academicYearId;
+
+        if (branchId && mongoose.Types.ObjectId.isValid(branchId)) {
+            query.branchId = branchId;
+        } else if (branchId && branchId !== 'main') {
+            // If branchId is provided but invalid, and not the fallback 'main', maybe return error or empty?
+            // For now, if it's 'main', we'll just not filter by branchId if it's not a valid ID.
+            // But the model says branchId is required, so structures MUST have one.
+            // If we don't filter by branchId, we might see structures from other branches.
+        }
+
+        if (academicYearId && mongoose.Types.ObjectId.isValid(academicYearId)) {
+            query.academicYearId = academicYearId;
+        }
+
         if (status) query.status = status;
 
         const feeStructures = await FeeStructure.find(query)

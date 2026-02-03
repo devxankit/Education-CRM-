@@ -25,7 +25,7 @@ const MappingTable = ({ mappings, onAssignClick, onRemove }) => {
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
                     {mappings.map((row) => (
-                        <tr key={row.subjectId} className="group hover:bg-gray-50/50 transition-colors">
+                        <tr key={row._id || row.subjectId} className="group hover:bg-gray-50/50 transition-colors">
 
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, HelpCircle } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
-import { initialSections } from '../../data/academicData';
+import { useAppStore } from '../../../../store/index';
 
 import ClassesTable from './components/classes/ClassesTable';
 import SectionsTable from './components/classes/SectionsTable';
@@ -9,26 +9,36 @@ import SectionFormModal from './components/classes/SectionFormModal';
 
 const Sections = () => {
     const classes = useAdminStore(state => state.classes);
+    const fetchClasses = useAdminStore(state => state.fetchClasses);
     const sections = useAdminStore(state => state.sections);
+    const fetchSections = useAdminStore(state => state.fetchSections);
     const setSections = useAdminStore(state => state.setSections);
     const addSection = useAdminStore(state => state.addSection);
-
-    // Initialize segments if empty
-    useEffect(() => {
-        if (Object.keys(sections).length === 0) {
-            Object.entries(initialSections).forEach(([classId, data]) => {
-                setSections(classId, data);
-            });
-        }
-    }, []);
+    const updateSection = useAdminStore(state => state.updateSection);
+    const user = useAppStore(state => state.user);
 
     // State
     const [selectedClassId, setSelectedClassId] = useState(null);
     const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
 
+    // Initialize segments if empty
+    useEffect(() => {
+        if (user?.branchId) {
+            fetchClasses(user.branchId);
+        } else {
+            fetchClasses('main');
+        }
+    }, [user, fetchClasses]);
+
+    useEffect(() => {
+        if (selectedClassId) {
+            fetchSections(selectedClassId);
+        }
+    }, [selectedClassId, fetchSections]);
+
     // Derived
-    const selectedClass = classes.find(c => c.id == selectedClassId);
+    const selectedClass = classes.find(c => c._id == selectedClassId || c.id == selectedClassId);
     const displayedSections = selectedClassId ? (sections[selectedClassId] || []) : [];
 
     // Handlers
@@ -43,19 +53,13 @@ const Sections = () => {
 
     const handleDeactivateSection = (section) => {
         if (window.confirm(`Deactivate Section '${section.name}'? Students will need to be reassigned.`)) {
-            const updatedSections = (sections[selectedClassId] || []).map(sec =>
-                sec.id === section.id ? { ...sec, status: 'inactive' } : sec
-            );
-            setSections(selectedClassId, updatedSections);
+            updateSection(section._id, selectedClassId, { status: 'inactive' });
         }
     };
 
     const handleUpdateSection = (data) => {
         if (!selectedClassId || !editingSection) return;
-        const updatedSections = (sections[selectedClassId] || []).map(sec =>
-            sec.id === editingSection.id ? { ...sec, ...data } : sec
-        );
-        setSections(selectedClassId, updatedSections);
+        updateSection(editingSection._id, selectedClassId, data);
         setEditingSection(null);
     };
 
@@ -89,8 +93,8 @@ const Sections = () => {
                     <ClassesTable
                         classes={classes}
                         selectedClassId={selectedClassId}
-                        onSelect={(cls) => setSelectedClassId(cls.id)}
-                        onArchive={() => {}} // Archive disabled in sections view
+                        onSelect={(cls) => setSelectedClassId(cls._id || cls.id)}
+                        onArchive={() => { }} // Archive disabled in sections view
                     />
                 </div>
 

@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const branchSchema = new mongoose.Schema(
     {
+        instituteId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institute",
+            required: true,
+        },
         code: {
             type: String,
             required: true,

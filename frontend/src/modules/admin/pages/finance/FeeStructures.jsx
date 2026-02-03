@@ -1,7 +1,7 @@
-
-import React, { useState } from 'react';
-import { Plus, Settings, Printer, Lock, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Settings, Printer, Lock, Download, Loader2 } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 import FeeStructureList from './components/fee-structures/FeeStructureList';
 import FeeStructureForm from './components/fee-structures/FeeStructureForm';
@@ -10,40 +10,64 @@ import InstallmentScheduler from './components/fee-structures/InstallmentSchedul
 import FeeStructureStatusBadge from './components/fee-structures/FeeStructureStatusBadge';
 
 const FeeStructures = () => {
-    const feeStructures = useAdminStore(state => state.feeStructures);
-    const addFeeStructure = useAdminStore(state => state.addFeeStructure);
-    const updateFeeStructure = useAdminStore(state => state.updateFeeStructure);
+    const {
+        feeStructures, fetchFeeStructures, addFeeStructure, updateFeeStructure,
+        academicYears, fetchAcademicYears, branches, fetchBranches
+    } = useAdminStore();
+    const user = useAppStore(state => state.user);
 
     const [selectedId, setSelectedId] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [filter, setFilter] = useState({ year: '', status: '' });
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState({ year: '', status: '', branchId: '' });
+
+    useEffect(() => {
+        const loadInitial = async () => {
+            setLoading(true);
+            await fetchAcademicYears();
+            await fetchBranches();
+
+            // Determine effective branchId for initial fetch
+            const effectiveBranchId = user?.branchId || '';
+            await fetchFeeStructures(effectiveBranchId);
+            setLoading(false);
+        };
+        loadInitial();
+    }, [user, fetchAcademicYears, fetchFeeStructures, fetchBranches]);
 
     // Derived
-    const selectedStructure = feeStructures.find(s => s.id === selectedId);
+    const selectedStructure = feeStructures.find(s => (s._id || s.id) === selectedId);
 
     const filteredStructures = feeStructures.filter(s => {
-        if (filter.year && s.academicYear !== filter.year) return false;
+        if (filter.year && (s.academicYearId?._id || s.academicYearId) !== filter.year) return false;
         if (filter.status && s.status !== filter.status) return false;
         return true;
     });
 
     // Handlers
-    const handleCreate = (data) => {
-        addFeeStructure({
+    const handleCreate = async (data) => {
+        const result = await addFeeStructure({
             ...data,
+            branchId: user?.branchId || 'main',
             status: 'draft'
         });
-        setIsCreating(false);
+        if (result) {
+            setIsCreating(false);
+            setSelectedId(result._id);
+        }
     };
 
     const handleFilterChange = (key, value) => {
         setFilter(prev => ({ ...prev, [key]: value }));
+        if (key === 'branchId') {
+            fetchFeeStructures(value || user?.branchId || '');
+        }
     };
 
-    const handleLock = () => {
+    const handleLock = async () => {
         if (!selectedStructure) return;
         if (window.confirm("Locking this fee structure makes it Active and Immutable. Continue?")) {
-            updateFeeStructure(selectedId, { status: 'active' });
+            await updateFeeStructure(selectedStructure._id || selectedStructure.id, { status: 'active' });
         }
     };
 
@@ -68,7 +92,7 @@ const FeeStructures = () => {
         }
 
         return (
-            <div className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden font-['Inter']">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-start bg-gray-50">
                     <div>
@@ -77,7 +101,7 @@ const FeeStructures = () => {
                             <FeeStructureStatusBadge status={selectedStructure.status} />
                         </div>
                         <p className="text-sm text-gray-500">
-                            {selectedStructure.academicYear} • {selectedStructure.classOrProgram} • {selectedStructure.branch}
+                            {selectedStructure.academicYearId?.name || 'N/A'} • {selectedStructure.applicableClasses?.length || 0} Classes • {selectedStructure.applicableCourses?.length || 0} Programs
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -105,15 +129,15 @@ const FeeStructures = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 text-center">
                             <span className="block text-xs text-indigo-500 uppercase font-bold tracking-wider">Total Fee</span>
-                            <span className="block text-2xl font-bold text-indigo-900 mt-1">${(selectedStructure.totalAmount || 0).toLocaleString()}</span>
+                            <span className="block text-2xl font-bold text-indigo-900 mt-1">₹{(selectedStructure.totalAmount || 0).toLocaleString()}</span>
                         </div>
                         <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
                             <span className="block text-xs text-gray-500 uppercase font-bold tracking-wider">Components</span>
-                            <span className="block text-2xl font-bold text-gray-700 mt-1">{selectedStructure.components.length}</span>
+                            <span className="block text-2xl font-bold text-gray-700 mt-1">{selectedStructure.components?.length || 0}</span>
                         </div>
                         <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
                             <span className="block text-xs text-gray-500 uppercase font-bold tracking-wider">Installments</span>
-                            <span className="block text-2xl font-bold text-gray-700 mt-1">{selectedStructure.installments.length}</span>
+                            <span className="block text-2xl font-bold text-gray-700 mt-1">{selectedStructure.installments?.length || 0}</span>
                         </div>
                     </div>
 
@@ -121,7 +145,7 @@ const FeeStructures = () => {
                     <div>
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Fee Components</h3>
                         <FeeComponentsEditor
-                            components={selectedStructure.components}
+                            components={selectedStructure.components || []}
                             readOnly={true}
                         />
                     </div>
@@ -131,7 +155,7 @@ const FeeStructures = () => {
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Payment Schedule</h3>
                         <InstallmentScheduler
                             totalAmount={selectedStructure.totalAmount}
-                            installments={selectedStructure.installments}
+                            installments={selectedStructure.installments || []}
                             readOnly={true}
                         />
                     </div>
@@ -164,12 +188,21 @@ const FeeStructures = () => {
 
                 {/* Left Panel */}
                 <div className="w-full lg:w-1/3 min-w-[320px]">
-                    <FeeStructureList
-                        structures={filteredStructures}
-                        selectedId={selectedId}
-                        onSelect={(item) => { setIsCreating(false); setSelectedId(item.id); }}
-                        onFilterChange={handleFilterChange}
-                    />
+                    {loading ? (
+                        <div className="h-full flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
+                            <Loader2 className="animate-spin text-indigo-500 mb-2" size={24} />
+                            <span className="text-sm text-gray-400">Loading schedules...</span>
+                        </div>
+                    ) : (
+                        <FeeStructureList
+                            structures={filteredStructures}
+                            selectedId={selectedId}
+                            onSelect={(item) => { setIsCreating(false); setSelectedId(item._id || item.id); }}
+                            onFilterChange={handleFilterChange}
+                            academicYears={academicYears}
+                            branches={branches}
+                        />
+                    )}
                 </div>
 
                 {/* Right Panel */}

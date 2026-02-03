@@ -2,19 +2,18 @@
 import React, { useState } from 'react';
 import { CalendarRange, Lock, Unlock, AlertTriangle } from 'lucide-react';
 
-const AdmissionWindowPanel = ({ isLocked }) => {
+const AdmissionWindowPanel = ({ isLocked, data, onChange }) => {
 
-    const [rules, setRules] = useState({
+    const rules = data || {
         isOpen: true,
-        startDate: '2025-03-01',
-        endDate: '2025-06-30',
+        startDate: '',
+        endDate: '',
         allowLate: false,
-        lateFeeApplicable: false
-    });
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...rules, [field]: value });
     };
 
     return (

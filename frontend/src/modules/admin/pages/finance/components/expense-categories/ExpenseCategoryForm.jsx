@@ -40,45 +40,43 @@ const ExpenseCategoryForm = ({ category, onSave, onCancel }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="h-full flex flex-col bg-white">
-
-            {/* Header removed, handled by drawer */}
+        <form onSubmit={handleSubmit} className="h-full flex flex-col bg-white font-['Inter']">
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-thin scrollbar-thumb-gray-100">
 
                 {/* Basic Details */}
-                <div className="space-y-4">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Classification</h3>
+                <div className="space-y-5">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Classification</h3>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category Name <span className="text-red-500">*</span></label>
+                    <div className="space-y-1.5 focus-within:text-indigo-600 transition-colors">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Category Name <span className="text-rose-500">*</span></label>
                         <input
                             type="text"
                             required
                             value={formData.name}
                             onChange={(e) => handleChange('name', e.target.value)}
                             placeholder="e.g. Office Supplies"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-medium placeholder:text-gray-300"
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Code (Immutable)</label>
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1.5 opacity-80">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">Code (System ID)</label>
                             <input
                                 type="text"
                                 value={formData.code}
                                 disabled
-                                className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-500 font-mono"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-400 font-mono text-sm cursor-not-allowed uppercase"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Cost Type</label>
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Cost Type</label>
                             <select
                                 value={formData.type}
                                 onChange={(e) => handleChange('type', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white outline-none"
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold text-gray-700 cursor-pointer"
                             >
                                 <option value="variable">Variable (One-off)</option>
                                 <option value="fixed">Fixed (Recurring)</option>
@@ -87,61 +85,66 @@ const ExpenseCategoryForm = ({ category, onSave, onCancel }) => {
                     </div>
                 </div>
 
-                <hr className="border-gray-100" />
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
 
                 {/* Controls */}
-                <div className="space-y-4">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Governance Controls</h3>
+                <div className="space-y-5">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Compliance & Limits</h3>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Budget Limit (Optional)</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-2 text-gray-400">$</span>
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Monthly Budget Limit</label>
+                        <div className="relative group">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold transition-colors group-focus-within:text-indigo-500">₹</span>
                             <input
                                 type="number"
                                 value={formData.budgetLimit}
                                 onChange={(e) => handleChange('budgetLimit', e.target.value)}
                                 placeholder="0.00"
-                                className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-mono font-bold text-gray-700 placeholder:text-gray-200"
                             />
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-1">Leave empty for unlimited spending.</p>
+                        <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1 font-medium">
+                            <AlertTriangle size={10} className="text-amber-400" />
+                            Leave empty for zero restriction.
+                        </p>
                     </div>
 
-                    <div className="flex items-start gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                        <input
-                            type="checkbox"
-                            id="approvalReq"
-                            checked={formData.approvalRequired}
-                            onChange={(e) => handleChange('approvalRequired', e.target.checked)}
-                            className="mt-1 w-4 h-4 text-indigo-600 rounded"
-                        />
-                        <div>
-                            <label htmlFor="approvalReq" className="block text-sm font-bold text-blue-900 flex items-center gap-2">
-                                <ShieldCheck size={14} /> Require Manager Approval
+                    <div className="p-5 rounded-2xl border border-blue-100 bg-blue-50/50 flex gap-4 transition-all hover:bg-blue-50">
+                        <div className="shrink-0 mt-0.5">
+                            <input
+                                type="checkbox"
+                                id="approvalReq"
+                                checked={formData.approvalRequired}
+                                onChange={(e) => handleChange('approvalRequired', e.target.checked)}
+                                className="w-5 h-5 text-indigo-600 rounded-lg border-blue-200 focus:ring-indigo-500 cursor-pointer transition-all"
+                            />
+                        </div>
+                        <div className="cursor-pointer select-none" onClick={() => handleChange('approvalRequired', !formData.approvalRequired)}>
+                            <label htmlFor="approvalReq" className="block text-sm font-bold text-blue-900 flex items-center gap-2 cursor-pointer">
+                                <ShieldCheck size={16} className="text-blue-500" /> Require Manager Approval
                             </label>
-                            <p className="text-xs text-blue-700 mt-1">
-                                If enabled, expenses in this category must be approved by the Finance Head before payout.
+                            <p className="text-[11px] text-blue-600/80 mt-1 leading-relaxed font-medium">
+                                Mandatory audit lock. Expense vouchers will require sign-off by Finance Head.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {category && (
-                    <div className="pt-4 mt-6 border-t border-gray-100">
-                        <div className="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-100">
+                    <div className="pt-6 border-t border-gray-50">
+                        <div className="group flex justify-between items-center bg-rose-50/30 p-5 rounded-2xl border border-rose-50 hover:bg-rose-50/50 transition-all">
                             <div>
-                                <span className="block text-sm font-bold text-red-800">Deactivate Category</span>
-                                <p className="text-xs text-red-600">Prevents new expenses from being logged.</p>
+                                <span className="block text-sm font-bold text-rose-800">Operational Status</span>
+                                <p className="text-xs text-rose-600 font-medium">If deactivated, new vouchers cannot be linked.</p>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
+                            <label className="relative inline-flex items-center cursor-pointer group">
                                 <input
                                     type="checkbox"
                                     className="sr-only peer"
                                     checked={formData.isActive}
                                     onChange={(e) => handleChange('isActive', e.target.checked)}
                                 />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                <div className="w-12 h-6.5 bg-rose-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
                             </label>
                         </div>
                     </div>
@@ -150,12 +153,20 @@ const ExpenseCategoryForm = ({ category, onSave, onCancel }) => {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
-                    Cancel
+            <div className="p-6 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3 shrink-0">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all active:scale-95"
+                >
+                    Discard Changes
                 </button>
-                <button type="submit" className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm shadow-sm transition-transform active:scale-95">
-                    <Save size={16} /> Save Changes
+                <button
+                    type="submit"
+                    className="flex items-center gap-2 px-8 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm shadow-lg shadow-indigo-600/20 transition-all active:scale-95 hover:-translate-y-0.5"
+                >
+                    <Save size={18} />
+                    {category ? 'Update Category' : 'Create Category'}
                 </button>
             </div>
 

@@ -3,7 +3,7 @@ import Subject from "../Models/SubjectModel.js";
 // ================= CREATE SUBJECT =================
 export const createSubject = async (req, res) => {
     try {
-        const { name, code, type, level, branchId, classIds, courseIds } = req.body;
+        const { name, code, type, category, level, branchId, classIds, courseIds } = req.body;
         const instituteId = req.user._id;
 
         if (!branchId) {
@@ -44,7 +44,14 @@ export const getSubjects = async (req, res) => {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
 
-        let query = { instituteId, branchId };
+        let query = { instituteId };
+
+        if (branchId.length === 24) {
+            query.branchId = branchId;
+        } else if (branchId !== 'main') {
+            return res.status(200).json({ success: true, data: [] });
+        }
+
         if (level && level !== 'all') {
             query.level = level;
         }

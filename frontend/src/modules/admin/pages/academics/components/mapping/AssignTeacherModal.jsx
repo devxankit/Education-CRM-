@@ -2,27 +2,18 @@
 import React, { useState } from 'react';
 import { X, UserCheck, Search } from 'lucide-react';
 
-const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, className }) => {
-
-    // Mock Teachers List
-    const teachers = [
-        { id: 1, name: 'Sarah Jen', department: 'Mathematics', load: 18 }, // Weekly periods
-        { id: 2, name: 'Vikram Singh', department: 'Science', load: 22 },
-        { id: 3, name: 'Priya Sharma', department: 'English', load: 14 },
-        { id: 4, name: 'John Doe', department: 'Computer Science', load: 20 },
-        { id: 5, name: 'Amit Patel', department: 'Mathematics', load: 12 }
-    ];
+const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, className, teachersList = [] }) => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTeacherId, setSelectedTeacherId] = useState(null);
 
     if (!isOpen) return null;
 
-    const filteredTeachers = teachers.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredTeachers = teachersList.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleAssign = () => {
         if (!selectedTeacherId) return;
-        const teacher = teachers.find(t => t.id === selectedTeacherId);
+        const teacher = teachersList.find(t => (t._id || t.id) === selectedTeacherId);
         onAssign(teacher);
         onClose();
         setSelectedTeacherId(null);
@@ -60,32 +51,34 @@ const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, className 
                 </div>
 
                 <div className="max-h-[300px] overflow-y-auto">
-                    {filteredTeachers.map(teacher => (
-                        <div
-                            key={teacher.id}
-                            onClick={() => setSelectedTeacherId(teacher.id)}
-                            className={`
-                                flex items-center justify-between p-4 cursor-pointer border-b border-gray-100 hover:bg-gray-50 transition-colors
-                                ${selectedTeacherId === teacher.id ? 'bg-indigo-50' : ''}
-                            `}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${selectedTeacherId === teacher.id ? 'bg-indigo-200 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
-                                    {teacher.name.charAt(0)}
+                    {filteredTeachers.map(teacher => {
+                        const id = teacher._id || teacher.id;
+                        return (
+                            <div
+                                key={id}
+                                onClick={() => setSelectedTeacherId(id)}
+                                className={`
+                                    flex items-center justify-between p-4 cursor-pointer border-b border-gray-100 hover:bg-gray-50 transition-colors
+                                    ${selectedTeacherId === id ? 'bg-indigo-50' : ''}
+                                `}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${selectedTeacherId === id ? 'bg-indigo-200 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
+                                        {teacher.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h4 className={`font-medium text-sm ${selectedTeacherId === id ? 'text-indigo-900' : 'text-gray-900'}`}>{teacher.name}</h4>
+                                        <p className="text-xs text-gray-500">{teacher.department || teacher.designation || 'Faculty'}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className={`font-medium text-sm ${selectedTeacherId === teacher.id ? 'text-indigo-900' : 'text-gray-900'}`}>{teacher.name}</h4>
-                                    <p className="text-xs text-gray-500">{teacher.department}</p>
+                                <div className="text-right">
+                                    <span className={`text-xs px-2 py-1 rounded bg-gray-100 font-mono ${teacher.load > 20 ? 'text-red-600 bg-red-50' : 'text-gray-600'}`}>
+                                        {teacher.load || 0} hrs/wk
+                                    </span>
                                 </div>
                             </div>
-
-                            <div className="text-right">
-                                <span className={`text-xs px-2 py-1 rounded bg-gray-100 font-mono ${teacher.load > 20 ? 'text-red-600 bg-red-50' : 'text-gray-600'}`}>
-                                    {teacher.load} hrs/wk
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {filteredTeachers.length === 0 && (
                         <div className="p-8 text-center text-gray-500 text-sm">

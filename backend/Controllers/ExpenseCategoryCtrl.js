@@ -1,4 +1,5 @@
 import ExpenseCategory from "../Models/ExpenseCategoryModel.js";
+import mongoose from "mongoose";
 
 // ================= CREATE EXPENSE CATEGORY =================
 export const createExpenseCategory = async (req, res) => {
@@ -6,8 +7,8 @@ export const createExpenseCategory = async (req, res) => {
         const { name, code, type, budgetLimit, approvalRequired, branchId } = req.body;
         const instituteId = req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || !mongoose.Types.ObjectId.isValid(branchId)) {
+            return res.status(400).json({ success: false, message: "Valid Branch ID is required" });
         }
 
         const category = new ExpenseCategory({
@@ -39,7 +40,11 @@ export const getExpenseCategories = async (req, res) => {
         const instituteId = req.user._id;
 
         let query = { instituteId };
-        if (branchId) query.branchId = branchId;
+
+        if (branchId && mongoose.Types.ObjectId.isValid(branchId)) {
+            query.branchId = branchId;
+        }
+
         if (isActive !== undefined) query.isActive = isActive === 'true';
 
         const categories = await ExpenseCategory.find(query).sort({ name: 1 });

@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Building, Users, MoreHorizontal, Plus } from 'lucide-react';
 import DesignationList from './DesignationList';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 const DepartmentForm = ({ department: initialData, onSave, onDelete }) => {
+    const { addToast } = useAdminStore();
 
     // Mode: View/Edit existing or Create New
     // If ID exists, it's edit.
@@ -32,26 +34,69 @@ const DepartmentForm = ({ department: initialData, onSave, onDelete }) => {
         }
     }, [initialData]);
 
+    const [editingDesignation, setEditingDesignation] = useState(null);
+
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleSave = () => {
+        if (!formData.name.trim()) {
+            addToast('Department Name is required', 'error');
+            return;
+        }
+        if (!formData.code.trim()) {
+            addToast('Department Code is required', 'error');
+            return;
+        }
         onSave(formData);
     };
 
-    // Designation Mock Handlers
+    // Designation Handlers
     const handleAddDesignation = () => {
         const newDes = {
-            id: Date.now(),
             name: 'New Role',
-            code: 'DES-NEW',
+            code: `DES-${Math.floor(Math.random() * 1000)}`,
             level: 1,
             reportsTo: '',
-            status: 'Active',
-            employeeCount: 0
+            status: 'Active'
         };
-        setFormData(prev => ({ ...prev, designations: [...prev.designations, newDes] }));
+        setFormData(prev => ({ ...prev, designations: [...(prev.designations || []), newDes] }));
+    };
+
+    const handleDeleteDesignation = (index) => {
+        if (window.confirm('Remove this designation?')) {
+            const newDesignations = [...formData.designations];
+            newDesignations.splice(index, 1);
+            setFormData(prev => ({ ...prev, designations: newDesignations }));
+        }
+    };
+
+    const handleEditDesignation = (des, index) => {
+        setEditingDesignation({ ...des, index });
+    };
+
+    const saveDesignationEdit = () => {
+        const newDesignations = [...formData.designations];
+        newDesignations[editingDesignation.index] = {
+            name: editingDesignation.name,
+            code: editingDesignation.code,
+            level: editingDesignation.level,
+            reportsTo: editingDesignation.reportsTo,
+            status: editingDesignation.status
+        };
+        setFormData(prev => ({ ...prev, designations: newDesignations }));
+        setEditingDesignation(null);
+    };
+
+    const handleDelete = async () => {
+        if (window.confirm('Are you sure you want to delete this department?')) {
+            try {
+                await onDelete(initialData._id);
+            } catch (error) {
+                addToast('Failed to delete department', 'error');
+            }
+        }
     };
 
     return (
@@ -68,7 +113,10 @@ const DepartmentForm = ({ department: initialData, onSave, onDelete }) => {
                 </div>
                 <div className="flex gap-2">
                     {initialData && (
-                        <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <button 
+                            onClick={handleDelete}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
                             <MoreHorizontal size={20} />
                         </button>
                     )}
@@ -138,8 +186,77 @@ const DepartmentForm = ({ department: initialData, onSave, onDelete }) => {
 
                     <DesignationList
                         designations={formData.designations || []}
-                        onEdit={(des) => alert(`Edit ${des.name} - Modal to be implemented`)}
+                        onEdit={handleEditDesignation}
+                        onDelete={handleDeleteDesignation}
                     />
+
+                    {/* Designation Edit Modal/Form Overlay */}
+                    {editingDesignation && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden">
+                                <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                                    <h4 className="font-bold text-gray-800">Edit Designation</h4>
+                                    <button onClick={() => setEditingDesignation(null)} className="text-gray-400 hover:text-gray-600">×</button>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Designation Name</label>
+                                        <input
+                                            type="text"
+                                            value={editingDesignation.name}
+                                            onChange={(e) => setEditingDesignation({ ...editingDesignation, name: e.target.value })}
+                                            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Code</label>
+                                            <input
+                                                type="text"
+                                                value={editingDesignation.code}
+                                                onChange={(e) => setEditingDesignation({ ...editingDesignation, code: e.target.value })}
+                                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Level</label>
+                                            <input
+                                                type="number"
+                                                value={editingDesignation.level}
+                                                onChange={(e) => setEditingDesignation({ ...editingDesignation, level: parseInt(e.target.value) })}
+                                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
+                                        <select
+                                            value={editingDesignation.status}
+                                            onChange={(e) => setEditingDesignation({ ...editingDesignation, status: e.target.value })}
+                                            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setEditingDesignation(null)}
+                                        className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={saveDesignationEdit}
+                                        className="px-4 py-2 text-sm font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition-colors"
+                                    >
+                                        Save Designation
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* 3. System Stats (Read Only) */}

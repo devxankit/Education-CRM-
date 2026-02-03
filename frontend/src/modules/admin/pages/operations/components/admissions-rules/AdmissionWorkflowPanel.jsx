@@ -2,18 +2,18 @@
 import React, { useState } from 'react';
 import { GitPullRequest, ArrowRight } from 'lucide-react';
 
-const AdmissionWorkflowPanel = ({ isLocked }) => {
+const AdmissionWorkflowPanel = ({ isLocked, data, onChange }) => {
 
-    const [config, setConfig] = useState({
+    const config = data || {
         requireFee: true,
         requireDocs: true,
-        approval: 'admin', // admin | principal | director
+        approval: 'admin',
         multiStage: false
-    });
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setConfig(prev => ({ ...prev, [field]: value }));
+        onChange({ ...config, [field]: value });
     };
 
     return (

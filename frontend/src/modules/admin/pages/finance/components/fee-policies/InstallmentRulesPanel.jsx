@@ -2,18 +2,11 @@
 import React, { useState } from 'react';
 import { CreditCard, AlertCircle } from 'lucide-react';
 
-const InstallmentRulesPanel = ({ isLocked }) => {
-
-    const [rules, setRules] = useState({
-        allowPartial: true,
-        allowOutOfOrder: false,
-        strictDueDate: true,
-        blockResultsOnDue: true
-    });
+const InstallmentRulesPanel = ({ isLocked, data = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...data, [field]: value });
     };
 
     return (
@@ -33,7 +26,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div className="mt-0.5">
                         <input
                             type="checkbox"
-                            checked={rules.allowPartial}
+                            checked={data.allowPartial || false}
                             onChange={(e) => handleChange('allowPartial', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-indigo-600 rounded cursor-pointer disabled:cursor-not-allowed"
@@ -42,7 +35,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div>
                         <label className="block text-sm font-semibold text-gray-800">Allow Partial Payments</label>
                         <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                            If enabled, students can pay any amount (e.g., $500 of a $2000 installment).
+                            If enabled, students can pay any amount (e.g., ₹500 of a ₹2000 installment).
                             If disabled, they must pay the exact installment amount.
                         </p>
                     </div>
@@ -53,7 +46,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div className="mt-0.5">
                         <input
                             type="checkbox"
-                            checked={rules.allowOutOfOrder}
+                            checked={data.allowOutOfOrder || false}
                             onChange={(e) => handleChange('allowOutOfOrder', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-indigo-600 rounded cursor-pointer disabled:cursor-not-allowed"
@@ -72,7 +65,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div className="mt-0.5">
                         <input
                             type="checkbox"
-                            checked={rules.strictDueDate}
+                            checked={data.strictDueDate || false}
                             onChange={(e) => handleChange('strictDueDate', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-indigo-600 rounded cursor-pointer disabled:cursor-not-allowed"
@@ -91,7 +84,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div className="mt-1">
                         <input
                             type="checkbox"
-                            checked={rules.blockResultsOnDue}
+                            checked={data.blockResultsOnDue || false}
                             onChange={(e) => handleChange('blockResultsOnDue', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-red-600 rounded cursor-pointer disabled:cursor-not-allowed"
@@ -100,7 +93,7 @@ const InstallmentRulesPanel = ({ isLocked }) => {
                     <div>
                         <label className="block text-sm font-bold text-red-900">Block Results / Admit Card on Dues</label>
                         <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                            Automatically hide exam results if pending dues &gt; $0.
+                            Automatically hide exam results if pending dues &gt; ₹0.
                         </p>
                     </div>
                 </div>

@@ -1,45 +1,44 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 import SubjectsTable from './components/subjects/SubjectsTable';
 import SubjectFormModal from './components/subjects/SubjectFormModal';
 
 const SubjectsMaster = () => {
+    const subjects = useAdminStore(state => state.subjects);
+    const classes = useAdminStore(state => state.classes);
+    const fetchSubjects = useAdminStore(state => state.fetchSubjects);
+    const fetchClasses = useAdminStore(state => state.fetchClasses);
+    const addSubject = useAdminStore(state => state.addSubject);
+    const updateSubject = useAdminStore(state => state.updateSubject);
+    const user = useAppStore(state => state.user);
 
-    // Mock Data
-    const [subjects, setSubjects] = useState([
-        { id: 1, name: 'Mathematics', code: 'SUB_MATH_001', type: 'theory', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'] },
-        { id: 2, name: 'Physics', code: 'SUB_PHY_001', type: 'theory_practical', level: 'school', status: 'active', assignedClasses: ['Class 9', 'Class 10', 'Class 11', 'Class 12'] },
-        { id: 3, name: 'Computer Science', code: 'SUB_CS_001', type: 'theory_practical', level: 'school', status: 'active', assignedClasses: ['Class 6', 'Class 7', 'Class 8'] },
-        { id: 4, name: 'Environmental Studies', code: 'SUB_EVS_001', type: 'theory', level: 'school', status: 'inactive', assignedClasses: ['Class 1', 'Class 2'] },
-        { id: 5, name: 'English Literature', code: 'SUB_ENG_001', type: 'theory', level: 'school', status: 'active', assignedClasses: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'] }
-    ]);
+    useEffect(() => {
+        const branchId = user?.branchId || 'main';
+        fetchSubjects(branchId);
+        fetchClasses(branchId);
+    }, [user, fetchSubjects, fetchClasses]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
     const [filterLevel, setFilterLevel] = useState('all');
     const [filterClass, setFilterClass] = useState('all');
 
-    // Mock Classes for Filter
-    const availableClasses = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`);
+    // Classes for Filter from store
+    const availableClasses = classes.map(c => c.name);
 
     // Handlers
     const handleCreate = (data) => {
         if (editingSubject) {
-            // Update
-            setSubjects(prev => prev.map(s => s.id === editingSubject.id ? { ...s, ...data } : s));
+            updateSubject(editingSubject._id, data);
         } else {
-            // Create
-            const newSubject = {
-                id: Date.now(),
+            addSubject({
                 ...data,
-                // generate code if new
-                code: `SUB_${data.name.substring(0, 3).toUpperCase()}_${Date.now().toString().slice(-3)}`,
-                status: 'active',
-                assignedClasses: [] // Default empty
-            };
-            setSubjects(prev => [newSubject, ...prev]);
+                branchId: user?.branchId || 'main'
+            });
         }
         setEditingSubject(null);
     };
@@ -51,7 +50,7 @@ const SubjectsMaster = () => {
 
     const handleDeactivate = (sub) => {
         if (window.confirm(`Deactivate '${sub.name}'? It will disappear from future mapping choices.`)) {
-            setSubjects(prev => prev.map(s => s.id === sub.id ? { ...s, status: 'inactive' } : s));
+            updateSubject(sub._id, { status: 'inactive' });
         }
     };
 
@@ -139,6 +138,7 @@ const SubjectsMaster = () => {
                 onClose={handleClose}
                 onCreate={handleCreate}
                 initialData={editingSubject}
+                classes={classes}
             />
         </div>
     );

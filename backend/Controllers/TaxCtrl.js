@@ -1,4 +1,5 @@
 import Tax from "../Models/TaxModel.js";
+import mongoose from "mongoose";
 
 // ================= CREATE TAX =================
 export const createTax = async (req, res) => {
@@ -6,8 +7,8 @@ export const createTax = async (req, res) => {
         const { name, description, code, rate, type, applicableOn, branchId } = req.body;
         const instituteId = req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || !mongoose.Types.ObjectId.isValid(branchId)) {
+            return res.status(400).json({ success: false, message: "Valid Branch ID is required" });
         }
 
         const tax = new Tax({
@@ -40,7 +41,11 @@ export const getTaxes = async (req, res) => {
         const instituteId = req.user._id;
 
         let query = { instituteId };
-        if (branchId) query.branchId = branchId;
+
+        if (branchId && mongoose.Types.ObjectId.isValid(branchId)) {
+            query.branchId = branchId;
+        }
+
         if (isActive !== undefined) query.isActive = isActive === 'true';
 
         const taxes = await Tax.find(query).sort({ createdAt: -1 });
@@ -59,6 +64,10 @@ export const updateTax = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid Tax ID" });
+        }
 
         const tax = await Tax.findByIdAndUpdate(
             id,
@@ -84,6 +93,10 @@ export const updateTax = async (req, res) => {
 export const deleteTax = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid Tax ID" });
+        }
 
         const tax = await Tax.findByIdAndDelete(id);
 

@@ -1,4 +1,5 @@
 import FeePolicy from "../Models/FeePolicyModel.js";
+import mongoose from "mongoose";
 
 // ================= GET OR INITIALIZE POLICY =================
 export const getFeePolicy = async (req, res) => {
@@ -6,27 +7,23 @@ export const getFeePolicy = async (req, res) => {
         const { academicYearId } = req.query;
         const instituteId = req.user._id;
 
-        if (!academicYearId) {
-            return res.status(400).json({ success: false, message: "Academic Year ID is required" });
+        if (!academicYearId || !mongoose.Types.ObjectId.isValid(academicYearId)) {
+            return res.status(400).json({ success: false, message: "Valid Academic Year ID is required" });
         }
 
         let policy = await FeePolicy.findOne({ instituteId, academicYearId });
 
         // If no policy exists for this year, return a default template (or create one)
         if (!policy) {
-            // We don't save it yet, just return defaults for the frontend to populate
             return res.status(200).json({
                 success: true,
-                message: "No policy found, providing defaults",
+                message: "No policy found, providing empty template",
                 data: {
                     academicYearId,
                     installmentRules: { allowPartial: true, allowOutOfOrder: false, strictDueDate: true, blockResultsOnDue: true },
-                    lateFeeRules: { enabled: true, gracePeriod: 7, type: "flat", value: 50, frequency: "daily", maxCap: 1000 },
-                    discountRules: [
-                        { name: 'Sibling Discount', type: 'percentage', value: 10, approvalRequired: false },
-                        { name: 'Staff Ward', type: 'percentage', value: 50, approvalRequired: true }
-                    ],
-                    refundRules: { allowed: false, windowDays: 30, deductionPercent: 10 }
+                    lateFeeRules: { enabled: false, gracePeriod: 0, type: "flat", value: 0, frequency: "daily", maxCap: 0 },
+                    discountRules: [],
+                    refundRules: { allowed: false, windowDays: 0, deductionPercent: 0 }
                 }
             });
         }
@@ -46,8 +43,8 @@ export const saveFeePolicy = async (req, res) => {
         const { academicYearId, ...policyData } = req.body;
         const instituteId = req.user._id;
 
-        if (!academicYearId) {
-            return res.status(400).json({ success: false, message: "Academic Year ID is required" });
+        if (!academicYearId || !mongoose.Types.ObjectId.isValid(academicYearId)) {
+            return res.status(400).json({ success: false, message: "Valid Academic Year ID is required" });
         }
 
         // Check if currently locked
@@ -56,6 +53,14 @@ export const saveFeePolicy = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 message: "This policy is locked and cannot be modified without an audit reason."
+            });
+        }
+
+        // Remove _id from nested objects if they are present as 'id' from frontend
+        if (policyData.discountRules) {
+            policyData.discountRules = policyData.discountRules.map(d => {
+                const { id, ...rest } = d;
+                return rest;
             });
         }
 
@@ -86,6 +91,10 @@ export const togglePolicyLock = async (req, res) => {
     try {
         const { id } = req.params;
         const { isLocked, unlockReason } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid Policy ID" });
+        }
 
         const policy = await FeePolicy.findById(id);
         if (!policy) {

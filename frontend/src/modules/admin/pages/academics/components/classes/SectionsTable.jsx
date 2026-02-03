@@ -37,7 +37,7 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm bg-white">
                         {sections.map((sec) => (
-                            <tr key={sec.id} className="group hover:bg-gray-50/50 transition-colors">
+                            <tr key={sec._id || sec.id} className="group hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
@@ -51,9 +51,9 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
                                 </td>
 
                                 <td className="px-6 py-4">
-                                    {sec.teacherName ? (
+                                    {(sec.teacherId?.name || sec.teacherName) ? (
                                         <div className="flex items-center gap-2 text-gray-700 text-xs bg-gray-50 px-2 py-1 rounded w-fit border border-gray-200">
-                                            <User size={12} /> {sec.teacherName}
+                                            <User size={12} /> {sec.teacherId?.name || sec.teacherName}
                                         </div>
                                     ) : (
                                         <span className="text-xs text-gray-400 italic">Unassigned</span>

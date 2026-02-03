@@ -2,28 +2,26 @@
 import React, { useState } from 'react';
 import { UserCheck, Plus, Trash2 } from 'lucide-react';
 
-const EligibilityRulesPanel = ({ isLocked }) => {
+const EligibilityRulesPanel = ({ isLocked, data = [], onChange }) => {
 
-    // Mock Criterion
-    const [criteria, setCriteria] = useState([
-        { id: 1, class: 'Class 1', minAge: 5, maxAge: 7, prevClassRequired: false },
-        { id: 2, class: 'Class 6', minAge: 10, maxAge: 12, prevClassRequired: true },
-        { id: 3, class: 'Class 10', minAge: 14, maxAge: 16, prevClassRequired: true },
-    ]);
+    const criteria = data;
 
     const handleChange = (id, field, value) => {
         if (isLocked) return;
-        setCriteria(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
+        const updated = criteria.map(c => c.id === id ? { ...c, [field]: value } : c);
+        onChange(updated);
     };
 
     const handleRemove = (id) => {
         if (isLocked) return;
-        setCriteria(prev => prev.filter(c => c.id !== id));
+        const updated = criteria.filter(c => c.id !== id);
+        onChange(updated);
     };
 
     const handleAdd = () => {
         if (isLocked) return;
-        setCriteria([...criteria, { id: Date.now(), class: 'New Class', minAge: 0, maxAge: 0, prevClassRequired: false }]);
+        const updated = [...criteria, { id: Date.now(), class: 'New Class', minAge: 0, maxAge: 0, prevClassRequired: false }];
+        onChange(updated);
     };
 
     return (

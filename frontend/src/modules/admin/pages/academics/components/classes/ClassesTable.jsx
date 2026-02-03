@@ -28,10 +28,10 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, h
                 <table className="w-full text-left border-collapse">
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {classes.map((cls) => {
-                            const isSelected = cls.id === selectedClassId;
+                            const isSelected = (cls._id || cls.id) === selectedClassId;
                             return (
                                 <tr
-                                    key={cls.id}
+                                    key={cls._id || cls.id}
                                     onClick={() => onSelect(cls)}
                                     className={`
                                         cursor-pointer transition-colors group relative

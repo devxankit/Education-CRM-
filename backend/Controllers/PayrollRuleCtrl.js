@@ -1,4 +1,5 @@
 import PayrollRule from "../Models/PayrollRuleModel.js";
+import mongoose from "mongoose";
 
 // ================= GET OR INITIALIZE PAYROLL RULE =================
 export const getPayrollRule = async (req, res) => {
@@ -12,20 +13,16 @@ export const getPayrollRule = async (req, res) => {
 
         let rule = await PayrollRule.findOne({ instituteId, financialYear });
 
-        // Fallback defaults if not found
+        // Fallback empty template if not found
         if (!rule) {
             return res.status(200).json({
                 success: true,
-                message: "No configuration found, providing defaults",
+                message: "No configuration found, providing empty template",
                 data: {
                     financialYear,
-                    salaryHeads: [
-                        { name: 'Basic Salary', type: 'earning', calculation: 'fixed', value: 0, isDefault: true },
-                        { name: 'HRA (House Rent)', type: 'earning', calculation: 'percentage', value: 40, base: 'basic' },
-                        { name: 'Provident Fund (PF)', type: 'deduction', calculation: 'percentage', value: 12, base: 'basic' }
-                    ],
-                    leaveRules: { lopFormula: 'fixed_30', sandwichRule: false, includeWeekends: true },
-                    schedule: { cycleStart: 1, payoutDay: 5, autoGenerateSlips: false }
+                    salaryHeads: [],
+                    leaveRules: { lopFormula: 'fixed_30', sandwichRule: false, includeWeekends: false },
+                    schedule: { cycleStart: 1, payoutDay: 1, autoGenerateSlips: false }
                 }
             });
         }
@@ -85,6 +82,10 @@ export const togglePayrollLock = async (req, res) => {
     try {
         const { id } = req.params;
         const { isLocked, unlockReason } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid ID" });
+        }
 
         const rule = await PayrollRule.findById(id);
         if (!rule) {

@@ -52,7 +52,8 @@ export const createBranch = async (req, res) => {
 // ================= GET ALL BRANCHES =================
 export const getBranches = async (req, res) => {
     try {
-        const branches = await Branch.find();
+        const instituteId = req.user._id;
+        const branches = await Branch.find({ instituteId });
 
         res.status(200).json({
             success: true,

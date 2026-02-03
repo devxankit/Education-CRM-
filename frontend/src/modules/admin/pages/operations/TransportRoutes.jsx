@@ -1,48 +1,49 @@
 
-import React, { useState } from 'react';
-import { Plus, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Settings, Loader2 } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
 
 // Components
 import RouteList from './components/routes-stops/RouteList';
 import RouteForm from './components/routes-stops/RouteForm';
 
 const TransportRoutes = () => {
+    const {
+        branches,
+        fetchBranches,
+        transportRoutes,
+        fetchTransportRoutes,
+        addTransportRoute,
+        updateTransportRoute,
+        deleteTransportRoute
+    } = useAdminStore();
 
-    // Mock State
-    const [routes, setRoutes] = useState([
-        {
-            id: 1,
-            name: 'Route 1 - North Zone',
-            code: 'RT-101',
-            vehicleNo: 'BUS-101',
-            driver: 'Ramesh Kumar',
-            capacity: 40,
-            studentsAssigned: 32,
-            status: 'Active',
-            stops: [
-                { id: 101, name: 'Main Gate', pickupTime: '07:00', dropTime: '15:30', students: 10 },
-                { id: 102, name: 'City Center', pickupTime: '07:20', dropTime: '15:10', students: 22 },
-            ]
-        },
-        {
-            id: 2,
-            name: 'Route 2 - South Zone',
-            code: 'RT-102',
-            vehicleNo: 'BUS-105',
-            driver: 'Suresh Singh',
-            capacity: 30,
-            studentsAssigned: 28,
-            status: 'Active',
-            stops: [
-                { id: 201, name: 'Highway Plaza', pickupTime: '07:15', dropTime: '15:45', students: 15 },
-                { id: 202, name: 'Green Park', pickupTime: '07:45', dropTime: '15:15', students: 13 },
-            ]
+    // Global State
+    const [branchId, setBranchId] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [selectedRoute, setSelectedRoute] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState(null);
+
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        if (branches.length > 0 && !branchId) {
+            setBranchId(branches[0]._id);
         }
-    ]);
+    }, [branches, branchId]);
 
-    const [selectedRoute, setSelectedRoute] = useState(null); // For viewing
-    const [isEditing, setIsEditing] = useState(false); // Mode: Edit/Create
-    const [editData, setEditData] = useState(null); // Data for form
+    useEffect(() => {
+        const loadRoutes = async () => {
+            if (!branchId) return;
+            setLoading(true);
+            await fetchTransportRoutes(branchId);
+            setLoading(false);
+        };
+        loadRoutes();
+    }, [branchId, fetchTransportRoutes]);
 
     // Handlers
     const handleSelectRoute = (route) => {
@@ -57,7 +58,7 @@ const TransportRoutes = () => {
     };
 
     const handleCreateNew = () => {
-        setEditData(null); // New Item
+        setEditData(null);
         setIsEditing(true);
         setSelectedRoute(null);
     };
@@ -67,22 +68,29 @@ const TransportRoutes = () => {
         setIsEditing(true);
     };
 
-    const handleSave = (formData) => {
-        if (editData) {
+    const handleSave = async (formData) => {
+        if (editData && editData._id) {
             // Update
-            setRoutes(prev => prev.map(r => r.id === editData.id ? { ...formData, id: r.id } : r)); // keep ID
+            await updateTransportRoute(editData._id, formData);
         } else {
             // Create
-            const newId = Date.now();
-            setRoutes(prev => [...prev, { ...formData, id: newId, studentsAssigned: 0 }]);
+            await addTransportRoute({ ...formData, branchId });
         }
         setIsEditing(false);
         setEditData(null);
+        setSelectedRoute(null);
     };
 
     const handleCancel = () => {
         setIsEditing(false);
         setEditData(null);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this route?")) {
+            await deleteTransportRoute(id);
+            if (selectedRoute?._id === id) setSelectedRoute(null);
+        }
     };
 
     return (
@@ -96,9 +104,18 @@ const TransportRoutes = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="p-2 border border-gray-200 rounded-lg bg-white text-gray-600 hover:text-indigo-600 shadow-sm">
-                        <Settings size={18} />
-                    </button>
+                    <div className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm shadow-sm">
+                        <span className="text-gray-500">Branch:</span>
+                        <select
+                            value={branchId}
+                            onChange={(e) => setBranchId(e.target.value)}
+                            className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer"
+                        >
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
                     <button
                         onClick={handleCreateNew}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg font-medium transition-all"
@@ -113,12 +130,18 @@ const TransportRoutes = () => {
 
                 {/* Left Listing */}
                 <div className={`col-span-12 md:col-span-4 lg:col-span-3 transition-all ${isEditing ? 'hidden md:block' : 'block'}`}>
-                    <RouteList
-                        routes={routes}
-                        activeRouteId={selectedRoute?.id || editData?.id}
-                        onSelect={handleSelectRoute}
-                        onEdit={handleEdit}
-                    />
+                    {loading ? (
+                        <div className="h-full flex items-center justify-center p-12 bg-white rounded-xl border border-gray-200">
+                            <Loader2 className="animate-spin text-indigo-500" size={24} />
+                        </div>
+                    ) : (
+                        <RouteList
+                            routes={transportRoutes}
+                            activeRouteId={selectedRoute?._id || editData?._id}
+                            onSelect={handleSelectRoute}
+                            onEdit={handleEdit}
+                        />
+                    )}
                 </div>
 
                 {/* Right Details/Form */}
@@ -130,17 +153,9 @@ const TransportRoutes = () => {
                             isNew={!editData}
                             onSave={handleSave}
                             onCancel={handleCancel}
+                            onDelete={() => handleDelete(editData._id)}
                         />
                     ) : selectedRoute ? (
-                        // View Mode (Reuse form but maybe disabled or just show summary - Using Form in Read-only or just Form for simplicity for now, usually detail view is different but ERPs often use Form)
-                        // For now, let's just use the Form component as a Detail Viewer by initiating edit immediately when clicking? 
-                        // No, user requested "View/Edit". Let's show a "Select a route to edit" placeholder if not editing, or auto-select first one.
-                        // Actually, let's just make "Select" trigger "Edit" mode for simplicity in this MVP iteration or show a read-only preview.
-                        // Let's go with: Clicking list item -> Shows Read Only View (to be built? or reuse form disabled?)
-                        // I'll reuse RouteForm but pass a 'readOnly' prop if I had one. 
-                        // Instead, I'll allow clicking "Edit" icon on list to enter edit mode. 
-                        // Clicking body just selects it.
-
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 flex flex-col items-center justify-center h-full text-center">
                             <div className="p-4 rounded-full bg-indigo-50 text-indigo-200 mb-4">
                                 <Settings size={48} />
@@ -148,12 +163,20 @@ const TransportRoutes = () => {
                             <h2 className="text-xl font-bold text-gray-800">{selectedRoute.name}</h2>
                             <p className="text-gray-500 mb-6">Code: {selectedRoute.code} • Capacity: {selectedRoute.capacity}</p>
 
-                            <button
-                                onClick={() => handleEdit(selectedRoute)}
-                                className="px-6 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 font-bold transition-colors"
-                            >
-                                Configure Route & Stops
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => handleEdit(selectedRoute)}
+                                    className="px-6 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 font-bold transition-colors"
+                                >
+                                    Configure Route & Stops
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(selectedRoute._id)}
+                                    className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-bold transition-colors"
+                                >
+                                    Delete Route
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-full text-center p-6 text-gray-400">

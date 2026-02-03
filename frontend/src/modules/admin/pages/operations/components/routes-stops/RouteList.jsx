@@ -15,11 +15,11 @@ const RouteList = ({ routes, activeRouteId, onSelect, onEdit }) => {
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 {routes.map((route) => (
                     <div
-                        key={route.id}
+                        key={route._id}
                         onClick={() => onSelect(route)}
                         className={`
                             border rounded-lg p-3 cursor-pointer transition-all relative group
-                            ${activeRouteId === route.id
+                            ${activeRouteId === route._id
                                 ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200 shadow-sm'
                                 : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-sm'}
                         `}
@@ -66,7 +66,7 @@ const RouteList = ({ routes, activeRouteId, onSelect, onEdit }) => {
                             onClick={(e) => { e.stopPropagation(); onEdit(route); }}
                             className={`
                                 absolute top-2 right-2 p-1.5 rounded-md hover:bg-white hover:shadow-sm hover:text-indigo-600 transition-all
-                                ${activeRouteId === route.id ? 'text-indigo-400' : 'text-transparent group-hover:text-gray-400'}
+                                ${activeRouteId === route._id ? 'text-indigo-400' : 'text-transparent group-hover:text-gray-400'}
                             `}
                         >
                             <Edit2 size={14} />
