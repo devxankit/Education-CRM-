@@ -71,7 +71,7 @@ const FeeStructureList = ({ structures, selectedId, onSelect, onFilterChange }) 
                                     <div className="space-y-1">
                                         <p>{item.academicYear} • {item.classOrProgram}</p>
                                         <p className="flex items-center gap-1 font-mono text-gray-600">
-                                            <DollarSign size={12} /> Total: ${item.totalAmount.toLocaleString()}
+                                            <DollarSign size={12} /> Total: ${(item.totalAmount || 0).toLocaleString()}
                                         </p>
                                     </div>
                                     <ChevronRight size={16} className={`text-gray-300 ${selectedId === item.id ? 'text-indigo-400' : ''}`} />

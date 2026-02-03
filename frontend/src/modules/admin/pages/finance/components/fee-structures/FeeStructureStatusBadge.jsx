@@ -5,7 +5,7 @@ const FeeStructureStatusBadge = ({ status }) => {
 
     // Status Logic
     const getStatusStyle = (status) => {
-        switch (status.toLowerCase()) {
+        switch ((status || '').toLowerCase()) {
             case 'active':
                 return 'bg-green-50 text-green-700 border-green-200';
             case 'draft':

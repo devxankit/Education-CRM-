@@ -105,7 +105,7 @@ const FeeStructures = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 text-center">
                             <span className="block text-xs text-indigo-500 uppercase font-bold tracking-wider">Total Fee</span>
-                            <span className="block text-2xl font-bold text-indigo-900 mt-1">${selectedStructure.totalAmount.toLocaleString()}</span>
+                            <span className="block text-2xl font-bold text-indigo-900 mt-1">${(selectedStructure.totalAmount || 0).toLocaleString()}</span>
                         </div>
                         <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
                             <span className="block text-xs text-gray-500 uppercase font-bold tracking-wider">Components</span>
