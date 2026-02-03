@@ -16,6 +16,11 @@ import TeacherRouter from "./Routers/TeacherRouter.js";
 import StudentRouter from "./Routers/StudentRouter.js";
 import ParentRouter from "./Routers/ParentRouter.js";
 import DepartmentRouter from "./Routers/DepartmentRouter.js";
+import FeeStructureRouter from "./Routers/FeeStructureRouter.js";
+import FeePolicyRouter from "./Routers/FeePolicyRouter.js";
+import PayrollRuleRouter from "./Routers/PayrollRuleRouter.js";
+import ExpenseCategoryRouter from "./Routers/ExpenseCategoryRouter.js";
+import TaxRouter from "./Routers/TaxRouter.js";
 
 const router = Router();
 
@@ -35,5 +40,10 @@ router.use("/api/v1/teacher", TeacherRouter);
 router.use("/api/v1/student", StudentRouter);
 router.use("/api/v1/parent", ParentRouter);
 router.use("/api/v1/department", DepartmentRouter);
+router.use("/api/v1/fee-structure", FeeStructureRouter);
+router.use("/api/v1/fee-policy", FeePolicyRouter);
+router.use("/api/v1/payroll-rule", PayrollRuleRouter);
+router.use("/api/v1/expense-category", ExpenseCategoryRouter);
+router.use("/api/v1/tax", TaxRouter);
 
 export default router;

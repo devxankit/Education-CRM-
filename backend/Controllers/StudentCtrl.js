@@ -118,7 +118,7 @@ export const loginStudent = async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        const token = generateToken(student._id);
+        const token = generateToken(student._id, "Student");
 
         student.lastLogin = new Date();
         await student.save();
