@@ -8,6 +8,78 @@ import Subject from "../Models/SubjectModel.js";
 import Class from "../Models/ClassModel.js";
 import Student from "../Models/StudentModel.js";
 import Homework from "../Models/HomeworkModel.js";
+import Notice from "../Models/NoticeModel.js";
+import Attendance from "../Models/AttendanceModel.js";
+
+// ================= TEACHER DASHBOARD =================
+export const getTeacherDashboard = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        // 1. Get Teacher Mappings (Classes & Subjects)
+        const mappings = await TeacherMapping.find({ teacherId, status: "active" })
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name");
+
+        const totalClasses = mappings.length;
+        const uniqueSubjects = [...new Set(mappings.map(m => m.subjectId?._id?.toString()))].filter(id => id).length;
+
+        // 2. Get Total Students (Unique students in assigned sections)
+        const sectionIds = [...new Set(mappings.map(m => m.sectionId?._id))].filter(id => id);
+        const totalStudents = await Student.countDocuments({
+            sectionId: { $in: sectionIds },
+            status: "active"
+        });
+
+        // 3. Get Homework Stats
+        const totalHomeworks = await Homework.countDocuments({ teacherId });
+        const recentHomeworks = await Homework.find({ teacherId })
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name")
+            .sort({ createdAt: -1 })
+            .limit(5);
+
+        // 4. Get Recent Notices
+        const recentNotices = await Notice.find({
+            instituteId,
+            status: "PUBLISHED"
+        })
+            .sort({ publishDate: -1 })
+            .limit(5);
+
+        // 5. Class Distribution for Chart
+        const classStats = await Promise.all(mappings.map(async (m) => {
+            const studentCount = m.sectionId?._id
+                ? await Student.countDocuments({ sectionId: m.sectionId._id, status: "active" })
+                : 0;
+            return {
+                className: `${m.classId?.name || "N/A"} - ${m.sectionId?.name || "N/A"}`,
+                subjectName: m.subjectId?.name || "N/A",
+                studentCount
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: {
+                summary: {
+                    totalClasses,
+                    totalSubjects: uniqueSubjects,
+                    totalStudents,
+                    totalHomeworks
+                },
+                recentHomeworks,
+                recentNotices,
+                classStats
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // ================= CREATE TEACHER =================
 export const createTeacher = async (req, res) => {
@@ -205,7 +277,7 @@ export const getTeacherProfile = async (req, res) => {
                 path: "branchId",
                 select: "name",
             })
-        
+
 
         if (!teacher) {
             return res.status(404).json({ success: false, message: "Teacher not found" });
@@ -384,6 +456,198 @@ export const getHomeworks = async (req, res) => {
         res.status(200).json({
             success: true,
             data: homeworks
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET HOMEWORK BY ID =================
+export const getHomeworkById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const homework = await Homework.findById(id)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name")
+            .populate("academicYearId", "name");
+
+        if (!homework) {
+            return res.status(404).json({ success: false, message: "Homework not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: homework
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= UPDATE HOMEWORK =================
+export const updateHomework = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const homework = await Homework.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (!homework) {
+            return res.status(404).json({ success: false, message: "Homework not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Homework updated successfully",
+            data: homework
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= DELETE HOMEWORK =================
+export const deleteHomework = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const homework = await Homework.findByIdAndDelete(id);
+
+        if (!homework) {
+            return res.status(404).json({ success: false, message: "Homework not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Homework deleted successfully"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= MARK ATTENDANCE =================
+export const markAttendance = async (req, res) => {
+    try {
+        const {
+            classId, sectionId, subjectId, date,
+            attendanceData, academicYearId, branchId
+        } = req.body;
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        // Use start of day for date consistency
+        const attendanceDate = new Date(date);
+        attendanceDate.setHours(0, 0, 0, 0);
+
+        // Check if attendance already exists for this date/class/section/subject
+        const query = {
+            classId,
+            sectionId,
+            date: attendanceDate
+        };
+        if (subjectId) query.subjectId = subjectId;
+
+        let attendance = await Attendance.findOne(query);
+
+        if (attendance) {
+            // Update existing attendance
+            attendance.attendanceData = attendanceData;
+            attendance.teacherId = teacherId;
+            await attendance.save();
+        } else {
+            // Create new record
+            attendance = new Attendance({
+                instituteId,
+                branchId,
+                teacherId,
+                classId,
+                sectionId,
+                subjectId,
+                date: attendanceDate,
+                academicYearId,
+                attendanceData,
+                status: "Submitted"
+            });
+            await attendance.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Attendance marked successfully",
+            data: attendance
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET ATTENDANCE HISTORY =================
+export const getAttendanceHistory = async (req, res) => {
+    try {
+        const { classId, sectionId, subjectId, startDate, endDate } = req.query;
+        const teacherId = req.user._id;
+
+        let query = { teacherId };
+        if (classId) query.classId = classId;
+        if (sectionId) query.sectionId = sectionId;
+        if (subjectId) query.subjectId = subjectId;
+
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        const history = await Attendance.find(query)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name")
+            .sort({ date: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: history
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET ATTENDANCE BY DATE =================
+export const getAttendanceByDate = async (req, res) => {
+    try {
+        const { classId, sectionId, subjectId, date } = req.query;
+
+        const attendanceDate = new Date(date);
+        attendanceDate.setHours(0, 0, 0, 0);
+
+        const query = {
+            classId,
+            sectionId,
+            date: attendanceDate
+        };
+        if (subjectId) query.subjectId = subjectId;
+
+        const attendance = await Attendance.findOne(query)
+            .populate("attendanceData.studentId", "firstName lastName admissionNo rollNo photo");
+
+        if (!attendance) {
+            return res.status(200).json({
+                success: true,
+                message: "No attendance record found for this date",
+                data: null
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: attendance
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

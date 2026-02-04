@@ -4,9 +4,17 @@ import {
     getStudents,
     getStudentById,
     updateStudent,
-    loginStudent
+    loginStudent,
+    getStudentDashboard,
+    getStudentExams,
+    getStudentResults,
+    getMyAttendance,
+    getStudentFees,
+    getMyNotices,
+    getStudentProfile,
+    getStudentAcademics
 } from "../Controllers/StudentCtrl.js";
-import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin, isStudent } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
@@ -15,11 +23,21 @@ router.post("/login", loginStudent);
 
 // Protected routes
 router.use(AuthMiddleware);
-router.use(isAdmin);
 
-router.post("/admit", admitStudent);
-router.get("/", getStudents);
-router.get("/:id", getStudentById);
-router.put("/:id", updateStudent);
+// Student specific routes
+router.get("/dashboard", isStudent, getStudentDashboard);
+router.get("/exams", isStudent, getStudentExams);
+router.get("/results", isStudent, getStudentResults);
+router.get("/attendance", isStudent, getMyAttendance);
+router.get("/fees", isStudent, getStudentFees);
+router.get("/notices", isStudent, getMyNotices);
+router.get("/profile", isStudent, getStudentProfile);
+router.get("/academics", isStudent, getStudentAcademics);
+
+// Admin only routes
+router.post("/admit", isAdmin, admitStudent);
+router.get("/", isAdmin, getStudents);
+router.get("/:id", isAdmin, getStudentById);
+router.put("/:id", isAdmin, updateStudent);
 
 export default router;
