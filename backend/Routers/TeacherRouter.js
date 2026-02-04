@@ -8,7 +8,14 @@ import {
     getTeacherClasses,
     getClassStudents,
     createHomework,
-    getHomeworks
+    getHomeworks,
+    getHomeworkById,
+    updateHomework,
+    deleteHomework,
+    markAttendance,
+    getAttendanceHistory,
+    getAttendanceByDate,
+    getTeacherDashboard
 } from "../Controllers/TeacherCtrl.js";
 import {
     addEligibleSubject,
@@ -27,10 +34,17 @@ router.use(AuthMiddleware);
 
 // Teacher/Staff specific routes
 router.get("/profile", isTeacher, getTeacherProfile);
+router.get("/dashboard", isTeacher, getTeacherDashboard);
 router.get("/classes", isTeacher, getTeacherClasses);
 router.get("/students", isTeacher, getClassStudents);
 router.post("/homework", isTeacher, createHomework);
 router.get("/homework", isTeacher, getHomeworks);
+router.get("/homework/:id", isTeacher, getHomeworkById);
+router.put("/homework/:id", isTeacher, updateHomework);
+router.delete("/homework/:id", isTeacher, deleteHomework);
+router.post("/attendance", isTeacher, markAttendance);
+router.get("/attendance/history", isTeacher, getAttendanceHistory);
+router.get("/attendance/by-date", isTeacher, getAttendanceByDate);
 
 // Management routes
 router.post("/", isAdmin, createTeacher);
