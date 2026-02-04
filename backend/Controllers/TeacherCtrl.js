@@ -92,7 +92,7 @@ export const getTeachers = async (req, res) => {
         if (department) query.department = department;
 
         const teachers = await Teacher.find(query)
-            .populate("roleId", "name")
+            // .populate("roleId", "name")
             .sort({ firstName: 1 });
 
         res.status(200).json({
