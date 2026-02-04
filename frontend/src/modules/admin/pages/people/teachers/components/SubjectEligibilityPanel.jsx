@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useAdminStore } from '../../../../../../store/adminStore';
-import { API_URL } from '../../../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const SubjectEligibilityPanel = ({ teacher }) => {
 

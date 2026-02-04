@@ -4,6 +4,7 @@ import Lenis from 'lenis';
 import { LogOut, HelpCircle, ShieldCheck } from 'lucide-react';
 import gsap from 'gsap';
 import { useTeacherStore } from '../../../store/teacherStore';
+import { useAppStore } from '../../../store/index';
 
 // Components
 import ProfileSummaryCard from '../components/profile/ProfileSummaryCard';
@@ -16,6 +17,15 @@ const ProfilePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const profile = useTeacherStore(state => state.profile);
+    const fetchProfile = useTeacherStore(state => state.fetchProfile);
+    const assignedClasses = useTeacherStore(state => state.assignedClasses);
+    const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
+
+    // Fetch Profile on Mount
+    useEffect(() => {
+        fetchProfile();
+        fetchAssignedClasses();
+    }, [fetchProfile, fetchAssignedClasses]);
 
     // Initial Mock Preferences/Academic for display if not in profile
     const academicInfo = profile.academic || {
@@ -65,10 +75,11 @@ const ProfilePage = () => {
         return () => ctx.revert();
     }, []);
 
+    const logout = useAppStore(state => state.logout);
+
     const handleLogout = () => {
         if (window.confirm("Are you sure you want to logout?")) {
-            // Logout logic
-            console.log("Logged out");
+            logout();
             navigate('/login');
         }
     };
@@ -103,7 +114,10 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="profile-section">
-                    <AssignedSubjectsCard academic={academicInfo} />
+                    <AssignedSubjectsCard
+                        subjects={assignedClasses}
+                        year={assignedClasses[0]?.academicYear || "2024-25"}
+                    />
                 </div>
 
                 <div className="profile-section">

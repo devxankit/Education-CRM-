@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
-import { API_URL } from '../app/api';
+import { API_URL } from '@/app/api';
 import { initialTaxes, feeStructures as initialFeeStructures } from '../modules/admin/data/financeData';
 import { initialClasses, initialSections } from '../modules/admin/data/academicData';
 import { initialEmployees, initialTeachers } from '../modules/admin/data/peopleData';
@@ -202,12 +202,42 @@ export const useAdminStore = create(
                     console.error('Error fetching parents:', error);
                 }
             },
-            addParent: (parent) => set((state) => ({
-                parents: [...state.parents, parent]
-            })),
-            updateParent: (id, data) => set((state) => ({
-                parents: state.parents.map(p => p._id === id ? { ...p, ...data } : p)
-            })),
+            addParent: async (parentData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/parent`, parentData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            parents: [response.data.data, ...state.parents]
+                        }));
+                        get().addToast('Parent created successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error adding parent:', error);
+                    get().addToast(error.response?.data?.message || 'Error adding parent', 'error');
+                }
+            },
+            updateParent: async (id, data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/parent/${id}`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            parents: state.parents.map(p => p._id === id ? response.data.data : p)
+                        }));
+                        get().addToast('Parent updated successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error updating parent:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating parent', 'error');
+                }
+            },
 
             // Actions: Teachers
             fetchTeachers: async () => {

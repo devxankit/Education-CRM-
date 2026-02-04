@@ -11,7 +11,7 @@ import IdentitySection from './components/IdentitySection';
 import LegalDetailsSection from './components/LegalDetailsSection';
 import ContactSection from './components/ContactSection';
 import BrandingUploader from './components/BrandingUploader';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const InstitutionProfile = () => {
     // State simulating backend data

@@ -8,7 +8,7 @@ import ParentsTable from './components/ParentsTable';
 import ParentDetailDrawer from './components/ParentDetailDrawer';
 
 const Parents = () => {
-    const { parents, fetchParents } = useAdminStore();
+    const { parents, fetchParents, addParent, updateParent, branches } = useAdminStore();
 
     useEffect(() => {
         fetchParents();
@@ -29,11 +29,22 @@ const Parents = () => {
         setIsDrawerOpen(true);
     };
 
-    const handleSave = (parentData) => {
-        // Since we are now using backend, handleSave should ideally call an API
-        // For now, let's just refresh the list after save
-        setIsDrawerOpen(false);
-        fetchParents();
+    const handleSave = async (parentData) => {
+        try {
+            if (parentData._id) {
+                await updateParent(parentData._id, parentData);
+            } else {
+                // Ensure branchId is present
+                if (!parentData.branchId && branches.length > 0) {
+                    parentData.branchId = branches[0]._id;
+                }
+                await addParent(parentData);
+            }
+            setIsDrawerOpen(false);
+            fetchParents();
+        } catch (error) {
+            console.error('Error saving parent:', error);
+        }
     };
 
     // Filter Logic

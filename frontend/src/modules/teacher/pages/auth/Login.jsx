@@ -2,33 +2,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
-
-// Mock Auth Function
-const mockLogin = (teacherId, password) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (teacherId && password) {
-                resolve({
-                    teacherId,
-                    name: 'Jane Smith',
-                    role: 'teacher'
-                });
-            } else {
-                reject('Invalid credentials');
-            }
-        }, 1200);
-    });
-};
+import axios from 'axios';
+import { API_URL } from '@/app/api';
+import { useAppStore } from '@/store/index';
 
 const TeacherLogin = () => {
     const navigate = useNavigate();
+    const login = useAppStore(state => state.login);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
 
     // Form State
     const [formData, setFormData] = useState({
-        teacherId: '',
+        teacherId: '', // This will be used as email for login
         password: ''
     });
 
@@ -43,10 +30,30 @@ const TeacherLogin = () => {
         setError('');
 
         try {
-            await mockLogin(formData.teacherId, formData.password);
-            navigate('/teacher/dashboard', { replace: true });
+            const response = await axios.post(`${API_URL}/teacher/login`, {
+                email: formData.teacherId,
+                password: formData.password
+            });
+
+            if (response.data.success) {
+                const { token, data } = response.data;
+
+                // Store token in localStorage
+                localStorage.setItem('token', token);
+
+                // Update global auth state
+                login(data);
+
+                // Set default authorization header for future requests
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                navigate('/teacher/dashboard', { replace: true });
+            } else {
+                setError(response.data.message || 'Login failed');
+            }
         } catch (err) {
-            setError(err || 'Login failed. Please try again.');
+            console.error('Login error:', err);
+            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
         } finally {
             setIsLoading(false);
         }

@@ -57,20 +57,14 @@ const Step6_Review = ({ data, onEditStep }) => {
                     <Row label="Address" value={`${data.address}, ${data.city}`} />
                 </Section>
 
-                <Section title="2. Guardian Info" step={2}>
-                    <Row label="Guardian Name" value={data.parentName || 'Linked Existing'} />
-                    <Row label="Relationship" value={data.relation} />
-                    <Row label="Contact" value={data.parentMobile} />
-                </Section>
-
-                <Section title="3. Academic Details" step={3}>
+                <Section title="2. Academic Details" step={2}>
                     <Row label="Campus" value={branchObj?.name} />
                     <Row label="Admission No" value={data.admissionNo} />
                     <Row label="Date" value={data.admissionDate} />
                     <Row label="Class Assigned" value={`${classObj?.name || 'N/A'} - ${sectionObj?.name || 'N/A'}`} />
                 </Section>
 
-                <Section title="4. Facilities" step={4}>
+                <Section title="3. Facilities" step={3}>
                     <Row label="Transport" value={data.transportRequired ? 'Yes' : 'No'} />
                     {data.transportRequired && routeObj && (
                         <Row label="Route" value={`${routeObj.name} / ${stopObj?.name || 'N/A'}`} />
@@ -78,7 +72,7 @@ const Step6_Review = ({ data, onEditStep }) => {
                     <Row label="Hostel" value={data.hostelRequired ? 'Yes' : 'No'} />
                 </Section>
 
-                <Section title="5. Documents" step={5}>
+                <Section title="4. Documents" step={4}>
                     <div className="flex gap-2 flex-wrap">
                         {data.documents && Object.keys(data.documents).map(key => (
                             <span key={key} className="bg-green-50 text-green-700 border border-green-100 px-2 py-1 rounded text-xs font-bold">

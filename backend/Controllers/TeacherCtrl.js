@@ -194,6 +194,35 @@ export const loginTeacher = async (req, res) => {
     }
 };
 
+// ================= GET TEACHER PROFILE =================
+export const getTeacherProfile = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+
+        const teacher = await Teacher.findById(teacherId)
+            .select("-password")
+            .populate({
+                path: "branchId",
+                select: "name",
+            })
+            .populate({
+                path: "roleId",
+                select: "name",
+            });
+
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "Teacher not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: teacher
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= GET TEACHER ASSIGNED CLASSES & SUBJECTS =================
 export const getTeacherClasses = async (req, res) => {
     try {

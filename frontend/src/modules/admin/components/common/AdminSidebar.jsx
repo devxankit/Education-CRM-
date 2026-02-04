@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { adminMenuConfig } from '../../config/menuConfig';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { useAppStore } from '../../../../store/index';
 
 const AdminSidebar = ({ isOpen, onClose }) => {
+    const user = useAppStore(state => state.user);
     const location = useLocation();
     const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -46,7 +48,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold font-['Poppins']">Admin Panel</h1>
-                        <p className="text-blue-200 text-sm mt-1">Super Controller</p>
+                        <p className="text-blue-200 text-sm mt-1">{user?.legalName || user?.shortName || 'Super Controller'}</p>
                     </div>
                     {/* Close button for mobile */}
                     <button

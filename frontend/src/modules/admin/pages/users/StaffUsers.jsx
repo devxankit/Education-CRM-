@@ -6,7 +6,7 @@ import StaffUsersTable from './components/StaffUsersTable';
 import CreateStaffUserModal from './components/CreateStaffUserModal';
 import ChangeRoleModal from './components/ChangeRoleModal';
 import UserDetailDrawer from './components/UserDetailDrawer';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const StaffUsers = () => {
     // Data States

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Settings, Search, Filter, Building } from 'lucide-react';
 import { useAdminStore } from '../../../../../store/adminStore';
-import { API_URL } from '../../../../../app/api';
+import { API_URL } from '@/app/api';
 
 // Components
 import DepartmentList from './components/DepartmentList';

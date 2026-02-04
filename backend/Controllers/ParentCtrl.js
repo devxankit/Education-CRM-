@@ -164,3 +164,85 @@ export const loginParent = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// ================= GET LINKED STUDENTS =================
+export const getLinkedStudents = async (req, res) => {
+    try {
+        const { parentId } = req.params;
+
+        const students = await Student.find({ parentId })
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .select("firstName lastName admissionNo classId sectionId");
+
+        const linkedStudents = students.map(s => ({
+            _id: s._id,
+            studentName: `${s.firstName} ${s.lastName}`,
+            admissionNo: s.admissionNo,
+            class: `${s.classId?.name || 'N/A'} - ${s.sectionId?.name || 'N/A'}`
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: linkedStudents
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= LINK STUDENT =================
+export const linkStudent = async (req, res) => {
+    try {
+        const { parentId } = req.params;
+        const { studentId } = req.body;
+
+        const student = await Student.findByIdAndUpdate(
+            studentId,
+            { parentId },
+            { new: true }
+        ).populate("classId", "name").populate("sectionId", "name");
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Student linked successfully",
+            data: {
+                _id: student._id,
+                studentName: `${student.firstName} ${student.lastName}`,
+                admissionNo: student.admissionNo,
+                class: `${student.classId?.name || 'N/A'} - ${student.sectionId?.name || 'N/A'}`
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= UNLINK STUDENT =================
+export const unlinkStudent = async (req, res) => {
+    try {
+        const { parentId } = req.params;
+        const { studentId } = req.body;
+
+        const student = await Student.findByIdAndUpdate(
+            studentId,
+            { $unset: { parentId: "" } },
+            { new: true }
+        );
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Student unlinked successfully"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

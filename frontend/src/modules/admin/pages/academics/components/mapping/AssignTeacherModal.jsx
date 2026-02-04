@@ -2,14 +2,29 @@
 import React, { useState } from 'react';
 import { X, UserCheck, Search } from 'lucide-react';
 
-const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, className, teachersList = [] }) => {
+const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, subjectId, className, teachersList = [] }) => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTeacherId, setSelectedTeacherId] = useState(null);
 
     if (!isOpen) return null;
 
-    const filteredTeachers = teachersList.filter(t => t.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Filter teachers who have this subject in their eligibleSubjects
+    const eligibleTeachers = teachersList.filter(teacher => {
+        // If teacher has eligibleSubjects array, check if current subject is in it
+        if (teacher.eligibleSubjects && Array.isArray(teacher.eligibleSubjects)) {
+            return teacher.eligibleSubjects.some(subject =>
+                (subject._id || subject) === subjectId
+            );
+        }
+        // If no eligibleSubjects defined, show all teachers (backward compatibility)
+        return true;
+    });
+
+    // Then apply name search filter
+    const filteredTeachers = eligibleTeachers.filter(t =>
+        t.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const handleAssign = () => {
         if (!selectedTeacherId) return;

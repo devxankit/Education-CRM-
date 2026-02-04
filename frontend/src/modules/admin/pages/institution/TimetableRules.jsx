@@ -7,7 +7,7 @@ import GlobalTimeSettings from './components/timetable-rules/GlobalTimeSettings'
 import PeriodRules from './components/timetable-rules/PeriodRules';
 import WorkloadRules from './components/timetable-rules/WorkloadRules';
 import ConflictRules from './components/timetable-rules/ConflictRules';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const TimetableRules = () => {
     // State simulating backend configuration

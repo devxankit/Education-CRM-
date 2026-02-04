@@ -75,29 +75,9 @@ const studentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Section",
         },
-        // Parent Details
-        parentMode: {
-            type: String,
-            enum: ["link", "create"],
-            default: "create",
-        },
         parentId: {
-            type: String,
-        },
-        parentName: {
-            type: String,
-        },
-        parentPhone: {
-            type: String,
-        },
-        parentMobile: {
-            type: String,
-        },
-        parentEmail: {
-            type: String,
-        },
-        relation: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Parent",
         },
         // Academic History
         prevSchool: {

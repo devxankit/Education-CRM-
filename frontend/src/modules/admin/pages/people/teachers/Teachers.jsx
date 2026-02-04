@@ -6,7 +6,7 @@ import TeacherTable from './components/TeacherTable';
 import TeacherProfileDrawer from './components/TeacherProfileDrawer';
 import CreateTeacherModal from './components/CreateTeacherModal';
 import EditTeacherModal from './components/EditTeacherModal';
-import { API_URL } from '../../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const Teachers = () => {
     const [teachers, setTeachers] = useState([]);

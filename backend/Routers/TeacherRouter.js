@@ -4,6 +4,7 @@ import {
     getTeachers,
     updateTeacher,
     loginTeacher,
+    getTeacherProfile,
     getTeacherClasses,
     getClassStudents,
     createHomework,
@@ -25,6 +26,7 @@ router.post("/login", loginTeacher);
 router.use(AuthMiddleware);
 
 // Teacher/Staff specific routes
+router.get("/profile", isTeacher, getTeacherProfile);
 router.get("/classes", isTeacher, getTeacherClasses);
 router.get("/students", isTeacher, getClassStudents);
 router.post("/homework", isTeacher, createHomework);

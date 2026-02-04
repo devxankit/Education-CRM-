@@ -48,11 +48,11 @@ const ProfileHeader = ({ student }) => {
                         </div>
                         <div className="flex items-center gap-2 text-gray-600">
                             <Phone size={16} className="text-gray-400" />
-                            <span>{student.parentMobile || student.contact || 'No Contact'}</span>
+                            <span>{student.parentId?.mobile || student.parentMobile || student.contact || 'No Contact'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 md:col-span-2">
                             <Mail size={16} className="text-gray-400" />
-                            <span className="truncate">{student.parentEmail || student.email || 'No Email Address'}</span>
+                            <span className="truncate">{student.parentId?.email || student.parentEmail || student.email || 'No Email Address'}</span>
                         </div>
                     </div>
 

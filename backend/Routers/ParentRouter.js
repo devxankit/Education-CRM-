@@ -3,7 +3,10 @@ import {
     createParent,
     getParents,
     updateParent,
-    loginParent
+    loginParent,
+    getLinkedStudents,
+    linkStudent,
+    unlinkStudent
 } from "../Controllers/ParentCtrl.js";
 import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 
@@ -19,5 +22,10 @@ router.use(isInstitute);
 router.post("/", createParent);
 router.get("/", getParents);
 router.put("/:id", updateParent);
+
+// Student Linking
+router.get("/:parentId/linked-students", getLinkedStudents);
+router.post("/:parentId/link-student", linkStudent);
+router.delete("/:parentId/unlink-student", unlinkStudent);
 
 export default router;

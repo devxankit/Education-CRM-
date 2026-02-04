@@ -61,8 +61,8 @@ const StudentTable = () => {
                                         <p className="text-xs text-gray-500">Roll: {student.rollNo || student.roll || 'N/A'}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-gray-900">{student.parentName || student.parent || 'N/A'}</p>
-                                        <p className="text-xs text-gray-500">{student.parentMobile || student.contact || student.phone || 'N/A'}</p>
+                                        <p className="text-gray-900">{student.parentId?.name || student.parentName || 'N/A'}</p>
+                                        <p className="text-xs text-gray-500">{student.parentId?.mobile || student.parentMobile || 'N/A'}</p>
                                     </td>
                                     <td className="px-6 py-4 font-mono text-gray-600 text-xs">
                                         {student.admissionNo || student.admNo || 'PENDING'}

@@ -5,7 +5,7 @@ import AcademicYearTable from './components/academic-years/AcademicYearTable';
 import CreateYearModal from './components/academic-years/CreateYearModal';
 import ActivateYearModal from './components/academic-years/ActivateYearModal';
 import CloseYearModal from './components/academic-years/CloseYearModal';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const AcademicYears = () => {
     // Role (Admin Context)

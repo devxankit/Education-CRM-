@@ -5,7 +5,7 @@ import { Plus, Download, ShieldCheck } from 'lucide-react';
 import RoleTable from './components/RoleTable';
 import CreateRoleModal from './components/CreateRoleModal';
 import RoleDetailDrawer from './components/RoleDetailDrawer';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const RolesList = () => {
     // Data States

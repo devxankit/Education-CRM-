@@ -13,7 +13,7 @@ import CalendarGrid from './components/calendars/CalendarGrid';
 import HolidayTable from './components/calendars/HolidayTable';
 import HolidayTypeLegend from './components/calendars/HolidayTypeLegend';
 import HolidayFormModal from './components/calendars/HolidayFormModal';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const Calendars = () => {
     // State

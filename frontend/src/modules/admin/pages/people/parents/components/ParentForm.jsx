@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, User, Phone, MapPin, Briefcase } from 'lucide-react';
+import { Save, User, Phone, MapPin, Briefcase, Building2 } from 'lucide-react';
 import StudentLinkPanel from './StudentLinkPanel';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
+    const branches = useAdminStore(state => state.branches);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -13,14 +15,17 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
         occupation: '',
         address: '',
         status: 'Active',
+        branchId: '',
         linkedStudents: []
     });
 
     useEffect(() => {
         if (initialData) {
             setFormData(initialData);
+        } else if (branches.length > 0) {
+            setFormData(prev => ({ ...prev, branchId: branches[0]._id }));
         }
-    }, [initialData]);
+    }, [initialData, branches]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -52,6 +57,21 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="e.g. Robert Smith"
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <Building2 size={12} className="text-gray-400" /> Campus / Branch
+                            </label>
+                            <select
+                                value={formData.branchId}
+                                onChange={(e) => handleChange('branchId', e.target.value)}
+                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                disabled={initialData?._id} // Disable changing branch for existing parents for now to avoid complexity
+                            >
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Relationship <span className="text-red-500">*</span></label>
@@ -142,8 +162,7 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
 
                 {/* Student Links */}
                 <StudentLinkPanel
-                    links={formData.linkedStudents}
-                    onUpdate={(updated) => handleChange('linkedStudents', updated)}
+                    parentId={initialData?._id}
                 />
 
             </div>

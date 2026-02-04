@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import BranchListTable from './components/branches/BranchListTable';
 import BranchDetailDrawer from './components/branches/BranchDetailDrawer';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const Branches = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);

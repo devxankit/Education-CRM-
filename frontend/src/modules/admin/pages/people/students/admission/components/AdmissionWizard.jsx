@@ -4,7 +4,6 @@ import { ChevronRight, ChevronLeft, Check, Save } from 'lucide-react';
 
 // Steps
 import Step1_Personal from './Step1_Personal';
-import Step2_ParentGuardian from './Step2_ParentGuardian';
 import Step3_Academic from './Step3_Academic';
 import Step4_Rules from './Step4_Rules';
 import Step5_Documents from './Step5_Documents';
@@ -19,24 +18,22 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
         dob: '', gender: '', bloodGroup: '', nationality: 'Indian',
         address: '', city: '', pincode: '',
 
-        // 2
-        parentMode: 'link', parentId: '', parentName: '', parentMobile: '', relation: 'Father',
-
-        // 3
+        // 3 (Now 2)
         branchId: '',
         admissionDate: new Date().toISOString().split('T')[0],
         classId: '', sectionId: '', rollNo: '',
         prevSchool: '',
+        lastClass: '',
 
-        // 4
+        // 4 (Now 3)
         transportRequired: false, routeId: '', stopId: '',
         hostelRequired: false, bedType: '', roomType: '',
 
-        // 5
+        // 5 (Now 4)
         documents: {}
     });
 
-    const totalSteps = 6;
+    const totalSteps = 5;
 
     const handleNext = () => {
         if (currentStep < totalSteps) setCurrentStep(prev => prev + 1);
@@ -56,11 +53,10 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
     const renderStep = () => {
         switch (currentStep) {
             case 1: return <Step1_Personal data={formData} onChange={setFormData} />;
-            case 2: return <Step2_ParentGuardian data={formData} onChange={setFormData} />;
-            case 3: return <Step3_Academic data={formData} onChange={setFormData} />;
-            case 4: return <Step4_Rules data={formData} onChange={setFormData} />;
-            case 5: return <Step5_Documents data={formData} onChange={setFormData} />;
-            case 6: return <Step6_Review data={formData} onEditStep={setCurrentStep} />;
+            case 2: return <Step3_Academic data={formData} onChange={setFormData} />;
+            case 3: return <Step4_Rules data={formData} onChange={setFormData} />;
+            case 4: return <Step5_Documents data={formData} onChange={setFormData} />;
+            case 5: return <Step6_Review data={formData} onEditStep={setCurrentStep} />;
             default: return null;
         }
     };
@@ -84,11 +80,10 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
                 {/* Horizontal Step Labels (Hidden on mobile) */}
                 <div className="hidden md:flex justify-between mt-3 text-[10px] uppercase font-bold text-gray-400">
                     <span className={currentStep >= 1 ? 'text-indigo-600' : ''}>1. Personal</span>
-                    <span className={currentStep >= 2 ? 'text-indigo-600' : ''}>2. Guardian</span>
-                    <span className={currentStep >= 3 ? 'text-indigo-600' : ''}>3. Academic</span>
-                    <span className={currentStep >= 4 ? 'text-indigo-600' : ''}>4. Logistics</span>
-                    <span className={currentStep >= 5 ? 'text-indigo-600' : ''}>5. Docs</span>
-                    <span className={currentStep >= 6 ? 'text-indigo-600' : ''}>6. Review</span>
+                    <span className={currentStep >= 2 ? 'text-indigo-600' : ''}>2. Academic</span>
+                    <span className={currentStep >= 3 ? 'text-indigo-600' : ''}>3. Logistics</span>
+                    <span className={currentStep >= 4 ? 'text-indigo-600' : ''}>4. Docs</span>
+                    <span className={currentStep >= 5 ? 'text-indigo-600' : ''}>5. Review</span>
                 </div>
             </div>
 

@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
+import { useAppStore } from '../../../../store/index';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
+    const login = useAppStore(state => state.login);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -47,8 +49,8 @@ const AdminLogin = () => {
             if (data.success) {
                 // Save token and user details
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.data));
-                
+                login(data.data);
+
                 // Navigate to dashboard
                 navigate('/admin/dashboard', { replace: true });
             } else {

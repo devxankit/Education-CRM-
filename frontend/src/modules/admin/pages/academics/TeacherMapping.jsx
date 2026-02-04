@@ -245,6 +245,7 @@ const TeacherMapping = () => {
                 onClose={() => setIsModalOpen(false)}
                 onAssign={handleAssignConfirm}
                 subjectName={activeSubject?.subjectName}
+                subjectId={activeSubject?.subjectId}
                 teachersList={teachers}
                 className={`${selectedClass?.name || ''} - ${currentSections.find(s => s._id === selectedSectionId)?.name || ''}`}
             />

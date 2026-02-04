@@ -81,6 +81,7 @@ export const getStudents = async (req, res) => {
         const students = await Student.find(query)
             .populate("classId", "name")
             .populate("sectionId", "name")
+            .populate("parentId")
             .sort({ firstName: 1 });
 
         res.status(200).json({
@@ -101,7 +102,8 @@ export const getStudentById = async (req, res) => {
         const student = await Student.findOne({ _id: id, instituteId })
             .populate("branchId", "name code city phone")
             .populate("classId", "name level board")
-            .populate("sectionId", "name capacity");
+            .populate("sectionId", "name capacity")
+            .populate("parentId");
 
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });

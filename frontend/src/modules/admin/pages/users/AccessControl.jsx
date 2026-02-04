@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Smartphone, Globe, Clock, AlertTriangle, Save } from 'lucide-react';
-import { API_URL } from '../../../../app/api';
+import { API_URL } from '@/app/api';
 
 const AccessControl = () => {
     // Data States

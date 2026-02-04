@@ -1,8 +1,11 @@
 
 import React from 'react';
 import { Menu, Bell, Search, User, ChevronDown } from 'lucide-react';
+import { useAppStore } from '../../../../store/index';
 
 const AdminHeader = ({ onMenuToggle }) => {
+    const user = useAppStore(state => state.user);
+
     return (
         <header className="bg-white border-b border-gray-200 shadow-sm">
             <div className="flex items-center justify-between px-4 md:px-6 py-4">
@@ -43,12 +46,12 @@ const AdminHeader = ({ onMenuToggle }) => {
                     {/* Profile Dropdown */}
                     <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
                         <div className="hidden md:block text-right">
-                            <p className="text-sm font-semibold text-gray-800">Super Admin</p>
-                            <p className="text-xs text-gray-500">admin@institution.com</p>
+                            <p className="text-sm font-semibold text-gray-800">{user?.adminName || user?.name || 'Super Admin'}</p>
+                            <p className="text-xs text-gray-500">{user?.email || 'admin@institution.com'}</p>
                         </div>
                         <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
-                                <User size={18} className="text-white" />
+                            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                {user?.adminName ? user.adminName.charAt(0).toUpperCase() : <User size={18} />}
                             </div>
                             <ChevronDown size={16} className="text-gray-600 hidden md:block" />
                         </button>

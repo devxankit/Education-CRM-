@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 import { teacherProfile, todayClasses, adminNotices } from '../modules/teacher/data/dashboardData';
 import { attendanceData } from '../modules/teacher/data/attendanceData';
 import { homeworkData } from '../modules/teacher/data/homeworkData';
@@ -17,6 +19,33 @@ export const useTeacherStore = create(
             })),
             // Profile & Settings
             profile: teacherProfile,
+            assignedClasses: [],
+            fetchAssignedClasses: async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/classes`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ assignedClasses: response.data.data.subjects });
+                    }
+                } catch (error) {
+                    console.error('Error fetching assigned classes:', error);
+                }
+            },
+            fetchProfile: async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ profile: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching teacher profile:', error);
+                }
+            },
             updateProfile: (data) => set((state) => ({
                 profile: { ...state.profile, ...data }
             })),

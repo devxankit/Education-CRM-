@@ -1,17 +1,15 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-// import { useAuth } from '../hooks/useAuth'; // Placeholder
+import { useAppStore } from '../store/index';
 
 const ProtectedRoute = ({ allowedRoles = [] }) => {
-    // const { user, isAuthenticated } = useAuth();
-    const isAuthenticated = true; // Mock
-    const user = { role: 'student' }; // Mock
+    const { user, isAuthenticated } = useAppStore();
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
         return <Navigate to="/unauthorized" replace />;
     }
 
