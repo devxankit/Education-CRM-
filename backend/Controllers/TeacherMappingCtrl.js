@@ -60,11 +60,15 @@ export const getMappings = async (req, res) => {
         const existingMappings = await TeacherMapping.find({
             academicYearId,
             sectionId
-        }).populate("teacherId", "name email");
+        }).populate("teacherId", "firstName lastName email");
 
         // 3. Merge subjects with mappings
         const result = subjects.map(sub => {
             const mapping = existingMappings.find(m => m.subjectId.toString() === sub._id.toString());
+            const teacherFullName = mapping?.teacherId
+                ? `${mapping.teacherId.firstName || ''} ${mapping.teacherId.lastName || ''}`.trim()
+                : null;
+
             return {
                 subjectId: sub._id,
                 subjectName: sub.name,
@@ -72,7 +76,7 @@ export const getMappings = async (req, res) => {
                 type: sub.type,
                 category: sub.category,
                 teacherId: mapping ? mapping.teacherId?._id : null,
-                teacherName: mapping ? mapping.teacherId?.name : null
+                teacherName: teacherFullName || null
             };
         });
 

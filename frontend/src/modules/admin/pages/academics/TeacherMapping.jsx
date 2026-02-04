@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Filter, Save, HelpCircle, AlertCircle } from 'lucide-react';
+import { Filter, Save, HelpCircle, AlertCircle, MapPin } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
@@ -13,7 +13,8 @@ const TeacherMapping = () => {
         teachers, fetchTeachers,
         academicYears, fetchAcademicYears,
         teacherMappings, fetchTeacherMappings,
-        assignTeacherMapping, removeTeacherMapping
+        assignTeacherMapping, removeTeacherMapping,
+        branches, fetchBranches
     } = useAdminStore();
 
     const user = useAppStore(state => state.user);
@@ -22,17 +23,35 @@ const TeacherMapping = () => {
     const [selectedClassId, setSelectedClassId] = useState('');
     const [selectedSectionId, setSelectedSectionId] = useState('');
     const [selectedYearId, setSelectedYearId] = useState('');
+    const [selectedBranchId, setSelectedBranchId] = useState(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeSubject, setActiveSubject] = useState(null);
 
     // Initial Fetch
     useEffect(() => {
-        const branchId = user?.branchId || 'main';
-        fetchClasses(branchId);
+        fetchBranches();
         fetchAcademicYears();
         fetchTeachers();
-    }, [user, fetchClasses, fetchAcademicYears, fetchTeachers]);
+    }, [fetchBranches, fetchAcademicYears, fetchTeachers]);
+
+    // Set selected branch
+    useEffect(() => {
+        if (!selectedBranchId) {
+            if (user?.branchId?.length === 24) {
+                setSelectedBranchId(user.branchId);
+            } else if (branches.length > 0) {
+                setSelectedBranchId(branches[0]._id);
+            }
+        }
+    }, [user, branches, selectedBranchId]);
+
+    // Fetch classes when branch is selected
+    useEffect(() => {
+        if (selectedBranchId) {
+            fetchClasses(selectedBranchId);
+        }
+    }, [selectedBranchId, fetchClasses]);
 
     // Set Active Year initially
     useEffect(() => {
@@ -83,9 +102,16 @@ const TeacherMapping = () => {
     const handleAssignConfirm = async (teacher) => {
         if (!activeSubject || !selectedYearId || !selectedSectionId) return;
 
+        const targetBranchId = user?.branchId?.length === 24 ? user.branchId : selectedBranchId;
+
+        if (!targetBranchId) {
+            alert("Error: No Branch found. Please create a branch first.");
+            return;
+        }
+
         const success = await assignTeacherMapping({
             academicYearId: selectedYearId,
-            branchId: user?.branchId || 'main',
+            branchId: targetBranchId,
             classId: selectedClassId,
             sectionId: selectedSectionId,
             subjectId: activeSubject.subjectId,
@@ -170,6 +196,21 @@ const TeacherMapping = () => {
                         <option value="">-- Select Section --</option>
                         {currentSections.map(sec => (
                             <option key={sec._id} value={sec._id}>{sec.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Branch Selector */}
+                <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
+                    <MapPin size={16} className="text-indigo-500" />
+                    <select
+                        value={selectedBranchId || ''}
+                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                        disabled={user?.branchId && user.branchId !== 'all'}
+                        className="text-sm font-semibold border-none bg-transparent outline-none focus:ring-0 cursor-pointer text-indigo-700"
+                    >
+                        {branches.map(b => (
+                            <option key={b._id} value={b._id}>{b.name}</option>
                         ))}
                     </select>
                 </div>

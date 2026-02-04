@@ -4,7 +4,7 @@ import Course from "../Models/CourseModel.js";
 export const createCourse = async (req, res) => {
     try {
         const { name, code, type, duration, totalSemesters, creditSystem, branchId } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
@@ -37,7 +37,7 @@ export const createCourse = async (req, res) => {
 export const getCourses = async (req, res) => {
     try {
         const { branchId, type } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });

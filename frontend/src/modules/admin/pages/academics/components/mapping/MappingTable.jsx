@@ -30,18 +30,18 @@ const MappingTable = ({ mappings, onAssignClick, onRemove }) => {
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-8 h-8 rounded flex items-center justify-center text-white font-bold text-xs bg-indigo-500`}>
-                                        {row.subjectName.charAt(0)}
+                                        {row.subjectName?.charAt(0) || 'S'}
                                     </div>
                                     <div>
-                                        <div className="font-medium text-gray-900">{row.subjectName}</div>
-                                        <div className="text-xs text-gray-400 font-mono">{row.subjectCode}</div>
+                                        <div className="font-medium text-gray-900">{row.subjectName || 'Unknown Subject'}</div>
+                                        <div className="text-xs text-gray-400 font-mono">{row.subjectCode || 'N/A'}</div>
                                     </div>
                                 </div>
                             </td>
 
                             <td className="px-6 py-4">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-xs text-gray-500 capitalize">{row.type.replace('_', ' + ')}</span>
+                                    <span className="text-xs text-gray-500 capitalize">{row.type?.replace('_', ' + ') || 'N/A'}</span>
                                 </div>
                             </td>
 
@@ -49,9 +49,9 @@ const MappingTable = ({ mappings, onAssignClick, onRemove }) => {
                                 {row.teacherId ? (
                                     <div className="flex items-center gap-2">
                                         <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
-                                            {row.teacherName.charAt(0)}
+                                            {row.teacherName?.charAt(0) || 'T'}
                                         </div>
-                                        <span className="text-gray-900 font-medium">{row.teacherName}</span>
+                                        <span className="text-gray-900 font-medium">{row.teacherName || 'Unknown Teacher'}</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-1 text-amber-600 text-xs bg-amber-50 px-2 py-1 rounded border border-amber-100 w-fit">

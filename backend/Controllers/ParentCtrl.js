@@ -6,7 +6,7 @@ import { generateToken } from "../Helpers/generateToken.js";
 export const createParent = async (req, res) => {
     try {
         const { name, mobile, email, relationship, branchId, address, occupation } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         const existingParent = await Parent.findOne({
             $or: [{ mobile }, { email: email || "no-email" }]
@@ -50,7 +50,7 @@ export const createParent = async (req, res) => {
 export const getParents = async (req, res) => {
     try {
         const { branchId, searchQuery } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
         if (branchId) query.branchId = branchId;

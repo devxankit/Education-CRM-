@@ -1,15 +1,36 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, Search, Link } from 'lucide-react';
+import { useAdminStore } from '../../../../../../../store/adminStore';
 
 const Step2_ParentGuardian = ({ data, onChange }) => {
-
     // data.parentMode: 'link' | 'create'
     const [mode, setMode] = useState(data.parentMode || 'link');
     const [searchQuery, setSearchQuery] = useState('');
+    const parents = useAdminStore(state => state.parents);
+    const fetchParents = useAdminStore(state => state.fetchParents);
+
+    useEffect(() => {
+        if (mode === 'link' && searchQuery.length >= 3) {
+            const timer = setTimeout(() => {
+                fetchParents(searchQuery);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [searchQuery, mode, fetchParents]);
 
     const handleChange = (field, value) => {
         onChange({ ...data, [field]: value, parentMode: mode });
+    };
+
+    const handleSelectParent = (parent) => {
+        onChange({
+            ...data,
+            parentId: parent._id,
+            parentName: parent.name,
+            parentMobile: parent.mobile,
+            parentEmail: parent.email
+        });
     };
 
     return (
@@ -61,19 +82,31 @@ const Step2_ParentGuardian = ({ data, onChange }) => {
                             </p>
                         </div>
 
-                        {/* Mock Result */}
-                        {searchQuery.length > 2 && (
-                            <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between group" onClick={() => handleChange('parentId', 'PRT-1001')}>
+                        {/* Result List */}
+                        {searchQuery.length >= 3 && parents.map((parent) => (
+                            <div
+                                key={parent._id}
+                                className={`border rounded-lg p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between group ${data.parentId === parent._id ? 'border-indigo-500 bg-indigo-50/30' : 'border-gray-200'}`}
+                                onClick={() => handleSelectParent(parent)}
+                            >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">RS</div>
+                                    <div className="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold">
+                                        {parent.name.charAt(0)}
+                                    </div>
                                     <div>
-                                        <p className="font-bold text-gray-800">Robert Smith</p>
-                                        <p className="text-xs text-gray-500">PRT-1001 • 9876543210</p>
+                                        <p className="font-bold text-gray-800">{parent.name}</p>
+                                        <p className="text-xs text-gray-500">{parent.code} • {parent.mobile}</p>
                                     </div>
                                 </div>
-                                <div className={`px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold ${data.parentId === 'PRT-1001' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    {data.parentId === 'PRT-1001' ? 'Selected' : 'Select'}
+                                <div className={`px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold ${data.parentId === parent._id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    {data.parentId === parent._id ? 'Selected' : 'Select'}
                                 </div>
+                            </div>
+                        ))}
+
+                        {searchQuery.length >= 3 && parents.length === 0 && (
+                            <div className="text-center py-6 text-gray-500 text-sm">
+                                No parents found with this query. Try a different name or mobile.
                             </div>
                         )}
                     </div>

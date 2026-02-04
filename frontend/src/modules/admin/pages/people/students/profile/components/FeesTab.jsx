@@ -2,14 +2,15 @@
 import React from 'react';
 import { CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
-const FeesTab = () => {
+const FeesTab = ({ student }) => {
+    // For now, no transactions for new student
+    const transactions = [];
 
-    // Mock Data
-    const transactions = [
-        { id: 'TXN-001', date: '2024-04-10', desc: 'Admission Fee', amount: 5000, status: 'Paid', mode: 'Online' },
-        { id: 'TXN-002', date: '2024-04-10', desc: 'Term 1 Tuition', amount: 15000, status: 'Paid', mode: 'Check' },
-        { id: 'TXN-003', date: '2024-08-01', desc: 'Term 2 Tuition', amount: 15000, status: 'Pandding', dueDate: '2024-08-15' },
-    ];
+    const stats = {
+        payable: 0,
+        paid: 0,
+        outstanding: 0
+    };
 
     return (
         <div className="space-y-6">
@@ -18,16 +19,16 @@ const FeesTab = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs text-gray-500 uppercase font-bold">Total Payable (Year)</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-1">$45,000</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mt-1">₹{stats.payable.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs text-gray-500 uppercase font-bold">Paid Till Date</p>
-                    <h3 className="text-2xl font-bold text-green-600 mt-1">$20,000</h3>
+                    <h3 className="text-2xl font-bold text-green-600 mt-1">₹{stats.paid.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs text-gray-500 uppercase font-bold">Outstanding</p>
-                    <h3 className="text-2xl font-bold text-red-600 mt-1">$25,000</h3>
-                    <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertCircle size={10} /> Next due: 15 Aug</p>
+                    <h3 className="text-2xl font-bold text-red-600 mt-1">₹{stats.outstanding.toLocaleString()}</h3>
+                    {stats.outstanding > 0 && <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertCircle size={10} /> Payment Due</p>}
                 </div>
             </div>
 
@@ -54,7 +55,7 @@ const FeesTab = () => {
                                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-mono text-gray-600 text-xs">{txn.date}</td>
                                     <td className="px-6 py-4 font-bold text-gray-800">{txn.desc}</td>
-                                    <td className="px-6 py-4 font-mono text-gray-800">${txn.amount.toLocaleString()}</td>
+                                    <td className="px-6 py-4 font-mono text-gray-800">₹{txn.amount.toLocaleString()}</td>
                                     <td className="px-6 py-4">
                                         {txn.status === 'Paid' ? (
                                             <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">
@@ -71,6 +72,16 @@ const FeesTab = () => {
                                     </td>
                                 </tr>
                             ))}
+                            {transactions.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-10 text-center text-gray-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <CreditCard size={32} className="opacity-20" />
+                                            <p className="font-medium">No transaction history found.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

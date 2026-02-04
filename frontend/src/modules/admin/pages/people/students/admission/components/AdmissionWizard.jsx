@@ -23,9 +23,9 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
         parentMode: 'link', parentId: '', parentName: '', parentMobile: '', relation: 'Father',
 
         // 3
-        admissionNo: `ADM-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`,
+        branchId: '',
         admissionDate: new Date().toISOString().split('T')[0],
-        class: '', section: '', rollNo: '',
+        classId: '', sectionId: '', rollNo: '',
         prevSchool: '',
 
         // 4

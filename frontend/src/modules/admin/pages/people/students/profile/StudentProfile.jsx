@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CreditCard, Clock, FileText, Activity } from 'lucide-react';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 // Components
 import ProfileHeader from './components/ProfileHeader';
@@ -12,33 +13,21 @@ const StudentProfile = () => {
 
     const { id } = useParams();
     const navigate = useNavigate();
+    const fetchStudentById = useAdminStore(state => state.fetchStudentById);
+
     const [activeTab, setActiveTab] = useState('academic');
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Fetch student data based on ID
     useEffect(() => {
-        const fetchStudentById = async () => {
+        const loadStudent = async () => {
             setLoading(true);
             try {
-                // TODO: Replace with actual API call when backend is ready
-                // const response = await api.get(`/students/${id}`);
-                // setStudent(response.data);
-
-                // Mock data for now - will be replaced by API response
-                const mockStudent = {
-                    id: id,
-                    name: 'Rahul Sharma',
-                    admissionNo: 'ADM-2024-1005',
-                    class: '10',
-                    section: 'A',
-                    rollNo: '24',
-                    gender: 'Male',
-                    age: 15,
-                    parentMobile: '+91 98765 43210',
-                    address: '#42, Palm Avenue, Green City'
-                };
-                setStudent(mockStudent);
+                const data = await fetchStudentById(id);
+                if (data) {
+                    setStudent(data);
+                }
             } catch (error) {
                 console.error('Error fetching student:', error);
             } finally {
@@ -47,9 +36,9 @@ const StudentProfile = () => {
         };
 
         if (id) {
-            fetchStudentById();
+            loadStudent();
         }
-    }, [id]);
+    }, [id, fetchStudentById]);
 
     const tabs = [
         { id: 'academic', label: 'Academic & Attendance', icon: BookOpen },
@@ -119,14 +108,22 @@ const StudentProfile = () => {
 
             {/* Tab Content */}
             <div className="flex-1">
-                {activeTab === 'academic' && <AcademicTab />}
-                {activeTab === 'fees' && <FeesTab />}
+                {activeTab === 'academic' && <AcademicTab student={student} />}
+                {activeTab === 'fees' && <FeesTab student={student} />}
 
                 {activeTab === 'documents' && (
                     <div className="bg-white p-10 rounded-xl border border-dashed border-gray-300 text-center text-gray-400">
                         <FileText size={48} className="mx-auto mb-4 opacity-50" />
                         <h3 className="text-lg font-bold text-gray-600">Documents Repository</h3>
                         <p className="text-sm">Birth Certificate, TC, and Photos are stored here.</p>
+                        <div className="mt-6 flex flex-wrap gap-4 justify-center">
+                            {student.documents && Object.keys(student.documents).map(key => student.documents[key].url && (
+                                <a key={key} href={student.documents[key].url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+                                    <FileText size={24} className="text-indigo-600 mb-2" />
+                                    <span className="text-xs font-bold text-gray-700">{student.documents[key].name}</span>
+                                </a>
+                            ))}
+                        </div>
                     </div>
                 )}
 

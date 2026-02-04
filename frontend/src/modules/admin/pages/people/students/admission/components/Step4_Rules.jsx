@@ -1,16 +1,25 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Bus, Bed, FileText } from 'lucide-react';
+import { useAdminStore } from '../../../../../../../store/adminStore';
 
 const Step4_Rules = ({ data, onChange }) => {
+    const transportRoutes = useAdminStore(state => state.transportRoutes);
+    const fetchTransportRoutes = useAdminStore(state => state.fetchTransportRoutes);
 
-    // data.transportRequired (bool)
-    // data.hostelRequired (bool)
-    // data.routeId, data.stopId
-    // data.roomType
+    useEffect(() => {
+        fetchTransportRoutes('main');
+    }, [fetchTransportRoutes]);
+
+    const selectedRoute = transportRoutes.find(r => r._id === data.routeId);
+    const stops = selectedRoute ? selectedRoute.stops : [];
 
     const handleChange = (field, value) => {
         onChange({ ...data, [field]: value });
+    };
+
+    const handleRouteChange = (routeId) => {
+        onChange({ ...data, routeId: routeId, stopId: '' });
     };
 
     return (
@@ -53,12 +62,13 @@ const Step4_Rules = ({ data, onChange }) => {
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Select Route</label>
                             <select
                                 value={data.routeId || ''}
-                                onChange={(e) => handleChange('routeId', e.target.value)}
+                                onChange={(e) => handleRouteChange(e.target.value)}
                                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                             >
                                 <option value="">Select Route</option>
-                                <option value="R-101">Route 1 (North - South)</option>
-                                <option value="R-102">Route 2 (East - West)</option>
+                                {transportRoutes.map(r => (
+                                    <option key={r._id} value={r._id}>{r.name} ({r.code})</option>
+                                ))}
                             </select>
                         </div>
                         <div>
@@ -66,11 +76,13 @@ const Step4_Rules = ({ data, onChange }) => {
                             <select
                                 value={data.stopId || ''}
                                 onChange={(e) => handleChange('stopId', e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                disabled={!data.routeId}
+                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
                             >
-                                <option value="">Select Stop</option>
-                                <option value="S-1">Central Station</option>
-                                <option value="S-2">Market square</option>
+                                <option value="">{data.routeId ? 'Select Stop' : 'Select Route First'}</option>
+                                {stops.map(s => (
+                                    <option key={s._id} value={s._id}>{s.name} ({s.pickupTime})</option>
+                                ))}
                             </select>
                         </div>
                     </div>

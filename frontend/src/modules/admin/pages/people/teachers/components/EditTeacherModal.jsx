@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { X, UserPlus, Shield, Phone, Mail, Calendar, GraduationCap, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Save, Loader2, GraduationCap } from 'lucide-react';
 
-const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = [], loading = false }) => {
+const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, branches = [] }) => {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -13,12 +13,31 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
         designation: '',
         academicLevel: '',
         experience: '',
-        joiningDate: new Date().toISOString().split('T')[0],
+        joiningDate: '',
         teachingStatus: 'Active',
         status: 'active'
     });
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        if (teacher) {
+            setFormData({
+                firstName: teacher.firstName || '',
+                lastName: teacher.lastName || '',
+                email: teacher.email || '',
+                phone: teacher.phone || '',
+                branchId: teacher.branchId?._id || teacher.branchId || '',
+                department: teacher.department || '',
+                designation: teacher.designation || '',
+                academicLevel: teacher.academicLevel || '',
+                experience: teacher.experience || '',
+                joiningDate: teacher.joiningDate ? new Date(teacher.joiningDate).toISOString().split('T')[0] : '',
+                teachingStatus: teacher.teachingStatus || 'Active',
+                status: teacher.status || 'active'
+            });
+        }
+    }, [teacher]);
+
+    if (!isOpen || !teacher) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,18 +46,18 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onCreate(formData);
+        onSave(teacher._id, formData);
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
 
             <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
                 {/* Header */}
                 <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
                     <h3 className="text-lg font-bold flex items-center gap-2">
-                        <UserPlus size={20} /> Add New Teacher
+                        <Save size={20} /> Edit Teacher Details
                     </h3>
                     <button onClick={onClose} className="hover:bg-indigo-700 p-1 rounded transition-colors shadow-sm">
                         <X size={20} />
@@ -72,9 +91,7 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <Mail size={14} className="text-gray-400" /> Email *
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                             <input
                                 type="email" name="email" required
                                 value={formData.email} onChange={handleChange}
@@ -83,9 +100,7 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <Phone size={14} className="text-gray-400" /> Phone
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                             <input
                                 type="tel" name="phone"
                                 value={formData.phone} onChange={handleChange}
@@ -99,9 +114,17 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <Shield size={14} className="text-gray-400" /> Branch *
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <input
+                                type="text" name="department"
+                                value={formData.department} onChange={handleChange}
+                                placeholder="e.g. Science"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
                             <select
                                 name="branchId" required
                                 value={formData.branchId} onChange={handleChange}
@@ -112,16 +135,6 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                                     <option key={b._id} value={b._id}>{b.name}</option>
                                 ))}
                             </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                            <input
-                                type="text" name="department"
-                                value={formData.department} onChange={handleChange}
-                                placeholder="e.g. Science"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            />
                         </div>
 
                         <div>
@@ -156,9 +169,7 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <GraduationCap size={14} className="text-gray-400" /> Experience
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
                             <input
                                 type="text" name="experience"
                                 value={formData.experience} onChange={handleChange}
@@ -168,9 +179,7 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <Calendar size={14} className="text-gray-400" /> Joining Date
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Joining Date</label>
                             <input
                                 type="date" name="joiningDate"
                                 value={formData.joiningDate} onChange={handleChange}
@@ -223,10 +232,13 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                             {loading ? (
                                 <>
                                     <Loader2 size={16} className="animate-spin" />
-                                    Creating...
+                                    Saving...
                                 </>
                             ) : (
-                                'Confirm Add Teacher'
+                                <>
+                                    <Save size={16} />
+                                    Save Changes
+                                </>
                             )}
                         </button>
                     </div>
@@ -236,4 +248,4 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
     );
 };
 
-export default CreateTeacherModal;
+export default EditTeacherModal;

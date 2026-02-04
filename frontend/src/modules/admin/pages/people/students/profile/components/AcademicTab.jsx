@@ -2,15 +2,9 @@
 import React from 'react';
 import { BookOpen, GraduationCap, Percent } from 'lucide-react';
 
-const AcademicTab = () => {
-
-    // Mock Data
-    const currentSubjects = [
-        { name: 'Mathematics', teacher: 'Mrs. Davis', attendance: '92%', grade: 'A' },
-        { name: 'Physics', teacher: 'Mr. Doe', attendance: '88%', grade: 'B+' },
-        { name: 'Computer Science', teacher: 'Mr. Turing', attendance: '95%', grade: 'A+' },
-        { name: 'English', teacher: 'Ms. Smith', attendance: '90%', grade: 'A' },
-    ];
+const AcademicTab = ({ student }) => {
+    // Get subjects from student data
+    const currentSubjects = student?.subjects || [];
 
     return (
         <div className="space-y-6">
@@ -23,7 +17,7 @@ const AcademicTab = () => {
                     </div>
                     <div>
                         <p className="text-xs text-gray-500 uppercase font-bold">Overall Attendance</p>
-                        <h3 className="text-xl font-bold text-gray-900">91.5%</h3>
+                        <h3 className="text-xl font-bold text-gray-900">{student?.attendance || 'N/A'}</h3>
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -32,7 +26,7 @@ const AcademicTab = () => {
                     </div>
                     <div>
                         <p className="text-xs text-gray-500 uppercase font-bold">CGPA / Grade</p>
-                        <h3 className="text-xl font-bold text-gray-900">9.2 (A)</h3>
+                        <h3 className="text-xl font-bold text-gray-900">{student?.grade || 'N/A'}</h3>
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -41,7 +35,7 @@ const AcademicTab = () => {
                     </div>
                     <div>
                         <p className="text-xs text-gray-500 uppercase font-bold">Subjects</p>
-                        <h3 className="text-xl font-bold text-gray-900">6 Enrolled</h3>
+                        <h3 className="text-xl font-bold text-gray-900">{student?.subjects?.length || 0} Enrolled</h3>
                     </div>
                 </div>
             </div>
@@ -56,25 +50,31 @@ const AcademicTab = () => {
                         <thead className="text-xs text-gray-500 uppercase bg-white border-b border-gray-100">
                             <tr>
                                 <th className="px-6 py-3 font-semibold">Subject</th>
+                                <th className="px-6 py-3 font-semibold">Code</th>
+                                <th className="px-6 py-3 font-semibold">Type</th>
                                 <th className="px-6 py-3 font-semibold">Teacher</th>
-                                <th className="px-6 py-3 font-semibold">Attendance</th>
-                                <th className="px-6 py-3 font-semibold">Current Grade</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {currentSubjects.map((sub, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 font-bold text-gray-800">{sub.name}</td>
+                                    <td className="px-6 py-4 text-gray-600 font-mono text-xs">{sub.code}</td>
+                                    <td className="px-6 py-4 text-gray-600 capitalize">{sub.type?.replace('_', ' + ')}</td>
                                     <td className="px-6 py-4 text-gray-600">{sub.teacher}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="w-full bg-gray-200 rounded-full h-1.5 w-24 mb-1">
-                                            <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: sub.attendance }}></div>
-                                        </div>
-                                        <span className="text-xs text-gray-500">{sub.attendance}</span>
-                                    </td>
-                                    <td className="px-6 py-4 font-bold text-indigo-600">{sub.grade}</td>
                                 </tr>
                             ))}
+                            {currentSubjects.length === 0 && (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-10 text-center text-gray-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <BookOpen size={32} className="opacity-20" />
+                                            <p className="font-medium">No subjects assigned yet.</p>
+                                            <p className="text-xs text-gray-400">Class schedule and subject mappings will appear here after academic setup.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -4,7 +4,7 @@ import Subject from "../Models/SubjectModel.js";
 export const createSubject = async (req, res) => {
     try {
         const { name, code, type, category, level, branchId, classIds, courseIds } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
@@ -38,7 +38,7 @@ export const createSubject = async (req, res) => {
 export const getSubjects = async (req, res) => {
     try {
         const { branchId, level } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });

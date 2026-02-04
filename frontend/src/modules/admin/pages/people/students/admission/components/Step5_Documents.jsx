@@ -7,12 +7,31 @@ const Step5_Documents = ({ data, onChange }) => {
     // data.documents: { photo: null, birthCert: null, tc: null }
 
     const [docs, setDocs] = useState(data.documents || {});
+    const [uploading, setUploading] = useState(null);
 
-    const handleUpload = (key, fileName) => {
-        // Mock upload
-        const newDocs = { ...docs, [key]: { name: fileName, status: 'Uploaded', date: new Date().toLocaleDateString() } };
-        setDocs(newDocs);
-        onChange({ ...data, documents: newDocs });
+    const handleUpload = (key, file) => {
+        if (!file) return;
+
+        setUploading(key);
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            const newDocs = {
+                ...docs,
+                [key]: {
+                    name: file.name,
+                    status: 'Uploaded',
+                    date: new Date().toLocaleDateString(),
+                    base64: base64String
+                }
+            };
+            setDocs(newDocs);
+            onChange({ ...data, documents: newDocs });
+            setUploading(null);
+        };
+
+        reader.readAsDataURL(file);
     };
 
     const DocItem = ({ id, label, required, type = 'PDF' }) => (
@@ -44,9 +63,9 @@ const Step5_Documents = ({ data, onChange }) => {
                     Remove
                 </button>
             ) : (
-                <label className="cursor-pointer bg-white border border-gray-300 text-gray-600 hover:border-indigo-500 hover:text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm">
-                    Upload
-                    <input type="file" className="hidden" onChange={(e) => handleUpload(id, e.target.files[0]?.name || 'doc.pdf')} />
+                <label className={`cursor-pointer bg-white border border-gray-300 text-gray-600 hover:border-indigo-500 hover:text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${uploading === id ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {uploading === id ? 'Processing...' : 'Upload'}
+                    <input type="file" className="hidden" accept={type === 'Image' ? "image/*" : ".pdf,.doc,.docx"} onChange={(e) => handleUpload(id, e.target.files[0])} />
                 </label>
             )}
         </div>

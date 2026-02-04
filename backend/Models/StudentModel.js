@@ -129,11 +129,11 @@ const studentSchema = new mongoose.Schema(
         },
         // Documents
         documents: {
-            photo: { name: String, status: String, date: String },
-            birthCert: { name: String, status: String, date: String },
-            transferCert: { name: String, status: String, date: String },
-            aadhar: { name: String, status: String, date: String },
-            prevMarksheet: { name: String, status: String, date: String },
+            photo: { name: String, status: String, date: String, url: String },
+            birthCert: { name: String, status: String, date: String, url: String },
+            transferCert: { name: String, status: String, date: String, url: String },
+            aadhar: { name: String, status: String, date: String, url: String },
+            prevMarksheet: { name: String, status: String, date: String, url: String },
         },
         address: {
             type: String,
@@ -165,7 +165,7 @@ const studentSchema = new mongoose.Schema(
 
 // Password hashing (if password exists)
 studentSchema.pre("save", async function (next) {
-    if (!this.password || !this.isModified("password")) return ;
+    if (!this.password || !this.isModified("password")) return;
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });

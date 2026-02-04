@@ -9,7 +9,7 @@ const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, className,
 
     if (!isOpen) return null;
 
-    const filteredTeachers = teachersList.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredTeachers = teachersList.filter(t => t.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleAssign = () => {
         if (!selectedTeacherId) return;
@@ -64,10 +64,10 @@ const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, className,
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${selectedTeacherId === id ? 'bg-indigo-200 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
-                                        {teacher.name.charAt(0)}
+                                        {teacher.name?.charAt(0) || 'T'}
                                     </div>
                                     <div>
-                                        <h4 className={`font-medium text-sm ${selectedTeacherId === id ? 'text-indigo-900' : 'text-gray-900'}`}>{teacher.name}</h4>
+                                        <h4 className={`font-medium text-sm ${selectedTeacherId === id ? 'text-indigo-900' : 'text-gray-900'}`}>{teacher.name || 'Unknown Teacher'}</h4>
                                         <p className="text-xs text-gray-500">{teacher.department || teacher.designation || 'Faculty'}</p>
                                     </div>
                                 </div>

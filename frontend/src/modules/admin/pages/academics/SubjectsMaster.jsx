@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, MapPin } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
@@ -10,17 +10,35 @@ import SubjectFormModal from './components/subjects/SubjectFormModal';
 const SubjectsMaster = () => {
     const subjects = useAdminStore(state => state.subjects);
     const classes = useAdminStore(state => state.classes);
+    const branches = useAdminStore(state => state.branches);
     const fetchSubjects = useAdminStore(state => state.fetchSubjects);
     const fetchClasses = useAdminStore(state => state.fetchClasses);
+    const fetchBranches = useAdminStore(state => state.fetchBranches);
     const addSubject = useAdminStore(state => state.addSubject);
     const updateSubject = useAdminStore(state => state.updateSubject);
     const user = useAppStore(state => state.user);
 
+    const [selectedBranchId, setSelectedBranchId] = useState(null);
+
     useEffect(() => {
-        const branchId = user?.branchId || 'main';
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        if (!selectedBranchId) {
+            if (user?.branchId?.length === 24) {
+                setSelectedBranchId(user.branchId);
+            } else if (branches.length > 0) {
+                setSelectedBranchId(branches[0]._id);
+            }
+        }
+    }, [user, branches, selectedBranchId]);
+
+    useEffect(() => {
+        const branchId = selectedBranchId || 'main';
         fetchSubjects(branchId);
         fetchClasses(branchId);
-    }, [user, fetchSubjects, fetchClasses]);
+    }, [selectedBranchId, fetchSubjects, fetchClasses]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
@@ -35,9 +53,17 @@ const SubjectsMaster = () => {
         if (editingSubject) {
             updateSubject(editingSubject._id, data);
         } else {
+            // Use selected branch if user doesn't have one
+            const targetId = user?.branchId?.length === 24 ? user.branchId : selectedBranchId;
+
+            if (!targetId) {
+                alert("Error: No Branch found. Please create a branch first in Institution Setup.");
+                return;
+            }
+
             addSubject({
                 ...data,
-                branchId: user?.branchId || 'main'
+                branchId: targetId
             });
         }
         setEditingSubject(null);
@@ -62,7 +88,16 @@ const SubjectsMaster = () => {
     // Filter Logic
     const filteredSubjects = subjects.filter(sub => {
         if (filterLevel !== 'all' && sub.level !== filterLevel) return false;
-        if (filterClass !== 'all' && (!sub.assignedClasses || !sub.assignedClasses.includes(filterClass))) return false;
+        
+        if (filterClass !== 'all') {
+            const subjectClasses = sub.classIds || sub.assignedClasses || [];
+            const hasClass = subjectClasses.some(cls => {
+                const name = typeof cls === 'object' ? cls.name : (classes.find(c => (c._id || c.id) === cls)?.name);
+                return name === filterClass;
+            });
+            if (!hasClass) return false;
+        }
+        
         return true;
     });
 
@@ -115,6 +150,21 @@ const SubjectsMaster = () => {
                             <option key={cls} value={cls}>{cls}</option>
                         ))}
                     </select>
+
+                    {/* Branch Switcher (Only for Super Admin/Multi-branch) */}
+                    <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
+                        <MapPin size={16} className="text-indigo-500" />
+                        <select
+                            value={selectedBranchId || ''}
+                            onChange={(e) => setSelectedBranchId(e.target.value)}
+                            disabled={user?.branchId && user.branchId !== 'all'}
+                            className="text-sm font-semibold border-none bg-transparent outline-none focus:ring-0 cursor-pointer text-indigo-700"
+                        >
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <button
@@ -128,6 +178,7 @@ const SubjectsMaster = () => {
             {/* List */}
             <SubjectsTable
                 subjects={filteredSubjects}
+                allClasses={classes}
                 onEdit={handleEditClick}
                 onDeactivate={handleDeactivate}
             />

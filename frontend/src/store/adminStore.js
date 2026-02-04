@@ -147,19 +147,52 @@ export const useAdminStore = create(
                     console.error('Error fetching students:', error);
                 }
             },
-            addStudent: (student) => set((state) => ({
-                students: [...state.students, { ...student, id: `ADM-${Date.now()}` }]
-            })),
+            fetchStudentById: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching student by ID:', error);
+                    throw error;
+                }
+            },
+            admitStudent: async (studentData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/student/admit`, studentData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            students: [response.data.data, ...state.students]
+                        }));
+                        get().addToast('Student admitted successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error admitting student:', error);
+                    get().addToast(error.response?.data?.message || 'Error admitting student', 'error');
+                    throw error;
+                }
+            },
             updateStudent: (id, data) => set((state) => ({
                 students: state.students.map(s => s.id === id ? { ...s, ...data } : s)
             })),
 
             // Actions: Parents
             setParents: (parents) => set({ parents }),
-            fetchParents: async () => {
+            fetchParents: async (searchQuery = '') => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/parent`, {
+                    const url = searchQuery
+                        ? `${API_URL}/parent?searchQuery=${searchQuery}`
+                        : `${API_URL}/parent`;
+                    const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {

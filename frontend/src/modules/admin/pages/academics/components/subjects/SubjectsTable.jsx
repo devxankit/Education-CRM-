@@ -3,7 +3,14 @@ import React from 'react';
 import { Book, Edit, Ban, FileText } from 'lucide-react';
 import SubjectStatusBadge from './SubjectStatusBadge';
 
-const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
+const SubjectsTable = ({ subjects, allClasses = [], onEdit, onDeactivate }) => {
+
+    const getClassName = (cls) => {
+        if (typeof cls === 'object' && cls.name) return cls.name;
+        // If it's an ID, look it up in allClasses
+        const found = allClasses.find(c => (c._id || c.id) === cls);
+        return found ? found.name : (typeof cls === 'string' ? `ID: ${cls.slice(-6)}` : 'Unknown');
+    };
 
     if (!subjects || subjects.length === 0) {
         return (
@@ -51,7 +58,7 @@ const SubjectsTable = ({ subjects, onEdit, onDeactivate }) => {
                                         {(sub.classIds || sub.assignedClasses) && (sub.classIds || sub.assignedClasses).length > 0 ? (
                                             (sub.classIds || sub.assignedClasses).slice(0, 3).map((cls, idx) => (
                                                 <span key={idx} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] border border-blue-100">
-                                                    {cls.name || cls}
+                                                    {getClassName(cls)}
                                                 </span>
                                             ))
                                         ) : (

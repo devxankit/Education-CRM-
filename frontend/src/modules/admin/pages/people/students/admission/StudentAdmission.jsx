@@ -8,18 +8,18 @@ const StudentAdmission = () => {
     const navigate = useNavigate();
     const [isComplete, setIsComplete] = useState(false);
     const [submittedId, setSubmittedId] = useState(null);
-    const addStudent = useAdminStore(state => state.addStudent);
+    const admitStudent = useAdminStore(state => state.admitStudent);
 
-    const handleComplete = (data) => {
-        // Here you would make the API call to save data
-        console.log("Submitting Admission Data:", data);
-
-        // Mock Success and persist
-        setTimeout(() => {
-            addStudent(data);
-            setSubmittedId(data.admissionNo || `ADM-${Date.now()}`);
-            setIsComplete(true);
-        }, 1000);
+    const handleComplete = async (data) => {
+        try {
+            const result = await admitStudent(data);
+            if (result) {
+                setSubmittedId(result.admissionNo);
+                setIsComplete(true);
+            }
+        } catch (error) {
+            console.error("Admission failed:", error);
+        }
     };
 
     const handleCancel = () => {

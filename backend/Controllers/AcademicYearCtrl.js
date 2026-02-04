@@ -4,7 +4,7 @@ import AcademicYear from "../Models/AcademicYearModel.js";
 export const createAcademicYear = async (req, res) => {
     try {
         const { name, startDate, endDate } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         const academicYear = new AcademicYear({
             instituteId,
@@ -32,7 +32,7 @@ export const createAcademicYear = async (req, res) => {
 // ================= GET ALL ACADEMIC YEARS =================
 export const getAcademicYears = async (req, res) => {
     try {
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
         const academicYears = await AcademicYear.find({ instituteId }).sort({ startDate: -1 });
 
         res.status(200).json({
@@ -51,7 +51,7 @@ export const getAcademicYears = async (req, res) => {
 export const activateAcademicYear = async (req, res) => {
     try {
         const { id } = req.params;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         // First, deactivate any currently active year
         await AcademicYear.updateMany(

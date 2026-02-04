@@ -16,7 +16,7 @@ export const createTeacher = async (req, res) => {
             firstName, lastName, email,
             phone, branchId, department,
             designation, roleId, experience, joiningDate,
-            teachingStatus, status
+            academicLevel, teachingStatus, status
         } = req.body;
         let { employeeId } = req.body;
         const instituteId = req.user._id;
@@ -52,6 +52,7 @@ export const createTeacher = async (req, res) => {
             phone,
             department,
             designation,
+            academicLevel,
             roleId,
             experience,
             joiningDate: joiningDate || new Date(),
@@ -93,11 +94,27 @@ export const getTeachers = async (req, res) => {
 
         const teachers = await Teacher.find(query)
             // .populate("roleId", "name")
+            .populate("eligibleSubjects", "name code type")
             .sort({ firstName: 1 });
+
+        // Get subject counts for each teacher
+        const teachersWithSubjects = await Promise.all(
+            teachers.map(async (teacher) => {
+                const subjectCount = await TeacherMapping.countDocuments({
+                    teacherId: teacher._id,
+                    status: 'active'
+                });
+
+                return {
+                    ...teacher.toObject(),
+                    eligibleSubjectsCount: subjectCount
+                };
+            })
+        );
 
         res.status(200).json({
             success: true,
-            data: teachers,
+            data: teachersWithSubjects,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

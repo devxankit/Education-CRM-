@@ -1,32 +1,41 @@
 
-import React, { useState } from 'react';
-import { X, User, GraduationCap, BookOpen, Shield, BarChart2, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, User, GraduationCap, BookOpen, Shield, BarChart2, Activity, Edit2 } from 'lucide-react';
 
 // Sub-components
 import QualificationPanel from './QualificationPanel';
 import SubjectEligibilityPanel from './SubjectEligibilityPanel';
 import AcademicRolesPanel from './AcademicRolesPanel';
 
-const TeacherProfileDrawer = ({ isOpen, onClose, teacher }) => {
+const TeacherProfileDrawer = ({ isOpen, onClose, teacher, onEdit }) => {
 
     const [activeTab, setActiveTab] = useState('overview');
 
-    // Mock Data for Profile
+    // Real Data State (initialized from props)
     const [qualifications, setQualifications] = useState({
-        highest: 'M.Sc. Physics',
-        specialization: 'Quantum Mechanics',
-        university: 'Delhi University',
-        experience: 5
+        highest: '',
+        specialization: '',
+        university: '',
+        experience: 0
     });
 
-    const [eligibility, setEligibility] = useState([
-        { id: 1, subject: 'Physics', level: 'School' },
-        { id: 2, subject: 'Science', level: 'School' }
-    ]);
+    const [eligibility, setEligibility] = useState([]);
+    const [academicRoles, setAcademicRoles] = useState([]);
 
-    const academicRoles = [
-        { role: 'Class Teacher', scope: 'Class 9-B', year: '2024-2025' }
-    ];
+    // Sync state with teacher prop when it changes
+    useEffect(() => {
+        if (teacher) {
+            setQualifications({
+                highest: teacher.highestQualification || '',
+                specialization: teacher.specialization || '',
+                university: teacher.university || '',
+                experience: teacher.experience || 0
+            });
+            setEligibility(teacher.eligibleSubjects || []);
+            setAcademicRoles(teacher.academicRoles || []);
+            setActiveTab('overview'); // Reset tab on teacher change
+        }
+    }, [teacher]);
 
     if (!isOpen || !teacher) return null;
 
@@ -56,9 +65,18 @@ const TeacherProfileDrawer = ({ isOpen, onClose, teacher }) => {
                         </h2>
                         <p className="text-xs text-gray-500 mt-1 font-mono">{teacher.code} • {teacher.department}</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onEdit && onEdit(teacher)}
+                            className="p-2 hover:bg-indigo-100 rounded-full text-indigo-600 transition-colors"
+                            title="Edit Teacher"
+                        >
+                            <Edit2 size={18} />
+                        </button>
+                        <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tab Bar */}
@@ -134,8 +152,7 @@ const TeacherProfileDrawer = ({ isOpen, onClose, teacher }) => {
 
                     {activeTab === 'eligibility' && (
                         <SubjectEligibilityPanel
-                            eligibleSubjects={eligibility}
-                            onUpdate={setEligibility}
+                            teacher={teacher}
                         />
                     )}
 

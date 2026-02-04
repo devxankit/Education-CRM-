@@ -9,6 +9,11 @@ import {
     createHomework,
     getHomeworks
 } from "../Controllers/TeacherCtrl.js";
+import {
+    addEligibleSubject,
+    removeEligibleSubject,
+    getEligibleSubjects
+} from "../Controllers/TeacherEligibilityCtrl.js";
 import { AuthMiddleware, isInstitute, isTeacher, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
@@ -29,5 +34,10 @@ router.get("/homework", isTeacher, getHomeworks);
 router.post("/", isAdmin, createTeacher);
 router.get("/", isAdmin, getTeachers);
 router.put("/:id", isAdmin, updateTeacher);
+
+// Eligible Subjects Management
+router.get("/:teacherId/eligible-subjects", isAdmin, getEligibleSubjects);
+router.post("/:teacherId/eligible-subjects", isAdmin, addEligibleSubject);
+router.delete("/:teacherId/eligible-subjects", isAdmin, removeEligibleSubject);
 
 export default router;

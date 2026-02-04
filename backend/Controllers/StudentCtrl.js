@@ -1,5 +1,8 @@
 import Student from "../Models/StudentModel.js";
+import Sequence from "../Models/SequenceModel.js";
+import TeacherMapping from "../Models/TeacherMappingModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
+import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 
 // ================= ADMIT STUDENT (CREATE) =================
 export const admitStudent = async (req, res) => {
@@ -7,26 +10,47 @@ export const admitStudent = async (req, res) => {
         const admissionData = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
-        // 1. Basic unique check
-        const existingStudent = await Student.findOne({
-            $or: [
-                { email: admissionData.email, email: { $ne: null } },
-                { admissionNo: admissionData.admissionNo }
-            ]
-        });
-
-        if (existingStudent) {
-            return res.status(400).json({
-                success: false,
-                message: "Student with this email or Admission No already exists"
-            });
+        // 1. Internal Unique Check (Email)
+        if (admissionData.email) {
+            const existingStudent = await Student.findOne({ email: admissionData.email });
+            if (existingStudent) {
+                return res.status(400).json({ success: false, message: "Student with this email already exists" });
+            }
         }
 
-        // 2. Create Student with all fields from 6-step wizard
+        // 2. Generate Sequential Admission Number
+        const currentYear = new Date().getFullYear().toString();
+        const sequence = await Sequence.findOneAndUpdate(
+            { instituteId, type: 'admission', year: currentYear },
+            { $inc: { sequenceValue: 1 } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        const admissionNo = `${sequence.prefix || 'ADM'}-${currentYear}-${sequence.sequenceValue.toString().padStart(4, '0')}`;
+
+        // 3. Handle Cloudinary Document Uploads
+        if (admissionData.documents) {
+            const uploadPromises = Object.keys(admissionData.documents).map(async (key) => {
+                const doc = admissionData.documents[key];
+                if (doc && doc.base64) {
+                    try {
+                        const cloudinaryUrl = await uploadBase64ToCloudinary(doc.base64, `students/documents/${instituteId}`);
+                        doc.url = cloudinaryUrl;
+                        delete doc.base64; // Remove base64 from object before saving to DB
+                    } catch (uploadError) {
+                        console.error(`Error uploading ${key} to Cloudinary:`, uploadError);
+                        // Optionally set an error status or keep going
+                    }
+                }
+            });
+            await Promise.all(uploadPromises);
+        }
+
+        // 4. Create Student
         const student = new Student({
             ...admissionData,
+            admissionNo,
             instituteId,
-            // Ensure branchId is taken from body if present, else fallback logic
             branchId: admissionData.branchId
         });
 
@@ -38,6 +62,7 @@ export const admitStudent = async (req, res) => {
             data: student,
         });
     } catch (error) {
+        console.error("Admission Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -61,6 +86,53 @@ export const getStudents = async (req, res) => {
         res.status(200).json({
             success: true,
             data: students,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET STUDENT BY ID =================
+export const getStudentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const student = await Student.findOne({ _id: id, instituteId })
+            .populate("branchId", "name code city phone")
+            .populate("classId", "name level board")
+            .populate("sectionId", "name capacity");
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        // Fetch subjects for this student's section
+        let subjects = [];
+        if (student.sectionId) {
+            const mappings = await TeacherMapping.find({
+                sectionId: student.sectionId._id
+            })
+                .populate("subjectId", "name code type")
+                .populate("teacherId", "firstName lastName");
+
+            subjects = mappings.map(m => ({
+                _id: m.subjectId?._id,
+                name: m.subjectId?.name,
+                code: m.subjectId?.code,
+                type: m.subjectId?.type,
+                teacher: m.teacherId
+                    ? `${m.teacherId.firstName || ''} ${m.teacherId.lastName || ''}`.trim()
+                    : 'Not Assigned'
+            }));
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                ...student.toObject(),
+                subjects
+            },
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

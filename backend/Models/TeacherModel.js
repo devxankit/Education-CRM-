@@ -68,6 +68,14 @@ const teacherSchema = new mongoose.Schema(
             enum: ["active", "inactive", "suspended"],
             default: "active",
         },
+        academicLevel: {
+            type: String,
+            enum: ["Primary", "Middle School", "High School", "Senior Secondary", "Undergraduate", "Postgraduate", "Diploma", "Vocational"],
+        },
+        eligibleSubjects: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Subject"
+        }],
         lastLogin: {
             type: Date,
         },

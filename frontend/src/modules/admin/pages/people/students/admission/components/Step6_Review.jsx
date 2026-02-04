@@ -1,8 +1,20 @@
-
 import React from 'react';
 import { Check, Edit2 } from 'lucide-react';
+import { useAdminStore } from '../../../../../../../store/adminStore';
 
 const Step6_Review = ({ data, onEditStep }) => {
+    const classes = useAdminStore(state => state.classes);
+    const sectionsObj = useAdminStore(state => state.sections);
+    const transportRoutes = useAdminStore(state => state.transportRoutes);
+    const branches = useAdminStore(state => state.branches);
+
+    // Resolution Logic
+    const classObj = classes.find(c => c._id === data.classId);
+    const sectionObj = (sectionsObj[data.classId] || []).find(s => s._id === data.sectionId);
+    const branchObj = branches.find(b => b._id === data.branchId);
+
+    const routeObj = transportRoutes.find(r => r._id === data.routeId);
+    const stopObj = routeObj?.stops?.find(s => s._id === data.stopId);
 
     const Section = ({ title, step, children }) => (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-4">
@@ -52,14 +64,17 @@ const Step6_Review = ({ data, onEditStep }) => {
                 </Section>
 
                 <Section title="3. Academic Details" step={3}>
+                    <Row label="Campus" value={branchObj?.name} />
                     <Row label="Admission No" value={data.admissionNo} />
                     <Row label="Date" value={data.admissionDate} />
-                    <Row label="Class Assigned" value={`${data.class} - ${data.section}`} />
+                    <Row label="Class Assigned" value={`${classObj?.name || 'N/A'} - ${sectionObj?.name || 'N/A'}`} />
                 </Section>
 
                 <Section title="4. Facilities" step={4}>
                     <Row label="Transport" value={data.transportRequired ? 'Yes' : 'No'} />
-                    {data.transportRequired && <Row label="Route" value={`${data.routeId} / ${data.stopId}`} />}
+                    {data.transportRequired && routeObj && (
+                        <Row label="Route" value={`${routeObj.name} / ${stopObj?.name || 'N/A'}`} />
+                    )}
                     <Row label="Hostel" value={data.hostelRequired ? 'Yes' : 'No'} />
                 </Section>
 

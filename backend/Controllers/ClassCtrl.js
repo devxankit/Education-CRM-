@@ -6,7 +6,7 @@ import Section from "../Models/SectionModel.js";
 export const createClass = async (req, res) => {
     try {
         const { name, level, board, branchId } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
@@ -35,7 +35,7 @@ export const createClass = async (req, res) => {
 export const getClasses = async (req, res) => {
     try {
         const { branchId } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
@@ -86,7 +86,7 @@ export const updateClass = async (req, res) => {
 export const createSection = async (req, res) => {
     try {
         const { classId, name, capacity, teacherId } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         const classData = await Class.findById(classId);
         if (!classData) {
@@ -122,7 +122,8 @@ export const getSectionsByClass = async (req, res) => {
             return res.status(200).json({ success: true, data: [] });
         }
 
-        const query = {};
+        const instituteId = req.user.instituteId || req.user._id;
+        const query = { instituteId };
         if (classId !== 'main') {
             query.classId = classId;
         }

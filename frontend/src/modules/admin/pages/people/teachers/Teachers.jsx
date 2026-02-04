@@ -5,6 +5,7 @@ import { Filter, Download, Search, UserPlus, Loader2 } from 'lucide-react';
 import TeacherTable from './components/TeacherTable';
 import TeacherProfileDrawer from './components/TeacherProfileDrawer';
 import CreateTeacherModal from './components/CreateTeacherModal';
+import EditTeacherModal from './components/EditTeacherModal';
 import { API_URL } from '../../../../../app/api';
 
 const Teachers = () => {
@@ -14,6 +15,7 @@ const Teachers = () => {
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -102,6 +104,36 @@ const Teachers = () => {
         } catch (error) {
             console.error('Error creating teacher:', error);
             alert('An error occurred while adding teacher');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditTeacher = async (id, formData) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/teacher/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Teacher updated successfully!');
+                fetchAllData(); // Refresh list
+                setIsEditModalOpen(false);
+                setIsDrawerOpen(false);
+            } else {
+                alert(data.message || 'Failed to update teacher');
+            }
+        } catch (error) {
+            console.error('Error updating teacher:', error);
+            alert('An error occurred while updating teacher');
         } finally {
             setLoading(false);
         }
@@ -200,11 +232,24 @@ const Teachers = () => {
                 loading={loading}
             />
 
+            <EditTeacherModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                teacher={selectedTeacher}
+                onSave={handleEditTeacher}
+                branches={branches}
+                loading={loading}
+            />
+
             {/* Detail Drawer */}
             <TeacherProfileDrawer
                 isOpen={isDrawerOpen}
                 onClose={handleClose}
                 teacher={selectedTeacher}
+                onEdit={(teacher) => {
+                    setSelectedTeacher(teacher);
+                    setIsEditModalOpen(true);
+                }}
             />
 
         </div>

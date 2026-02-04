@@ -2,10 +2,11 @@ import express from "express";
 import {
     admitStudent,
     getStudents,
+    getStudentById,
     updateStudent,
     loginStudent
 } from "../Controllers/StudentCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
@@ -14,10 +15,11 @@ router.post("/login", loginStudent);
 
 // Protected routes
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 router.post("/admit", admitStudent);
 router.get("/", getStudents);
+router.get("/:id", getStudentById);
 router.put("/:id", updateStudent);
 
 export default router;
