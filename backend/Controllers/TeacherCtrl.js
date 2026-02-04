@@ -7,13 +7,14 @@ import Section from "../Models/SectionModel.js";
 import Subject from "../Models/SubjectModel.js";
 import Class from "../Models/ClassModel.js";
 import Student from "../Models/StudentModel.js";
+import Homework from "../Models/HomeworkModel.js";
 
 // ================= CREATE TEACHER =================
 export const createTeacher = async (req, res) => {
     try {
         const {
             firstName, lastName, email,
-             phone, branchId, department,
+            phone, branchId, department,
             designation, roleId, experience, joiningDate,
             teachingStatus, status
         } = req.body;
@@ -250,6 +251,96 @@ export const getTeacherClasses = async (req, res) => {
                 totalSubjects: subjectsArray.length,
                 totalClasses: mappings.length
             }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET CLASS STUDENTS =================
+export const getClassStudents = async (req, res) => {
+    try {
+        const { classId, sectionId } = req.query;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        if (!classId || !sectionId) {
+            return res.status(400).json({ success: false, message: "Class ID and Section ID are required" });
+        }
+
+        const students = await Student.find({
+            instituteId,
+            classId,
+            sectionId,
+            status: "active"
+        }).select("firstName lastName admissionNo rollNo gender photo");
+
+        res.status(200).json({
+            success: true,
+            data: students
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CREATE HOMEWORK =================
+export const createHomework = async (req, res) => {
+    try {
+        const {
+            classId, sectionId, subjectId, title,
+            instructions, dueDate, attachments, status,
+            academicYearId, branchId
+        } = req.body;
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const homework = new Homework({
+            instituteId,
+            branchId,
+            teacherId,
+            classId,
+            sectionId,
+            subjectId,
+            title,
+            instructions,
+            dueDate,
+            attachments,
+            status: status || "published",
+            academicYearId
+        });
+
+        await homework.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Homework created successfully",
+            data: homework
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER HOMEWORKS =================
+export const getHomeworks = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const { classId, sectionId, subjectId } = req.query;
+
+        let query = { teacherId };
+        if (classId) query.classId = classId;
+        if (sectionId) query.sectionId = sectionId;
+        if (subjectId) query.subjectId = subjectId;
+
+        const homeworks = await Homework.find(query)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: homeworks
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -3,9 +3,13 @@ import {
     createTeacher,
     getTeachers,
     updateTeacher,
-    loginTeacher
+    loginTeacher,
+    getTeacherClasses,
+    getClassStudents,
+    createHomework,
+    getHomeworks
 } from "../Controllers/TeacherCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isInstitute, isTeacher, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
@@ -14,10 +18,16 @@ router.post("/login", loginTeacher);
 
 // Protected routes
 router.use(AuthMiddleware);
-router.use(isInstitute);
 
-router.post("/", createTeacher);
-router.get("/", getTeachers);
-router.put("/:id", updateTeacher);
+// Teacher/Staff specific routes
+router.get("/classes", isTeacher, getTeacherClasses);
+router.get("/students", isTeacher, getClassStudents);
+router.post("/homework", isTeacher, createHomework);
+router.get("/homework", isTeacher, getHomeworks);
+
+// Management routes
+router.post("/", isAdmin, createTeacher);
+router.get("/", isAdmin, getTeachers);
+router.put("/:id", isAdmin, updateTeacher);
 
 export default router;
