@@ -13,7 +13,7 @@ export const createTeacher = async (req, res) => {
     try {
         const {
             firstName, lastName, email,
-            password, phone, branchId, department,
+             phone, branchId, department,
             designation, roleId, experience, joiningDate,
             teachingStatus, status
         } = req.body;
