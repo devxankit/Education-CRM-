@@ -10,6 +10,21 @@ export const getHostelConfig = async (req, res) => {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
 
+        // Handle 'main' or invalid ID to avoid CastError
+        if (branchId === 'main' || branchId.length !== 24) {
+            return res.status(200).json({
+                success: true,
+                message: "No specific configuration for this branch level, providing defaults",
+                data: {
+                    branchId,
+                    availability: { isEnabled: true, separateBlocks: { boys: true, girls: true, staff: false }, maxHostels: 2 },
+                    roomRules: { roomTypes: { single: true, double: true, triple: false, dorm: false }, maxBedsPerRoom: 4 },
+                    feeLink: { isLinked: true, feeBasis: 'room_type', collectionFrequency: 'term' },
+                    safetyRules: { mandatoryGuardian: true, medicalInfo: true, wardenAssignment: true }
+                }
+            });
+        }
+
         let config = await HostelConfig.findOne({ instituteId, branchId });
 
         if (!config) {
@@ -42,8 +57,8 @@ export const saveHostelConfig = async (req, res) => {
         const { branchId, ...configData } = req.body;
         const instituteId = req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required to save hostel configuration" });
         }
 
         const existing = await HostelConfig.findOne({ instituteId, branchId });

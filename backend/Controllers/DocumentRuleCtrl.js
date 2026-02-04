@@ -4,10 +4,41 @@ import DocumentRule from "../Models/DocumentRuleModel.js";
 export const getDocumentRule = async (req, res) => {
     try {
         const { branchId } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
+        }
+
+        // Handle 'main' or invalid ID to avoid CastError
+        if (branchId === 'main' || branchId.length !== 24) {
+            return res.status(200).json({
+                success: true,
+                message: "No specific configuration for this branch level, providing defaults",
+                data: {
+                    branchId,
+                    categories: [
+                        { name: 'Identity Proof', active: true, mandatory: true },
+                        { name: 'Address Proof', active: true, mandatory: true },
+                        { name: 'Academic Records', active: true, mandatory: false },
+                        { name: 'Medical Records', active: false, mandatory: false },
+                        { name: 'Transfer Certificates', active: true, mandatory: true },
+                    ],
+                    workflow: { verificationLevel: 'single', autoReject: false, retentionYears: 5, autoArchive: true, expiryAction: 'Archive' },
+                    studentRules: [
+                        { name: 'Aadhaar Card', stage: 'admission', mandatory: true, verifier: 'admin' },
+                        { name: 'Birth Certificate', stage: 'admission', mandatory: true, verifier: 'admin' },
+                        { name: 'Transfer Certificate', stage: 'post-admission', mandatory: true, verifier: 'registrar' },
+                        { name: 'Previous Marksheet', stage: 'admission', mandatory: false, verifier: 'class-teacher' }
+                    ],
+                    staffRules: [
+                        { name: 'Identity Proof (PAN/Aadhaar)', type: 'all', mandatory: true },
+                        { name: 'Qualification Degrees', type: 'teaching', mandatory: true },
+                        { name: 'Experience Letters', type: 'teaching', mandatory: true },
+                        { name: 'Police Verification', type: 'all', mandatory: false }
+                    ]
+                }
+            });
         }
 
         let rule = await DocumentRule.findOne({ instituteId, branchId });
@@ -56,10 +87,10 @@ export const getDocumentRule = async (req, res) => {
 export const saveDocumentRule = async (req, res) => {
     try {
         const { branchId, ...ruleData } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required to save document policy" });
         }
 
         const existing = await DocumentRule.findOne({ instituteId, branchId });

@@ -6,13 +6,13 @@ import {
     updateBranch,
     deleteBranch
 } from "../Controllers/BranchCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
 // Apply auth middleware to all routes
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 router.post("/", createBranch);
 router.get("/", getBranches);

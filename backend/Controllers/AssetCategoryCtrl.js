@@ -6,8 +6,8 @@ export const createAssetCategory = async (req, res) => {
         const { name, code, type, trackingType, serialRequired, depreciation, depMethod, branchId } = req.body;
         const instituteId = req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required to create a category" });
         }
 
         const category = new AssetCategory({
@@ -41,7 +41,14 @@ export const getAssetCategories = async (req, res) => {
         const instituteId = req.user._id;
 
         let query = { instituteId };
-        if (branchId) query.branchId = branchId;
+        if (branchId && branchId !== 'main' && branchId.length === 24) {
+            query.branchId = branchId;
+        } else if (branchId === 'main') {
+            // If main, maybe return all or none? 
+            // Most other controllers return empty list or filter by institute only.
+            // Let's keep it consistent: if branchId is main, we don't filter by branchId.
+        }
+
         if (status) query.status = status;
         if (type) query.type = type;
 

@@ -2,23 +2,24 @@
 import React, { useState } from 'react';
 import { MessageCircle, Mail, Smartphone, Bell, HelpCircle } from 'lucide-react';
 
-const SupportChannelPanel = ({ isLocked }) => {
+const SupportChannelPanel = ({ isLocked, channels = [], onChange }) => {
 
-    // Mock Channels
-    const [channels, setChannels] = useState([
-        { id: 'in_app', name: 'In-App Support', icon: HelpCircle, enabled: true, autoAck: true },
-        { id: 'email', name: 'Email Helpdesk', icon: Mail, enabled: true, autoAck: true },
-        { id: 'whatsapp', name: 'WhatsApp Bot', icon: MessageCircle, enabled: false, autoAck: false }
-    ]);
+    const iconMap = {
+        in_app: HelpCircle,
+        email: Mail,
+        whatsapp: MessageCircle,
+        mobile: Smartphone,
+        sms: Bell
+    };
 
     const toggleChannel = (id) => {
         if (isLocked) return;
-        setChannels(prev => prev.map(c => c.id === id ? { ...c, enabled: !c.enabled } : c));
+        onChange(channels.map(c => c.id === id ? { ...c, enabled: !c.enabled } : c));
     };
 
     const toggleAck = (id) => {
         if (isLocked) return;
-        setChannels(prev => prev.map(c => c.id === id ? { ...c, autoAck: !c.autoAck } : c));
+        onChange(channels.map(c => c.id === id ? { ...c, autoAck: !c.autoAck } : c));
     };
 
     return (
@@ -33,7 +34,7 @@ const SupportChannelPanel = ({ isLocked }) => {
 
             <div className="p-4 space-y-3">
                 {channels.map((channel) => {
-                    const Icon = channel.icon;
+                    const Icon = iconMap[channel.id] || HelpCircle;
                     return (
                         <div key={channel.id} className={`border rounded-lg p-3 transition-all ${channel.enabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-75'}`}>
                             <div className="flex items-center justify-between">

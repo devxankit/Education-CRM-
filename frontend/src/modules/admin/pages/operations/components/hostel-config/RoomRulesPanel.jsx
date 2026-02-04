@@ -2,30 +2,19 @@
 import React, { useState } from 'react';
 import { Home, LayoutGrid } from 'lucide-react';
 
-const RoomRulesPanel = ({ isLocked }) => {
-
-    const [rules, setRules] = useState({
-        roomTypes: {
-            single: true,
-            double: true,
-            triple: false,
-            dorm: false
-        },
-        maxBedsPerRoom: 4,
-        allowMixed: false
-    });
+const RoomRulesPanel = ({ isLocked, data = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...data, [field]: value });
     };
 
     const toggleType = (type) => {
         if (isLocked) return;
-        setRules(prev => ({
-            ...prev,
-            roomTypes: { ...prev.roomTypes, [type]: !prev.roomTypes[type] }
-        }));
+        onChange({
+            ...data,
+            roomTypes: { ...data.roomTypes, [type]: !data.roomTypes?.[type] }
+        });
     };
 
     return (
@@ -51,7 +40,7 @@ const RoomRulesPanel = ({ isLocked }) => {
                                 </span>
                                 <input
                                     type="checkbox"
-                                    checked={rules.roomTypes[type]}
+                                    checked={data.roomTypes?.[type] || false}
                                     onChange={() => toggleType(type)}
                                     disabled={isLocked}
                                     className="w-4 h-4 text-teal-600 rounded"
@@ -72,7 +61,7 @@ const RoomRulesPanel = ({ isLocked }) => {
                         <input
                             type="number"
                             min="1" max="20"
-                            value={rules.maxBedsPerRoom}
+                            value={data.maxBedsPerRoom || 0}
                             onChange={(e) => handleChange('maxBedsPerRoom', Number(e.target.value))}
                             disabled={isLocked}
                             className="w-full px-3 py-2 border border-gray-300 rounded text-center font-bold text-teal-800"

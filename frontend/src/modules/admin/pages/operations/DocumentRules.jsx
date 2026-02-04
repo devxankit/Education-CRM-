@@ -1,6 +1,8 @@
 
-import React, { useState } from 'react';
-import { Save, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, AlertTriangle, Loader2 } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
 
 // Components
@@ -10,21 +12,96 @@ import StaffDocumentRulesPanel from './components/document-rules/StaffDocumentRu
 import VerificationWorkflowPanel from './components/document-rules/VerificationWorkflowPanel';
 
 const DocumentRules = () => {
+    const { user } = useAppStore();
+    const { fetchDocumentRule, saveDocumentRule, toggleDocumentLock } = useAdminStore();
 
     // Global State
+    const [loading, setLoading] = useState(true);
     const [isLocked, setIsLocked] = useState(false);
     const [branch, setBranch] = useState('Global Policy');
+    const [policyId, setPolicyId] = useState(null);
 
-    const handleLock = () => {
+    // Form State
+    const [categories, setCategories] = useState([]);
+    const [workflow, setWorkflow] = useState({
+        verificationLevel: 'single',
+        autoReject: false,
+        retentionYears: 5,
+        autoArchive: true,
+        expiryAction: 'Archive'
+    });
+    const [studentRules, setStudentRules] = useState([]);
+    const [staffRules, setStaffRules] = useState([]);
+    const [isDirty, setIsDirty] = useState(false);
+
+    useEffect(() => {
+        const loadPolicy = async () => {
+            setLoading(true);
+            const branchId = user?.branchId || 'main'; // This might need adjustment if 'main' is not valid
+            const data = await fetchDocumentRule(branchId);
+            if (data) {
+                setPolicyId(data._id);
+                setIsLocked(data.isLocked || false);
+                setCategories(data.categories || []);
+                setWorkflow(data.workflow || {
+                    verificationLevel: 'single',
+                    autoReject: false,
+                    retentionYears: 5,
+                    autoArchive: true,
+                    expiryAction: 'Archive'
+                });
+                setStudentRules(data.studentRules || []);
+                setStaffRules(data.staffRules || []);
+            }
+            setLoading(false);
+            setIsDirty(false);
+        };
+        loadPolicy();
+    }, [user, fetchDocumentRule]);
+
+    const handleLock = async () => {
+        if (!policyId) {
+            alert("Please save the policy first before locking.");
+            return;
+        }
         if (window.confirm("Activate and Lock Document Rules? This will mandate uploads for all new entries.")) {
-            setIsLocked(true);
+            const updated = await toggleDocumentLock(policyId, { isLocked: true });
+            if (updated) setIsLocked(true);
         }
     };
 
-    const handleUnlock = () => {
+    const handleUnlock = async () => {
         const reason = prompt("Enter Audit Reason for Unlocking Document Config:");
-        if (reason) setIsLocked(false);
+        if (reason) {
+            const updated = await toggleDocumentLock(policyId, { isLocked: false, unlockReason: reason });
+            if (updated) setIsLocked(false);
+        }
     };
+
+    const handleSave = async () => {
+        const branchId = user?.branchId || 'main';
+        const payload = {
+            branchId,
+            categories,
+            workflow,
+            studentRules,
+            staffRules
+        };
+        const saved = await saveDocumentRule(payload);
+        if (saved) {
+            setPolicyId(saved._id);
+            setIsDirty(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center">
+                <Loader2 className="animate-spin text-indigo-500 mb-2" size={32} />
+                <p className="text-gray-500 text-sm font-medium italic">Loading document policies...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -60,12 +137,26 @@ const DocumentRules = () => {
 
                 {/* 1. Categories */}
                 <div className="lg:col-span-1">
-                    <DocumentCategoryPanel isLocked={isLocked} />
+                    <DocumentCategoryPanel
+                        isLocked={isLocked}
+                        categories={categories}
+                        setCategories={(newCats) => {
+                            setCategories(newCats);
+                            setIsDirty(true);
+                        }}
+                    />
                 </div>
 
                 {/* 2. Verification & Retention */}
                 <div className="lg:col-span-1">
-                    <VerificationWorkflowPanel isLocked={isLocked} />
+                    <VerificationWorkflowPanel
+                        isLocked={isLocked}
+                        workflow={workflow}
+                        setWorkflow={(newWf) => {
+                            setWorkflow(newWf);
+                            setIsDirty(true);
+                        }}
+                    />
                 </div>
 
                 {/* 3. Placeholder or Stats */}
@@ -89,24 +180,41 @@ const DocumentRules = () => {
 
                 {/* 4. Student Rules (Full Width) */}
                 <div className="lg:col-span-3">
-                    <StudentDocumentRulesPanel isLocked={isLocked} />
+                    <StudentDocumentRulesPanel
+                        isLocked={isLocked}
+                        rules={studentRules}
+                        setRules={(newRules) => {
+                            setStudentRules(newRules);
+                            setIsDirty(true);
+                        }}
+                    />
                 </div>
 
                 {/* 5. Staff Rules (Full Width) */}
                 <div className="lg:col-span-3">
-                    <StaffDocumentRulesPanel isLocked={isLocked} />
+                    <StaffDocumentRulesPanel
+                        isLocked={isLocked}
+                        rules={staffRules}
+                        setRules={(newRules) => {
+                            setStaffRules(newRules);
+                            setIsDirty(true);
+                        }}
+                    />
                 </div>
 
             </div>
 
             {/* Footer Actions */}
-            {!isLocked && (
+            {!isLocked && isDirty && (
                 <div className="fixed bottom-0 right-0 left-0 md:left-64 bg-white border-t border-gray-200 p-4 flex justify-between items-center z-10">
                     <div className="flex items-center gap-2 text-amber-600 text-sm">
                         <AlertTriangle size={16} />
                         <span>Unsaved changes in draft.</span>
                     </div>
-                    <button className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg font-medium">
+                    <button
+                        onClick={handleSave}
+                        className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg font-medium"
+                    >
                         <Save size={18} /> Save Policy
                     </button>
                 </div>

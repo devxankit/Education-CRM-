@@ -1,21 +1,14 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Files, CheckCircle2, XCircle } from 'lucide-react';
 
-const DocumentCategoryPanel = ({ isLocked }) => {
+const DocumentCategoryPanel = ({ isLocked, categories, setCategories }) => {
 
-    // Mock Categories
-    const [categories, setCategories] = useState([
-        { id: 1, name: 'Identity Proof', active: true, mandatory: true },
-        { id: 2, name: 'Address Proof', active: true, mandatory: true },
-        { id: 3, name: 'Academic Records', active: true, mandatory: false },
-        { id: 4, name: 'Medical Records', active: false, mandatory: false },
-        { id: 5, name: 'Transfer Certificates', active: true, mandatory: true },
-    ]);
-
-    const toggleStatus = (id) => {
+    const toggleStatus = (index) => {
         if (isLocked) return;
-        setCategories(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
+        const newCats = [...categories];
+        newCats[index].active = !newCats[index].active;
+        setCategories(newCats);
     };
 
     return (
@@ -30,8 +23,8 @@ const DocumentCategoryPanel = ({ isLocked }) => {
 
             <div className="p-4">
                 <div className="space-y-3">
-                    {categories.map((cat) => (
-                        <div key={cat.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                    {categories.map((cat, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
                             <div className="flex items-center gap-3">
                                 <span className={`p-2 rounded-full ${cat.active ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
                                     <Files size={16} />
@@ -45,7 +38,7 @@ const DocumentCategoryPanel = ({ isLocked }) => {
                             </div>
 
                             <button
-                                onClick={() => toggleStatus(cat.id)}
+                                onClick={() => toggleStatus(index)}
                                 disabled={isLocked}
                                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold transition-colors ${cat.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                             >

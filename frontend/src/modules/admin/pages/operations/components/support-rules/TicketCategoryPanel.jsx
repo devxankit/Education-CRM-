@@ -2,19 +2,19 @@
 import React, { useState } from 'react';
 import { Tag, AlertCircle, Plus, Trash2 } from 'lucide-react';
 
-const TicketCategoryPanel = ({ isLocked }) => {
+const TicketCategoryPanel = ({ isLocked, categories = [], onChange }) => {
 
-    const [categories, setCategories] = useState([
-        { id: 1, name: 'Academic Issues', priority: 'medium', active: true },
-        { id: 2, name: 'Fee & Billing', priority: 'high', active: true },
-        { id: 3, name: 'Transport', priority: 'medium', active: true },
-        { id: 4, name: 'Technical Support', priority: 'low', active: true },
-        { id: 5, name: 'Emergency / Safety', priority: 'critical', active: true }
-    ]);
-
-    const handleRemove = (id) => {
+    const handleAdd = () => {
         if (isLocked) return;
-        setCategories(prev => prev.filter(c => c.id !== id));
+        const name = prompt("Enter new category name:");
+        if (name) {
+            onChange([...categories, { name, priority: 'medium', active: true }]);
+        }
+    };
+
+    const handleRemove = (index) => {
+        if (isLocked) return;
+        onChange(categories.filter((_, i) => i !== index));
     };
 
     const getPriorityColor = (p) => {
@@ -37,15 +37,18 @@ const TicketCategoryPanel = ({ isLocked }) => {
                     </div>
                 </div>
                 {!isLocked && (
-                    <button className="p-1.5 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 transition-colors">
+                    <button
+                        onClick={handleAdd}
+                        className="p-1.5 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 transition-colors"
+                    >
                         <Plus size={16} />
                     </button>
                 )}
             </div>
 
             <div className="p-4 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                {categories.map((cat) => (
-                    <div key={cat.id} className="flex items-center justify-between p-2.5 border border-gray-100 rounded hover:bg-gray-50 group">
+                {categories.map((cat, index) => (
+                    <div key={cat._id || index} className="flex items-center justify-between p-2.5 border border-gray-100 rounded hover:bg-gray-50 group">
                         <div className="flex items-center gap-3">
                             <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityColor(cat.priority)}`}>
                                 {cat.priority}
@@ -54,7 +57,7 @@ const TicketCategoryPanel = ({ isLocked }) => {
                         </div>
 
                         {!isLocked ? (
-                            <button onClick={() => handleRemove(cat.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onClick={() => handleRemove(index)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                                 <Trash2 size={14} />
                             </button>
                         ) : (

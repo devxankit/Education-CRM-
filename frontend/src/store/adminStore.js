@@ -821,7 +821,7 @@ export const useAdminStore = create(
             saveAdmissionRule: async (ruleData) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.post(`${API_URL}/admission-rule`, ruleData, {
+                    const response = await axios.post(`${API_URL}/admission-rule/save`, ruleData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -851,7 +851,7 @@ export const useAdminStore = create(
             saveTransportConfig: async (configData) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.post(`${API_URL}/transport-config`, configData, {
+                    const response = await axios.post(`${API_URL}/transport-config/save`, configData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -861,6 +861,21 @@ export const useAdminStore = create(
                 } catch (error) {
                     console.error('Error saving transport config:', error);
                     get().addToast(error.response?.data?.message || 'Error saving transport config', 'error');
+                }
+            },
+            toggleTransportLock: async (id, lockData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/transport-config/${id}/lock`, lockData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(`Transport policy ${lockData.isLocked ? 'locked' : 'unlocked'}`, 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error toggling transport lock:', error);
+                    get().addToast(error.response?.data?.message || 'Error toggling transport lock', 'error');
                 }
             },
 
@@ -930,6 +945,253 @@ export const useAdminStore = create(
                 } catch (error) {
                     console.error('Error deleting transport route:', error);
                     get().addToast(error.response?.data?.message || 'Error deleting transport route', 'error');
+                }
+            },
+
+            // Actions: Asset Governance
+            assetCategories: [],
+            fetchAssetCategories: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/asset-category?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ assetCategories: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching asset categories:', error);
+                }
+            },
+            addAssetCategory: async (categoryData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/asset-category`, categoryData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            assetCategories: [...state.assetCategories, response.data.data]
+                        }));
+                        get().addToast('Asset category created', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error adding asset category:', error);
+                    get().addToast(error.response?.data?.message || 'Error creating asset category', 'error');
+                }
+            },
+            updateAssetCategory: async (id, data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/asset-category/${id}`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            assetCategories: state.assetCategories.map(c => c._id === id ? response.data.data : c)
+                        }));
+                        get().addToast('Asset category updated', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error updating asset category:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating asset category', 'error');
+                }
+            },
+            deleteAssetCategory: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/asset-category/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            assetCategories: state.assetCategories.filter(c => c._id !== id)
+                        }));
+                        get().addToast('Asset category deleted', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting asset category:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting asset category', 'error');
+                }
+            },
+            fetchAssetRule: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/asset-rule?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching asset rule:', error);
+                }
+            },
+            saveAssetRule: async (ruleData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/asset-rule/save`, ruleData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Asset governance policy saved', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error saving asset rule:', error);
+                    get().addToast(error.response?.data?.message || 'Error saving asset policy', 'error');
+                }
+            },
+            toggleAssetLock: async (id, lockData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/asset-rule/${id}/lock`, lockData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(`Asset policy ${lockData.isLocked ? 'locked' : 'unlocked'}`, 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error toggling asset lock:', error);
+                    get().addToast(error.response?.data?.message || 'Error toggling asset lock', 'error');
+                }
+            },
+
+            // Actions: Document Compliance Rules
+            fetchDocumentRule: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/document-rule?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching document rule:', error);
+                }
+            },
+            saveDocumentRule: async (ruleData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/document-rule/save`, ruleData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Document policy saved', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error saving document rule:', error);
+                    get().addToast(error.response?.data?.message || 'Error saving document policy', 'error');
+                }
+            },
+            toggleDocumentLock: async (id, lockData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/document-rule/${id}/lock`, lockData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(`Document policy ${lockData.isLocked ? 'locked' : 'unlocked'}`, 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error toggling document lock:', error);
+                    get().addToast(error.response?.data?.message || 'Error toggling document lock', 'error');
+                }
+            },
+
+            // Actions: Support Rules
+            fetchSupportRule: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/support-rule?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching support rule:', error);
+                }
+            },
+            saveSupportRule: async (ruleData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/support-rule/save`, ruleData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Support policy saved', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error saving support rule:', error);
+                    get().addToast(error.response?.data?.message || 'Error saving support policy', 'error');
+                }
+            },
+            toggleSupportLock: async (id, lockData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/support-rule/${id}/lock`, lockData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(`Support policy ${lockData.isLocked ? 'locked' : 'unlocked'}`, 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error toggling support lock:', error);
+                    get().addToast(error.response?.data?.message || 'Error toggling support lock', 'error');
+                }
+            },
+
+            // Actions: Hostel Configuration
+            fetchHostelConfig: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/hostel-config?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching hostel config:', error);
+                }
+            },
+            saveHostelConfig: async (configData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/hostel-config/save`, configData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Hostel configuration saved', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error saving hostel config:', error);
+                    get().addToast(error.response?.data?.message || 'Error saving hostel config', 'error');
+                }
+            },
+            toggleHostelLock: async (id, lockData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/hostel-config/${id}/lock`, lockData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(`Hostel config ${lockData.isLocked ? 'locked' : 'unlocked'}`, 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error toggling hostel lock:', error);
+                    get().addToast(error.response?.data?.message || 'Error toggling hostel lock', 'error');
                 }
             },
         }),

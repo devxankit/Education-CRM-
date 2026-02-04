@@ -157,7 +157,7 @@ export const loginStaff = async (req, res) => {
             });
         }
 
-        const token = generateToken(staff._id);
+        const token = generateToken(staff._id, "Staff");
 
         // Update last login
         staff.lastLogin = new Date();

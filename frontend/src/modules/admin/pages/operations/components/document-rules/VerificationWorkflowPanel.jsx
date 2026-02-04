@@ -1,20 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ShieldCheck, Archive, Clock } from 'lucide-react';
 
-const VerificationWorkflowPanel = ({ isLocked }) => {
-
-    // Workflow State
-    const [workflow, setWorkflow] = useState({
-        verificationLevel: 'single', // single | multi
-        autoReject: false,
-        retentionYears: 5,
-        autoArchive: true
-    });
+const VerificationWorkflowPanel = ({ isLocked, workflow, setWorkflow }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setWorkflow(prev => ({ ...prev, [field]: value }));
+        setWorkflow({ ...workflow, [field]: value });
     };
 
     return (
@@ -96,10 +88,12 @@ const VerificationWorkflowPanel = ({ isLocked }) => {
                         <span className="text-xs text-gray-600">Action after Expiry</span>
                         <select
                             disabled={isLocked}
+                            value={workflow.expiryAction || 'Archive'}
+                            onChange={(e) => handleChange('expiryAction', e.target.value)}
                             className="bg-white border border-gray-200 text-xs rounded px-2 py-1 outline-none"
                         >
-                            <option>Auto Archive (Read-only)</option>
-                            <option>Hard Delete</option>
+                            <option value="Archive">Auto Archive (Read-only)</option>
+                            <option value="Delete">Hard Delete</option>
                         </select>
                     </div>
 

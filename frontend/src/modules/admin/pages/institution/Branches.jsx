@@ -40,6 +40,8 @@ const Branches = () => {
             const data = await response.json();
             if (data.success) {
                 setBranches(data.data);
+            } else {
+                alert(data.message || 'Failed to load branches');
             }
         } catch (error) {
             console.error('Error fetching branches:', error);
@@ -64,8 +66,8 @@ const Branches = () => {
         try {
             const token = localStorage.getItem('token');
             const method = formData._id ? 'PUT' : 'POST';
-            const url = formData._id 
-                ? `${API_URL}/branch/${formData._id}` 
+            const url = formData._id
+                ? `${API_URL}/branch/${formData._id}`
                 : `${API_URL}/branch`;
 
             const response = await fetch(url, {
@@ -97,7 +99,7 @@ const Branches = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            
+
             const response = await fetch(`${API_URL}/branch/${id}`, {
                 method: 'PUT',
                 headers: {
@@ -127,11 +129,11 @@ const Branches = () => {
     const filteredBranches = branches.filter(b => {
         const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             b.code.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        const matchesStatus = statusFilter === 'all' || 
-            (statusFilter === 'active' && b.isActive) || 
+
+        const matchesStatus = statusFilter === 'all' ||
+            (statusFilter === 'active' && b.isActive) ||
             (statusFilter === 'inactive' && !b.isActive);
-            
+
         return matchesSearch && matchesStatus;
     });
 
@@ -172,7 +174,7 @@ const Branches = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <Filter size={16} className="text-gray-400" />
-                    <select 
+                    <select
                         className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-700 outline-none"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}

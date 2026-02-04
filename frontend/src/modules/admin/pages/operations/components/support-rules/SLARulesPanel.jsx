@@ -2,19 +2,11 @@
 import React, { useState } from 'react';
 import { Clock, BarChart } from 'lucide-react';
 
-const SLARulesPanel = ({ isLocked }) => {
-
-    // SLA Configuration (Hours)
-    const [sla, setSla] = useState([
-        { priority: 'critical', response: 0.5, resolution: 4 },
-        { priority: 'high', response: 2, resolution: 12 },
-        { priority: 'medium', response: 6, resolution: 24 },
-        { priority: 'low', response: 24, resolution: 72 }
-    ]);
+const SLARulesPanel = ({ isLocked, sla = [], onChange }) => {
 
     const handleChange = (priority, field, value) => {
         if (isLocked) return;
-        setSla(prev => prev.map(s => s.priority === priority ? { ...s, [field]: Number(value) } : s));
+        onChange(sla.map(s => s.priority === priority ? { ...s, [field]: Number(value) } : s));
     };
 
     return (
@@ -41,7 +33,7 @@ const SLARulesPanel = ({ isLocked }) => {
                             <tr key={s.priority} className="group hover:bg-gray-50">
                                 <td className="py-3 pl-2">
                                     <span className={`text-xs font-bold capitalize ${s.priority === 'critical' ? 'text-red-600' :
-                                            s.priority === 'high' ? 'text-orange-600' : 'text-gray-600'
+                                        s.priority === 'high' ? 'text-orange-600' : 'text-gray-600'
                                         }`}>
                                         {s.priority}
                                     </span>

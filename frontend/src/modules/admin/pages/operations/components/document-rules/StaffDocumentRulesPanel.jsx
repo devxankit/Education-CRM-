@@ -1,34 +1,30 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Briefcase, Plus, Trash2 } from 'lucide-react';
 
-const StaffDocumentRulesPanel = ({ isLocked }) => {
+const StaffDocumentRulesPanel = ({ isLocked, rules, setRules }) => {
 
-    const [rules, setRules] = useState([
-        { id: 1, name: 'Identity Proof (PAN/Aadhaar)', type: 'all', mandatory: true },
-        { id: 2, name: 'Qualification Degrees', type: 'teaching', mandatory: true },
-        { id: 3, name: 'Experience Letters', type: 'teaching', mandatory: true },
-        { id: 4, name: 'Police Verification', type: 'all', mandatory: false }
-    ]);
-
-    const handleRemove = (id) => {
+    const handleRemove = (index) => {
         if (isLocked) return;
-        setRules(prev => prev.filter(r => r.id !== id));
+        const newRules = [...rules];
+        newRules.splice(index, 1);
+        setRules(newRules);
     };
 
     const handleAdd = () => {
         if (isLocked) return;
         setRules([...rules, {
-            id: Date.now(),
             name: 'New Document',
             type: 'all',
             mandatory: false
         }]);
     };
 
-    const handleChange = (id, field, value) => {
+    const handleChange = (index, field, value) => {
         if (isLocked) return;
-        setRules(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+        const newRules = [...rules];
+        newRules[index] = { ...newRules[index], [field]: value };
+        setRules(newRules);
     };
 
     return (
@@ -59,14 +55,14 @@ const StaffDocumentRulesPanel = ({ isLocked }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {rules.map((rule) => (
-                            <tr key={rule.id} className="hover:bg-gray-50 group">
+                        {rules.map((rule, index) => (
+                            <tr key={index} className="hover:bg-gray-50 group">
                                 <td className="px-4 py-2">
                                     <input
                                         type="text"
                                         value={rule.name}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'name', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'name', e.target.value)}
                                         className="w-full bg-transparent border-b border-transparent focus:border-purple-500 outline-none text-sm font-medium text-gray-800"
                                     />
                                 </td>
@@ -74,7 +70,7 @@ const StaffDocumentRulesPanel = ({ isLocked }) => {
                                     <select
                                         value={rule.type}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'type', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'type', e.target.value)}
                                         className="bg-transparent text-xs text-gray-600 border border-gray-200 rounded px-2 py-1 outline-none"
                                     >
                                         <option value="all">All Staff</option>
@@ -88,13 +84,13 @@ const StaffDocumentRulesPanel = ({ isLocked }) => {
                                         type="checkbox"
                                         checked={rule.mandatory}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'mandatory', e.target.checked)}
+                                        onChange={(e) => handleChange(index, 'mandatory', e.target.checked)}
                                         className="w-4 h-4 text-purple-600 rounded cursor-pointer"
                                     />
                                 </td>
                                 <td className="px-4 py-2 text-center">
                                     {!isLocked && (
-                                        <button onClick={() => handleRemove(rule.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onClick={() => handleRemove(index)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                                             <Trash2 size={14} />
                                         </button>
                                     )}
@@ -103,6 +99,11 @@ const StaffDocumentRulesPanel = ({ isLocked }) => {
                         ))}
                     </tbody>
                 </table>
+                {rules.length === 0 && (
+                    <div className="py-8 text-center text-gray-400 italic">
+                        No staff document rules defined.
+                    </div>
+                )}
             </div>
         </div>
     );
