@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, UploadCloud, Calendar, FileText, Check, Trash2 } from 'lucide-react';
 import { useTeacherStore } from '../../../../store/teacherStore';
 
 const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
     const addHomework = useTeacherStore(state => state.addHomework);
+    const profile = useTeacherStore(state => state.profile);
+    const isCreating = useTeacherStore(state => state.isCreatingHomework);
+
     const [selectedClassId, setSelectedClassId] = useState(null);
     const [title, setTitle] = useState('');
     const [instructions, setInstructions] = useState('');
@@ -24,38 +27,39 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const handlePublish = () => {
+    const handlePublish = async () => {
         if (!selectedClassId || !title) {
             alert("Please fill all required fields (Class and Title)");
             return;
         }
-        
-        const newHomework = {
-            id: `HW-${Date.now()}`,
+
+        const selectedMapping = classes.find(c => c.id === selectedClassId);
+
+        const payload = {
+            classId: selectedMapping.classId,
+            sectionId: selectedMapping.sectionId,
+            subjectId: selectedMapping.subjectId,
             title,
-            description: instructions,
-            class: classes.find(c => c.id === selectedClassId)?.name || selectedClassId,
-            subject: classes.find(c => c.id === selectedClassId)?.subject || '',
+            instructions,
             dueDate,
-            status: 'Active',
-            submissionCount: 0,
-            totalStudents: classes.find(c => c.id === selectedClassId)?.students || 0,
-            attachments: selectedFile ? [selectedFile.name] : []
+            status: 'published',
+            academicYearId: profile?.currentAcademicYear || profile?.academicYearId || "65af736f987654edcba98765",
+            branchId: profile?.branchId?._id || profile?.branchId || "65af736f987654edcba12345",
+            attachments: selectedFile ? [{ name: selectedFile.name, url: "" }] : []
         };
 
-        console.log('Publishing:', newHomework);
-        addHomework(newHomework);
+        const success = await addHomework(payload);
 
-        // Mock API call simulation
-        setTimeout(() => {
+        if (success) {
             alert("Homework Published Successfully!");
-            // Reset form
             setTitle('');
             setInstructions('');
             setSelectedClassId(null);
             setSelectedFile(null);
             onClose();
-        }, 300);
+        } else {
+            alert("Failed to publish homework. Please try again.");
+        }
     };
 
     if (!isOpen) return null;
@@ -96,12 +100,12 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                                         key={cls.id}
                                         onClick={() => setSelectedClassId(cls.id)}
                                         className={`flex-shrink-0 min-w-[120px] p-3 rounded-xl border transition-all text-left relative ${isSelected
-                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
+                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                                            : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
                                             }`}
                                     >
-                                        <div className="text-xs opacity-70 mb-0.5 uppercase tracking-wider font-semibold">Class {cls.name}</div>
-                                        <div className="text-sm font-bold truncate">{cls.subject}</div>
+                                        <div className="text-xs opacity-70 mb-0.5 uppercase tracking-wider font-semibold">Class {cls.className}</div>
+                                        <div className="text-sm font-bold truncate">{cls.subjectName}</div>
                                         {isSelected && (
                                             <div className="absolute top-2 right-2 bg-white/20 p-0.5 rounded-full">
                                                 <Check size={12} className="text-white" />
@@ -149,7 +153,7 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-indigo-50/50 border border-indigo-100 rounded-xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer relative z-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                    className="w-full pl-10 pr-4 py-3.5 bg-indigo-50/50 border border-indigo-100 rounded-xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer relative z-0"
                                 />
                             </div>
                         </div>
@@ -184,14 +188,15 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                 </div>
 
                 <div className="mt-auto bg-white border-t border-gray-100 p-4 flex gap-3 rounded-b-2xl">
-                    <button className="flex-1 py-3.5 px-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 active:scale-95 transition-all">
-                        Save Draft
+                    <button onClick={onClose} className="flex-1 py-3.5 px-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 active:scale-95 transition-all">
+                        Cancel
                     </button>
                     <button
                         onClick={handlePublish}
-                        className="flex-1 py-3.5 px-4 rounded-xl bg-gray-900 text-white font-bold text-sm hover:bg-gray-800 shadow-xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-2"
+                        disabled={isCreating}
+                        className="flex-1 py-3.5 px-4 rounded-xl bg-gray-900 text-white font-bold text-sm hover:bg-gray-800 shadow-xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        Publish Homework
+                        {isCreating ? 'Publishing...' : 'Publish Homework'}
                     </button>
                 </div>
 

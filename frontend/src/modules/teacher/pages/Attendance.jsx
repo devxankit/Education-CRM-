@@ -96,6 +96,15 @@ const AttendancePage = () => {
         }
     }, [students]);
 
+    const profile = useTeacherStore(state => state.profile);
+    const isSubmitting = useTeacherStore(state => state.isSubmittingAttendance);
+
+    useEffect(() => {
+        if (!profile || !profile._id) {
+            useTeacherStore.getState().fetchProfile();
+        }
+    }, [profile]);
+
     const handleStatusChange = (studentId, status) => {
         setAttendanceState(prev => ({
             ...prev,
@@ -103,7 +112,7 @@ const AttendancePage = () => {
         }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (Object.keys(attendanceState).length === 0) {
             alert("No students to mark attendance for.");
             return;
@@ -111,22 +120,29 @@ const AttendancePage = () => {
 
         const confirm = window.confirm("Are you sure you want to submit attendance? This action will be logged.");
         if (confirm) {
-            const record = {
-                id: `ATT-${Date.now()}`,
-                mappingId: selectedMapping?.id,
+            const attendanceData = Object.entries(attendanceState).map(([studentId, status]) => ({
+                studentId,
+                status,
+                remarks: ""
+            }));
+
+            const payload = {
                 classId: selectedMapping?.classId,
                 sectionId: selectedMapping?.sectionId,
                 subjectId: selectedMapping?.subjectId,
-                className: selectedMapping?.className,
-                subject: selectedMapping?.subjectName,
                 date: new Date().toISOString(),
-                attendance: attendanceState,
-                stats
+                attendanceData,
+                academicYearId: profile?.currentAcademicYear || profile?.academicYearId || "65af736f987654edcba98765", // Fallback or from profile
+                branchId: profile?.branchId?._id || profile?.branchId || "65af736f987654edcba12345"
             };
 
-            submitAttendanceAction(record);
-            alert("Attendance Submitted Successfully!");
-            navigate('/teacher/dashboard');
+            const success = await submitAttendanceAction(payload);
+            if (success) {
+                alert("Attendance Submitted Successfully!");
+                navigate('/teacher/dashboard');
+            } else {
+                alert("Failed to submit attendance. Please try again.");
+            }
         }
     };
 

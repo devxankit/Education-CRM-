@@ -7,20 +7,19 @@ import { AnimatePresence } from 'framer-motion';
 import { useTeacherStore } from '../../../store/teacherStore';
 
 // Components
-import TeacherHeader from '../components/common/TeacherHeader';
 import HomeworkTabs from '../components/homework/HomeworkTabs';
 import HomeworkCard from '../components/homework/HomeworkCard';
 import CreateHomeworkForm from '../components/homework/CreateHomeworkForm';
-
-// Data
-import { teacherProfile } from '../data/dashboardData';
-import { homeworkData } from '../data/homeworkData';
 
 const HomeworkPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const listRef = useRef(null);
     const homeworkList = useTeacherStore(state => state.homeworkList);
+    const fetchHomeworkList = useTeacherStore(state => state.fetchHomeworkList);
+    const isFetching = useTeacherStore(state => state.isFetchingHomework);
+    const assignedClasses = useTeacherStore(state => state.assignedClasses);
+    const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
 
     const [activeTab, setActiveTab] = useState('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -41,13 +40,21 @@ const HomeworkPage = () => {
         return () => lenis.destroy();
     }, []);
 
+    // Fetch Homework on Mount
+    useEffect(() => {
+        fetchHomeworkList();
+        if (assignedClasses.length === 0) {
+            fetchAssignedClasses();
+        }
+    }, [fetchHomeworkList, fetchAssignedClasses, assignedClasses.length]);
+
     // Filter Logic
     useEffect(() => {
         const filtered = homeworkList.filter(hw => {
             if (activeTab === 'all') return true;
-            if (activeTab === 'active') return hw.status === 'Active';
-            if (activeTab === 'past') return hw.status === 'Closed';
-            if (activeTab === 'draft') return hw.status === 'Draft';
+            if (activeTab === 'active') return hw.status === 'published' || hw.status === 'Active';
+            if (activeTab === 'past') return hw.status === 'Closed' || hw.status === 'archived';
+            if (activeTab === 'draft') return hw.status === 'draft' || hw.status === 'Draft';
             return true;
         });
         setFilteredHomework(filtered);
@@ -63,6 +70,18 @@ const HomeworkPage = () => {
         }
     }, [filteredHomework]);
 
+    // Flatten mappings for the form
+    const flatMappings = assignedClasses.flatMap(sub =>
+        sub.classes.map(cls => ({
+            id: `${sub.subjectId}_${cls.classId}_${cls.sectionId}`,
+            subjectId: sub.subjectId,
+            subjectName: sub.subjectName,
+            classId: cls.classId,
+            sectionId: cls.sectionId,
+            className: cls.fullClassName,
+            students: 0
+        }))
+    );
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-28">
@@ -95,12 +114,17 @@ const HomeworkPage = () => {
 
                 {/* 2. Homework List */}
                 <div ref={listRef} className="mt-2 min-h-[300px]">
-                    {filteredHomework.length > 0 ? (
+                    {isFetching ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-indigo-600">
+                            <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4" />
+                            <p className="text-sm font-medium text-gray-500">Loading homeworks...</p>
+                        </div>
+                    ) : filteredHomework.length > 0 ? (
                         filteredHomework.map(hw => (
                             <HomeworkCard
-                                key={hw.id}
+                                key={hw._id || hw.id}
                                 homework={hw}
-                                onClick={() => navigate(`/teacher/homework/${hw.id}`)}
+                                onClick={() => navigate(`/teacher/homework/${hw._id || hw.id}`)}
                             />
                         ))
                     ) : (
@@ -120,7 +144,7 @@ const HomeworkPage = () => {
                     <CreateHomeworkForm
                         isOpen={isCreateModalOpen}
                         onClose={() => setIsCreateModalOpen(false)}
-                        classes={homeworkData.classes}
+                        classes={flatMappings}
                     />
                 )}
             </AnimatePresence>

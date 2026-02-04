@@ -86,22 +86,72 @@ export const useTeacherStore = create(
 
             // Attendance
             attendanceRecords: [],
-            submitAttendance: (record) => set((state) => {
-                // Update class status in todayClasses if applicable
-                const updatedTodayClasses = state.todayClasses.map(c =>
-                    c.id === record.classId ? { ...c, status: 'Marked', attendance: `${record.stats.present}%` } : c
-                );
-                return {
-                    attendanceRecords: [...state.attendanceRecords, record],
-                    todayClasses: updatedTodayClasses
-                };
-            }),
+            isSubmittingAttendance: false,
+            submitAttendance: async (record) => {
+                set({ isSubmittingAttendance: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/teacher/attendance`, record, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            attendanceRecords: [...state.attendanceRecords, response.data.data],
+                            todayClasses: state.todayClasses.map(c =>
+                                c.id === record.classId ? { ...c, status: 'Marked' } : c
+                            )
+                        }));
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error submitting attendance:', error);
+                    return false;
+                } finally {
+                    set({ isSubmittingAttendance: false });
+                }
+            },
 
             // Homework
-            homeworkList: homeworkData.list,
-            addHomework: (homework) => set((state) => ({
-                homeworkList: [homework, ...state.homeworkList]
-            })),
+            homeworkList: [],
+            isFetchingHomework: false,
+            isCreatingHomework: false,
+            fetchHomeworkList: async (filters = {}) => {
+                set({ isFetchingHomework: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/homework`, {
+                        params: filters,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ homeworkList: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching homework list:', error);
+                } finally {
+                    set({ isFetchingHomework: false });
+                }
+            },
+            addHomework: async (homeworkData) => {
+                set({ isCreatingHomework: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/teacher/homework`, homeworkData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            homeworkList: [response.data.data, ...state.homeworkList]
+                        }));
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error adding homework:', error);
+                    return false;
+                } finally {
+                    set({ isCreatingHomework: false });
+                }
+            },
 
             // Support Queries
             queries: queriesData,
