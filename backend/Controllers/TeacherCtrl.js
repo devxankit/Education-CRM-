@@ -205,10 +205,7 @@ export const getTeacherProfile = async (req, res) => {
                 path: "branchId",
                 select: "name",
             })
-            .populate({
-                path: "roleId",
-                select: "name",
-            });
+        
 
         if (!teacher) {
             return res.status(404).json({ success: false, message: "Teacher not found" });
