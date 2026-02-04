@@ -23,9 +23,10 @@ const ProfilePage = () => {
 
     // Fetch Profile on Mount
     useEffect(() => {
+        // Only fetch if we don't have real data or if the store says we aren't already fetching
         fetchProfile();
         fetchAssignedClasses();
-    }, [fetchProfile, fetchAssignedClasses]);
+    }, []); // Run once on mount
 
     // Initial Mock Preferences/Academic for display if not in profile
     const academicInfo = profile.academic || {

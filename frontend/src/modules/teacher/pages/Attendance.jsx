@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { Info, Calendar as CalendarIcon, Users } from 'lucide-react';
+import { Info, Calendar as CalendarIcon, Users, Loader2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useTeacherStore } from '../../../store/teacherStore';
 
@@ -10,34 +10,66 @@ import ClassSubjectSelector from '../components/attendance/ClassSubjectSelector'
 import AttendanceRow from '../components/attendance/AttendanceRow';
 import AttendanceSummaryBar from '../components/attendance/AttendanceSummaryBar';
 
-// Data
-import { attendanceData } from '../data/attendanceData';
-
 const AttendancePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const listRef = useRef(null);
-    const todayClasses = useTeacherStore(state => state.todayClasses);
+
+    // Store
+    const assignedClasses = useTeacherStore(state => state.assignedClasses);
+    const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
+    const students = useTeacherStore(state => state.classStudents);
+    const fetchClassStudents = useTeacherStore(state => state.fetchClassStudents);
+    const isFetchingClasses = useTeacherStore(state => state.isFetchingClasses);
+    const isFetchingStudents = useTeacherStore(state => state.isFetchingStudents);
     const submitAttendanceAction = useTeacherStore(state => state.submitAttendance);
 
-    const [selectedClass, setSelectedClass] = useState(null);
+    const [selectedMapping, setSelectedMapping] = useState(null);
     const [attendanceState, setAttendanceState] = useState({});
 
-    // Initialize State
+    // Fetch Classes on Mount
     useEffect(() => {
-        // Default to first class from today's timetable
-        if (todayClasses.length > 0 && !selectedClass) {
-            setSelectedClass(todayClasses[0]);
+        fetchAssignedClasses();
+    }, [fetchAssignedClasses]);
+
+    // Flatten mappings for the selector
+    const flatMappings = assignedClasses.flatMap(sub =>
+        sub.classes.map(cls => ({
+            id: `${sub.subjectId}_${cls.classId}_${cls.sectionId}`,
+            subjectId: sub.subjectId,
+            subjectName: sub.subjectName,
+            classId: cls.classId,
+            sectionId: cls.sectionId,
+            className: cls.fullClassName,
+        }))
+    );
+
+    // Default to first mapping if none selected
+    useEffect(() => {
+        if (flatMappings.length > 0 && !selectedMapping) {
+            setSelectedMapping(flatMappings[0]);
         }
+    }, [flatMappings, selectedMapping]);
 
-        // Initialize attendance map from existing mock student list
-        const initialMap = {};
-        attendanceData.students.forEach(s => {
-            initialMap[s.id] = 'Present';
-        });
-        setAttendanceState(initialMap);
+    // Fetch Students when mapping changes
+    useEffect(() => {
+        if (selectedMapping) {
+            fetchClassStudents(selectedMapping.classId, selectedMapping.sectionId);
+        }
+    }, [selectedMapping, fetchClassStudents]);
 
-    }, [todayClasses]);
+    // Initialize/Update Attendance State when students change
+    useEffect(() => {
+        if (students.length > 0) {
+            const initialMap = {};
+            students.forEach(s => {
+                initialMap[s._id] = 'Present';
+            });
+            setAttendanceState(initialMap);
+        } else {
+            setAttendanceState({});
+        }
+    }, [students]);
 
     // Smooth Scroll
     useEffect(() => {
@@ -56,13 +88,13 @@ const AttendancePage = () => {
 
     // Stagger Animation
     useEffect(() => {
-        if (listRef.current) {
+        if (listRef.current && students.length > 0) {
             gsap.fromTo(listRef.current.children,
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out', delay: 0.2 }
             );
         }
-    }, [selectedClass]);
+    }, [students]);
 
     const handleStatusChange = (studentId, status) => {
         setAttendanceState(prev => ({
@@ -72,13 +104,21 @@ const AttendancePage = () => {
     };
 
     const handleSubmit = () => {
+        if (Object.keys(attendanceState).length === 0) {
+            alert("No students to mark attendance for.");
+            return;
+        }
+
         const confirm = window.confirm("Are you sure you want to submit attendance? This action will be logged.");
         if (confirm) {
             const record = {
                 id: `ATT-${Date.now()}`,
-                classId: selectedClass?.id,
-                className: selectedClass?.classSection,
-                subject: selectedClass?.subject,
+                mappingId: selectedMapping?.id,
+                classId: selectedMapping?.classId,
+                sectionId: selectedMapping?.sectionId,
+                subjectId: selectedMapping?.subjectId,
+                className: selectedMapping?.className,
+                subject: selectedMapping?.subjectName,
                 date: new Date().toISOString(),
                 attendance: attendanceState,
                 stats
@@ -98,6 +138,11 @@ const AttendancePage = () => {
         return acc;
     }, { present: 0, absent: 0, leave: 0 });
 
+    const formattedClassesForSelector = flatMappings.map(m => ({
+        id: m.id,
+        name: m.className,
+        subject: m.subjectName
+    }));
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-28">
@@ -124,9 +169,12 @@ const AttendancePage = () => {
             <main className="max-w-2xl mx-auto px-4 pt-6">
                 {/* 1. Controls */}
                 <ClassSubjectSelector
-                    classes={attendanceData.classes}
-                    selectedClass={selectedClass}
-                    onClassChange={setSelectedClass}
+                    classes={formattedClassesForSelector}
+                    selectedClass={selectedMapping ? { id: selectedMapping.id } : null}
+                    onClassChange={(cls) => {
+                        const mapping = flatMappings.find(m => m.id === cls.id);
+                        setSelectedMapping(mapping);
+                    }}
                 />
 
                 <div className="flex items-center justify-between mb-4 px-1">
@@ -135,25 +183,45 @@ const AttendancePage = () => {
                         {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </div>
                     <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-1 rounded inline-block">
-                        {attendanceData.students.length} Students
+                        {isFetchingStudents ? '...' : students.length} Students
                     </span>
                 </div>
 
                 {/* 2. Attendance List */}
                 <div ref={listRef} className="pb-4">
-                    {attendanceData.students.map(student => (
-                        <AttendanceRow
-                            key={student.id}
-                            student={student}
-                            status={attendanceState[student.id]}
-                            onStatusChange={handleStatusChange}
-                        />
-                    ))}
+                    {isFetchingStudents ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-4" />
+                            <p className="text-sm text-gray-500 font-medium font-['Inter']">Loading student list...</p>
+                        </div>
+                    ) : students.length > 0 ? (
+                        students.map(student => (
+                            <AttendanceRow
+                                key={student._id}
+                                student={{
+                                    id: student._id,
+                                    name: `${student.firstName} ${student.lastName}`,
+                                    roll: student.rollNo || 'N/A'
+                                }}
+                                status={attendanceState[student._id]}
+                                onStatusChange={handleStatusChange}
+                            />
+                        ))
+                    ) : (
+                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                            <Users className="mx-auto text-gray-300 mb-3" size={32} />
+                            <p className="text-sm text-gray-400 font-medium font-['Inter']">No students found for this class.</p>
+                        </div>
+                    )}
                 </div>
             </main>
 
             {/* 3. Bottom Action Bar */}
-            <AttendanceSummaryBar stats={stats} onSubmit={handleSubmit} />
+            <AttendanceSummaryBar
+                stats={stats}
+                onSubmit={handleSubmit}
+                disabled={isFetchingStudents || students.length === 0}
+            />
         </div>
     );
 };

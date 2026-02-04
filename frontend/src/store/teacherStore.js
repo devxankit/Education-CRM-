@@ -20,7 +20,13 @@ export const useTeacherStore = create(
             // Profile & Settings
             profile: teacherProfile,
             assignedClasses: [],
+            classStudents: [],
+            isFetchingProfile: false,
+            isFetchingClasses: false,
+            isFetchingStudents: false,
             fetchAssignedClasses: async () => {
+                if (get().isFetchingClasses) return;
+                set({ isFetchingClasses: true });
                 try {
                     const token = localStorage.getItem('token');
                     const response = await axios.get(`${API_URL}/teacher/classes`, {
@@ -31,9 +37,31 @@ export const useTeacherStore = create(
                     }
                 } catch (error) {
                     console.error('Error fetching assigned classes:', error);
+                } finally {
+                    set({ isFetchingClasses: false });
+                }
+            },
+            fetchClassStudents: async (classId, sectionId) => {
+                if (get().isFetchingStudents) return;
+                set({ isFetchingStudents: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/students`, {
+                        params: { classId, sectionId },
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ classStudents: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching class students:', error);
+                } finally {
+                    set({ isFetchingStudents: false });
                 }
             },
             fetchProfile: async () => {
+                if (get().isFetchingProfile) return;
+                set({ isFetchingProfile: true });
                 try {
                     const token = localStorage.getItem('token');
                     const response = await axios.get(`${API_URL}/teacher/profile`, {
@@ -44,6 +72,8 @@ export const useTeacherStore = create(
                     }
                 } catch (error) {
                     console.error('Error fetching teacher profile:', error);
+                } finally {
+                    set({ isFetchingProfile: false });
                 }
             },
             updateProfile: (data) => set((state) => ({
