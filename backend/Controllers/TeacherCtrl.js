@@ -1,18 +1,29 @@
 import Teacher from "../Models/TeacherModel.js";
+import TeacherMapping from "../Models/TeacherMappingModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
 import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
+import Section from "../Models/SectionModel.js";
+import Subject from "../Models/SubjectModel.js";
+import Class from "../Models/ClassModel.js";
+import Student from "../Models/StudentModel.js";
 
 // ================= CREATE TEACHER =================
 export const createTeacher = async (req, res) => {
     try {
         const {
-            employeeId, firstName, lastName, email,
+            firstName, lastName, email,
             password, phone, branchId, department,
             designation, roleId, experience, joiningDate,
             teachingStatus, status
         } = req.body;
+        let { employeeId } = req.body;
         const instituteId = req.user._id;
+
+        // Generate Random Employee ID if not provided
+        if (!employeeId) {
+            employeeId = "EMP" + Math.floor(100000 + Math.random() * 900000);
+        }
 
         const existingTeacher = await Teacher.findOne({
             $or: [{ email }, { employeeId }]
@@ -159,6 +170,86 @@ export const loginTeacher = async (req, res) => {
                 role: "Teacher"
             },
             token
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER ASSIGNED CLASSES & SUBJECTS =================
+export const getTeacherClasses = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+
+        // Fetch all mappings for this teacher
+        const mappings = await TeacherMapping.find({ teacherId, status: "active" })
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name code")
+            .populate("courseId", "name")
+            .populate("academicYearId", "name");
+
+        if (!mappings || mappings.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "No classes or subjects assigned yet.",
+                data: {
+                    subjects: [],
+                    totalClasses: 0,
+                    totalSubjects: 0
+                }
+            });
+        }
+
+        // Group by Subject
+        const subjectGroups = {};
+
+        for (const m of mappings) {
+            const subjectId = m.subjectId?._id?.toString() || "unknown";
+
+            if (!subjectGroups[subjectId]) {
+                subjectGroups[subjectId] = {
+                    subjectId: subjectId,
+                    subjectName: m.subjectId?.name || "N/A",
+                    subjectCode: m.subjectId?.code || "N/A",
+                    academicYear: m.academicYearId?.name || "N/A",
+                    status: m.status?.toUpperCase() || "ACTIVE",
+                    classesCount: 0,
+                    totalStudents: 0,
+                    classes: []
+                };
+            }
+
+            const sectionId = m.sectionId?._id;
+
+            // Fetch student count for this section
+            const studentCount = sectionId
+                ? await Student.countDocuments({ sectionId, status: "active" })
+                : 0;
+
+            subjectGroups[subjectId].classes.push({
+                classId: m.classId?._id,
+                sectionId: sectionId,
+                className: m.classId?.name || m.courseId?.name || "N/A",
+                sectionName: m.sectionId?.name || "N/A",
+                fullClassName: `${m.classId?.name || m.courseId?.name || "N/A"}-${m.sectionId?.name || ""}`,
+                studentCount,
+                schedule: "Daily" // Day info placeholder
+            });
+
+            subjectGroups[subjectId].classesCount += 1;
+            subjectGroups[subjectId].totalStudents += studentCount;
+        }
+
+        const subjectsArray = Object.values(subjectGroups);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                subjects: subjectsArray,
+                totalSubjects: subjectsArray.length,
+                totalClasses: mappings.length
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
