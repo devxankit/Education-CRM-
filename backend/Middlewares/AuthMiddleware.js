@@ -5,6 +5,8 @@ import Parent from '../Models/ParentModel.js'
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 
+import Staff from '../Models/StaffModel.js'
+
 export const AuthMiddleware = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
@@ -20,6 +22,8 @@ export const AuthMiddleware = asyncHandler(async (req, res, next) => {
 
     if (role === 'institute') {
       user = await Institute.findById(decoded?.id);
+    } else if (role === 'Staff') {
+      user = await Staff.findById(decoded?.id);
     } else if (role === 'Student') {
       user = await Student.findById(decoded?.id);
     } else if (role === 'Teacher') {
@@ -43,6 +47,13 @@ export const AuthMiddleware = asyncHandler(async (req, res, next) => {
 export const isInstitute = asyncHandler(async (req, res, next) => {
   if (!req.user || req.role !== 'institute') {
     return res.status(403).json({ success: false, message: "Not authorized as institute" });
+  }
+  next();
+});
+
+export const isAdmin = asyncHandler(async (req, res, next) => {
+  if (!req.user || (req.role !== 'institute' && req.role !== 'Staff')) {
+    return res.status(403).json({ success: false, message: "Not authorized as admin" });
   }
   next();
 });

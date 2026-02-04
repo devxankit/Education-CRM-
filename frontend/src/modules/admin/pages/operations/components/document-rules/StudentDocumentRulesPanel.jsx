@@ -1,25 +1,19 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { GraduationCap, Plus, Trash2 } from 'lucide-react';
 
-const StudentDocumentRulesPanel = ({ isLocked }) => {
+const StudentDocumentRulesPanel = ({ isLocked, rules, setRules }) => {
 
-    const [rules, setRules] = useState([
-        { id: 1, name: 'Aadhaar Card', stage: 'admission', mandatory: true, verifier: 'admin' },
-        { id: 2, name: 'Birth Certificate', stage: 'admission', mandatory: true, verifier: 'admin' },
-        { id: 3, name: 'Transfer Certificate', stage: 'post-admission', mandatory: true, verifier: 'registrar' },
-        { id: 4, name: 'Previous Marksheet', stage: 'admission', mandatory: false, verifier: 'class-teacher' }
-    ]);
-
-    const handleRemove = (id) => {
+    const handleRemove = (index) => {
         if (isLocked) return;
-        setRules(prev => prev.filter(r => r.id !== id));
+        const newRules = [...rules];
+        newRules.splice(index, 1);
+        setRules(newRules);
     };
 
     const handleAdd = () => {
         if (isLocked) return;
         setRules([...rules, {
-            id: Date.now(),
             name: 'New Document',
             stage: 'admission',
             mandatory: false,
@@ -27,9 +21,11 @@ const StudentDocumentRulesPanel = ({ isLocked }) => {
         }]);
     };
 
-    const handleChange = (id, field, value) => {
+    const handleChange = (index, field, value) => {
         if (isLocked) return;
-        setRules(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+        const newRules = [...rules];
+        newRules[index] = { ...newRules[index], [field]: value };
+        setRules(newRules);
     };
 
     return (
@@ -61,14 +57,14 @@ const StudentDocumentRulesPanel = ({ isLocked }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {rules.map((rule) => (
-                            <tr key={rule.id} className="hover:bg-gray-50 group">
+                        {rules.map((rule, index) => (
+                            <tr key={index} className="hover:bg-gray-50 group">
                                 <td className="px-4 py-2">
                                     <input
                                         type="text"
                                         value={rule.name}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'name', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'name', e.target.value)}
                                         className="w-full bg-transparent border-b border-transparent focus:border-indigo-500 outline-none text-sm font-medium text-gray-800"
                                     />
                                 </td>
@@ -76,7 +72,7 @@ const StudentDocumentRulesPanel = ({ isLocked }) => {
                                     <select
                                         value={rule.stage}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'stage', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'stage', e.target.value)}
                                         className="bg-transparent text-xs text-gray-600 border border-gray-200 rounded px-2 py-1 outline-none"
                                     >
                                         <option value="admission">At Admission</option>
@@ -89,7 +85,7 @@ const StudentDocumentRulesPanel = ({ isLocked }) => {
                                         type="checkbox"
                                         checked={rule.mandatory}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'mandatory', e.target.checked)}
+                                        onChange={(e) => handleChange(index, 'mandatory', e.target.checked)}
                                         className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
                                     />
                                 </td>
@@ -97,7 +93,7 @@ const StudentDocumentRulesPanel = ({ isLocked }) => {
                                     <select
                                         value={rule.verifier}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(rule.id, 'verifier', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'verifier', e.target.value)}
                                         className="bg-transparent text-xs text-blue-600 font-medium border border-blue-100 bg-blue-50 rounded px-2 py-1 outline-none"
                                     >
                                         <option value="admin">Admin Only</option>
@@ -107,7 +103,7 @@ const StudentDocumentRulesPanel = ({ isLocked }) => {
                                 </td>
                                 <td className="px-4 py-2 text-center">
                                     {!isLocked && (
-                                        <button onClick={() => handleRemove(rule.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onClick={() => handleRemove(index)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                                             <Trash2 size={14} />
                                         </button>
                                     )}

@@ -5,7 +5,7 @@ import { generateToken } from "../Helpers/generateToken.js";
 export const admitStudent = async (req, res) => {
     try {
         const admissionData = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         // 1. Basic unique check
         const existingStudent = await Student.findOne({
@@ -46,7 +46,7 @@ export const admitStudent = async (req, res) => {
 export const getStudents = async (req, res) => {
     try {
         const { branchId, classId, sectionId } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
         if (branchId) query.branchId = branchId;

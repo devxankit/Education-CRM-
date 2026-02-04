@@ -2,21 +2,11 @@
 import React, { useState } from 'react';
 import { UserCheck, CornerUpRight, ClipboardCheck } from 'lucide-react';
 
-const AssignmentRulesPanel = ({ isLocked }) => {
-
-    // Assignment Rules
-    const [rules, setRules] = useState({
-        allowStaff: true,
-        allowDepartment: true,
-        allowLocation: true,
-        approvalRequired: true,
-        mandatoryReturn: true,
-        damageReporting: true
-    });
+const AssignmentRulesPanel = ({ isLocked, rules, setRules }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        setRules({ ...rules, [field]: value });
     };
 
     return (

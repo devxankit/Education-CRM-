@@ -1,23 +1,30 @@
 
-import React, { useState } from 'react';
-import { Plus, Download, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Download, Filter, Loader2 } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 // Components
 import InventoryCategoryTable from './components/inventory-categories/InventoryCategoryTable';
 import CategoryDetailDrawer from './components/inventory-categories/CategoryDetailDrawer';
 
 const InventoryCategories = () => {
+    const { assetCategories, fetchAssetCategories, addAssetCategory, updateAssetCategory, deleteAssetCategory } = useAdminStore();
+    const user = useAppStore(state => state.user);
+    const branchId = user?.branchId || 'main';
 
-    // Mock Data
-    const [categories, setCategories] = useState([
-        { id: 1, name: 'IT Assets', code: 'CAT-1001', type: 'Asset', trackingType: 'Item-based', serialRequired: true, depreciation: true, depMethod: 'Straight Line', status: 'Active', assetCount: 145 },
-        { id: 2, name: 'Furniture', code: 'CAT-2002', type: 'Asset', trackingType: 'Quantity-based', serialRequired: false, depreciation: true, depMethod: 'Written Down Value', status: 'Active', assetCount: 500 },
-        { id: 3, name: 'Office Stationery', code: 'CAT-3005', type: 'Consumable', trackingType: 'Quantity-based', serialRequired: false, depreciation: false, status: 'Active', assetCount: 2000 },
-        { id: 4, name: 'Lab Chemicals', code: 'CAT-4010', type: 'Consumable', trackingType: 'Quantity-based', serialRequired: false, depreciation: false, status: 'Inactive', assetCount: 50 },
-    ]);
-
+    const [loading, setLoading] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
+
+    useEffect(() => {
+        const load = async () => {
+            setLoading(true);
+            await fetchAssetCategories(branchId);
+            setLoading(false);
+        };
+        load();
+    }, [branchId, fetchAssetCategories]);
 
     // Handlers
     const handleAdd = () => {
@@ -30,16 +37,21 @@ const InventoryCategories = () => {
         setIsDrawerOpen(true);
     };
 
-    const handleSave = (categoryData) => {
+    const handleSave = async (categoryData) => {
         if (editingCategory) {
             // Update
-            setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...categoryData, id: c.id, assetCount: c.assetCount } : c));
+            await updateAssetCategory(editingCategory._id, categoryData);
         } else {
             // Create
-            const newId = Date.now();
-            setCategories(prev => [...prev, { ...categoryData, id: newId, assetCount: 0 }]);
+            await addAssetCategory({ ...categoryData, branchId });
         }
         setIsDrawerOpen(false);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this category? This might affect existing assets.")) {
+            await deleteAssetCategory(id);
+        }
     };
 
     return (
@@ -72,27 +84,34 @@ const InventoryCategories = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase">Total Categories</p>
-                    <h3 className="text-2xl font-bold text-gray-800 mt-1">{categories.length}</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mt-1">{assetCategories.length}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase">Fixed Assets</p>
-                    <h3 className="text-2xl font-bold text-indigo-600 mt-1">{categories.filter(c => c.type === 'Asset').length}</h3>
+                    <h3 className="text-2xl font-bold text-indigo-600 mt-1">{assetCategories.filter(c => c.type === 'Asset').length}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase">Consumables</p>
-                    <h3 className="text-2xl font-bold text-amber-600 mt-1">{categories.filter(c => c.type === 'Consumable').length}</h3>
+                    <h3 className="text-2xl font-bold text-amber-600 mt-1">{assetCategories.filter(c => c.type === 'Consumable').length}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase">Inactive</p>
-                    <h3 className="text-2xl font-bold text-gray-400 mt-1">{categories.filter(c => c.status === 'Inactive').length}</h3>
+                    <h3 className="text-2xl font-bold text-gray-400 mt-1">{assetCategories.filter(c => c.status === 'Inactive').length}</h3>
                 </div>
             </div>
 
             {/* Table */}
-            <InventoryCategoryTable
-                categories={categories}
-                onEdit={handleEdit}
-            />
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="animate-spin text-indigo-600" size={40} />
+                </div>
+            ) : (
+                <InventoryCategoryTable
+                    categories={assetCategories}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            )}
 
             {/* Drawer */}
             <CategoryDetailDrawer

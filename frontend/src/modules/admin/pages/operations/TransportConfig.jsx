@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, AlertTriangle, Loader2 } from 'lucide-react';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
 import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 // Components
 import TransportAvailabilityPanel from './components/transport-config/TransportAvailabilityPanel';
@@ -11,10 +12,11 @@ import CapacityRulesPanel from './components/transport-config/CapacityRulesPanel
 import TransportFeeLinkPanel from './components/transport-config/TransportFeeLinkPanel';
 
 const TransportConfig = () => {
-    const { branches, fetchBranches, fetchTransportConfig, saveTransportConfig } = useAdminStore();
+    const { branches, fetchBranches, fetchTransportConfig, saveTransportConfig, toggleTransportLock } = useAdminStore();
+    const user = useAppStore(state => state.user);
 
     // Global State
-    const [branchId, setBranchId] = useState('');
+    const [branchId, setBranchId] = useState(user?.branchId || 'main');
     const [config, setConfig] = useState(null);
     const [isLocked, setIsLocked] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -26,8 +28,8 @@ const TransportConfig = () => {
     }, [fetchBranches]);
 
     useEffect(() => {
-        if (branches.length > 0 && !branchId) {
-            setBranchId(branches[0]._id);
+        if (branches.length > 0 && branchId === 'main') {
+            // keep it main for now if that's what we want, or set to first branch
         }
     }, [branches, branchId]);
 
@@ -52,12 +54,12 @@ const TransportConfig = () => {
         setIsDirty(true);
     };
 
-    const handleSave = async (lockReason) => {
+    const handleSave = async (unlockReason = null) => {
         setIsSaving(true);
         const dataToSave = {
             ...config,
             branchId,
-            unlockReason: lockReason
+            unlockReason
         };
         const result = await saveTransportConfig(dataToSave);
         if (result) {
@@ -68,18 +70,30 @@ const TransportConfig = () => {
         setIsSaving(false);
     };
 
-    const handleLock = () => {
+    const handleLock = async () => {
         if (window.confirm("Activate and Lock Transport Configuration? Changes will impede new route creation.")) {
-            saveTransportConfig({ ...config, branchId, isLocked: true });
+            setIsSaving(true);
+            const result = await saveTransportConfig({ ...config, branchId, isLocked: true });
+            if (result) {
+                setConfig(result);
+                setIsLocked(true);
+                setIsDirty(false);
+            }
+            setIsSaving(false);
         }
     };
 
-    const handleUnlock = () => {
+    const handleUnlock = async () => {
         const reason = prompt("Enter Audit Reason for Unlocking Transport Config:");
         if (reason) {
-            setConfig(prev => ({ ...prev, isLocked: false, unlockReason: reason }));
-            setIsLocked(false);
-            setIsDirty(true);
+            setIsSaving(true);
+            const result = await toggleTransportLock(config._id, { isLocked: false, unlockReason: reason });
+            if (result) {
+                setConfig(result);
+                setIsLocked(false);
+                setIsDirty(false);
+            }
+            setIsSaving(false);
         }
     };
 
@@ -109,6 +123,7 @@ const TransportConfig = () => {
                             onChange={(e) => setBranchId(e.target.value)}
                             className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer"
                         >
+                            <option value="main">System Default (All)</option>
                             {branches.map(b => (
                                 <option key={b._id} value={b._id}>{b.name}</option>
                             ))}

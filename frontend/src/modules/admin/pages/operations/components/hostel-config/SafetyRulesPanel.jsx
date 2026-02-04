@@ -2,17 +2,11 @@
 import React, { useState } from 'react';
 import { ShieldAlert, FileText, UserCheck } from 'lucide-react';
 
-const SafetyRulesPanel = ({ isLocked }) => {
-
-    const [rules, setRules] = useState({
-        mandatoryGuardian: true,
-        medicalInfo: true,
-        wardenAssignment: true
-    });
+const SafetyRulesPanel = ({ isLocked, data = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        onChange({ ...data, [field]: value });
     };
 
     return (
@@ -32,7 +26,7 @@ const SafetyRulesPanel = ({ isLocked }) => {
                     <div className="mt-0.5">
                         <input
                             type="checkbox"
-                            checked={rules.mandatoryGuardian}
+                            checked={data.mandatoryGuardian || false}
                             onChange={(e) => handleChange('mandatoryGuardian', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-red-600 rounded cursor-pointer"
@@ -51,7 +45,7 @@ const SafetyRulesPanel = ({ isLocked }) => {
                     <div className="mt-0.5">
                         <input
                             type="checkbox"
-                            checked={rules.medicalInfo}
+                            checked={data.medicalInfo || false}
                             onChange={(e) => handleChange('medicalInfo', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-red-600 rounded cursor-pointer"
@@ -70,7 +64,7 @@ const SafetyRulesPanel = ({ isLocked }) => {
                     <div className="mt-0.5">
                         <input
                             type="checkbox"
-                            checked={rules.wardenAssignment}
+                            checked={data.wardenAssignment || false}
                             onChange={(e) => handleChange('wardenAssignment', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-red-600 rounded cursor-pointer"

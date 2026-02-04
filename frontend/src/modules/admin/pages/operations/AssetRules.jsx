@@ -1,6 +1,8 @@
 
-import React, { useState } from 'react';
-import { Save, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Save, AlertTriangle, Loader2 } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
 
 // Components
@@ -10,20 +12,103 @@ import AssignmentRulesPanel from './components/asset-rules/AssignmentRulesPanel'
 import AuditRulesPanel from './components/asset-rules/AuditRulesPanel';
 
 const AssetRules = () => {
+    const { fetchAssetRule, saveAssetRule, toggleAssetLock, fetchAssetCategories } = useAdminStore();
+    const user = useAppStore(state => state.user);
+    const branchId = user?.branchId || 'main';
 
     // Global State
+    const [loading, setLoading] = useState(true);
+    const [policyId, setPolicyId] = useState(null);
     const [isLocked, setIsLocked] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
 
-    const handleLock = () => {
-        if (window.confirm("Activate and Lock Asset Governance Policy? This will enforce assignment rules.")) {
-            setIsLocked(true);
+    const [inventoryRules, setInventoryRules] = useState({
+        trackingEnabled: true,
+        lowStockThreshold: 10,
+        autoBlockIssue: true
+    });
+
+    const [assignmentRules, setAssignmentRules] = useState({
+        allowStaff: true,
+        allowDepartment: true,
+        allowLocation: true,
+        approvalRequired: true,
+        mandatoryReturn: true,
+    });
+
+    const [auditRules, setAuditRules] = useState({
+        periodicAudit: true,
+        frequency: 'quarterly',
+        physicalVerification: true,
+        retentionYears: 5
+    });
+
+    // Load Data
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const rule = await fetchAssetRule(branchId);
+            if (rule) {
+                setPolicyId(rule._id);
+                setIsLocked(rule.isLocked || false);
+                if (rule.inventory) setInventoryRules(rule.inventory);
+                if (rule.assignment) setAssignmentRules(rule.assignment);
+                if (rule.audit) setAuditRules(rule.audit);
+            }
+            await fetchAssetCategories(branchId);
+        } catch (error) {
+            console.error("Error loading asset policy:", error);
+        } finally {
+            setLoading(false);
+            setIsDirty(false);
+        }
+    }, [branchId, fetchAssetRule, fetchAssetCategories]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    const handleSave = async () => {
+        const payload = {
+            branchId,
+            inventory: inventoryRules,
+            assignment: assignmentRules,
+            audit: auditRules,
+        };
+
+        const result = await saveAssetRule(payload);
+        if (result) {
+            setPolicyId(result._id);
+            setIsDirty(false);
         }
     };
 
-    const handleUnlock = () => {
-        const reason = prompt("Enter Audit Reason for Unlocking Asset Policy:");
-        if (reason) setIsLocked(false);
+    const handleLock = async () => {
+        if (!policyId) {
+            alert("Please save the policy first before locking.");
+            return;
+        }
+        if (window.confirm("Activate and Lock Asset Governance Policy? This will enforce assignment rules.")) {
+            const result = await toggleAssetLock(policyId, { isLocked: true });
+            if (result) setIsLocked(true);
+        }
     };
+
+    const handleUnlock = async () => {
+        const reason = prompt("Enter Audit Reason for Unlocking Asset Policy:");
+        if (reason) {
+            const result = await toggleAssetLock(policyId, { isLocked: false, unlockReason: reason });
+            if (result) setIsLocked(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <Loader2 className="animate-spin text-indigo-600" size={48} />
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -45,18 +130,30 @@ const AssetRules = () => {
 
                 {/* 1. Classification (Full Column) */}
                 <div className="lg:col-span-1">
-                    <AssetCategoryPanel isLocked={isLocked} />
+                    <AssetCategoryPanel isLocked={isLocked} branchId={branchId} />
                 </div>
 
                 {/* 2. Middle Column: Assignment & Inventory */}
                 <div className="lg:col-span-1 flex flex-col gap-6">
-                    <InventoryRulesPanel isLocked={isLocked} />
-                    <AssignmentRulesPanel isLocked={isLocked} />
+                    <InventoryRulesPanel
+                        isLocked={isLocked}
+                        policy={inventoryRules}
+                        setPolicy={(val) => { setInventoryRules(val); setIsDirty(true); }}
+                    />
+                    <AssignmentRulesPanel
+                        isLocked={isLocked}
+                        rules={assignmentRules}
+                        setRules={(val) => { setAssignmentRules(val); setIsDirty(true); }}
+                    />
                 </div>
 
                 {/* 3. Right Column: Audit & Stats */}
                 <div className="lg:col-span-1 flex flex-col gap-6">
-                    <AuditRulesPanel isLocked={isLocked} />
+                    <AuditRulesPanel
+                        isLocked={isLocked}
+                        policy={auditRules}
+                        setPolicy={(val) => { setAuditRules(val); setIsDirty(true); }}
+                    />
 
                     {/* Stats */}
                     <div className="bg-slate-800 rounded-xl p-6 text-white flex-1">
@@ -81,13 +178,16 @@ const AssetRules = () => {
             </div>
 
             {/* Footer Actions */}
-            {!isLocked && (
-                <div className="fixed bottom-0 right-0 left-0 md:left-64 bg-white border-t border-gray-200 p-4 flex justify-between items-center z-10">
+            {!isLocked && isDirty && (
+                <div className="fixed bottom-0 right-0 left-0 md:left-64 bg-white border-t border-gray-200 p-4 flex justify-between items-center z-10 transition-all">
                     <div className="flex items-center gap-2 text-amber-600 text-sm">
                         <AlertTriangle size={16} />
                         <span>Unsaved changes in draft.</span>
                     </div>
-                    <button className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg font-medium">
+                    <button
+                        onClick={handleSave}
+                        className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg font-medium"
+                    >
                         <Save size={18} /> Save Policy
                     </button>
                 </div>

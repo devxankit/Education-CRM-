@@ -4,10 +4,25 @@ import AssetRule from "../Models/AssetRuleModel.js";
 export const getAssetRule = async (req, res) => {
     try {
         const { branchId } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
+        }
+
+        // Handle 'main' or invalid ID to avoid CastError
+        if (branchId === 'main' || branchId.length !== 24) {
+            // Return defaults if main or invalid branch
+            return res.status(200).json({
+                success: true,
+                message: "No specific configuration for this branch level, providing defaults",
+                data: {
+                    branchId,
+                    inventory: { trackingEnabled: true, lowStockThreshold: 10, autoBlockIssue: true },
+                    assignment: { allowStaff: true, allowDepartment: true, allowLocation: true, approvalRequired: true, mandatoryReturn: true },
+                    audit: { periodicAudit: true, frequency: 'quarterly', physicalVerification: true, retentionYears: 5 }
+                }
+            });
         }
 
         let rule = await AssetRule.findOne({ instituteId, branchId });
@@ -39,10 +54,10 @@ export const getAssetRule = async (req, res) => {
 export const saveAssetRule = async (req, res) => {
     try {
         const { branchId, ...ruleData } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required to save policy" });
         }
 
         const existing = await AssetRule.findOne({ instituteId, branchId });

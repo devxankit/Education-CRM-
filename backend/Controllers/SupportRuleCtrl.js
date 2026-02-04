@@ -10,6 +10,36 @@ export const getSupportRule = async (req, res) => {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
 
+        // Handle 'main' or invalid ID to avoid CastError
+        if (branchId === 'main' || branchId.length !== 24) {
+            return res.status(200).json({
+                success: true,
+                message: "No specific configuration for this branch level, providing defaults",
+                data: {
+                    branchId,
+                    channels: [
+                        { id: 'in_app', name: 'In-App Support', enabled: true, autoAck: true },
+                        { id: 'email', name: 'Email Helpdesk', enabled: true, autoAck: true },
+                        { id: 'whatsapp', name: 'WhatsApp Bot', enabled: false, autoAck: false }
+                    ],
+                    categories: [
+                        { name: 'Academic Issues', priority: 'medium', active: true },
+                        { name: 'Fee & Billing', priority: 'high', active: true },
+                        { name: 'Transport', priority: 'medium', active: true },
+                        { name: 'Technical Support', priority: 'low', active: true },
+                        { name: 'Emergency / Safety', priority: 'critical', active: true }
+                    ],
+                    sla: [
+                        { priority: 'critical', response: 0.5, resolution: 4 },
+                        { priority: 'high', response: 2, resolution: 12 },
+                        { priority: 'medium', response: 6, resolution: 24 },
+                        { priority: 'low', response: 24, resolution: 72 }
+                    ],
+                    escalation: { escalationEnabled: true, autoBreachEscalation: true }
+                }
+            });
+        }
+
         let rule = await SupportRule.findOne({ instituteId, branchId });
 
         if (!rule) {
@@ -57,8 +87,8 @@ export const saveSupportRule = async (req, res) => {
         const { branchId, ...ruleData } = req.body;
         const instituteId = req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required to save support policy" });
         }
 
         const existing = await SupportRule.findOne({ instituteId, branchId });

@@ -8,7 +8,7 @@ export const createBranch = async (req, res) => {
             city, state, phone, email, allowAdmissions, allowFeeCollection
         } = req.body;
 
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         // Check if code already exists
         const existingBranch = await Branch.findOne({ code });
@@ -52,7 +52,7 @@ export const createBranch = async (req, res) => {
 // ================= GET ALL BRANCHES =================
 export const getBranches = async (req, res) => {
     try {
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
         const branches = await Branch.find({ instituteId });
 
         res.status(200).json({

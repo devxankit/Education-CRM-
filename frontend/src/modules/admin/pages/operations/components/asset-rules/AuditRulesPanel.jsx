@@ -2,18 +2,11 @@
 import React, { useState } from 'react';
 import { ClipboardList, History, AlertCircle } from 'lucide-react';
 
-const AuditRulesPanel = ({ isLocked }) => {
-
-    const [policy, setPolicy] = useState({
-        periodicAudit: true,
-        frequency: 'quarterly', // monthly | quarterly | yearly
-        physicalVerification: true,
-        retentionYears: 5
-    });
+const AuditRulesPanel = ({ isLocked, policy, setPolicy }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setPolicy(prev => ({ ...prev, [field]: value }));
+        setPolicy({ ...policy, [field]: value });
     };
 
     return (

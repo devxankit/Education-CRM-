@@ -84,7 +84,7 @@ export const createTeacher = async (req, res) => {
 export const getTeachers = async (req, res) => {
     try {
         const { branchId, department } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
         if (branchId) query.branchId = branchId;

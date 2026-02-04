@@ -2,17 +2,11 @@
 import React, { useState } from 'react';
 import { Layers, AlertCircle } from 'lucide-react';
 
-const InventoryRulesPanel = ({ isLocked }) => {
-
-    const [policy, setPolicy] = useState({
-        trackingEnabled: true,
-        lowStockThreshold: 10,
-        autoBlockIssue: true
-    });
+const InventoryRulesPanel = ({ isLocked, policy, setPolicy }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setPolicy(prev => ({ ...prev, [field]: value }));
+        setPolicy({ ...policy, [field]: value });
     };
 
     return (

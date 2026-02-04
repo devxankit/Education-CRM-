@@ -2,17 +2,11 @@
 import React, { useState } from 'react';
 import { DollarSign, Link, Receipt } from 'lucide-react';
 
-const HostelFeeLinkPanel = ({ isLocked }) => {
-
-    const [config, setConfig] = useState({
-        isLinked: true,
-        feeBasis: 'room_type', // room_type | flat
-        collectionFrequency: 'term' // monthly | term | annual
-    });
+const HostelFeeLinkPanel = ({ isLocked, data = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setConfig(prev => ({ ...prev, [field]: value }));
+        onChange({ ...data, [field]: value });
     };
 
     return (
@@ -34,7 +28,7 @@ const HostelFeeLinkPanel = ({ isLocked }) => {
                         <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={config.isLinked}
+                            checked={data.isLinked || false}
                             disabled={isLocked}
                             onChange={(e) => handleChange('isLinked', e.target.checked)}
                         />
@@ -43,21 +37,21 @@ const HostelFeeLinkPanel = ({ isLocked }) => {
                 </div>
 
                 {/* Options */}
-                <div className={`space-y-4 transition-opacity ${!config.isLinked ? 'opacity-40 pointer-events-none' : ''}`}>
+                <div className={`space-y-4 transition-opacity ${!data.isLinked ? 'opacity-40 pointer-events-none' : ''}`}>
 
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">Fee Calculation Basis</label>
                         <div className="grid grid-cols-2 gap-3">
                             <div
                                 onClick={() => handleChange('feeBasis', 'room_type')}
-                                className={`p-3 border rounded-lg cursor-pointer flex items-center gap-2 ${config.feeBasis === 'room_type' ? 'bg-green-50 border-green-200 ring-1 ring-green-300' : 'hover:bg-gray-50'}`}
+                                className={`p-3 border rounded-lg cursor-pointer flex items-center gap-2 ${data.feeBasis === 'room_type' ? 'bg-green-50 border-green-200 ring-1 ring-green-300' : 'hover:bg-gray-50'}`}
                             >
                                 <Receipt size={16} className="text-green-600" />
                                 <span className="text-xs font-bold text-gray-700">Room Type</span>
                             </div>
                             <div
                                 onClick={() => handleChange('feeBasis', 'flat')}
-                                className={`p-3 border rounded-lg cursor-pointer flex items-center gap-2 ${config.feeBasis === 'flat' ? 'bg-green-50 border-green-200 ring-1 ring-green-300' : 'hover:bg-gray-50'}`}
+                                className={`p-3 border rounded-lg cursor-pointer flex items-center gap-2 ${data.feeBasis === 'flat' ? 'bg-green-50 border-green-200 ring-1 ring-green-300' : 'hover:bg-gray-50'}`}
                             >
                                 <Receipt size={16} className="text-green-600" />
                                 <span className="text-xs font-bold text-gray-700">Flat Rate</span>
@@ -68,7 +62,7 @@ const HostelFeeLinkPanel = ({ isLocked }) => {
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">Collection Frequency</label>
                         <select
-                            value={config.collectionFrequency}
+                            value={data.collectionFrequency || 'monthly'}
                             onChange={(e) => handleChange('collectionFrequency', e.target.value)}
                             disabled={isLocked}
                             className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white outline-none"

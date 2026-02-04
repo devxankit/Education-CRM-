@@ -2,16 +2,11 @@
 import React, { useState } from 'react';
 import { TrendingUp, User, ArrowUpRight } from 'lucide-react';
 
-const EscalationMatrixPanel = ({ isLocked }) => {
-
-    const [policy, setPolicy] = useState({
-        escalationEnabled: true,
-        autoBreachEscalation: true
-    });
+const EscalationMatrixPanel = ({ isLocked, escalation = {}, onChange }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setPolicy(prev => ({ ...prev, [field]: value }));
+        onChange({ ...escalation, [field]: value });
     };
 
     return (
@@ -26,14 +21,13 @@ const EscalationMatrixPanel = ({ isLocked }) => {
 
             <div className="p-6 space-y-6">
 
-                {/* Master Switch */}
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-700">Enable Escalation Workflow</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={policy.escalationEnabled}
+                            checked={escalation.escalationEnabled}
                             disabled={isLocked}
                             onChange={(e) => handleChange('escalationEnabled', e.target.checked)}
                         />
@@ -41,7 +35,7 @@ const EscalationMatrixPanel = ({ isLocked }) => {
                     </label>
                 </div>
 
-                <div className={`space-y-4 transition-opacity ${!policy.escalationEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`space-y-4 transition-opacity ${!escalation.escalationEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
 
                     {/* Level 1 */}
                     <div className="flex items-center gap-3">
@@ -83,7 +77,7 @@ const EscalationMatrixPanel = ({ isLocked }) => {
                     <div className="pt-2 flex items-center gap-2">
                         <input
                             type="checkbox"
-                            checked={policy.autoBreachEscalation}
+                            checked={escalation.autoBreachEscalation}
                             onChange={(e) => handleChange('autoBreachEscalation', e.target.checked)}
                             disabled={isLocked}
                             className="w-4 h-4 text-red-500 rounded cursor-pointer"
