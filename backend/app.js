@@ -32,6 +32,7 @@ import AssetCategoryRouter from "./Routers/AssetCategoryRouter.js";
 import AssetRuleRouter from "./Routers/AssetRuleRouter.js";
 import SupportRuleRouter from "./Routers/SupportRuleRouter.js";
 import DocumentRuleRouter from "./Routers/DocumentRuleRouter.js";
+import ExamPolicyRouter from "./Routers/ExamPolicyRouter.js";
 // import ChecklistRouter from "./Routers/ChecklistRouter.js";
 
 const router = Router();
@@ -68,6 +69,7 @@ router.use("/api/v1/asset-category", AssetCategoryRouter);
 router.use("/api/v1/asset-rule", AssetRuleRouter);
 router.use("/api/v1/support-rule", SupportRuleRouter);
 router.use("/api/v1/document-rule", DocumentRuleRouter);
+router.use("/api/v1/exam-policy", ExamPolicyRouter);
 // router.use("/api/v1/checklist", ChecklistRouter);
 
 export default router;
