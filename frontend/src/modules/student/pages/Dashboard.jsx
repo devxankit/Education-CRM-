@@ -18,8 +18,13 @@ const Dashboard = () => {
     const containerRef = useRef(null);
     const profile = useStudentStore(state => state.profile);
     const dashboardData = useStudentStore(state => state.dashboard);
+    const fetchDashboardData = useStudentStore(state => state.fetchDashboardData);
 
-    const [loading, setLoading] = useState(false); // Default false since we have persistence and initial data
+    const [loading, setLoading] = useState(!dashboardData);
+
+    useEffect(() => {
+        fetchDashboardData().finally(() => setLoading(false));
+    }, [fetchDashboardData]);
 
     // Initialize Smooth Scroll (Lenis)
     useEffect(() => {

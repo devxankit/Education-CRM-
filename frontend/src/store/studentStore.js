@@ -1,37 +1,123 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { dashboardData } from '../modules/student/data/dashboardData';
-import { attendanceData } from '../modules/student/data/attendanceData';
-import { feesData } from '../modules/student/data/feesData';
-import { examsData } from '../modules/student/data/examsData';
-import { homeworkData } from '../modules/student/data/homeworkData';
-import { supportData } from '../modules/student/data/supportData';
-import { profileData } from '../modules/student/data/profileData';
-import { notificationsData } from '../modules/student/data/notificationsData';
-import { notices as noticesData } from '../modules/student/data/noticesData';
-import { academicsData } from '../modules/student/data/academicsData';
-import { documentsData } from '../modules/student/data/documentsData';
-import { notesData } from '../modules/student/data/notesData';
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 
 export const useStudentStore = create(
     persist(
         (set, get) => ({
             // State
-            profile: profileData,
-            dashboard: dashboardData,
-            attendance: attendanceData,
-            fees: feesData,
-            exams: examsData,
-            homeworkList: homeworkData,
-            support: supportData,
-            notifications: notificationsData,
-            notices: noticesData,
-            academics: academicsData,
-            documents: documentsData,
-            notes: notesData,
+            token: null,
+            isAuthenticated: false,
+            profile: null,
+            dashboard: null,
+            attendance: [],
+            fees: null,
+            exams: [],
+            homeworkList: [],
+            support: [],
+            notifications: [],
+            notices: [],
+            academics: null,
+            documents: [],
+            notes: [],
             tickets: [],
+            isLoading: false,
+            error: null,
 
             // Actions
+            login: async (admissionNo, password) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await axios.post(`${API_URL}/student/login`, {
+                        admissionNo,
+                        password
+                    });
+
+                    if (response.data.success) {
+                        const { token, data } = response.data;
+                        localStorage.setItem('token', token);
+                        localStorage.setItem('user', JSON.stringify(data));
+
+                        // Also update useAppStore for ProtectedRoute compatibility
+                        const { useAppStore } = await import('./index');
+                        useAppStore.getState().login(data);
+
+                        set({
+                            token,
+                            isAuthenticated: true,
+                            profile: data,
+                            isLoading: false
+                        });
+                        return true;
+                    }
+                } catch (error) {
+                    const message = error.response?.data?.message || 'Login failed';
+                    set({ error: message, isLoading: false });
+                    return false;
+                }
+            },
+
+            logout: () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                set({
+                    token: null,
+                    isAuthenticated: false,
+                    profile: null,
+                    dashboard: null
+                });
+            },
+
+            fetchDashboardData: async () => {
+                if (get().isLoading) return;
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/dashboard`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ dashboard: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching dashboard data:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchProfile: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ profile: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching student profile:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchAcademics: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/academics`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ academics: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching student academics:', error);
+                    set({ isLoading: false });
+                }
+            },
+
             updateProfile: (data) => set((state) => ({
                 profile: { ...state.profile, ...data }
             })),
@@ -49,8 +135,8 @@ export const useStudentStore = create(
             payFee: (amount) => set((state) => ({
                 fees: {
                     ...state.fees,
-                    paid: state.fees.paid + amount,
-                    pending: state.fees.pending - amount
+                    paid: (state.fees?.paid || 0) + amount,
+                    pending: (state.fees?.pending || 0) - amount
                 }
             })),
 
@@ -59,7 +145,7 @@ export const useStudentStore = create(
             })),
 
             fetchNotifications: () => {
-                // In mock, already in state. Could trigger loading here if needed.
+                // To be implemented with backend
             },
 
             acknowledgeNotice: (id) => set((state) => ({
@@ -72,6 +158,11 @@ export const useStudentStore = create(
         }),
         {
             name: 'student-storage',
+            partialize: (state) => ({
+                token: state.token,
+                isAuthenticated: state.isAuthenticated,
+                profile: state.profile
+            }),
         }
     )
 );

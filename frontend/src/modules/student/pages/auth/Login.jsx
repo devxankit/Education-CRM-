@@ -1,30 +1,16 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
-
-// Mock Auth Function
-const mockLogin = (studentId, password) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (studentId && password) {
-                resolve({
-                    studentId,
-                    name: 'John Doe',
-                    role: 'student'
-                });
-            } else {
-                reject('Invalid credentials');
-            }
-        }, 1200);
-    });
-};
+import { useStudentStore } from '@/store/studentStore';
 
 const StudentLogin = () => {
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+    const login = useStudentStore(state => state.login);
+    const isLoading = useStudentStore(state => state.isLoading);
+    const errorState = useStudentStore(state => state.error);
+
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
+    const [localError, setLocalError] = useState('');
 
     // Form State
     const [formData, setFormData] = useState({
@@ -34,23 +20,25 @@ const StudentLogin = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError('');
+        setLocalError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        setError('');
+        setLocalError('');
 
-        try {
-            await mockLogin(formData.studentId, formData.password);
+        if (!formData.studentId || !formData.password) {
+            setLocalError('Please fill in all fields');
+            return;
+        }
+
+        const success = await login(formData.studentId, formData.password);
+        if (success) {
             navigate('/student/dashboard', { replace: true });
-        } catch (err) {
-            setError(err || 'Login failed. Please try again.');
-        } finally {
-            setIsLoading(false);
         }
     };
+
+    const displayError = localError || errorState;
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
@@ -70,7 +58,7 @@ const StudentLogin = () => {
                         {/* Student ID */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                <User size={12} /> Student ID / Email
+                                <User size={12} /> Student ID / Admission No
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
@@ -81,7 +69,7 @@ const StudentLogin = () => {
                                     value={formData.studentId}
                                     onChange={handleChange}
                                     className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
-                                    placeholder="e.g. STU-2024-001"
+                                    placeholder="e.g. ADM-2026-0001"
                                 />
                             </div>
                         </div>
@@ -111,11 +99,11 @@ const StudentLogin = () => {
                             </div>
                         </div>
 
-                        {error && (
-                            <div className="rounded-md bg-red-50 p-4 border border-red-100">
+                        {displayError && (
+                            <div className="rounded-md bg-red-50 p-4 border border-red-100 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <div className="flex">
                                     <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                                        <h3 className="text-sm font-medium text-red-800">{displayError}</h3>
                                     </div>
                                 </div>
                             </div>

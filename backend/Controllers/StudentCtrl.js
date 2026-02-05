@@ -206,7 +206,8 @@ export const admitStudent = async (req, res) => {
             admissionNo,
             instituteId,
             branchId: admissionData.branchId,
-            parentId // Link parent to student
+            parentId, // Link parent to student
+            password: admissionData.password || '12345678' // Default password for portal login
         });
 
         await student.save();

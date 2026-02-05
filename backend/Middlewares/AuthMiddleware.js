@@ -74,7 +74,7 @@ export const isTeacher = asyncHandler(async (req, res, next) => {
 });
 
 export const isParent = asyncHandler(async (req, res, next) => {
-  if (!req.user || req.role !== 'Parent') {
+  if (!req.user || req.role !== 'parent') {
     return res.status(403).json({ success: false, message: "Not authorized as parent" });
   }
   next();
