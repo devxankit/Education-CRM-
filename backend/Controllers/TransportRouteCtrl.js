@@ -4,10 +4,10 @@ import TransportRoute from "../Models/TransportRouteModel.js";
 export const createRoute = async (req, res) => {
     try {
         const { name, code, vehicleNo, driver, capacity, stops, branchId } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required" });
         }
 
         const route = new TransportRoute({
@@ -37,10 +37,17 @@ export const createRoute = async (req, res) => {
 export const getRoutes = async (req, res) => {
     try {
         const { branchId, status } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        // Basic validation to avoid CastError 500
+        if (branchId && branchId.length !== 24 && branchId !== 'main') {
+            return res.status(200).json({ success: true, data: [] });
+        }
 
         let query = { instituteId };
-        if (branchId) query.branchId = branchId;
+        if (branchId && branchId !== 'main') {
+            query.branchId = branchId;
+        }
         if (status) query.status = status;
 
         const routes = await TransportRoute.find(query).sort({ name: 1 });

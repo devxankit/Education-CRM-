@@ -1,4 +1,6 @@
 import Student from "../Models/StudentModel.js";
+import Class from "../Models/ClassModel.js";
+import Section from "../Models/SectionModel.js";
 import Parent from "../Models/ParentModel.js";
 import Sequence from "../Models/SequenceModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
@@ -159,6 +161,25 @@ export const admitStudent = async (req, res) => {
             const existingStudent = await Student.findOne({ parentEmail: admissionData.parentEmail });
             if (existingStudent) {
                 return res.status(400).json({ success: false, message: "Student with this parent email already exists" });
+            }
+        }
+
+        // 1.1 Capacity Check
+        if (admissionData.sectionId && admissionData.classId) {
+            const classData = await Class.findById(admissionData.classId);
+            const section = await Section.findById(admissionData.sectionId);
+
+            if (classData && section) {
+                const studentCount = await Student.countDocuments({ sectionId: admissionData.sectionId, status: 'active' });
+                // Use class capacity for all its sections
+                const studentCapacity = classData.capacity || 40;
+
+                if (studentCount >= studentCapacity) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Section '${section.name}' is full. Class '${classData.name}' limited to ${studentCapacity} students per section.`
+                    });
+                }
             }
         }
 

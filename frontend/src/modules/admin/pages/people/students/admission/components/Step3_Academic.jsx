@@ -84,8 +84,11 @@ const Step3_Academic = ({ data, onChange }) => {
                             className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                         >
                             <option value="">Select Campus</option>
-                            {branches.map(b => (
-                                <option key={b._id} value={b._id}>{b.name} ({b.code})</option>
+                            {branches.map((b, idx) => (
+                                <option key={b._id} value={b._id}>
+                                    {idx === 0 && user?.role === 'institute' && (user?.legalName || user?.shortName) ? `${user.legalName || user.shortName} - ` : ''}
+                                    {b.name} ({b.code})
+                                </option>
                             ))}
                         </select>
                         {user?.role === 'Staff' && user?.branchId !== 'all' && (

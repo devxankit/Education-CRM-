@@ -21,7 +21,6 @@ export const profileData = {
         instituteName: "Springfield International School",
         medium: "English",
         stream: "Science (PCM)",
-        house: "Red House",
         admissionDate: "2018-06-01"
     },
     parent: {

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Book, Users, Shield, HelpCircle, ChevronRight } from 'lucide-react';
+import { Settings, Book, Users, Shield, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
 
 // Components
 import ProfileSummaryCard from '../components/Profile/ProfileSummaryCard';
@@ -39,10 +39,6 @@ const AcademicInfoCard = ({ data }) => {
                     <div className="p-3 border border-gray-100 rounded-xl">
                         <p className="text-[10px] text-gray-400 uppercase font-medium">Medium</p>
                         <p className="text-sm font-bold text-gray-800">{data.medium}</p>
-                    </div>
-                    <div className="p-3 border border-gray-100 rounded-xl">
-                        <p className="text-[10px] text-gray-400 uppercase font-medium">House</p>
-                        <p className="text-sm font-bold text-gray-800">{data.house}</p>
                     </div>
                     <div className="p-3 border border-gray-100 rounded-xl">
                         <p className="text-[10px] text-gray-400 uppercase font-medium">Since</p>
@@ -89,7 +85,13 @@ const ProfilePage = () => {
     const containerRef = useRef(null);
     const student = useStudentStore(state => state.profile);
     const fetchProfile = useStudentStore(state => state.fetchProfile);
+    const logout = useStudentStore(state => state.logout);
     const [loading, setLoading] = useState(!student);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/student/login');
+    };
 
     // Initial Load & Smooth Scroll
     useEffect(() => {
@@ -152,7 +154,6 @@ const ProfilePage = () => {
         instituteName: student.branchId?.name || "My Institute",
         stream: student.classId?.level || "Standard",
         medium: student.branchId?.board || "English",
-        house: "Not Assigned",
         admissionDate: student.admissionDate
     };
 
@@ -245,7 +246,7 @@ const ProfilePage = () => {
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <button
                             onClick={() => navigate('/student/help')}
-                            className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-8 flex items-center justify-between group active:scale-[0.98] transition-all"
+                            className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4 flex items-center justify-between group active:scale-[0.98] transition-all"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -260,7 +261,26 @@ const ProfilePage = () => {
                         </button>
                     </motion.div>
 
-                    {/* 7. Account Footer */}
+                    {/* 7. Logout Action */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full bg-rose-50 p-4 rounded-2xl border border-rose-100 shadow-sm mb-8 flex items-center justify-between group active:scale-[0.98] transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                                    <LogOut size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-rose-900">Logout</p>
+                                    <p className="text-xs text-rose-500">Sign out from your account</p>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="text-rose-300 group-hover:text-rose-600 transition-colors" />
+                        </button>
+                    </motion.div>
+
+                    {/* 8. Account Footer */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <div className="text-center text-[10px] text-gray-400 pb-10">
                             {student.lastLogin && (

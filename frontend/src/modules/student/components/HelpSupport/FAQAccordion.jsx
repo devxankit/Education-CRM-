@@ -15,14 +15,16 @@ const FAQAccordion = ({ data }) => {
             </div>
 
             <div className="divide-y divide-gray-50">
-                {data.map((section, catIdx) => (
+                {data?.map((section, catIdx) => (
                     <div key={catIdx}>
                         {/* Category Header */}
-                        <div className="bg-gray-50/50 px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                            {section.category}
-                        </div>
+                        {section.category && (
+                            <div className="bg-gray-50/50 px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                {section.category}
+                            </div>
+                        )}
 
-                        {section.questions.map((item, qIdx) => {
+                        {section.questions?.map((item, qIdx) => {
                             const index = `${catIdx}-${qIdx}`;
                             const isOpen = openIndex === index;
 

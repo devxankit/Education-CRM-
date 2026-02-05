@@ -1,11 +1,12 @@
 import Class from "../Models/ClassModel.js";
 import Section from "../Models/SectionModel.js";
+import Student from "../Models/StudentModel.js";
 
 // ================= CLASS CONTROLLERS =================
 
 export const createClass = async (req, res) => {
     try {
-        const { name, level, board, branchId } = req.body;
+        const { name, level, board, branchId, capacity } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
@@ -17,7 +18,8 @@ export const createClass = async (req, res) => {
             branchId,
             name,
             level,
-            board
+            board,
+            capacity
         });
 
         await newClass.save();
@@ -98,7 +100,7 @@ export const createSection = async (req, res) => {
             branchId: classData.branchId,
             classId,
             name,
-            capacity,
+            capacity: classData.capacity || 40,
             teacherId: teacherId || null
         });
 
@@ -128,11 +130,23 @@ export const getSectionsByClass = async (req, res) => {
             query.classId = classId;
         }
 
+        const classData = await Class.findById(classId);
         const sections = await Section.find(query).populate('teacherId', 'name');
+
+        // Add actual student count for each section and override capacity with class capacity
+        const sectionsWithCount = await Promise.all(sections.map(async (sec) => {
+            const count = await Student.countDocuments({ sectionId: sec._id, status: 'active' });
+            const secObj = sec.toObject();
+            return {
+                ...secObj,
+                studentCount: count,
+                capacity: classData ? classData.capacity : secObj.capacity // Override with class capacity
+            };
+        }));
 
         res.status(200).json({
             success: true,
-            data: sections,
+            data: sectionsWithCount,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -17,7 +17,7 @@ const AdminLogin = () => {
         adminId: 'institute@gmail.com',
         password: '123'
     });
-    
+
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,7 +58,12 @@ const AdminLogin = () => {
                 throw new Error(data.message || 'Login failed');
             }
         } catch (err) {
-            setError(err.message || 'Login failed. Please try again.');
+            console.error('Login Error:', err);
+            if (err instanceof TypeError && err.message === 'Failed to fetch') {
+                setError('Backend server is offline. Please start the backend server on port 3000.');
+            } else {
+                setError(err.message || 'Login failed. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }

@@ -45,7 +45,10 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, h
                                             <span className={`font-semibold ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>
                                                 {cls.name}
                                             </span>
-                                            <span className="text-xs text-gray-400 font-mono">{cls.code}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-400 font-mono">{cls.code}</span>
+                                                <span className="text-[10px] text-gray-500 bg-gray-100 px-1 rounded">Cap: {cls.capacity}</span>
+                                            </div>
                                         </div>
                                     </td>
 

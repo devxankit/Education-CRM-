@@ -22,8 +22,12 @@ const AcademicYears = () => {
     const [closureTarget, setClosureTarget] = useState(null);
 
     // Fetch academic years on component mount
+    const isInitialMount = React.useRef(true);
     useEffect(() => {
-        fetchAcademicYears();
+        if (isInitialMount.current) {
+            fetchAcademicYears();
+            isInitialMount.current = false;
+        }
     }, []);
 
     const fetchAcademicYears = async () => {

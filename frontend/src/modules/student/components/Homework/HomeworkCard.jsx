@@ -78,7 +78,10 @@ const HomeworkCard = ({ homework, index, onClick }) => {
             {/* Action Hint */}
             <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs">
                 <span className="text-gray-400">By {homework.teacher}</span>
-                <span className="text-primary font-semibold flex items-center group-hover:translate-x-1 transition-transform">
+                <span
+                    className="text-primary font-semibold flex items-center group-hover:translate-x-1 transition-transform"
+                    onClick={(e) => { e.stopPropagation(); onClick(homework); }}
+                >
                     {homework.status === 'Pending' ? 'Submit Now' : 'View Details'} →
                 </span>
             </div>

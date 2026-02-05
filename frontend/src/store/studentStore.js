@@ -69,7 +69,24 @@ export const useStudentStore = create(
                     token: null,
                     isAuthenticated: false,
                     profile: null,
-                    dashboard: null
+                    dashboard: null,
+                    attendance: [],
+                    fees: null,
+                    exams: [],
+                    homeworkList: [],
+                    support: {
+                        tickets: [],
+                        faq: [],
+                        categories: []
+                    },
+                    notifications: [],
+                    notices: [],
+                    academics: null,
+                    documents: [],
+                    notes: [],
+                    tickets: [],
+                    isLoading: false,
+                    error: null
                 });
             },
 

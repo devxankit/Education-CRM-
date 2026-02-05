@@ -33,7 +33,7 @@ const HomeworkPage = () => {
     }, [fetchHomework]);
 
     // Transform Data
-    const data = homeworkList.map(hw => ({
+    const data = React.useMemo(() => homeworkList.map(hw => ({
         id: hw._id,
         title: hw.title,
         subject: hw.subjectId?.name || "Subject",
@@ -43,7 +43,7 @@ const HomeworkPage = () => {
         teacher: hw.teacherId ? `${hw.teacherId.firstName} ${hw.teacherId.lastName}` : "Teacher",
         instructions: hw.instructions,
         attachments: hw.attachments,
-        submission: hw.submissionStatus === 'Submitted' || hw.submissionStatus === 'Checked' || hw.submissionStatus === 'Late' ? {
+        submission: (hw.submissionStatus === 'Submitted' || hw.submissionStatus === 'Checked' || hw.submissionStatus === 'Late') ? {
             date: hw.updatedAt,
             files: [] // Backend would need to return submission details if needed for display
         } : null,
@@ -52,12 +52,12 @@ const HomeworkPage = () => {
             marks: hw.marks,
             maxMarks: 100 // Placeholder
         } : null
-    }));
+    })), [homeworkList]);
 
     // Update selected homework if ID changes
     useEffect(() => {
         if (id && data.length > 0) {
-            const hw = data.find(item => item.id === id);
+            const hw = data.find(item => String(item.id) === String(id));
             if (hw) {
                 setSelectedHomework(hw);
             }
@@ -98,7 +98,8 @@ const HomeworkPage = () => {
     }, []);
 
     const handleHomeworkClick = (hw) => {
-        navigate(`${hw.id}`);
+        // Use absolute path to avoid relative route bugs
+        navigate(`/student/homework/${hw.id}`);
     };
 
     const handleCloseDetail = () => {
@@ -195,7 +196,7 @@ const HomeworkPage = () => {
                     <HomeworkDetail
                         homework={selectedHomework}
                         onClose={handleCloseDetail}
-                        onRefresh={() => { }} // No-op as store is reactive
+                        onRefresh={() => fetchHomework()} // Ensure refresh is triggered
                     />
                 )}
             </AnimatePresence>

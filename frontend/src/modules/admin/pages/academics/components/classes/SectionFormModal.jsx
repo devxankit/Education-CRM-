@@ -19,7 +19,7 @@ const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClas
                 });
             } else {
                 setFormData({
-                    classId: initialClassId || (classes[0]?.id || ''),
+                    classId: initialClassId || (classes[0]?._id || classes[0]?.id || ''),
                     name: ''
                 });
             }
@@ -29,7 +29,8 @@ const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClas
     if (!isOpen) return null;
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleSubmit = (e) => {
@@ -46,7 +47,7 @@ const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClas
             <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in">
                 <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
                     <h3 className="text-lg font-bold flex items-center gap-2">
-                        <Users size={20} /> Add Section
+                        <Users size={20} /> {initialData ? 'Edit Section' : 'Add Section'}
                     </h3>
                     <button onClick={onClose} className="hover:bg-indigo-700 p-1 rounded transition-colors"><X size={20} /></button>
                 </div>

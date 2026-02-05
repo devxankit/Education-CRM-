@@ -44,8 +44,12 @@ const RolesList = () => {
         }
     }, []);
 
+    const isInitialMount = React.useRef(true);
     useEffect(() => {
-        fetchRoles();
+        if (isInitialMount.current) {
+            fetchRoles();
+            isInitialMount.current = false;
+        }
     }, [fetchRoles]);
 
     // -- Handlers --

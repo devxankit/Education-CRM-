@@ -4,13 +4,23 @@ import TransportConfig from "../Models/TransportConfigModel.js";
 export const getTransportConfig = async (req, res) => {
     try {
         const { branchId } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
 
-        let config = await TransportConfig.findOne({ instituteId, branchId });
+        // Basic validation to avoid CastError 500
+        if (branchId.length !== 24 && branchId !== 'main') {
+            return res.status(200).json({ success: true, data: {} });
+        }
+
+        let query = { instituteId };
+        if (branchId !== 'main') {
+            query.branchId = branchId;
+        }
+
+        let config = await TransportConfig.findOne(query);
 
         if (!config) {
             // Return defaults if none exists
@@ -40,10 +50,10 @@ export const getTransportConfig = async (req, res) => {
 export const saveTransportConfig = async (req, res) => {
     try {
         const { branchId, ...configData } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
+        if (!branchId || branchId === 'main') {
+            return res.status(400).json({ success: false, message: "A valid Branch ID is required" });
         }
 
         const existing = await TransportConfig.findOne({ instituteId, branchId });

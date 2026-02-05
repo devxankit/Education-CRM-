@@ -47,7 +47,17 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
                                 </td>
 
                                 <td className="px-6 py-4 text-gray-600">
-                                    <span className="font-mono">{sec.capacity}</span> Students
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-800">{sec.studentCount || 0} / {sec.capacity}</span>
+                                        <div className="w-24 bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${((sec.studentCount || 0) / sec.capacity) > 0.9 ? 'bg-red-500' :
+                                                        ((sec.studentCount || 0) / sec.capacity) > 0.7 ? 'bg-amber-500' : 'bg-green-500'
+                                                    }`}
+                                                style={{ width: `${Math.min(((sec.studentCount || 0) / sec.capacity) * 100, 100)}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <td className="px-6 py-4">

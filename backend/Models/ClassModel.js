@@ -27,6 +27,10 @@ const classSchema = new mongoose.Schema(
             enum: ["CBSE", "ICSE", "STATE", "IB", "IGCSE"],
             required: true,
         },
+        capacity: {
+            type: Number,
+            default: 40,
+        },
         status: {
             type: String,
             enum: ["active", "archived"],

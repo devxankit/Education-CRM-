@@ -36,8 +36,12 @@ const AccessControl = () => {
         }
     }, []);
 
+    const isInitialMount = React.useRef(true);
     useEffect(() => {
-        fetchPolicies();
+        if (isInitialMount.current) {
+            fetchPolicies();
+            isInitialMount.current = false;
+        }
     }, [fetchPolicies]);
 
     const handleSave = async () => {

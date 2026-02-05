@@ -44,8 +44,18 @@ const HelpSupportPage = () => {
 
     const supportData = {
         faq: [
-            { question: "How to pay fees online?", answer: "Go to Fees page and click on Pay Now button. You can use cards, UPI or netbanking." },
-            { question: "Where can I find school syllabus?", answer: "Check the Notes section under Syllabus category." }
+            {
+                category: "Payments",
+                questions: [
+                    { q: "How to pay fees online?", a: "Go to Fees page and click on Pay Now button. You can use cards, UPI or netbanking." }
+                ]
+            },
+            {
+                category: "Academics",
+                questions: [
+                    { q: "Where can I find school syllabus?", a: "Check the Notes section under Syllabus category." }
+                ]
+            }
         ],
         categories: ["Academic", "Fee Related", "Homework", "General", "Correction"]
     };
@@ -76,7 +86,14 @@ const HelpSupportPage = () => {
     };
 
     const handleTicketSubmit = async (ticketDetails) => {
-        addTicket(ticketDetails);
+        // Map form fields to backend model fields
+        const formattedTicket = {
+            category: ticketDetails.category,
+            topic: ticketDetails.subject,
+            details: ticketDetails.description,
+            priority: 'Normal'
+        };
+        addTicket(formattedTicket);
         setShowRaiseModal(false);
         setViewMode('tickets');
     };

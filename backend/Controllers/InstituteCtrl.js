@@ -69,10 +69,13 @@ export const loginSuperAdmin = async (req, res) => {
 
     const token = generateToken(institute._id, "institute");
 
+    const instituteData = institute.toObject();
+    delete instituteData.password;
+
     res.status(200).json({
       success: true,
       message: "Login successful",
-      data: institute,
+      data: instituteData,
       token
     });
   } catch (error) {
