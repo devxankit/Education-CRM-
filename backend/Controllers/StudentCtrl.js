@@ -175,7 +175,7 @@ export const admitStudent = async (req, res) => {
 
             if (!parent) {
                 // Generate random password for new parent
-                parentPassword = generateRandomPassword();
+                parentPassword = "123456";
                 const parentCode = `PRT-${Date.now().toString().slice(-6)}`;
 
                 // Create new parent
@@ -206,7 +206,8 @@ export const admitStudent = async (req, res) => {
             admissionNo,
             instituteId,
             branchId: admissionData.branchId,
-            parentId // Link parent to student
+            parentId, // Link parent to student
+            password: admissionData.password || admissionNo // Ensure password is saved, default to admission number
         });
 
         await student.save();

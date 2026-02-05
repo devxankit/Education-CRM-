@@ -16,7 +16,11 @@ import {
     getChildExamResults,
     getChildTeachers,
     getParentProfile,
-    updateParentProfile
+    updateParentProfile,
+    acknowledgeNotice,
+    getChildDocuments,
+    payChildFee,
+    changeParentPassword
 } from "../Controllers/ParentCtrl.js";
 import { AuthMiddleware, isInstitute, isParent } from "../Middlewares/AuthMiddleware.js";
 
@@ -53,5 +57,10 @@ router.get("/portal/child/:studentId/homework", AuthMiddleware, isParent, getChi
 router.get("/portal/child/:studentId/fees", AuthMiddleware, isParent, getChildFees);
 router.get("/portal/child/:studentId/exams", AuthMiddleware, isParent, getChildExamResults);
 router.get("/portal/child/:studentId/teachers", AuthMiddleware, isParent, getChildTeachers);
+router.get("/portal/child/:studentId/documents", AuthMiddleware, isParent, getChildDocuments);
+router.post("/portal/child/:studentId/pay-fee", AuthMiddleware, isParent, payChildFee);
+
+router.post("/portal/notices/:noticeId/acknowledge", AuthMiddleware, isParent, acknowledgeNotice);
+router.post("/portal/change-password", AuthMiddleware, isParent, changeParentPassword);
 
 export default router;
