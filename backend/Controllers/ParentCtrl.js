@@ -836,3 +836,127 @@ export const updateParentProfile = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// ================= ACKNOWLEDGE NOTICE =================
+export const acknowledgeNotice = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const { noticeId } = req.params;
+
+        const notice = await Notice.findById(noticeId);
+        if (!notice) {
+            return res.status(404).json({ success: false, message: "Notice not found" });
+        }
+
+        // Add parent to recipients who acknowledged (we'll use a separate model or handle it differently if needed)
+        // For now, let's just return success as "Acknowledged"
+
+        res.status(200).json({
+            success: true,
+            message: "Notice acknowledged successfully"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET CHILD DOCUMENTS =================
+export const getChildDocuments = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const { studentId } = req.params;
+
+        const student = await Student.findOne({ _id: studentId, parentId });
+        if (!student) {
+            return res.status(403).json({ success: false, message: "Unauthorized access" });
+        }
+
+        // Return student documents
+        const docs = [];
+        if (student.documents) {
+            Object.entries(student.documents).forEach(([key, value]) => {
+                if (value && value.url) {
+                    docs.push({
+                        id: key,
+                        title: key.charAt(0).toUpperCase() + key.slice(1),
+                        url: value.url,
+                        type: "PDF",
+                        date: student.updatedAt
+                    });
+                }
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: docs
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= PAY CHILD FEE =================
+export const payChildFee = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const { studentId } = req.params;
+        const { feeStructureId, amount, paymentMethod, transactionId } = req.body;
+
+        const student = await Student.findOne({ _id: studentId, parentId });
+        if (!student) {
+            return res.status(403).json({ success: false, message: "Unauthorized access" });
+        }
+
+        const payment = new FeePayment({
+            instituteId: student.instituteId,
+            branchId: student.branchId,
+            studentId,
+            feeStructureId,
+            amountPaid: amount,
+            paymentMethod,
+            transactionId,
+            paymentDate: new Date(),
+            status: "Success",
+            receiptNo: `REC-${Date.now()}`
+        });
+
+        await payment.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Payment recorded successfully",
+            data: payment
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CHANGE PARENT PASSWORD =================
+export const changeParentPassword = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const { oldPassword, newPassword } = req.body;
+
+        const parent = await Parent.findById(parentId);
+        if (!parent) {
+            return res.status(404).json({ success: false, message: "Parent not found" });
+        }
+
+        const isMatch = await parent.comparePassword(oldPassword);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Invalid old password" });
+        }
+
+        parent.password = newPassword;
+        await parent.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password changed successfully"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

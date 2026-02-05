@@ -26,10 +26,10 @@ const ClassInfoCard = ({ info }) => {
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8"></div>
 
             <div className="grid grid-cols-2 gap-y-4 gap-x-2 relative z-10 text-left">
-                <InfoItem icon={GraduationCap} label="Class & Section" value={`${info.className} - ${info.section}`} />
-                <InfoItem icon={Calendar} label="Academic Year" value={info.academicYear} />
-                <InfoItem icon={BookOpen} label="Medium" value={info.medium} />
-                {info.stream && <InfoItem icon={GraduationCap} label="Stream" value={info.stream} />}
+                <InfoItem icon={GraduationCap} label="Class & Section" value={`${info?.className || 'N/A'} - ${info?.section || 'N/A'}`} />
+                <InfoItem icon={Calendar} label="Academic Year" value={info?.academicYear || 'N/A'} />
+                <InfoItem icon={BookOpen} label="Medium" value={info?.medium || 'N/A'} />
+                {info?.stream && <InfoItem icon={GraduationCap} label="Stream" value={info?.stream} />}
             </div>
         </motion.div>
     );

@@ -12,17 +12,17 @@ const SubjectCard = ({ subject }) => {
         <div className="subject-card group bg-white p-4 rounded-xl border border-gray-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-all active:scale-[0.98] cursor-pointer relative overflow-hidden">
 
             <div className="flex items-start justify-between mb-3">
-                <div className={`p-2.5 rounded-lg ${subject.color}`}>
+                <div className={`p-2.5 rounded-lg ${subject?.color || 'bg-gray-50 text-gray-500'}`}>
                     <Book size={20} />
                 </div>
                 <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                    {subject.code}
+                    {subject?.code || 'N/A'}
                 </span>
             </div>
 
             <div>
-                <h4 className="font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">{subject.name}</h4>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-1">{subject.teacher}</p>
+                <h4 className="font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">{subject?.name || 'Unknown'}</h4>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-1">{subject?.teacher || 'No Teacher'}</p>
 
                 <div className="mt-4 flex items-center justify-between">
                     <span className="text-[10px] font-medium text-gray-400">
@@ -42,7 +42,7 @@ const SubjectsGrid = ({ subjects }) => {
 
     useEffect(() => {
         if (!gridRef.current) return;
-        
+
         const ctx = gsap.context(() => {
             const cards = gridRef.current.querySelectorAll('.subject-card');
             if (cards.length === 0) return;
@@ -80,7 +80,7 @@ const SubjectsGrid = ({ subjects }) => {
                 });
             }
         }, gridRef);
-        
+
         return () => {
             ctx.revert();
         };

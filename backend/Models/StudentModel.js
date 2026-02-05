@@ -46,7 +46,7 @@ const studentSchema = new mongoose.Schema(
             type: String,
             // Optional password for primary students
         },
-        dateOfBirth: {
+        dob: {
             type: Date,
         },
         gender: {

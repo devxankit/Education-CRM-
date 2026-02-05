@@ -56,7 +56,7 @@ const AcademicInfoCard = ({ data }) => {
 
 // Helper for Parent Card
 const ParentInfoCard = ({ data }) => {
-    if (!data) return null;
+    if (!data || !data.name || data.name === 'N/A') return null;
     return (
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
             <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -66,20 +66,11 @@ const ParentInfoCard = ({ data }) => {
             <div className="space-y-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
-                        {data.fatherName?.charAt(0)}
+                        {data.name?.charAt(0)}
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-gray-900">{data.fatherName}</p>
-                        <p className="text-xs text-gray-500">Father • {data.guardianContact}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold shrink-0">
-                        {data.motherName?.charAt(0)}
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold text-gray-900">{data.motherName}</p>
-                        <p className="text-xs text-gray-500">Mother</p>
+                        <p className="text-sm font-bold text-gray-900">{data.name}</p>
+                        <p className="text-xs text-gray-500">{data.relationship} • {data.contact}</p>
                     </div>
                 </div>
                 {data.linkedAccount && (
@@ -96,8 +87,9 @@ const ParentInfoCard = ({ data }) => {
 const ProfilePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const data = useStudentStore(state => state.profile);
-    const [loading, setLoading] = useState(false);
+    const student = useStudentStore(state => state.profile);
+    const fetchProfile = useStudentStore(state => state.fetchProfile);
+    const [loading, setLoading] = useState(!student);
 
     // Initial Load & Smooth Scroll
     useEffect(() => {
@@ -116,18 +108,75 @@ const ProfilePage = () => {
         }
         requestAnimationFrame(raf);
 
+        // ALWAYS fetch the full populated profile on mount
+        setLoading(true);
+        fetchProfile().finally(() => setLoading(false));
+
         return () => lenis.destroy();
-    }, []);
+    }, [fetchProfile]);
 
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-400 font-medium">Loading your profile...</p>
+                </div>
             </div>
         );
     }
 
-    if (!data) return <EmptyState />;
+    if (!student) return <EmptyState />;
+
+    // Prepare data for sub-components
+    const summaryData = {
+        name: `${student.firstName} ${student.lastName}`,
+        avatar: student.documents?.photo?.url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + student.admissionNo,
+        class: student.classId?.name || "N/A",
+        section: student.sectionId?.name || "N/A",
+        rollNumber: student.rollNo || "N/A",
+        id: student.admissionNo,
+        status: student.status === 'active' ? 'Active' : 'Inactive'
+    };
+
+    const personalData = {
+        dob: student.dob,
+        gender: student.gender,
+        bloodGroup: student.bloodGroup,
+        contact: student.parentId?.mobile || student.parentMobile || "N/A",
+        email: student.parentEmail || "N/A",
+        address: student.address ? `${student.address}, ${student.city}, ${student.state} - ${student.pincode}` : "N/A"
+    };
+
+    const academicData = {
+        instituteName: student.branchId?.name || "My Institute",
+        stream: student.classId?.level || "Standard",
+        medium: student.branchId?.board || "English",
+        house: "Not Assigned",
+        admissionDate: student.admissionDate
+    };
+
+    const parentData = {
+        name: student.parentId?.name || "N/A",
+        relationship: student.parentId?.relationship || "Guardian",
+        contact: student.parentId?.mobile || "N/A",
+        linkedAccount: !!student.parentId
+    };
+
+    // Transform documents object to array for list component
+    const docsArray = student.documents ? Object.keys(student.documents)
+        .filter(key => student.documents[key]?.url)
+        .map(key => ({
+            id: key,
+            name: key === 'birthCert' ? 'Birth Certificate' :
+                key === 'transferCert' ? 'Transfer Certificate' :
+                    key === 'aadhar' ? 'Aadhar Card' :
+                        key === 'prevMarksheet' ? 'Previous Marksheet' : 'Document',
+            type: 'PDF/Image',
+            size: student.documents[key]?.date || 'Uploaded',
+            status: student.documents[key]?.status || 'Uploaded',
+            url: student.documents[key]?.url
+        })) : [];
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-24">
@@ -165,30 +214,30 @@ const ProfilePage = () => {
                 >
                     {/* 1. Summary */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
-                        <ProfileSummaryCard student={data.student} />
+                        <ProfileSummaryCard student={summaryData} />
                     </motion.div>
 
                     {/* 2. Personal Info */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <InfoSectionCard
                             title="Personal Information"
-                            data={data.student}
+                            data={personalData}
                         />
                     </motion.div>
 
                     {/* 3. Academic Info */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
-                        <AcademicInfoCard data={data.academic} />
+                        <AcademicInfoCard data={academicData} />
                     </motion.div>
 
                     {/* 4. Documents */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
-                        <DocumentsList documents={data.documents} />
+                        <DocumentsList documents={docsArray} />
                     </motion.div>
 
                     {/* 5. Parent Info */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
-                        <ParentInfoCard data={data.parent} />
+                        <ParentInfoCard data={parentData} />
                     </motion.div>
 
 
@@ -214,8 +263,10 @@ const ProfilePage = () => {
                     {/* 7. Account Footer */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <div className="text-center text-[10px] text-gray-400 pb-10">
-                            <p>Last login: {new Date(data.account.lastLogin).toLocaleString()}</p>
-                            <p>Account Version v1.2.0 • {data.account.securityStatus}</p>
+                            {student.lastLogin && (
+                                <p>Last login: {new Date(student.lastLogin).toLocaleString()}</p>
+                            )}
+                            <p>Account Version v1.2.0 • {student.status === 'active' ? 'Secure' : 'Inactive'}</p>
                         </div>
                     </motion.div>
 

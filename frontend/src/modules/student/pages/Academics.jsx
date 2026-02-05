@@ -11,8 +11,14 @@ import { useStudentStore } from '../../../store/studentStore';
 const Academics = () => {
     const navigate = useNavigate();
     const data = useStudentStore(state => state.academics);
+    const fetchAcademics = useStudentStore(state => state.fetchAcademics);
     const [activeDay, setActiveDay] = useState(new Date().toLocaleDateString('en-US', { weekday: 'short' })); // Default to today
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(!data);
+
+    // Fetch on mount
+    useEffect(() => {
+        fetchAcademics().finally(() => setLoading(false));
+    }, [fetchAcademics]);
 
     // Fallback if today is Sunday -> Mon
     useEffect(() => {

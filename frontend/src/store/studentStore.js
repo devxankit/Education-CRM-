@@ -15,7 +15,11 @@ export const useStudentStore = create(
             fees: null,
             exams: [],
             homeworkList: [],
-            support: [],
+            support: {
+                tickets: [],
+                faq: [],
+                categories: []
+            },
             notifications: [],
             notices: [],
             academics: null,
@@ -26,11 +30,11 @@ export const useStudentStore = create(
             error: null,
 
             // Actions
-            login: async (admissionNo, password) => {
+            login: async (identifier, password) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await axios.post(`${API_URL}/student/login`, {
-                        admissionNo,
+                        identifier,
                         password
                     });
 

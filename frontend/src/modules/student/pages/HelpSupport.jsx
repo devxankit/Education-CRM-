@@ -17,12 +17,12 @@ import { useStudentStore } from '../../../store/studentStore';
 const HelpSupportPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const supportData = useStudentStore(state => state.support);
-    const persistentTickets = useStudentStore(state => state.tickets);
+    const supportData = useStudentStore(state => state.support) || { tickets: [], faq: [], categories: [] };
+    const persistentTickets = useStudentStore(state => state.tickets) || [];
     const addTicket = useStudentStore(state => state.addTicket);
 
     // Combine mock tickets with persistent ones for UI
-    const allTickets = [...persistentTickets, ...supportData.tickets];
+    const allTickets = [...(persistentTickets || []), ...(supportData.tickets || [])];
 
     const [loading, setLoading] = useState(false);
     const [showRaiseModal, setShowRaiseModal] = useState(false);

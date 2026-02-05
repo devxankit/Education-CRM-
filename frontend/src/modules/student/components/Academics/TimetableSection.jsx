@@ -87,7 +87,7 @@ const TimetableSection = ({ timetable, activeDay, setActiveDay }) => {
 
             {/* Content */}
             <div className="min-h-[200px]" ref={containerRef}>
-                {timetable[activeDay]?.length > 0 ? (
+                {timetable && timetable[activeDay]?.length > 0 ? (
                     timetable[activeDay].map((cls, idx) => (
                         <TimetableRow key={cls.id || idx} cls={cls} index={idx} />
                     ))

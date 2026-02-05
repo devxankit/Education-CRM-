@@ -14,7 +14,7 @@ const StudentLogin = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        studentId: '',
+        identifier: '',
         password: ''
     });
 
@@ -27,12 +27,12 @@ const StudentLogin = () => {
         e.preventDefault();
         setLocalError('');
 
-        if (!formData.studentId || !formData.password) {
+        if (!formData.identifier || !formData.password) {
             setLocalError('Please fill in all fields');
             return;
         }
 
-        const success = await login(formData.studentId, formData.password);
+        const success = await login(formData.identifier, formData.password);
         if (success) {
             navigate('/student/dashboard', { replace: true });
         }
@@ -55,21 +55,21 @@ const StudentLogin = () => {
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-gray-100">
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        {/* Student ID */}
+                        {/* Identifier */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                <User size={12} /> Student ID / Admission No
+                                <User size={12} /> Admission No / Email
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
-                                    id="studentId"
-                                    name="studentId"
+                                    id="identifier"
+                                    name="identifier"
                                     type="text"
                                     required
-                                    value={formData.studentId}
+                                    value={formData.identifier}
                                     onChange={handleChange}
                                     className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
-                                    placeholder="e.g. ADM-2026-0001"
+                                    placeholder="e.g. ADM-2026-0001 or email@example.com"
                                 />
                             </div>
                         </div>
