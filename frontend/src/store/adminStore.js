@@ -180,9 +180,26 @@ export const useAdminStore = create(
                     throw error;
                 }
             },
-            updateStudent: (id, data) => set((state) => ({
-                students: state.students.map(s => s.id === id ? { ...s, ...data } : s)
-            })),
+            updateStudent: async (id, studentData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/student/${id}`, studentData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.data.success) {
+                        set((state) => ({
+                            students: state.students.map(s => (s._id === id || s.id === id) ? response.data.data : s)
+                        }));
+                        get().addToast('Student profile updated successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error updating student:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating student', 'error');
+                    throw error;
+                }
+            },
 
             // Actions: Parents
             setParents: (parents) => set({ parents }),

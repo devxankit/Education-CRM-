@@ -2,7 +2,7 @@
 import React from 'react';
 import { User, Phone, Mail, MapPin, Edit } from 'lucide-react';
 
-const ProfileHeader = ({ student }) => {
+const ProfileHeader = ({ student, onEdit }) => {
     // Robust name handling
     const fullName = student.name || `${student.firstName || ''} ${student.middleName || ''} ${student.lastName || ''}`.trim() || 'No Name';
 
@@ -36,7 +36,10 @@ const ProfileHeader = ({ student }) => {
                                 <span>Roll No: {student.rollNo || 'N/A'}</span>
                             </div>
                         </div>
-                        <button className="hidden md:flex items-center gap-1 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-indigo-100">
+                        <button
+                            onClick={onEdit}
+                            className="hidden md:flex items-center gap-1 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-indigo-100"
+                        >
                             <Edit size={16} /> Edit Profile
                         </button>
                     </div>

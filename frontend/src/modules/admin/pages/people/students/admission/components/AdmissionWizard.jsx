@@ -16,6 +16,7 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
         // 1
         firstName: '', middleName: '', lastName: '',
         dob: '', gender: '', bloodGroup: '', nationality: 'Indian',
+        parentEmail: '',
         address: '', city: '', pincode: '',
 
         // 3 (Now 2)
@@ -36,6 +37,19 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
     const totalSteps = 5;
 
     const handleNext = () => {
+        // Simple validation for Step 1
+        if (currentStep === 1) {
+            if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.parentEmail) {
+                alert("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email)");
+                return;
+            }
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.parentEmail)) {
+                alert("Please enter a valid Parent Email address");
+                return;
+            }
+        }
         if (currentStep < totalSteps) setCurrentStep(prev => prev + 1);
     };
 

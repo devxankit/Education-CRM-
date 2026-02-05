@@ -37,8 +37,8 @@ const studentSchema = new mongoose.Schema(
         },
         parentEmail: {
             type: String,
+            required: true,
             unique: true,
-            sparse: true, // Optional email
             lowercase: true,
             trim: true,
         },
