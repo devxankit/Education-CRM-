@@ -54,6 +54,7 @@ const Step6_Review = ({ data, onEditStep }) => {
                     <Row label="Full Name" value={`${data.firstName} ${data.middleName || ''} ${data.lastName}`} />
                     <Row label="Date of Birth" value={data.dob} />
                     <Row label="Gender" value={data.gender} />
+                    <Row label="Parent Email" value={data.parentEmail} />
                     <Row label="Address" value={`${data.address}, ${data.city}`} />
                 </Section>
 

@@ -329,6 +329,35 @@ export const updateStudent = async (req, res) => {
         // Prevent password update via this route
         delete updateData.password;
 
+        // Internal Unique Check (parentEmail) if email is being changed
+        if (updateData.parentEmail) {
+            const existingStudent = await Student.findOne({
+                parentEmail: updateData.parentEmail,
+                _id: { $ne: id }
+            });
+            if (existingStudent) {
+                return res.status(400).json({ success: false, message: "Another student with this parent email already exists" });
+            }
+        }
+
+        // Handle Cloudinary Document Uploads
+        if (updateData.documents) {
+            const instituteId = req.user.instituteId || req.user._id;
+            const uploadPromises = Object.keys(updateData.documents).map(async (key) => {
+                const doc = updateData.documents[key];
+                if (doc && doc.base64) {
+                    try {
+                        const cloudinaryUrl = await uploadBase64ToCloudinary(doc.base64, `students/documents/${instituteId}`);
+                        doc.url = cloudinaryUrl;
+                        delete doc.base64; // Remove base64 from object before saving to DB
+                    } catch (uploadError) {
+                        console.error(`Error uploading updated ${key} to Cloudinary:`, uploadError);
+                    }
+                }
+            });
+            await Promise.all(uploadPromises);
+        }
+
         const student = await Student.findByIdAndUpdate(
             id,
             { $set: updateData },

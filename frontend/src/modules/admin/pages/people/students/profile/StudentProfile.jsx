@@ -2,43 +2,60 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CreditCard, Clock, FileText, Activity } from 'lucide-react';
-import { useAdminStore } from '../../../../../../store/adminStore';
+import { useAdminStore } from '@/store/adminStore';
 
 // Components
 import ProfileHeader from './components/ProfileHeader';
 import AcademicTab from './components/AcademicTab';
 import FeesTab from './components/FeesTab';
+import StudentEditPortal from './components/StudentEditPortal';
 
 const StudentProfile = () => {
 
     const { id } = useParams();
     const navigate = useNavigate();
     const fetchStudentById = useAdminStore(state => state.fetchStudentById);
+    const updateStudent = useAdminStore(state => state.updateStudent);
 
     const [activeTab, setActiveTab] = useState('academic');
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     // Fetch student data based on ID
-    useEffect(() => {
-        const loadStudent = async () => {
-            setLoading(true);
-            try {
-                const data = await fetchStudentById(id);
-                if (data) {
-                    setStudent(data);
-                }
-            } catch (error) {
-                console.error('Error fetching student:', error);
-            } finally {
-                setLoading(false);
+    const loadStudent = async () => {
+        setLoading(true);
+        try {
+            const data = await fetchStudentById(id);
+            if (data) {
+                setStudent(data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching student:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (id) {
             loadStudent();
         }
     }, [id, fetchStudentById]);
+
+    const handleUpdateSave = async (studentId, updatedData) => {
+        try {
+            const result = await updateStudent(studentId, updatedData);
+            if (result) {
+                // Manually update local state or re-fetch
+                setStudent(result);
+                return true;
+            }
+        } catch (error) {
+            console.error("Failed to update student:", error);
+            throw error;
+        }
+    };
 
     const tabs = [
         { id: 'academic', label: 'Academic & Attendance', icon: BookOpen },
@@ -85,7 +102,7 @@ const StudentProfile = () => {
             </div>
 
             {/* Profile Header */}
-            <ProfileHeader student={student} />
+            <ProfileHeader student={student} onEdit={() => setIsEditOpen(true)} />
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-6 bg-white rounded-t-xl px-2">
@@ -120,7 +137,7 @@ const StudentProfile = () => {
                             {student.documents && Object.keys(student.documents).map(key => student.documents[key].url && (
                                 <a key={key} href={student.documents[key].url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all">
                                     <FileText size={24} className="text-indigo-600 mb-2" />
-                                    <span className="text-xs font-bold text-gray-700">{student.documents[key].name}</span>
+                                    <span className="text-xs font-bold text-gray-700">{student.documents[key].name || key}</span>
                                 </a>
                             ))}
                         </div>
@@ -135,6 +152,14 @@ const StudentProfile = () => {
                     </div>
                 )}
             </div>
+
+            {/* Edit Portal */}
+            <StudentEditPortal
+                isOpen={isEditOpen}
+                student={student}
+                onClose={() => setIsEditOpen(false)}
+                onSave={handleUpdateSave}
+            />
 
         </div>
     );

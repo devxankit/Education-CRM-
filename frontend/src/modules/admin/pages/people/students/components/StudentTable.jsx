@@ -62,7 +62,10 @@ const StudentTable = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <p className="text-gray-900">{student.parentId?.name || student.parentName || 'N/A'}</p>
-                                        <p className="text-xs text-gray-500">{student.parentId?.mobile || student.parentMobile || 'N/A'}</p>
+                                        <div className="flex flex-col">
+                                            <p className="text-xs text-gray-500">{student.parentId?.mobile || student.parentMobile || 'N/A'}</p>
+                                            {student.parentEmail && <p className="text-[10px] text-indigo-500 font-medium truncate max-w-[150px]">{student.parentEmail}</p>}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 font-mono text-gray-600 text-xs">
                                         {student.admissionNo || student.admNo || 'PENDING'}
