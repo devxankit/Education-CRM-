@@ -126,11 +126,11 @@ export const admitStudent = async (req, res) => {
         const admissionData = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
-        // 1. Internal Unique Check (Email)
-        if (admissionData.email) {
-            const existingStudent = await Student.findOne({ email: admissionData.email });
+        // 1. Internal Unique Check (parentEmail)
+        if (admissionData.parentEmail) {
+            const existingStudent = await Student.findOne({ parentEmail: admissionData.parentEmail });
             if (existingStudent) {
-                return res.status(400).json({ success: false, message: "Student with this email already exists" });
+                return res.status(400).json({ success: false, message: "Student with this parent email already exists" });
             }
         }
 
@@ -155,33 +155,96 @@ export const admitStudent = async (req, res) => {
                         delete doc.base64; // Remove base64 from object before saving to DB
                     } catch (uploadError) {
                         console.error(`Error uploading ${key} to Cloudinary:`, uploadError);
-                        // Optionally set an error status or keep going
                     }
                 }
             });
             await Promise.all(uploadPromises);
         }
 
-        // 4. Create Student
+        // 4. Create/Find Parent and generate password if parentEmail and parentMobile are provided
+        let parentId = admissionData.parentId;
+        let parentPassword = null;
+        let parentCreated = false;
+
+        if (admissionData.parentEmail && admissionData.parentMobile) {
+            // Check if parent already exists with this mobile
+            let parent = await Parent.findOne({
+                mobile: admissionData.parentMobile,
+                instituteId
+            });
+
+            if (!parent) {
+                // Generate random password for new parent
+                parentPassword = generateRandomPassword();
+                const parentCode = `PRT-${Date.now().toString().slice(-6)}`;
+
+                // Create new parent
+                parent = new Parent({
+                    instituteId,
+                    branchId: admissionData.branchId,
+                    name: admissionData.parentName || admissionData.fatherName || admissionData.guardianName || "Parent",
+                    mobile: admissionData.parentMobile,
+                    email: admissionData.parentEmail,
+                    relationship: admissionData.parentRelationship || "Father",
+                    address: admissionData.address,
+                    occupation: admissionData.parentOccupation,
+                    code: parentCode,
+                    password: parentPassword // Will be hashed by model pre-save hook
+                });
+
+                await parent.save();
+                parentCreated = true;
+                console.log(`Parent created: ${parent._id} with mobile: ${admissionData.parentMobile}`);
+            }
+
+            parentId = parent._id;
+        }
+
+        // 5. Create Student
         const student = new Student({
             ...admissionData,
             admissionNo,
             instituteId,
-            branchId: admissionData.branchId
+            branchId: admissionData.branchId,
+            parentId // Link parent to student
         });
 
         await student.save();
 
+        // 6. Send credentials email to parent if new parent was created
+        if (parentCreated && admissionData.parentEmail && parentPassword) {
+            const studentName = `${admissionData.firstName} ${admissionData.lastName || ''}`.trim();
+            const parentName = admissionData.parentName || admissionData.fatherName || admissionData.guardianName || "Parent";
+
+            // Send email asynchronously (don't block response)
+            sendParentCredentialsEmail(
+                admissionData.parentEmail,
+                parentPassword,
+                parentName,
+                studentName,
+                admissionNo
+            ).then(() => {
+                console.log(`Credentials email sent to ${admissionData.parentEmail}`);
+            }).catch(err => {
+                console.error(`Failed to send email to ${admissionData.parentEmail}:`, err);
+            });
+        }
+
         res.status(201).json({
             success: true,
-            message: "Student admitted successfully",
+            message: parentCreated
+                ? "Student admitted successfully. Login credentials sent to parent email."
+                : "Student admitted successfully",
             data: student,
+            parentLinked: !!parentId,
+            emailSent: parentCreated && !!admissionData.parentEmail
         });
     } catch (error) {
         console.error("Admission Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 // ================= GET STUDENTS =================
 export const getStudents = async (req, res) => {
