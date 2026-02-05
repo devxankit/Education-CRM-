@@ -18,12 +18,16 @@ const ExamsPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const listRef = useRef(null);
-    const marksRecords = useTeacherStore(state => state.marksRecords);
+    const fetchExams = useTeacherStore(state => state.fetchExams);
     const exams = useTeacherStore(state => state.exams);
-    const examStudentsMap = useTeacherStore(state => state.examStudents);
-
-    const [activeTab, setActiveTab] = useState('active');
+    const isFetching = useTeacherStore(state => state.isFetchingExams);
+    const [activeTab, setActiveTab] = useState('all');
     const [selectedExam, setSelectedExam] = useState(null);
+
+    // Fetch exams on mount
+    useEffect(() => {
+        fetchExams();
+    }, [fetchExams]);
 
     // Smooth Scroll
     useEffect(() => {
@@ -41,12 +45,11 @@ const ExamsPage = () => {
     }, []);
 
     // Filter Logic
-    const filteredExams = exams.map(exam => {
-        const record = marksRecords.find(r => r.examId === exam.id);
-        return record ? { ...exam, status: record.status } : exam;
-    }).filter(exam => {
+    const filteredExams = exams.filter(exam => {
         if (activeTab === 'all') return true;
-        return exam.status.toLowerCase() === activeTab;
+        if (activeTab === 'active') return exam.status === 'Published';
+        if (activeTab === 'submitted') return exam.status === 'Completed';
+        return true;
     });
 
     // Animation on Filter Change
@@ -57,10 +60,10 @@ const ExamsPage = () => {
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out' }
             );
         }
-    }, [activeTab]);
+    }, [activeTab, filteredExams.length]);
 
-    const handleEnterMarks = (exam) => {
-        setSelectedExam(exam);
+    const handleEnterMarks = (exam, subject) => {
+        setSelectedExam({ ...exam, currentSubject: subject });
     };
 
     return (
@@ -79,9 +82,6 @@ const ExamsPage = () => {
                         </button>
                         <h1 className="text-lg font-bold text-gray-900">Exams & Marks</h1>
                     </div>
-                    <button className="text-gray-400 hover:text-indigo-600 transition-colors">
-                        <Info size={20} />
-                    </button>
                 </div>
             </div>
 
@@ -91,14 +91,24 @@ const ExamsPage = () => {
 
                 {/* 2. Exam List */}
                 <div ref={listRef} className="mt-2 min-h-[300px]">
-                    {filteredExams.length > 0 ? (
+                    {isFetching ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                            <p className="text-sm font-medium">Fetching exams...</p>
+                        </div>
+                    ) : filteredExams.length > 0 ? (
                         filteredExams.map(exam => (
-                            <ExamCard
-                                key={exam.id}
-                                exam={exam}
-                                onEnterMarks={handleEnterMarks}
-                                onClick={() => navigate(`/teacher/exams/${exam.id}`)}
-                            />
+                            <div key={exam._id}>
+                                {exam.subjects.map(subject => (
+                                    <ExamCard
+                                        key={`${exam._id}_${subject.subjectId}`}
+                                        exam={exam}
+                                        subject={subject}
+                                        onEnterMarks={(ex) => handleEnterMarks(ex, subject)}
+                                        onClick={() => navigate(`/teacher/exams/${exam._id}`)}
+                                    />
+                                ))}
+                            </div>
                         ))
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
@@ -118,7 +128,7 @@ const ExamsPage = () => {
                         isOpen={!!selectedExam}
                         onClose={() => setSelectedExam(null)}
                         exam={selectedExam}
-                        students={examStudentsMap[selectedExam?.id] || []}
+                        subject={selectedExam.currentSubject}
                     />
                 )}
             </AnimatePresence>

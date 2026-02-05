@@ -2,9 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
 import { API_URL } from '@/app/api';
-import { teacherProfile, todayClasses, adminNotices } from '../modules/teacher/data/dashboardData';
-import { attendanceData } from '../modules/teacher/data/attendanceData';
-import { homeworkData } from '../modules/teacher/data/homeworkData';
 import { queriesData } from '../modules/teacher/data/supportData';
 import { examsData } from '../modules/teacher/data/examsData';
 import { submissionsData } from '../modules/teacher/data/submissionsData';
@@ -12,13 +9,75 @@ import { submissionsData } from '../modules/teacher/data/submissionsData';
 export const useTeacherStore = create(
     persist(
         (set, get) => ({
+            // Auth State
+            user: null,
+            token: null,
+            isAuthenticated: false,
+
+            login: async (email, password) => {
+                try {
+                    const response = await axios.post(`${API_URL}/teacher/login`, { email, password });
+                    if (response.data.success) {
+                        const { data, token } = response.data;
+                        localStorage.setItem('token', token);
+                        set({
+                            user: data,
+                            token,
+                            isAuthenticated: true
+                        });
+                        return { success: true };
+                    }
+                } catch (error) {
+                    console.error('Teacher Login Error:', error);
+                    return {
+                        success: false,
+                        message: error.response?.data?.message || 'Login failed'
+                    };
+                }
+            },
+
+            logout: () => {
+                localStorage.removeItem('token');
+                set({
+                    user: null,
+                    token: null,
+                    isAuthenticated: false,
+                    profile: null,
+                    assignedClasses: [],
+                    classStudents: [],
+                    dashboardData: null
+                });
+            },
+
+            // Dashboard
+            dashboardData: null,
+            isFetchingDashboard: false,
+            fetchDashboard: async () => {
+                if (get().isFetchingDashboard) return;
+                set({ isFetchingDashboard: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/dashboard`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ dashboardData: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching dashboard:', error);
+                } finally {
+                    set({ isFetchingDashboard: false });
+                }
+            },
+
             // Submissions
             submissions: submissionsData,
             updateSubmission: (id, data) => set((state) => ({
                 submissions: state.submissions.map(s => s.id === id ? { ...s, ...data } : s)
             })),
+
             // Profile & Settings
-            profile: teacherProfile,
+            profile: null,
             assignedClasses: [],
             classStudents: [],
             isFetchingProfile: false,
@@ -91,10 +150,6 @@ export const useTeacherStore = create(
                 profile: { ...state.profile, ...data }
             })),
 
-            // Dashboard & Notices
-            notices: adminNotices,
-            todayClasses: todayClasses,
-
             // Attendance
             attendanceRecords: [],
             isSubmittingAttendance: false,
@@ -164,6 +219,21 @@ export const useTeacherStore = create(
                     set({ isFetchingHomework: false });
                 }
             },
+            getHomeworkById: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/homework/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error fetching homework:', error);
+                    return null;
+                }
+            },
             addHomework: async (homeworkData) => {
                 set({ isCreatingHomework: true });
                 try {
@@ -184,6 +254,61 @@ export const useTeacherStore = create(
                     set({ isCreatingHomework: false });
                 }
             },
+            updateHomework: async (id, updateData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/teacher/homework/${id}`, updateData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            homeworkList: state.homeworkList.map(hw =>
+                                hw._id === id ? response.data.data : hw
+                            )
+                        }));
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error updating homework:', error);
+                    return false;
+                }
+            },
+            deleteHomework: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/teacher/homework/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            homeworkList: state.homeworkList.filter(hw => hw._id !== id)
+                        }));
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error deleting homework:', error);
+                    return false;
+                }
+            },
+
+            // Notices
+            notices: [],
+            isFetchingNotices: false,
+            fetchNotices: async () => {
+                if (get().isFetchingNotices) return;
+                set({ isFetchingNotices: true });
+                try {
+                    // Notices come from the dashboard API now
+                    const dashboardData = get().dashboardData;
+                    if (dashboardData?.recentNotices) {
+                        set({ notices: dashboardData.recentNotices });
+                    }
+                } catch (error) {
+                    console.error('Error fetching notices:', error);
+                } finally {
+                    set({ isFetchingNotices: false });
+                }
+            },
 
             // Support Queries
             queries: queriesData,
@@ -194,24 +319,142 @@ export const useTeacherStore = create(
             })),
 
             // Marks/Exams
-            exams: examsData.list,
-            examStudents: examsData.students,
+            exams: [],
+            isFetchingExams: false,
+            fetchExams: async () => {
+                if (get().isFetchingExams) return;
+                set({ isFetchingExams: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/exams`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ exams: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching exams:', error);
+                } finally {
+                    set({ isFetchingExams: false });
+                }
+            },
+
+            examStudents: {}, // Stores students per exam-class-subject combo
+            isFetchingExamStudents: false,
+            fetchExamStudents: async (examId, classId, subjectId) => {
+                set({ isFetchingExamStudents: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/exams/students`, {
+                        params: { examId, classId, subjectId },
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const key = `${examId}_${classId}_${subjectId}`;
+                        set(state => ({
+                            examStudents: {
+                                ...state.examStudents,
+                                [key]: response.data.data
+                            }
+                        }));
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching exam students:', error);
+                    return [];
+                } finally {
+                    set({ isFetchingExamStudents: false });
+                }
+            },
+
             marksRecords: [],
+            isSubmittingMarks: false,
+            submitMarks: async (marksPayload) => {
+                set({ isSubmittingMarks: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/teacher/exams/submit-marks`, marksPayload, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        // Refresh exams to show updated status if needed
+                        get().fetchExams();
+                        return { success: true, message: response.data.message };
+                    }
+                    return { success: false, message: response.data.message };
+                } catch (error) {
+                    console.error('Error submitting marks:', error);
+                    return { success: false, message: error.response?.data?.message || 'Failed to submit marks' };
+                } finally {
+                    set({ isSubmittingMarks: false });
+                }
+            },
             saveMarksDraft: (record) => set((state) => ({
                 marksRecords: [
                     ...state.marksRecords.filter(r => r.examId !== record.examId),
                     record
                 ]
             })),
-            submitMarks: (record) => set((state) => ({
-                marksRecords: [
-                    ...state.marksRecords.filter(r => r.examId !== record.examId),
-                    { ...record, status: 'Submitted' }
-                ],
-                exams: state.exams.map(ex =>
-                    ex.id === record.examId ? { ...ex, status: 'Submitted' } : ex
-                )
-            })),
+
+            // Submissions
+            submissions: [],
+            isFetchingSubmissions: false,
+            fetchHomeworkSubmissions: async (homeworkId) => {
+                set({ isFetchingSubmissions: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/homework/${homeworkId}/submissions`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ submissions: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching submissions:', error);
+                } finally {
+                    set({ isFetchingSubmissions: false });
+                }
+            },
+            gradeSubmission: async (submissionId, gradeData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/teacher/homework/submissions/${submissionId}/grade`, gradeData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set(state => ({
+                            submissions: state.submissions.map(s =>
+                                s._id === submissionId ? { ...s, ...response.data.data } : s
+                            )
+                        }));
+                        return { success: true };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    console.error('Error grading submission:', error);
+                    return { success: false };
+                }
+            },
+
+            // Analytics
+            analyticsData: null,
+            isFetchingAnalytics: false,
+            fetchAnalytics: async () => {
+                set({ isFetchingAnalytics: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/analytics`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ analyticsData: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching analytics:', error);
+                } finally {
+                    set({ isFetchingAnalytics: false });
+                }
+            },
         }),
         {
             name: 'teacher-storage',

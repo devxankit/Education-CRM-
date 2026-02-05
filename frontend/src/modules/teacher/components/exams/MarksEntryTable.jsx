@@ -3,51 +3,74 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTeacherStore } from '../../../../store/teacherStore';
 
-const MarksEntryTable = ({ exam, students, isOpen, onClose }) => {
-    const { saveMarksDraft, submitMarks } = useTeacherStore();
-    // Local state for marks to allow inputs
-    const [marksData, setMarksData] = useState(
-        students ? students.reduce((acc, st) => ({ ...acc, [st.id]: st.marks || '' }), {}) : {}
-    );
+const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
+    const { fetchExamStudents, submitMarks, isSubmittingMarks } = useTeacherStore();
+    const examStudents = useTeacherStore(state => state.examStudents);
+    const [marksData, setMarksData] = useState({});
+    const [remarksData, setRemarksData] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+
+    const classId = exam.classes?.[0]?._id;
+    const key = `${exam._id}_${classId}_${subject.subjectId}`;
+    const students = examStudents[key] || [];
+
+    React.useEffect(() => {
+        if (isOpen && exam && subject && classId) {
+            const loadStudents = async () => {
+                const data = await fetchExamStudents(exam._id, classId, subject.subjectId);
+                // Initialize local state with existing marks if any
+                if (data) {
+                    const initialMarks = {};
+                    const initialRemarks = {};
+                    data.forEach(st => {
+                        initialMarks[st._id] = st.marksObtained ?? '';
+                        initialRemarks[st._id] = st.remarks ?? '';
+                    });
+                    setMarksData(initialMarks);
+                    setRemarksData(initialRemarks);
+                }
+                setIsLoading(false);
+            };
+            loadStudents();
+        }
+    }, [isOpen, exam._id, classId, subject.subjectId, fetchExamStudents]);
 
     if (!isOpen || !exam) return null;
 
     const handleMarkChange = (id, value) => {
-        // Simple numeric validation (allow empty string)
-        if (value === '' || (/^\d+$/.test(value) && parseInt(value) <= exam.totalMarks)) {
+        if (value === '' || (parseFloat(value) <= subject.maxMarks)) {
             setMarksData(prev => ({ ...prev, [id]: value }));
         }
     };
 
-    const handleSaveDraft = () => {
-        const record = {
-            examId: exam.id,
-            subject: exam.subject,
-            title: exam.title,
-            marks: marksData,
-            status: 'Draft',
-            updatedAt: new Date().toISOString()
-        };
-        console.log('Saving draft:', record);
-        saveMarksDraft(record);
-        alert('Draft saved!');
+    const handleRemarkChange = (id, value) => {
+        setRemarksData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleSubmitMarks = () => {
-        const confirm = window.confirm("Are you sure you want to submit marks? This action cannot be undone.");
+    const handleSubmitMarks = async () => {
+        const confirm = window.confirm("Are you sure you want to submit marks? This action will update student transcripts.");
         if (confirm) {
-            const record = {
-                examId: exam.id,
-                subject: exam.subject,
-                title: exam.title,
-                marks: marksData,
-                status: 'Submitted',
-                updatedAt: new Date().toISOString()
+            const marksPayload = {
+                examId: exam._id,
+                classId: classId,
+                subjectId: subject.subjectId,
+                maxMarks: subject.maxMarks,
+                passingMarks: subject.passingMarks,
+                marksData: students.map(st => ({
+                    studentId: st._id,
+                    marksObtained: parseFloat(marksData[st._id]) || 0,
+                    remarks: remarksData[st._id] || '',
+                    status: marksData[st._id] === '' ? 'Absent' : (parseFloat(marksData[st._id]) >= subject.passingMarks ? 'Pass' : 'Fail')
+                }))
             };
-            console.log('Submitting marks:', record);
-            submitMarks(record);
-            alert('Marks submitted successfully!');
-            onClose();
+
+            const result = await submitMarks(marksPayload);
+            if (result.success) {
+                alert('Marks submitted successfully!');
+                onClose();
+            } else {
+                alert(result.message || 'Failed to submit marks');
+            }
         }
     };
 
@@ -71,8 +94,8 @@ const MarksEntryTable = ({ exam, students, isOpen, onClose }) => {
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 rounded-t-2xl shrink-0">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">{exam.subject} - Marks</h2>
-                        <p className="text-xs text-gray-500 font-medium">{exam.title} • Max Marks: {exam.totalMarks}</p>
+                        <h2 className="text-lg font-bold text-gray-900">{subject.subjectName} - Marks</h2>
+                        <p className="text-xs text-gray-500 font-medium">{exam.examName || exam.title} • Max Marks: {subject.maxMarks}</p>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
                         <X size={20} className="text-gray-500" />
@@ -80,53 +103,73 @@ const MarksEntryTable = ({ exam, students, isOpen, onClose }) => {
                 </div>
 
                 {/* Table Body */}
-                <div className="flex-1 overflow-y-auto p-4">
-                    <div className="space-y-2">
-                        {students.map((student) => (
-                            <div key={student.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-indigo-100 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-                                        {student.roll}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-gray-900">{student.name}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium tracking-wide">ID: {student.id}</p>
-                                    </div>
-                                </div>
+                <div className="flex-1 overflow-y-auto p-4 bg-gray-50/30">
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
+                            <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                            <p className="text-sm font-medium">Loading roster...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {students.map((student) => (
+                                <div key={student._id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                    <div className="flex items-center justify-between p-3 border-b border-gray-50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-100 bg-indigo-50 flex items-center justify-center font-bold text-indigo-600">
+                                                {student.photo ? <img src={student.photo} alt="" className="w-full h-full object-cover" /> : student.firstName.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-gray-900 leading-tight uppercase">{student.firstName} {student.lastName}</h4>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Roll: {student.rollNo || 'N/A'}</p>
+                                            </div>
+                                        </div>
 
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        placeholder="-"
-                                        value={marksData[student.id]}
-                                        onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                                        className={`w-14 h-10 text-center text-sm font-bold border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all ${marksData[student.id] !== '' ? 'bg-white border-gray-200 text-gray-900' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
-                                    />
-                                    <div className={`p-2 rounded-lg ${marksData[student.id] >= exam.passingMarks ? 'bg-green-50 text-green-600' : (marksData[student.id] !== '' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-300')}`}>
-                                        {marksData[student.id] !== ''
-                                            ? (marksData[student.id] >= exam.passingMarks ? <CheckCircle size={16} /> : <AlertCircle size={16} />)
-                                            : <div className="w-4 h-4 rounded-full border-2 border-gray-300 border-dashed"></div>}
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                inputMode="decimal"
+                                                placeholder="-"
+                                                value={marksData[student._id]}
+                                                onChange={(e) => handleMarkChange(student._id, e.target.value)}
+                                                className={`w-16 h-10 text-center text-sm font-bold border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all ${marksData[student._id] !== '' ? 'bg-white border-gray-200 text-gray-900' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
+                                            />
+                                            <div className={`p-2 rounded-xl ${parseFloat(marksData[student._id]) >= subject.passingMarks ? 'bg-green-50 text-green-600' : (marksData[student._id] !== '' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-300')}`}>
+                                                {marksData[student._id] !== ''
+                                                    ? (parseFloat(marksData[student._id]) >= subject.passingMarks ? <CheckCircle size={20} /> : <AlertCircle size={20} />)
+                                                    : <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-dashed"></div>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50/50">
+                                        <input
+                                            type="text"
+                                            placeholder="Remarks (Optional)..."
+                                            value={remarksData[student._id] || ''}
+                                            onChange={(e) => handleRemarkChange(student._id, e.target.value)}
+                                            className="w-full bg-transparent border-none p-0 text-[11px] font-medium text-gray-500 focus:ring-0 outline-none"
+                                        />
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer Actions */}
                 <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 flex gap-3 shrink-0">
                     <button
-                        onClick={handleSaveDraft}
-                        className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50"
+                        onClick={onClose}
+                        className="flex-1 py-3.5 px-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all"
                     >
-                        Save Draft
+                        Cancel
                     </button>
                     <button
                         onClick={handleSubmitMarks}
-                        className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                        disabled={isLoading || isSubmittingMarks}
+                        className="flex-[2] py-3.5 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
                     >
-                        <Save size={16} /> Submit Marks
+                        {isSubmittingMarks ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={18} />}
+                        {isSubmittingMarks ? 'Submitting...' : 'Submit Marks'}
                     </button>
                 </div>
             </motion.div>

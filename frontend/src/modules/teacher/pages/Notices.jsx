@@ -1,14 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { ChevronLeft, Filter, AlertCircle, Calendar } from 'lucide-react';
+import { ChevronLeft, Loader2, FileText } from 'lucide-react';
 import gsap from 'gsap';
-
-// Data
-import { noticesData } from '../data/noticesData';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 const NoticeCard = ({ notice, onClick }) => {
-    const isUrgent = notice.priority === 'Urgent';
+    const isUrgent = notice.priority === 'Urgent' || notice.priority === 'High';
 
     return (
         <div
@@ -17,9 +15,11 @@ const NoticeCard = ({ notice, onClick }) => {
         >
             <div className="flex justify-between items-start mb-2">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${isUrgent ? 'bg-red-100 text-red-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                    {notice.priority}
+                    {notice.priority || 'Normal'}
                 </span>
-                <span className="text-[10px] text-gray-400 font-medium">{new Date(notice.date).toLocaleDateString()}</span>
+                <span className="text-[10px] text-gray-400 font-medium">
+                    {new Date(notice.publishDate || notice.createdAt).toLocaleDateString()}
+                </span>
             </div>
             <h3 className={`text-sm font-bold mb-1 ${isUrgent ? 'text-red-900' : 'text-gray-900'}`}>{notice.title}</h3>
             <p className="text-xs text-gray-500 line-clamp-2">{notice.content}</p>
@@ -30,6 +30,20 @@ const NoticeCard = ({ notice, onClick }) => {
 const NoticesPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
+
+    // Store
+    const dashboardData = useTeacherStore(state => state.dashboardData);
+    const fetchDashboard = useTeacherStore(state => state.fetchDashboard);
+    const isFetchingDashboard = useTeacherStore(state => state.isFetchingDashboard);
+
+    // Fetch dashboard data if not available
+    useEffect(() => {
+        if (!dashboardData) {
+            fetchDashboard();
+        }
+    }, [dashboardData, fetchDashboard]);
+
+    const notices = dashboardData?.recentNotices || [];
 
     // Smooth Scroll
     useEffect(() => {
@@ -44,18 +58,20 @@ const NoticesPage = () => {
 
     // Animation
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.from('.notice-card', {
-                y: 20,
-                opacity: 0,
-                duration: 0.5,
-                stagger: 0.1,
-                ease: 'power2.out',
-                delay: 0.2
-            });
-        }, containerRef);
-        return () => ctx.revert();
-    }, []);
+        if (notices.length > 0) {
+            const ctx = gsap.context(() => {
+                gsap.from('.notice-card', {
+                    y: 20,
+                    opacity: 0,
+                    duration: 0.5,
+                    stagger: 0.1,
+                    ease: 'power2.out',
+                    delay: 0.2
+                });
+            }, containerRef);
+            return () => ctx.revert();
+        }
+    }, [notices]);
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-20">
@@ -77,16 +93,29 @@ const NoticesPage = () => {
                     <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Recent Updates</h2>
                 </div>
 
-                <div className="space-y-1">
-                    {noticesData.map((notice, index) => (
-                        <div key={notice.id} className="notice-card">
-                            <NoticeCard
-                                notice={notice}
-                                onClick={() => navigate(`/teacher/notices/${notice.id}`)}
-                            />
-                        </div>
-                    ))}
-                </div>
+                {isFetchingDashboard && notices.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-4" />
+                        <p className="text-sm text-gray-500">Loading notices...</p>
+                    </div>
+                ) : notices.length > 0 ? (
+                    <div className="space-y-1">
+                        {notices.map((notice) => (
+                            <div key={notice._id} className="notice-card">
+                                <NoticeCard
+                                    notice={notice}
+                                    onClick={() => navigate(`/teacher/notices/${notice._id}`)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                        <FileText className="mx-auto text-gray-300 mb-3" size={40} />
+                        <p className="text-sm text-gray-400 font-medium">No notices available</p>
+                        <p className="text-xs text-gray-300 mt-1">Check back later for updates</p>
+                    </div>
+                )}
             </main>
         </div>
     );

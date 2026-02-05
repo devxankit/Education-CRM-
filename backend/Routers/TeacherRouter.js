@@ -15,7 +15,14 @@ import {
     markAttendance,
     getAttendanceHistory,
     getAttendanceByDate,
-    getTeacherDashboard
+    getTeacherDashboard,
+    getTeacherExams,
+    getExamById,
+    getExamStudents,
+    submitMarks,
+    getHomeworkSubmissions,
+    gradeSubmission,
+    getTeacherAnalytics
 } from "../Controllers/TeacherCtrl.js";
 import {
     addEligibleSubject,
@@ -42,9 +49,20 @@ router.get("/homework", isTeacher, getHomeworks);
 router.get("/homework/:id", isTeacher, getHomeworkById);
 router.put("/homework/:id", isTeacher, updateHomework);
 router.delete("/homework/:id", isTeacher, deleteHomework);
+router.get("/homework/:homeworkId/submissions", isTeacher, getHomeworkSubmissions);
+router.put("/homework/submissions/:submissionId/grade", isTeacher, gradeSubmission);
 router.post("/attendance", isTeacher, markAttendance);
 router.get("/attendance/history", isTeacher, getAttendanceHistory);
 router.get("/attendance/by-date", isTeacher, getAttendanceByDate);
+
+// Exam routes
+router.get("/exams", isTeacher, getTeacherExams);
+router.get("/exams/students", isTeacher, getExamStudents);
+router.get("/exams/:id", isTeacher, getExamById);
+router.post("/exams/submit-marks", isTeacher, submitMarks);
+
+// Analytics
+router.get("/analytics", isTeacher, getTeacherAnalytics);
 
 // Management routes
 router.post("/", isAdmin, createTeacher);

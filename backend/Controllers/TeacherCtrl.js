@@ -10,6 +10,9 @@ import Student from "../Models/StudentModel.js";
 import Homework from "../Models/HomeworkModel.js";
 import Notice from "../Models/NoticeModel.js";
 import Attendance from "../Models/AttendanceModel.js";
+import Exam from "../Models/ExamModel.js";
+import ExamResult from "../Models/ExamResultModel.js";
+import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 
 // ================= TEACHER DASHBOARD =================
 export const getTeacherDashboard = async (req, res) => {
@@ -662,6 +665,391 @@ export const getAttendanceByDate = async (req, res) => {
             data: attendance
         });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER EXAMS =================
+export const getTeacherExams = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        // Get teacher's assigned classes
+        const mappings = await TeacherMapping.find({ teacherId, status: "active" });
+        const classIds = [...new Set(mappings.map(m => m.classId?.toString()).filter(id => id))];
+
+        if (classIds.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: [],
+                message: "No classes assigned"
+            });
+        }
+
+        // Find exams that include teacher's classes
+        const exams = await Exam.find({
+            instituteId,
+            classes: { $in: classIds },
+            status: { $in: ["Published", "Completed"] }
+        })
+            .populate("classes", "name")
+            .populate("subjects.subjectId", "name code")
+            .sort({ startDate: -1 });
+
+        // Format response
+        const formattedExams = exams.map(exam => {
+            // Filter subjects to only those the teacher teaches
+            const teacherSubjectIds = mappings.map(m => m.subjectId?.toString());
+            const relevantSubjects = exam.subjects.filter(s =>
+                teacherSubjectIds.includes(s.subjectId?._id?.toString())
+            );
+
+            return {
+                _id: exam._id,
+                examName: exam.examName,
+                examType: exam.examType,
+                startDate: exam.startDate,
+                endDate: exam.endDate,
+                description: exam.description,
+                status: exam.status,
+                classes: exam.classes,
+                subjects: relevantSubjects.map(s => ({
+                    subjectId: s.subjectId?._id,
+                    subjectName: s.subjectId?.name,
+                    date: s.date,
+                    maxMarks: s.maxMarks,
+                    passingMarks: s.passingMarks
+                }))
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            data: formattedExams
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET EXAM BY ID =================
+export const getExamById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const exam = await Exam.findById(id)
+            .populate("classes", "name")
+            .populate("subjects.subjectId", "name code")
+            .populate("branchId", "name")
+            .populate("academicYearId", "name");
+
+        if (!exam) {
+            return res.status(404).json({ success: false, message: "Exam not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: exam
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET EXAM STUDENTS (for marks entry) =================
+export const getExamStudents = async (req, res) => {
+    try {
+        const { examId, classId, subjectId } = req.query;
+
+        if (!examId || !classId || !subjectId) {
+            return res.status(400).json({
+                success: false,
+                message: "examId, classId, and subjectId are required"
+            });
+        }
+
+        // Get students in the class
+        const students = await Student.find({
+            classId,
+            status: "active"
+        }).select("firstName lastName admissionNo rollNo gender photo sectionId");
+
+        // Get existing results for these students in this exam/subject
+        const existingResults = await ExamResult.find({
+            examId,
+            studentId: { $in: students.map(s => s._id) }
+        });
+
+        // Map students with their marks if already entered
+        const studentsWithMarks = students.map(student => {
+            const result = existingResults.find(r =>
+                r.studentId.toString() === student._id.toString()
+            );
+            const subjectResult = result?.results?.find(r =>
+                r.subjectId?.toString() === subjectId
+            );
+
+            return {
+                _id: student._id,
+                firstName: student.firstName,
+                lastName: student.lastName,
+                admissionNo: student.admissionNo,
+                rollNo: student.rollNo,
+                gender: student.gender,
+                photo: student.photo,
+                marksObtained: subjectResult?.marksObtained ?? null,
+                status: subjectResult?.status ?? null,
+                remarks: subjectResult?.remarks ?? ""
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            data: studentsWithMarks
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= SUBMIT EXAM MARKS =================
+export const submitMarks = async (req, res) => {
+    try {
+        const { examId, classId, subjectId, marksData, maxMarks, passingMarks } = req.body;
+        const instituteId = req.user.instituteId || req.user._id;
+        const branchId = req.user.branchId;
+
+        if (!examId || !classId || !subjectId || !marksData || !Array.isArray(marksData)) {
+            return res.status(400).json({
+                success: false,
+                message: "examId, classId, subjectId, and marksData are required"
+            });
+        }
+
+        const results = [];
+
+        for (const entry of marksData) {
+            const { studentId, marksObtained, status, remarks } = entry;
+
+            // Determine pass/fail
+            const entryStatus = status || (marksObtained >= passingMarks ? "Pass" : "Fail");
+
+            // Calculate grade (simple grading)
+            let grade = "F";
+            const percentage = (marksObtained / maxMarks) * 100;
+            if (percentage >= 90) grade = "A+";
+            else if (percentage >= 80) grade = "A";
+            else if (percentage >= 70) grade = "B+";
+            else if (percentage >= 60) grade = "B";
+            else if (percentage >= 50) grade = "C";
+            else if (percentage >= 40) grade = "D";
+
+            // Find or create exam result for this student
+            let examResult = await ExamResult.findOne({ examId, studentId });
+
+            if (examResult) {
+                // Update existing result
+                const existingSubjectIndex = examResult.results.findIndex(
+                    r => r.subjectId?.toString() === subjectId
+                );
+
+                if (existingSubjectIndex > -1) {
+                    examResult.results[existingSubjectIndex] = {
+                        subjectId,
+                        marksObtained,
+                        totalMarks: maxMarks,
+                        grade,
+                        remarks: remarks || "",
+                        status: entryStatus
+                    };
+                } else {
+                    examResult.results.push({
+                        subjectId,
+                        marksObtained,
+                        totalMarks: maxMarks,
+                        grade,
+                        remarks: remarks || "",
+                        status: entryStatus
+                    });
+                }
+
+                // Recalculate totals
+                examResult.totalMarksObtained = examResult.results.reduce((sum, r) => sum + (r.marksObtained || 0), 0);
+                examResult.totalMaxMarks = examResult.results.reduce((sum, r) => sum + (r.totalMarks || 0), 0);
+                examResult.percentage = (examResult.totalMarksObtained / examResult.totalMaxMarks) * 100;
+
+                await examResult.save();
+                results.push(examResult);
+            } else {
+                // Create new result
+                examResult = new ExamResult({
+                    instituteId,
+                    branchId,
+                    examId,
+                    studentId,
+                    results: [{
+                        subjectId,
+                        marksObtained,
+                        totalMarks: maxMarks,
+                        grade,
+                        remarks: remarks || "",
+                        status: entryStatus
+                    }],
+                    totalMarksObtained: marksObtained,
+                    totalMaxMarks: maxMarks,
+                    percentage: (marksObtained / maxMarks) * 100
+                });
+
+                await examResult.save();
+                results.push(examResult);
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Marks submitted successfully",
+            data: {
+                count: results.length
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET HOMEWORK SUBMISSIONS =================
+export const getHomeworkSubmissions = async (req, res) => {
+    try {
+        const { homeworkId } = req.params;
+
+        const submissions = await HomeworkSubmission.find({ homeworkId })
+            .populate("studentId", "firstName lastName admissionNo rollNo photo")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: submissions
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GRADE SUBMISSION =================
+export const gradeSubmission = async (req, res) => {
+    try {
+        const { submissionId } = req.params;
+        const { marks, feedback } = req.body;
+        const teacherId = req.user._id;
+
+        const submission = await HomeworkSubmission.findByIdAndUpdate(
+            submissionId,
+            {
+                marks,
+                feedback,
+                status: "Graded",
+                gradedBy: teacherId,
+                gradedAt: new Date()
+            },
+            { new: true }
+        );
+
+        if (!submission) {
+            return res.status(404).json({ success: false, message: "Submission not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Submission graded successfully",
+            data: submission
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER ANALYTICS =================
+export const getTeacherAnalytics = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        // 1. Get Teacher Mappings
+        const mappings = await TeacherMapping.find({ teacherId, status: "active" });
+        const classIds = mappings.map(m => m.classId);
+        const uniqueClassIds = [...new Set(classIds.map(id => id.toString()))];
+
+        // 2. Attendance Stats (last 7 days average)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        // Simple aggregation for attendance
+        const attendanceRecords = await Attendance.find({
+            instituteId,
+            classId: { $in: uniqueClassIds },
+            date: { $gte: sevenDaysAgo }
+        });
+
+        // Calculate avg attendance per day
+        const dailyStats = {};
+        attendanceRecords.forEach(record => {
+            const dateStr = record.date.toISOString().split('T')[0];
+            const presentCount = record.students.filter(s => s.status === 'Present').length;
+            const totalCount = record.students.length;
+            const percentage = totalCount > 0 ? (presentCount / totalCount) * 100 : 0;
+
+            if (!dailyStats[dateStr]) dailyStats[dateStr] = [];
+            dailyStats[dateStr].push(percentage);
+        });
+
+        const attendanceTrend = Object.keys(dailyStats).map(date => ({
+            date,
+            avgAttendance: Math.round(dailyStats[date].reduce((a, b) => a + b, 0) / dailyStats[date].length)
+        })).sort((a, b) => a.date.localeCompare(b.date));
+
+        // 3. Homework Stats
+        const totalHomeworks = await Homework.countDocuments({ teacherId });
+        const recentHomeworks = await Homework.find({ teacherId }).limit(5).sort({ createdAt: -1 });
+
+        const formattedHomeworks = [];
+        for (const hw of recentHomeworks) {
+            const submissionCount = await HomeworkSubmission.countDocuments({ homeworkId: hw._id });
+            formattedHomeworks.push({
+                ...hw._doc,
+                submissionCount
+            });
+        }
+
+        // 4. Exam Performance
+        const recentExams = await Exam.find({ classes: { $in: uniqueClassIds } }).limit(2).sort({ startDate: -1 });
+        const examPerformance = [];
+        for (const exam of recentExams) {
+            const results = await ExamResult.find({ examId: exam._id });
+            const avgPercentage = results.length > 0
+                ? results.reduce((sum, r) => sum + r.percentage, 0) / results.length
+                : 0;
+
+            examPerformance.push({
+                examName: exam.examName,
+                avgPercentage: Math.round(avgPercentage)
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                attendanceTrend,
+                homeworkStats: {
+                    total: totalHomeworks,
+                    recent: formattedHomeworks
+                },
+                examPerformance
+            }
+        });
+    } catch (error) {
+        console.error("Analytics Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

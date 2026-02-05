@@ -36,6 +36,7 @@ const teacherRoutes = [
                     { path: 'attendance', element: <AttendancePage /> },
                     { path: 'homework', element: <HomeworkPage /> },
                     { path: 'homework/:id', element: <HomeworkDetailPage /> },
+                    { path: 'homework/:id/submissions', element: <SubmissionsPage /> },
                     { path: 'homework/submissions', element: <SubmissionsPage /> },
                     { path: 'exams', element: <ExamsPage /> },
                     { path: 'exams/:id', element: <ExamDetailPage /> },

@@ -3,20 +3,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
 import axios from 'axios';
-import { API_URL } from '@/app/api';
-import { useAppStore } from '@/store/index';
+import { useTeacherStore } from '../../../../store/teacherStore';
 
 const TeacherLogin = () => {
     const navigate = useNavigate();
-    const login = useAppStore(state => state.login);
+    const login = useTeacherStore(state => state.login);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
 
     // Form State
     const [formData, setFormData] = useState({
-        teacherId: '', // This will be used as email for login
-        password: ''
+        teacherId: 'teacher@gmail.com', // This will be used as email for login
+        password: '123456'
     });
 
     const handleChange = (e) => {
@@ -30,26 +29,14 @@ const TeacherLogin = () => {
         setError('');
 
         try {
-            const response = await axios.post(`${API_URL}/teacher/login`, {
-                email: formData.teacherId,
-                password: formData.password
-            });
+            const result = await login(formData.teacherId, formData.password);
 
-            if (response.data.success) {
-                const { token, data } = response.data;
-
-                // Store token in localStorage
-                localStorage.setItem('token', token);
-
-                // Update global auth state
-                login(data);
-
+            if (result?.success) {
                 // Set default authorization header for future requests
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
+                axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
                 navigate('/teacher/dashboard', { replace: true });
             } else {
-                setError(response.data.message || 'Login failed');
+                setError(result?.message || 'Login failed. Please check your credentials.');
             }
         } catch (err) {
             console.error('Login error:', err);

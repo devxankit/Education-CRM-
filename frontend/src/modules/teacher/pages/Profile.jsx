@@ -1,17 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { LogOut, HelpCircle, ShieldCheck } from 'lucide-react';
+import { LogOut, HelpCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import gsap from 'gsap';
 import { useTeacherStore } from '../../../store/teacherStore';
-import { useAppStore } from '../../../store/index';
 
 // Components
 import ProfileSummaryCard from '../components/profile/ProfileSummaryCard';
 import AssignedSubjectsCard from '../components/profile/AssignedSubjectsCard';
 import SettingsCard from '../components/profile/SettingsCard';
-
-// Data
 
 const ProfilePage = () => {
     const navigate = useNavigate();
@@ -20,6 +17,8 @@ const ProfilePage = () => {
     const fetchProfile = useTeacherStore(state => state.fetchProfile);
     const assignedClasses = useTeacherStore(state => state.assignedClasses);
     const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
+    const logout = useTeacherStore(state => state.logout);
+    const isFetchingProfile = useTeacherStore(state => state.isFetchingProfile);
 
     // Fetch Initial Data
     useEffect(() => {
@@ -27,18 +26,7 @@ const ProfilePage = () => {
         fetchAssignedClasses();
     }, [fetchProfile, fetchAssignedClasses]);
 
-    // Initial Mock Preferences/Academic for display if not in profile
-    const academicInfo = profile.academic || {
-        department: profile.department,
-        designation: profile.designation || profile.role,
-        joinedDate: "15 June 2022",
-        employeeId: profile.id,
-        subjects: [
-            { id: 1, name: "Mathematics", classes: ["10-A", "10-B", "9-C"] },
-            { id: 2, name: "Physics", classes: ["11-A"] }
-        ]
-    };
-
+    // Format dates safely
     const formatSecurityDate = (dateString) => {
         if (!dateString) return "Not available";
         const date = new Date(dateString);
@@ -52,9 +40,11 @@ const ProfilePage = () => {
     };
 
     const securityInfo = {
-        lastLogin: formatSecurityDate(profile.lastLogin),
-        passwordLastChanged: profile.passwordChangedAt ? new Date(profile.passwordChangedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Never",
-        twoFactorEnabled: profile.twoFactorEnabled || false
+        lastLogin: formatSecurityDate(profile?.lastLogin),
+        passwordLastChanged: profile?.passwordChangedAt
+            ? new Date(profile.passwordChangedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : "Never",
+        twoFactorEnabled: profile?.twoFactorEnabled || false
     };
 
     // Smooth Scroll
@@ -74,6 +64,7 @@ const ProfilePage = () => {
 
     // Entrance Animation
     useEffect(() => {
+        if (!profile) return;
         const ctx = gsap.context(() => {
             gsap.from('.profile-section', {
                 y: 30,
@@ -85,9 +76,7 @@ const ProfilePage = () => {
             });
         }, containerRef);
         return () => ctx.revert();
-    }, []);
-
-    const logout = useAppStore(state => state.logout);
+    }, [profile]);
 
     const handleLogout = () => {
         if (window.confirm("Are you sure you want to logout?")) {
@@ -95,6 +84,14 @@ const ProfilePage = () => {
             navigate('/teacher/login');
         }
     };
+
+    if (isFetchingProfile && !profile) {
+        return (
+            <div className="min-h-screen bg-gray-50/50 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            </div>
+        );
+    }
 
 
     return (
