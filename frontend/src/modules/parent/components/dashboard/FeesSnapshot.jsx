@@ -3,7 +3,7 @@ import React from 'react';
 import { Download } from 'lucide-react';
 
 const FeesSnapshot = ({ fees, onActionClick }) => {
-    const isPending = fees.pending > 0;
+    const isPending = (fees?.pending || 0) > 0;
 
     return (
         <div className="px-4 mb-8">
@@ -12,11 +12,11 @@ const FeesSnapshot = ({ fees, onActionClick }) => {
                 <div className="flex justify-between items-end mb-4">
                     <div>
                         <p className="text-xs font-bold text-gray-400 uppercase mb-1">Total Outstanding</p>
-                        <h2 className="text-2xl font-extrabold text-gray-900">₹{fees.pending.toLocaleString()}</h2>
+                        <h2 className="text-2xl font-extrabold text-gray-900">₹{(fees?.pending || 0).toLocaleString()}</h2>
                     </div>
                     <div className="text-right">
                         <p className="text-xs font-medium text-gray-500 mb-0.5">Due Date</p>
-                        <p className="text-sm font-bold text-red-500">{fees.dueDate || 'No Dues'}</p>
+                        <p className="text-sm font-bold text-red-500">{fees?.dueDate || 'No Dues'}</p>
                     </div>
                 </div>
 

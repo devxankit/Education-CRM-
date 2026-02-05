@@ -22,7 +22,7 @@ import {
     payChildFee,
     changeParentPassword
 } from "../Controllers/ParentCtrl.js";
-import { AuthMiddleware, isInstitute, isParent } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin, isParent } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
@@ -34,14 +34,14 @@ router.post("/login", loginParent);
 // ====================================
 // ADMIN/INSTITUTE ROUTES (for managing parents)
 // ====================================
-router.post("/", AuthMiddleware, isInstitute, createParent);
-router.get("/", AuthMiddleware, isInstitute, getParents);
-router.put("/:id", AuthMiddleware, isInstitute, updateParent);
+router.post("/", AuthMiddleware, isAdmin, createParent);
+router.get("/", AuthMiddleware, isAdmin, getParents);
+router.put("/:id", AuthMiddleware, isAdmin, updateParent);
 
-// Student Linking (Admin)
-router.get("/:parentId/linked-students", AuthMiddleware, isInstitute, getLinkedStudents);
-router.post("/:parentId/link-student", AuthMiddleware, isInstitute, linkStudent);
-router.delete("/:parentId/unlink-student", AuthMiddleware, isInstitute, unlinkStudent);
+// Student Linking (Admin & Parent)
+router.get("/:parentId/linked-students", AuthMiddleware, getLinkedStudents);
+router.post("/:parentId/link-student", AuthMiddleware, isAdmin, linkStudent);
+router.delete("/:parentId/unlink-student", AuthMiddleware, isAdmin, unlinkStudent);
 
 // ====================================
 // PARENT PORTAL APIs (for logged-in parents)

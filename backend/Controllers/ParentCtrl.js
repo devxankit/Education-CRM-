@@ -9,11 +9,12 @@ import ExamResult from "../Models/ExamResultModel.js";
 import Exam from "../Models/ExamModel.js";
 import Teacher from "../Models/TeacherModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
+import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
 
 // ================= CREATE PARENT =================
 export const createParent = async (req, res) => {
     try {
-        const { name, mobile, email, relationship, branchId, address, occupation } = req.body;
+        const { name, mobile, email, relationship, branchId, address, occupation, studentIds } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         const existingParent = await Parent.findOne({
@@ -39,10 +40,23 @@ export const createParent = async (req, res) => {
             address,
             occupation,
             code: parentCode,
-            password: mobile // Default password as mobile number
+            password: "123456" // Default password
         });
 
         await parent.save();
+
+        // Send Email if email is provided
+        if (email) {
+            await sendLoginCredentialsEmail(email, "123456", name, "Parent");
+        }
+
+        // If linking students during creation
+        if (studentIds && Array.isArray(studentIds) && studentIds.length > 0) {
+            await Student.updateMany(
+                { _id: { $in: studentIds } },
+                { $set: { parentId: parent._id } }
+            );
+        }
 
         res.status(201).json({
             success: true,
@@ -135,7 +149,14 @@ export const loginParent = async (req, res) => {
     try {
         const { mobile, password } = req.body;
 
-        const parent = await Parent.findOne({ mobile });
+        // Search by mobile OR email
+        const parent = await Parent.findOne({
+            $or: [
+                { mobile: mobile },
+                { email: mobile }
+            ]
+        });
+
         if (!parent) {
             return res.status(404).json({ success: false, message: "Parent not found" });
         }

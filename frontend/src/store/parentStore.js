@@ -1,59 +1,116 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { MOCK_PARENT_DATA, MOCK_FEES, MOCK_ATTENDANCE, MOCK_HOMEWORK, MOCK_TEACHERS, MOCK_DOCUMENTS, MOCK_EXAMS, MOCK_RESULT_DETAILS, MOCK_HOMEWORK_DETAILS } from '../modules/parent/data/mockData';
+import axios from 'axios';
+import { API_URL } from '../app/api';
 
 export const useParentStore = create(
     persist(
         (set, get) => ({
-            // User & Children
-            user: MOCK_PARENT_DATA.user,
-            children: MOCK_PARENT_DATA.children,
-            selectedChildId: MOCK_PARENT_DATA.children[0]?.id || null,
+            // State
+            user: null,
+            token: null,
+            children: [],
+            selectedChildId: null,
+            isAuthenticated: false,
 
             // Data
-            notices: MOCK_PARENT_DATA.notices,
-            fees: MOCK_FEES,
-            attendance: MOCK_ATTENDANCE,
-            homework: MOCK_HOMEWORK,
-            homeworkDetails: MOCK_HOMEWORK_DETAILS,
-            teachers: MOCK_TEACHERS,
-            documents: MOCK_DOCUMENTS,
-            exams: MOCK_EXAMS,
-            results: MOCK_RESULT_DETAILS,
+            notices: [],
+            fees: null,
+            attendance: [],
+            homework: [],
+            homeworkDetails: null,
+            teachers: [],
+            documents: [],
+            exams: [],
+            results: null,
             tickets: [],
 
             // Actions
+            login: async (mobile, password) => {
+                try {
+                    const response = await axios.post(`${API_URL}/parent/login`, { mobile, password });
+                    if (response.data.success) {
+                        const { data, token } = response.data;
+                        localStorage.setItem('token', token);
+                        set({
+                            user: data,
+                            token,
+                            isAuthenticated: true
+                        });
+                        return { success: true };
+                    }
+                } catch (error) {
+                    console.error('Parent Login Error:', error);
+                    return {
+                        success: false,
+                        message: error.response?.data?.message || 'Login failed'
+                    };
+                }
+            },
+
+            logout: () => {
+                localStorage.removeItem('token');
+                set({
+                    user: null,
+                    token: null,
+                    isAuthenticated: false,
+                    children: [],
+                    selectedChildId: null
+                });
+            },
+
+            fetchChildren: async () => {
+                const { user } = get();
+                if (!user) return;
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/${user._id}/linked-students`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const children = response.data.data;
+                        set({
+                            children,
+                            selectedChildId: get().selectedChildId || children[0]?._id
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching children:', error);
+                }
+            },
+
+            fetchDashboardData: async () => {
+                const { user } = get();
+                if (!user) return;
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/dashboard`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const { children } = response.data.data;
+                        set({
+                            children,
+                            selectedChildId: get().selectedChildId || children[0]?.id || children[0]?._id
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching dashboard data:', error);
+                }
+            },
+
             setSelectedChild: (id) => set({ selectedChildId: id }),
 
-            updateChildData: (childId, data) => set((state) => ({
-                children: state.children.map(c => c.id === childId ? { ...c, ...data } : c)
-            })),
-
-            addTicket: (ticket) => set((state) => ({
-                tickets: [{ ...ticket, id: `TKT-${Date.now()}`, status: 'Open', date: new Date().toISOString() }, ...state.tickets]
-            })),
-
-            payFee: (amount, mode) => set((state) => {
-                const newReceipt = { id: `REC-${Date.now()}`, date: new Date().toISOString().split('T')[0], amount, mode };
-                return {
-                    fees: {
-                        ...state.fees,
-                        summary: {
-                            ...state.fees.summary,
-                            paid: state.fees.summary.paid + amount,
-                            pending: state.fees.summary.pending - amount
-                        },
-                        receipts: [newReceipt, ...state.fees.receipts]
-                    }
-                };
-            }),
-
-            acknowledgeNotice: (noticeId) => set((state) => ({
-                notices: state.notices.map(n => n.id === noticeId ? { ...n, acknowledged: true } : n)
-            }))
+            // ... (Rest of actions will be implemented as APIs are integrated)
         }),
         {
             name: 'parent-storage',
+            partialize: (state) => ({
+                user: state.user,
+                token: state.token,
+                isAuthenticated: state.isAuthenticated,
+                selectedChildId: state.selectedChildId
+            }),
         }
     )
 );

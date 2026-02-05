@@ -144,7 +144,7 @@ const studentSchema = new mongoose.Schema(
 );
 
 // Password hashing (if password exists)
-studentSchema.pre("save", async function (next) {
+studentSchema.pre("save", async function () {
     if (!this.password || !this.isModified("password")) return;
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

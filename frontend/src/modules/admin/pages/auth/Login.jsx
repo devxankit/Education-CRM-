@@ -14,9 +14,10 @@ const AdminLogin = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        adminId: '',
-        password: ''
+        adminId: 'institute@gmail.com',
+        password: '123'
     });
+    
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

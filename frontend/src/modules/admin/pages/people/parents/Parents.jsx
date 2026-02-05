@@ -8,11 +8,14 @@ import ParentsTable from './components/ParentsTable';
 import ParentDetailDrawer from './components/ParentDetailDrawer';
 
 const Parents = () => {
-    const { parents, fetchParents, addParent, updateParent, branches } = useAdminStore();
+    const { parents, fetchParents, addParent, updateParent, branches, fetchBranches } = useAdminStore();
 
     useEffect(() => {
         fetchParents();
-    }, [fetchParents]);
+        if (branches.length === 0) {
+            fetchBranches();
+        }
+    }, [fetchParents, fetchBranches]);
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [viewingParent, setViewingParent] = useState(null);

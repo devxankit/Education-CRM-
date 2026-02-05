@@ -5,13 +5,13 @@ import {
     unlockExamPolicy,
     lockExamPolicy
 } from "../Controllers/ExamPolicyCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", AuthMiddleware, isInstitute, getExamPolicy);
-router.post("/", AuthMiddleware, isInstitute, saveExamPolicy);
-router.post("/unlock", AuthMiddleware, isInstitute, unlockExamPolicy);
-router.post("/lock", AuthMiddleware, isInstitute, lockExamPolicy);
+router.get("/", AuthMiddleware, isAdmin, getExamPolicy);
+router.post("/", AuthMiddleware, isAdmin, saveExamPolicy);
+router.post("/unlock", AuthMiddleware, isAdmin, unlockExamPolicy);
+router.post("/lock", AuthMiddleware, isAdmin, lockExamPolicy);
 
 export default router;

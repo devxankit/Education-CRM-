@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Info, Calendar, PieChart, AlertTriangle, Book, Award, HeadphonesIcon, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, Info, Calendar, PieChart, AlertTriangle, Book, Award, HeadphonesIcon, ChevronDown, CheckCircle, XCircle, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AttendanceOverview from '../components/attendance/AttendanceOverview';
 import { useParentStore } from '../../../store/parentStore';
 
 const ParentAttendancePage = () => {
     const navigate = useNavigate();
+    const logout = useParentStore(state => state.logout);
     const location = useLocation();
     const state = location.state || {};
     const { childId, highlightLowAttendance } = state;
@@ -40,6 +41,11 @@ const ParentAttendancePage = () => {
         navigate(path, { state: { childId, source: 'attendance' } });
     };
 
+    const handleLogout = () => {
+        logout();
+        navigate('/parent/login');
+    };
+
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">
             {/* 1. Header */}
@@ -50,12 +56,21 @@ const ParentAttendancePage = () => {
                     </button>
                     <h1 className="text-lg font-bold text-gray-900">Attendance</h1>
                 </div>
-                <button
-                    onClick={() => setIsInfoModalOpen(true)}
-                    className="p-2 rounded-full hover:bg-indigo-50 text-indigo-600 transition-colors"
-                >
-                    <Info size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsInfoModalOpen(true)}
+                        className="p-2 rounded-full hover:bg-indigo-50 text-indigo-600 transition-colors"
+                    >
+                        <Info size={20} />
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        title="Logout"
+                    >
+                        <LogOut size={20} />
+                    </button>
+                </div>
             </header>
 
             <main className="max-w-md mx-auto p-4 space-y-6">

@@ -24,6 +24,8 @@ import NewTicketPage from './pages/NewTicket';
 import ParentProfilePage from './pages/Profile';
 import ParentSettingsPage from './pages/Settings';
 
+import ParentAuthGuard from '../../components/auth/ParentAuthGuard';
+
 const parentRoutes = [
     {
         path: 'parent',
@@ -34,26 +36,31 @@ const parentRoutes = [
                 element: <Navigate to="dashboard" replace />,
             },
             {
-                element: <ParentLayout />,
+                element: <ParentAuthGuard />,
                 children: [
-                    { path: 'dashboard', element: <ParentDashboard /> },
-                    { path: 'children', element: <ChildrenPage /> },
-                    { path: 'attendance', element: <AttendancePage /> },
-                    { path: 'homework', element: <HomeworkPage /> },
-                    { path: 'homework/:homeworkId', element: <HomeworkDetailPage /> },
-                    { path: 'exams', element: <ExamsResultsPage /> },
-                    { path: 'results', element: <ExamsResultsPage /> },
-                    { path: 'results/:examId', element: <ResultDetailPage /> },
-                    { path: 'fees', element: <FeesPaymentsPage /> },
-                    { path: 'notices', element: <NoticesPage /> },
-                    { path: 'notices/:noticeId', element: <NoticeDetailPage /> },
-                    { path: 'teachers', element: <TeachersPage /> },
-                    { path: 'documents', element: <DocumentsPage /> },
-                    { path: 'support', element: <ParentSupportPage /> },
-                    { path: 'support/new', element: <NewTicketPage /> },
-                    { path: 'support/:ticketId', element: <ParentSupportPage /> }, // Re-using for now as placeholder for detail
-                    { path: 'profile', element: <ParentProfilePage /> },
-                    { path: 'settings', element: <ParentSettingsPage /> },
+                    {
+                        element: <ParentLayout />,
+                        children: [
+                            { path: 'dashboard', element: <ParentDashboard /> },
+                            { path: 'children', element: <ChildrenPage /> },
+                            { path: 'attendance', element: <AttendancePage /> },
+                            { path: 'homework', element: <HomeworkPage /> },
+                            { path: 'homework/:homeworkId', element: <HomeworkDetailPage /> },
+                            { path: 'exams', element: <ExamsResultsPage /> },
+                            { path: 'results', element: <ExamsResultsPage /> },
+                            { path: 'results/:examId', element: <ResultDetailPage /> },
+                            { path: 'fees', element: <FeesPaymentsPage /> },
+                            { path: 'notices', element: <NoticesPage /> },
+                            { path: 'notices/:noticeId', element: <NoticeDetailPage /> },
+                            { path: 'teachers', element: <TeachersPage /> },
+                            { path: 'documents', element: <DocumentsPage /> },
+                            { path: 'support', element: <ParentSupportPage /> },
+                            { path: 'support/new', element: <NewTicketPage /> },
+                            { path: 'support/:ticketId', element: <ParentSupportPage /> }, // Re-using for now as placeholder for detail
+                            { path: 'profile', element: <ParentProfilePage /> },
+                            { path: 'settings', element: <ParentSettingsPage /> },
+                        ]
+                    }
                 ]
             }
         ]

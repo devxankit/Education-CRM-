@@ -33,7 +33,12 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(formData);
+        // Include only IDs for the backend to save
+        const submissionData = {
+            ...formData,
+            studentIds: formData.linkedStudents.map(s => s._id)
+        };
+        onSave(submissionData);
     };
 
     return (
@@ -63,11 +68,13 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                                 <Building2 size={12} className="text-gray-400" /> Campus / Branch
                             </label>
                             <select
+                                required
                                 value={formData.branchId}
                                 onChange={(e) => handleChange('branchId', e.target.value)}
                                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                                disabled={initialData?._id} // Disable changing branch for existing parents for now to avoid complexity
+                                disabled={initialData?._id}
                             >
+                                <option value="" disabled>Select Campus</option>
                                 {branches.map(b => (
                                     <option key={b._id} value={b._id}>{b.name}</option>
                                 ))}
@@ -163,6 +170,8 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                 {/* Student Links */}
                 <StudentLinkPanel
                     parentId={initialData?._id}
+                    initialLinkedStudents={formData.linkedStudents}
+                    onChange={(newList) => handleChange('linkedStudents', newList)}
                 />
 
             </div>

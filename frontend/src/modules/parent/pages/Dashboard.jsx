@@ -19,16 +19,11 @@ const ParentDashboard = () => {
     const user = useParentStore(state => state.user);
     const children = useParentStore(state => state.children);
     const selectedChildId = useParentStore(state => state.selectedChildId);
-    const setSelectedChildId = useParentStore(state => state.setSelectedChild);
+    const fetchDashboardData = useParentStore(state => state.fetchDashboardData);
 
     const [isLoading, setIsLoading] = useState(true);
 
-    const activeChild = children.find(c => c.id === selectedChildId) || children[0];
-
-    // Persist Selection logic handled by store now, but we keep the handler for UI
-    const handleChildSelect = (id) => {
-        setSelectedChildId(id);
-    };
+    const activeChild = children?.find(c => (c._id === selectedChildId || c.id === selectedChildId)) || children?.[0];
 
     // Navigation Handlers
     const handleNotificationClick = () => {
@@ -80,18 +75,27 @@ const ParentDashboard = () => {
         navigate(path, { state: { childId: selectedChildId } });
     };
 
+    const handleChildSelect = (id) => {
+        useParentStore.getState().setSelectedChild(id);
+    };
+
+    // UseEffect to fetch data
     useEffect(() => {
-        setTimeout(() => setIsLoading(false), 500);
-    }, [selectedChildId]);
+        const initDashboard = async () => {
+            await fetchDashboardData();
+            setIsLoading(false);
+        };
+        initDashboard();
+    }, [fetchDashboardData]);
 
     useEffect(() => {
-        if (!isLoading) {
+        if (!isLoading && activeChild) {
             gsap.fromTo(".dashboard-item",
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "power2.out" }
             );
         }
-    }, [isLoading]);
+    }, [isLoading, activeChild]);
 
     if (isLoading) {
         return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -99,15 +103,17 @@ const ParentDashboard = () => {
         </div>;
     }
 
+    if (!user) return null;
+
     return (
         <div className="min-h-screen bg-gray-50/50 pb-28">
             <DashboardHeader
-                parentName={user.name}
+                parentName={user?.name || 'Parent'}
                 onNotificationClick={handleNotificationClick}
             />
 
             {/* Child Selector */}
-            {children.length > 1 && (
+            {children?.length > 1 && (
                 <div className="dashboard-item">
                     <ChildSelector
                         children={children}
@@ -124,21 +130,21 @@ const ParentDashboard = () => {
 
                 <div className="dashboard-item">
                     <AlertsSection
-                        alerts={activeChild.alerts}
+                        alerts={activeChild?.alerts || []}
                         onAlertClick={handleAlertClick}
                     />
                 </div>
 
                 <div className="dashboard-item">
                     <AcademicSnapshot
-                        data={activeChild.academics}
+                        data={activeChild?.academics}
                         onItemClick={handleAcademicClick}
                     />
                 </div>
 
                 <div className="dashboard-item">
                     <FeesSnapshot
-                        fees={activeChild.fees}
+                        fees={activeChild?.fees}
                         onActionClick={handleFeesClick}
                     />
                 </div>

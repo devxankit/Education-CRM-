@@ -1,36 +1,30 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
-
-// Mock Auth Function
-const mockLogin = (parentId, password) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (parentId && password) {
-                resolve({
-                    parentId,
-                    name: 'Robert Wilson',
-                    role: 'parent'
-                });
-            } else {
-                reject('Invalid credentials');
-            }
-        }, 1200);
-    });
-};
+import { Lock, Phone, Eye, EyeOff, Shield, CheckCircle2 } from 'lucide-react';
+import { useParentStore } from '../../../../store/parentStore';
 
 const ParentLogin = () => {
     const navigate = useNavigate();
+    const login = useParentStore(state => state.login);
+    const isAuthenticated = useParentStore(state => state.isAuthenticated);
+
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
-        parentId: '',
-        password: ''
+        mobile: 'parent@gmail.com',
+        password: '123456' // Set default as requested earlier
     });
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/parent/dashboard', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,56 +36,72 @@ const ParentLogin = () => {
         setIsLoading(true);
         setError('');
 
-        try {
-            await mockLogin(formData.parentId, formData.password);
-            navigate('/parent/dashboard', { replace: true });
-        } catch (err) {
-            setError(err || 'Login failed. Please try again.');
-        } finally {
+        const result = await login(formData.mobile, formData.password);
+
+        if (result.success) {
+            setSuccess(true);
+            setTimeout(() => {
+                navigate('/parent/dashboard', { replace: true });
+            }, 1000);
+        } else {
+            setError(result.message || 'Login failed. Please check your credentials.');
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <div className="mx-auto h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg mb-4">
-                    <Lock size={24} />
+                <div className="mx-auto h-16 w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 mb-6 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <Shield size={32} />
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Parent Portal</h2>
-                <p className="mt-2 text-sm text-gray-600">
-                    Log in to track your child's progress
+                <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Parent Portal</h2>
+                <p className="text-gray-500 font-medium">
+                    Access your ward's academic records
                 </p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-gray-100">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        {/* Parent ID */}
+            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+                <div className="bg-white py-10 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-3xl sm:px-12 border border-gray-100 relative overflow-hidden">
+
+                    {/* Decorative Element */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+
+                    <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
+                        {/* Mobile Number */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                <User size={12} /> Parent ID / Email
+                            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2 ml-1">
+                                Mobile or Email
                             </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+                                    <Phone size={18} />
+                                </div>
                                 <input
-                                    id="parentId"
-                                    name="parentId"
+                                    id="mobile"
+                                    name="mobile"
                                     type="text"
                                     required
-                                    value={formData.parentId}
+                                    value={formData.mobile}
                                     onChange={handleChange}
-                                    className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
-                                    placeholder="e.g. PAR-2024-001"
+                                    className="block w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
+                                    placeholder="Enter registered mobile or email"
                                 />
                             </div>
                         </div>
 
                         {/* Password */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                <Shield size={12} /> Password
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="flex items-center justify-between mb-2 ml-1">
+                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                                    Password
+                                </label>
+                                <button type="button" className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700">Forgot Password?</button>
+                            </div>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+                                    <Lock size={18} />
+                                </div>
                                 <input
                                     id="password"
                                     name="password"
@@ -99,55 +109,57 @@ const ParentLogin = () => {
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all pr-10"
+                                    className="block w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all"
                                     placeholder="••••••••"
                                 />
-                                <div
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                <button
+                                    type="button"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-indigo-500 transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </div>
+                                </button>
                             </div>
                         </div>
 
                         {error && (
-                            <div className="rounded-md bg-red-50 p-4 border border-red-100">
-                                <div className="flex">
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                                    </div>
-                                </div>
+                            <div className="animate-in fade-in slide-in-from-top-1 bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl text-xs font-bold leading-relaxed flex items-center gap-2">
+                                <Shield size={16} className="shrink-0" />
+                                {error}
                             </div>
                         )}
 
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            >
-                                {isLoading ? (
-                                    <span className="flex items-center gap-2">
-                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Verifying...
-                                    </span>
-                                ) : (
-                                    'Parent Login'
-                                )}
-                            </button>
-                        </div>
+                        <button
+                            type="submit"
+                            disabled={isLoading || success}
+                            className={`w-full relative flex items-center justify-center py-4 px-4 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:shadow-indigo-200 active:scale-[0.98] transition-all disabled:opacity-100 disabled:bg-gray-400 ${success ? 'bg-green-500 hover:bg-green-500 shadow-green-100' : ''}`}
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>Authenticating Portal...</span>
+                                </div>
+                            ) : success ? (
+                                <div className="flex items-center gap-2 animate-in zoom-in duration-300">
+                                    <CheckCircle2 size={20} />
+                                    <span>Welcome Back!</span>
+                                </div>
+                            ) : (
+                                'Sign In to Portal'
+                            )}
+                        </button>
                     </form>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-xs text-gray-400">
-                            Parent credentials are provided by the school administration.
+                    <div className="mt-8 pt-8 border-t border-gray-50 text-center">
+                        <p className="text-[11px] text-gray-400 leading-relaxed max-w-[200px] mx-auto">
+                            Default password is <span className="text-indigo-500 font-bold italic">123456</span> unless changed by user.
                         </p>
                     </div>
                 </div>
+
+                <p className="mt-8 text-center text-xs text-gray-400">
+                    &copy; 2024 Education CRM. All academic rights reserved.
+                </p>
             </div>
         </div>
     );

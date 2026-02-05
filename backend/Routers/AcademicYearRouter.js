@@ -6,12 +6,12 @@ import {
     closeAcademicYear,
     deleteAcademicYear
 } from "../Controllers/AcademicYearCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 router.post("/", createAcademicYear);
 router.get("/", getAcademicYears);

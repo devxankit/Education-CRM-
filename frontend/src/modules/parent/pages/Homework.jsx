@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Info, Search, Filter, Calendar, Book, Award, HeadphonesIcon, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Info, Search, Filter, Calendar, Book, Award, HeadphonesIcon, AlertCircle, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import HomeworkCard from '../components/homework/HomeworkCard';
 import { useParentStore } from '../../../store/parentStore';
 
 const ParentHomeworkPage = () => {
     const navigate = useNavigate();
+    const logout = useParentStore(state => state.logout);
     const location = useLocation();
     const state = location.state || {};
     const { childId, filter: initialFilter } = state;
@@ -31,6 +32,11 @@ const ParentHomeworkPage = () => {
 
     // Handlers
     const handleBack = () => navigate(-1);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/parent/login');
+    };
 
     // 2. Tab filtering logic
     const filteredHomework = homework.filter(hw => {
@@ -65,12 +71,21 @@ const ParentHomeworkPage = () => {
                     </button>
                     <h1 className="text-lg font-bold text-gray-900">Homework</h1>
                 </div>
-                <button
-                    onClick={() => setIsInfoModalOpen(true)}
-                    className="p-2 rounded-full hover:bg-indigo-50 text-indigo-600 transition-colors"
-                >
-                    <Info size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsInfoModalOpen(true)}
+                        className="p-2 rounded-full hover:bg-indigo-50 text-indigo-600 transition-colors"
+                    >
+                        <Info size={20} />
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        title="Logout"
+                    >
+                        <LogOut size={20} />
+                    </button>
+                </div>
             </header>
 
             <main className="max-w-md mx-auto p-4 space-y-6">

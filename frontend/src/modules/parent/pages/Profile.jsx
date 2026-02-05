@@ -14,7 +14,7 @@ const ParentProfilePage = () => {
     const navigate = useNavigate();
     const user = useParentStore(state => state.user);
     const children = useParentStore(state => state.children);
-    const setSelectedChildId = useParentStore(state => state.setSelectedChild);
+    const logout = useParentStore(state => state.logout);
 
     const [preferences, setPreferences] = useState({
         attendance: true,
@@ -23,11 +23,14 @@ const ParentProfilePage = () => {
         fees: true
     });
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editForm, setEditForm] = useState({ email: user.email || '', mobile: user.mobile || '+91 98765 43210' });
+    const [editForm, setEditForm] = useState({
+        email: user?.email || '',
+        mobile: user?.mobile || ''
+    });
 
     // Handlers
     const handleLogout = () => {
-        alert("Logged out successfully");
+        logout();
         navigate('/parent/login');
     };
 
@@ -72,29 +75,29 @@ const ParentProfilePage = () => {
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-3">
                         <span className="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold uppercase rounded-full border border-green-100">
-                            {user.status || 'Active'}
+                            {user?.status || 'Active'}
                         </span>
                     </div>
 
                     <div className="flex flex-col items-center text-center mb-6">
                         <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-3 overflow-hidden">
-                            {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" /> : <User size={32} className="text-indigo-600" />}
+                            {user?.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" /> : <User size={32} className="text-indigo-600" />}
                         </div>
-                        <h2 className="text-lg font-bold text-gray-900">{user.name}</h2>
-                        <p className="text-xs text-gray-400 font-mono tracking-wider">ID: {user.id}</p>
+                        <h2 className="text-lg font-bold text-gray-900">{user?.name || 'Parent User'}</h2>
+                        <p className="text-xs text-gray-400 font-mono tracking-wider">ID: {user?._id || user?.id || 'N/A'}</p>
                     </div>
 
                     <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                             <div className="flex items-center gap-3">
                                 <Mail size={16} className="text-gray-400" />
-                                <span className="text-sm font-medium text-gray-700">{user.email || 'N/A'}</span>
+                                <span className="text-sm font-medium text-gray-700">{user?.email || 'N/A'}</span>
                             </div>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                             <div className="flex items-center gap-3">
                                 <Phone size={16} className="text-gray-400" />
-                                <span className="text-sm font-medium text-gray-700">{user.mobile || '+91 98765 43210'}</span>
+                                <span className="text-sm font-medium text-gray-700">{user?.mobile || 'N/A'}</span>
                             </div>
                         </div>
                         <button

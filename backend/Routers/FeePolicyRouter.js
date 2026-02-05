@@ -4,12 +4,12 @@ import {
     saveFeePolicy,
     togglePolicyLock,
 } from "../Controllers/FeePolicyCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 router.get("/", getFeePolicy);
 router.post("/save", saveFeePolicy);

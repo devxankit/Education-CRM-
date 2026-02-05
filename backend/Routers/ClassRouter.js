@@ -7,12 +7,12 @@ import {
     getSectionsByClass,
     updateSection
 } from "../Controllers/ClassCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 // Classes
 router.post("/", createClass);

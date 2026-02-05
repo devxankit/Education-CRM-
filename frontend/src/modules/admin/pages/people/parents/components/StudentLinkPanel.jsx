@@ -1,25 +1,33 @@
 
-import React, { useState, useEffect } from 'react';
-import { UserPlus, Trash2, Link, AlertCircle, Loader2, Search } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { UserPlus, Trash2, Link, AlertCircle, Loader2, Search, X, User } from 'lucide-react';
 import { API_URL } from '@/app/api';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
-const StudentLinkPanel = ({ parentId }) => {
-
+const StudentLinkPanel = ({ parentId, initialLinkedStudents = [], onChange }) => {
     const students = useAdminStore(state => state.students);
     const fetchStudents = useAdminStore(state => state.fetchStudents);
 
     const [linkedStudents, setLinkedStudents] = useState([]);
     const [isAdding, setIsAdding] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStudentId, setSelectedStudentId] = useState('');
     const [loading, setLoading] = useState(false);
-    const [fetching, setFetching] = useState(true);
+    const [fetching, setFetching] = useState(false);
 
-    // Fetch linked students
+    // Sync local state with initialLinkedStudents when they change (prop updates)
+    useEffect(() => {
+        if (initialLinkedStudents && initialLinkedStudents.length > 0) {
+            setLinkedStudents(initialLinkedStudents);
+        }
+    }, [initialLinkedStudents]);
+
+    // Fetch linked students from API if we have a parentId and no initial data
     useEffect(() => {
         const loadLinkedStudents = async () => {
-            if (!parentId) return;
+            if (!parentId || (initialLinkedStudents && initialLinkedStudents.length > 0)) {
+                setFetching(false);
+                return;
+            }
 
             setFetching(true);
             try {
@@ -29,7 +37,9 @@ const StudentLinkPanel = ({ parentId }) => {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    setLinkedStudents(data.data || []);
+                    const fetchedList = data.data || [];
+                    setLinkedStudents(fetchedList);
+                    if (onChange) onChange(fetchedList);
                 }
             } catch (error) {
                 console.error('Error fetching linked students:', error);
@@ -41,189 +51,251 @@ const StudentLinkPanel = ({ parentId }) => {
         loadLinkedStudents();
     }, [parentId]);
 
-    // Fetch all students for dropdown
+    // Ensure all students are loaded for the search
     useEffect(() => {
         if (students.length === 0) {
             fetchStudents();
         }
     }, [students.length, fetchStudents]);
 
-    const handleLink = async () => {
-        if (!selectedStudentId) return;
+    // Filter students for the search dropdown
+    const availableStudents = useMemo(() => {
+        if (!searchTerm.trim()) return [];
+        return students.filter(s => {
+            const isAlreadyLinked = linkedStudents.some(ls => ls._id === s._id || ls.id === s._id);
+            const matchesSearch =
+                `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (s.admissionNo && s.admissionNo.toLowerCase().includes(searchTerm.toLowerCase()));
+            return !isAlreadyLinked && matchesSearch;
+        }).slice(0, 5); // Limit to top 5 results for cleaner UI
+    }, [students, linkedStudents, searchTerm]);
 
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/parent/${parentId}/link-student`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ studentId: selectedStudentId })
-            });
+    const handleSelectStudent = async (student) => {
+        if (parentId) {
+            // DIRECT LINK (API Call for existing parent)
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/parent/${parentId}/link-student`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ studentId: student._id })
+                });
 
-            const data = await response.json();
-            if (data.success) {
-                setLinkedStudents(prev => [...prev, data.data]);
-                setSelectedStudentId('');
-                setSearchTerm('');
-                setIsAdding(false);
-            } else {
-                alert(data.message || 'Failed to link student');
+                const data = await response.json();
+                if (data.success) {
+                    const newLinked = [...linkedStudents, data.data];
+                    setLinkedStudents(newLinked);
+                    if (onChange) onChange(newLinked);
+                    setSearchTerm('');
+                    setIsAdding(false);
+                }
+            } catch (error) {
+                console.error('Error linking student:', error);
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error('Error linking student:', error);
-            alert('An error occurred');
-        } finally {
-            setLoading(false);
+        } else {
+            // LOCAL LINK (For new/unsaved parent creation)
+            const newEntry = {
+                _id: student._id,
+                studentName: `${student.firstName} ${student.lastName}`,
+                class: `${student.classId?.name || ''}-${student.sectionId?.name || ''}`,
+                admissionNo: student.admissionNo
+            };
+            const newLinked = [...linkedStudents, newEntry];
+            setLinkedStudents(newLinked);
+            if (onChange) onChange(newLinked);
+            setSearchTerm('');
+            setIsAdding(false);
         }
     };
 
-    const handleUnlink = async (studentId) => {
-        if (!confirm("Are you sure you want to unlink this student? Ensure they have another guardian linked.")) {
-            return;
-        }
+    const handleUnlink = async (studentToUnlink) => {
+        const studentId = studentToUnlink._id || studentToUnlink.id;
 
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/parent/${parentId}/unlink-student`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ studentId })
-            });
+        if (parentId) {
+            if (!confirm(`Unlink ${studentToUnlink.studentName || 'this student'}?`)) return;
 
-            const data = await response.json();
-            if (data.success) {
-                setLinkedStudents(prev => prev.filter(s => s._id !== studentId));
-            } else {
-                alert(data.message || 'Failed to unlink student');
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/parent/${parentId}/unlink-student`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ studentId })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const newLinked = linkedStudents.filter(s => (s._id !== studentId && s.id !== studentId));
+                    setLinkedStudents(newLinked);
+                    if (onChange) onChange(newLinked);
+                }
+            } catch (error) {
+                console.error('Error unlinking student:', error);
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error('Error unlinking student:', error);
-            alert('An error occurred');
-        } finally {
-            setLoading(false);
+        } else {
+            // LOCAL UNLINK
+            const newLinked = linkedStudents.filter(s => (s._id !== studentId && s.id !== studentId));
+            setLinkedStudents(newLinked);
+            if (onChange) onChange(newLinked);
         }
     };
-
-    // Filter available students (not already linked)
-    const availableStudents = students.filter(s =>
-        !linkedStudents.some(ls => ls._id === s._id) &&
-        `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (fetching) {
-        return (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
-                <Loader2 className="mx-auto text-indigo-600 animate-spin mb-2" size={32} />
-                <p className="text-sm text-gray-500">Loading students...</p>
-            </div>
-        );
-    }
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Link className="text-indigo-600" size={20} />
-                    <h3 className="font-bold text-gray-800 text-sm">Linked Students</h3>
-                </div>
-                <button
-                    onClick={() => setIsAdding(!isAdding)}
-                    disabled={loading}
-                    className="flex items-center gap-1 text-indigo-600 text-xs font-bold hover:underline disabled:opacity-50"
-                >
-                    <UserPlus size={14} /> Link Student
-                </button>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-2 tracking-wider">
+                    <Link size={14} className="text-indigo-500" /> Linked Children
+                </h4>
+                {!isAdding && (
+                    <button
+                        type="button"
+                        onClick={() => setIsAdding(true)}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 px-2.5 py-1 rounded-full transition-all"
+                    >
+                        <UserPlus size={12} /> Link Student
+                    </button>
+                )}
             </div>
 
-            <div className="p-6 space-y-3">
-
-                {isAdding && (
-                    <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2">
-                        <label className="text-xs font-bold text-indigo-800 block mb-2">Search Student to Link</label>
-                        <div className="flex flex-col gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                                <input
-                                    type="text"
-                                    placeholder="Type student name..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full text-sm border border-indigo-200 rounded pl-8 pr-2 py-1.5 outline-none"
-                                    autoFocus
-                                />
-                            </div>
-                            <select
-                                value={selectedStudentId}
-                                onChange={(e) => setSelectedStudentId(e.target.value)}
-                                className="w-full text-sm border border-indigo-200 rounded px-2 py-1.5 outline-none bg-white"
-                                disabled={loading}
-                            >
-                                <option value="">Select a student...</option>
-                                {availableStudents.map(s => (
-                                    <option key={s._id} value={s._id}>
-                                        {s.firstName} {s.lastName} - {s.admissionNo}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleLink}
-                                    disabled={!selectedStudentId || loading}
-                                    className="flex-1 bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold disabled:bg-indigo-300 disabled:cursor-not-allowed flex items-center justify-center gap-1"
-                                >
-                                    {loading ? <Loader2 size={14} className="animate-spin" /> : 'Add'}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setIsAdding(false);
-                                        setSearchTerm('');
-                                        setSelectedStudentId('');
-                                    }}
-                                    className="px-3 py-1.5 border border-indigo-200 text-indigo-700 rounded text-xs font-bold"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+            {/* Inline Search UI */}
+            {isAdding && (
+                <div className="relative animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2 p-1 bg-gray-50 border border-indigo-100 rounded-xl focus-within:ring-2 focus-within:ring-indigo-200 transition-all">
+                        <div className="pl-3 text-gray-400">
+                            <Search size={16} />
                         </div>
-                    </div>
-                )}
-
-                {linkedStudents.map((link) => (
-                    <div key={link._id} className="flex justify-between items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50 group">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
-                                {link.studentName?.charAt(0) || 'S'}
-                            </div>
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">{link.studentName}</p>
-                                <p className="text-[10px] text-gray-500">{link.class}</p>
-                            </div>
-                        </div>
+                        <input
+                            type="text"
+                            placeholder="Type student name or ID..."
+                            className="flex-1 bg-transparent text-sm py-2 outline-none text-gray-700 placeholder:text-gray-400"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            autoFocus
+                        />
                         <button
-                            onClick={() => handleUnlink(link._id)}
-                            disabled={loading}
-                            className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-2 disabled:opacity-50"
+                            type="button"
+                            onClick={() => { setIsAdding(false); setSearchTerm(''); }}
+                            className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-gray-400 hover:text-gray-600 transition-all"
                         >
-                            <Trash2 size={16} />
+                            <X size={16} />
                         </button>
                     </div>
-                ))}
 
-                {linkedStudents.length === 0 && (
-                    <div className="text-center py-4 text-gray-400 text-xs italic border border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-2">
-                        <AlertCircle size={16} />
-                        No students linked. This parent is an orphan record.
+                    {/* Quick Results Dropdown */}
+                    {searchTerm.trim() && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 shadow-xl rounded-xl z-10 overflow-hidden py-1 divide-y divide-gray-50">
+                            {availableStudents.length > 0 ? (
+                                availableStudents.map(student => (
+                                    <button
+                                        key={student._id}
+                                        type="button"
+                                        onClick={() => handleSelectStudent(student)}
+                                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-indigo-50 transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                                {student.firstName[0]}{student.lastName[0]}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="text-sm font-semibold text-gray-800">{student.firstName} {student.lastName}</p>
+                                                <p className="text-[10px] text-gray-500">{student.admissionNo} • {student.classId?.name}</p>
+                                            </div>
+                                        </div>
+                                        <UserPlus size={14} className="text-indigo-400 group-hover:text-indigo-600" />
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="px-4 py-6 text-center text-gray-400 italic text-xs flex flex-col items-center gap-2">
+                                    <AlertCircle size={20} className="text-gray-200" />
+                                    No matching students found
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* List of Linked Students */}
+            <div className="grid gap-2">
+                {fetching ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-gray-400 animate-pulse">
+                        <Loader2 size={24} className="animate-spin mb-2" />
+                        <span className="text-[10px] font-medium">Syncing students...</span>
                     </div>
-                )}
+                ) : (
+                    <>
+                        {linkedStudents.map((link) => (
+                            <div
+                                key={link._id || link.id}
+                                className="group flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:border-indigo-100 hover:bg-indigo-50/30 transition-all"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-indigo-500 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all duration-300">
+                                        <User size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-800 leading-none">{link.studentName}</p>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className="text-[10px] bg-white border border-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-medium tracking-tighter">
+                                                {link.class || 'No Class'}
+                                            </span>
+                                            {link.admissionNo && (
+                                                <span className="text-[10px] text-gray-400 font-mono italic">
+                                                    #{link.admissionNo}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleUnlink(link)}
+                                    disabled={loading}
+                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        ))}
 
+                        {linkedStudents.length === 0 && !isAdding && (
+                            <div className="flex flex-col items-center justify-center py-10 px-6 border-2 border-dashed border-gray-50 rounded-2xl bg-gray-50/30">
+                                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-300 mb-3">
+                                    <Link size={20} />
+                                </div>
+                                <p className="text-xs text-gray-400 font-medium text-center">
+                                    No students linked to this profile.
+                                    <br />
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAdding(true)}
+                                        className="text-indigo-600 font-bold hover:underline mt-1"
+                                    >
+                                        Connect child account
+                                    </button>
+                                </p>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
+
+            {loading && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-20 rounded-xl">
+                    <Loader2 className="text-indigo-600 animate-spin" />
+                </div>
+            )}
         </div>
     );
 };
