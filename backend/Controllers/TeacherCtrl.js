@@ -457,9 +457,24 @@ export const getHomeworks = async (req, res) => {
             .populate("subjectId", "name")
             .sort({ createdAt: -1 });
 
+        // Add counts for each homework
+        const homeworksWithCounts = await Promise.all(homeworks.map(async (hw) => {
+            const submissionCount = await HomeworkSubmission.countDocuments({ homeworkId: hw._id });
+            const totalStudents = await Student.countDocuments({
+                classId: hw.classId,
+                sectionId: hw.sectionId,
+                status: 'active'
+            });
+            return {
+                ...hw.toObject(),
+                submissionCount,
+                totalStudents
+            };
+        }));
+
         res.status(200).json({
             success: true,
-            data: homeworks
+            data: homeworksWithCounts
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -480,9 +495,23 @@ export const getHomeworkById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Homework not found" });
         }
 
+        // Get submission count
+        const submissionCount = await HomeworkSubmission.countDocuments({ homeworkId: id });
+
+        // Get total students in the class/section
+        const totalStudents = await Student.countDocuments({
+            classId: homework.classId,
+            sectionId: homework.sectionId,
+            status: 'active'
+        });
+
         res.status(200).json({
             success: true,
-            data: homework
+            data: {
+                ...homework.toObject(),
+                submissionCount,
+                totalStudents
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

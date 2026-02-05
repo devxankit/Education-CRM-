@@ -153,9 +153,20 @@ const SubmissionsPage = () => {
                                             {sub.submissionDate ? new Date(sub.submissionDate).toLocaleDateString() : 'N/A'}
                                         </div>
                                         {sub.attachments?.length > 0 && (
-                                            <div className="flex items-center gap-1.5">
-                                                <FileText size={14} />
-                                                {sub.attachments.length} Files
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {sub.attachments.map((file, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={file.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-100 rounded-lg text-[10px] font-bold text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <FileText size={12} />
+                                                        {file.name || 'View File'}
+                                                    </a>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
@@ -212,6 +223,33 @@ const SubmissionsPage = () => {
                                         <p className="text-sm text-gray-700 leading-relaxed font-medium">
                                             {selectedSubmission.content}
                                         </p>
+                                    </div>
+                                )}
+
+                                {selectedSubmission.attachments && selectedSubmission.attachments.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Submitted Files</h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {selectedSubmission.attachments.map((file, idx) => (
+                                                <a
+                                                    key={idx}
+                                                    href={file.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-indigo-50 hover:border-indigo-100 transition-all group"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-white rounded-xl shadow-sm group-hover:text-indigo-600">
+                                                            <FileText size={18} />
+                                                        </div>
+                                                        <span className="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors truncate max-w-[200px]">
+                                                            {file.name || `File ${idx + 1}`}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-indigo-600 bg-white px-3 py-1 rounded-lg shadow-sm uppercase tracking-wider">View</span>
+                                                </a>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
