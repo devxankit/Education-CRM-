@@ -12,14 +12,31 @@ const DocumentsPage = () => {
     const selectedChildId = useParentStore(state => state.selectedChildId);
     const setSelectedChildId = useParentStore(state => state.setSelectedChild);
     const documents = useParentStore(state => state.documents);
+    const fetchDocuments = useParentStore(state => state.fetchDocuments);
+    const isLoading = useParentStore(state => state.isLoading);
     const [filterType, setFilterType] = useState('All');
 
-    const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
+    const selectedChild = children.find(c => c._id === selectedChildId || c.id === selectedChildId) || children[0];
 
-    // Filter documents for selected child
-    const filteredDocs = documents
-        .filter(doc => doc.childId === selectedChildId)
-        .filter(doc => filterType === 'All' || doc.type === filterType);
+    React.useEffect(() => {
+        if (selectedChild?._id || selectedChild?.id) {
+            fetchDocuments(selectedChild?._id || selectedChild?.id);
+        }
+    }, [selectedChild, fetchDocuments]);
+
+    // Filter documents by type on client side
+    const filteredDocs = documents.filter(doc => filterType === 'All' || doc.type === filterType);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Checking documents...</p>
+                </div>
+            </div>
+        );
+    }
 
     const documentTypes = ['All', 'Academic', 'Finance', 'Certificate', 'Medical'];
 

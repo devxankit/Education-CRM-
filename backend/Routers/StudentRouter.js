@@ -12,7 +12,12 @@ import {
     getStudentFees,
     getMyNotices,
     getStudentProfile,
-    getStudentAcademics
+    getStudentAcademics,
+    getStudentHomework,
+    submitHomework,
+    getLearningMaterials,
+    createSupportTicket,
+    getSupportTickets
 } from "../Controllers/StudentCtrl.js";
 import { AuthMiddleware, isAdmin, isStudent } from "../Middlewares/AuthMiddleware.js";
 
@@ -33,6 +38,11 @@ router.get("/fees", isStudent, getStudentFees);
 router.get("/notices", isStudent, getMyNotices);
 router.get("/profile", isStudent, getStudentProfile);
 router.get("/academics", isStudent, getStudentAcademics);
+router.get("/homework", isStudent, getStudentHomework);
+router.post("/homework/submit", isStudent, submitHomework);
+router.get("/learning-materials", isStudent, getLearningMaterials);
+router.post("/tickets", isStudent, createSupportTicket);
+router.get("/tickets", isStudent, getSupportTickets);
 
 // Admin only routes
 router.post("/admit", isAdmin, admitStudent);

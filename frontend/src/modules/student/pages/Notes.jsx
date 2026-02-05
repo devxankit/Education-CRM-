@@ -9,21 +9,33 @@ import { useStudentStore } from '../../../store/studentStore';
 
 const Notes = () => {
     const navigate = useNavigate();
-    const data = useStudentStore(state => state.notes);
-    const [loading, setLoading] = useState(false);
-    const [notes, setNotes] = useState(data);
-    const [subjects, setSubjects] = useState(['All', ...new Set(data.map(n => n.subject))]);
+    const materials = useStudentStore(state => state.notes);
+    const fetchLearningMaterials = useStudentStore(state => state.fetchLearningMaterials);
+    const [loading, setLoading] = useState(!materials || materials.length === 0);
     const [activeTab, setActiveTab] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [dateSort, setDateSort] = useState('newest'); // newest, oldest
     const [showFilters, setShowFilters] = useState(false);
 
-    // Update local state if store data changes
+    // Initial Load
     useEffect(() => {
-        setNotes(data);
-        const uniqueSubjects = ['All', ...new Set(data.map(n => n.subject))];
-        setSubjects(uniqueSubjects);
-    }, [data]);
+        fetchLearningMaterials().finally(() => setLoading(false));
+    }, [fetchLearningMaterials]);
+
+    // Transform Data
+    const notes = materials.map(m => ({
+        id: m._id,
+        title: m.title,
+        description: m.description,
+        subject: m.subjectId?.name || "General",
+        type: m.type === 'Video' ? 'Video' : 'PDF', // Placeholder map
+        date: new Date(m.createdAt).toLocaleDateString(),
+        author: m.teacherId ? `${m.teacherId.firstName} ${m.teacherId.lastName}` : "Admin",
+        size: "2.4 MB", // Placeholder
+        url: m.files?.[0]?.url
+    }));
+
+    const subjects = ['All', ...new Set(notes.map(n => n.subject))];
 
     // Filtered & Sorted Data
     const filteredNotes = notes

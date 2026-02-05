@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Upload, X, File, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStudentStore } from '../../../../store/studentStore';
 
 const HomeworkSubmission = ({ homework, onSubmissionComplete }) => {
+    const submitHomework = useStudentStore(state => state.submitHomework);
     const [file, setFile] = useState(null);
     const [note, setNote] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,24 +24,47 @@ const HomeworkSubmission = ({ homework, onSubmissionComplete }) => {
         }
     };
 
-    const handleSubmit = () => {
+    const convertToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
+    const handleSubmit = async () => {
         if (!file) {
             setError('Please attach a file to submit.');
             return;
         }
 
         setIsSubmitting(true);
+        try {
+            const base64 = await convertToBase64(file);
+            const submissionData = {
+                homeworkId: homework.id,
+                content: note,
+                attachments: [
+                    { name: file.name, base64 }
+                ]
+            };
 
-        // Simulate Network Request
-        setTimeout(() => {
+            const result = await submitHomework(submissionData);
+            if (result) {
+                setSuccess(true);
+                setTimeout(() => {
+                    onSubmissionComplete();
+                }, 1000);
+            } else {
+                setError('Failed to submit homework. Please try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('An error occurred during submission.');
+        } finally {
             setIsSubmitting(false);
-            setSuccess(true);
-
-            // Notify parent after brief delay
-            setTimeout(() => {
-                onSubmissionComplete();
-            }, 1000);
-        }, 1500);
+        }
     };
 
     if (success) {

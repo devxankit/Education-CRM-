@@ -122,43 +122,246 @@ export const useStudentStore = create(
                 }
             },
 
+            fetchHomework: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/homework`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ homeworkList: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching homework:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            submitHomework: async (homeworkData) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/student/homework/submit`, homeworkData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        await get().fetchHomework(); // Refresh list
+                        set({ isLoading: false });
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error submitting homework:', error);
+                    set({ isLoading: false });
+                    return false;
+                }
+            },
+
+            fetchAttendance: async (startDate, endDate) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/attendance`, {
+                        params: { startDate, endDate },
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const rawData = response.data.data;
+
+                        // Transform raw records into stats
+                        const total = rawData.length;
+                        const present = rawData.filter(r => r.status === 'Present').length;
+                        const late = rawData.filter(r => r.status === 'Late').length;
+                        const halfDay = rawData.filter(r => r.status === 'Half-Day').length;
+                        const absent = rawData.filter(r => r.status === 'Absent').length;
+
+                        const percentage = total > 0
+                            ? ((present + late + halfDay * 0.5) / total) * 100
+                            : 0;
+
+                        // Mock subject-wise (since backend returns general attendance for now)
+                        // In a real scenario, attendance model might include subjectId
+                        const mockSubjects = [
+                            { name: 'Physics', percentage: percentage, attended: present, total: total, color: '#6366f1' },
+                            { name: 'Chemistry', percentage: percentage, attended: present, total: total, color: '#a855f7' },
+                            { name: 'Mathematics', percentage: percentage, attended: present, total: total, color: '#ec4899' }
+                        ];
+
+                        const structuredData = {
+                            overall: {
+                                percentage: Math.round(percentage),
+                                totalClasses: total,
+                                present: present + late + halfDay,
+                                absent: absent,
+                                trend: '+2%'
+                            },
+                            eligibility: {
+                                status: percentage >= 75 ? 'Eligible' : (percentage >= 70 ? 'Warning' : 'At Risk'),
+                                required: 75,
+                                current: Math.round(percentage),
+                                message: percentage >= 75 ? "You're doing great! Keep it up." : "Try to attend more classes."
+                            },
+                            subjects: mockSubjects,
+                            monthlyLog: [
+                                { month: 'Current', present: present, total: total }
+                            ],
+                            history: rawData.map(r => ({
+                                id: r._id,
+                                date: new Date(r.date).toLocaleDateString(),
+                                day: new Date(r.date).toLocaleDateString('en-US', { weekday: 'long' }),
+                                status: r.status,
+                                time: "09:00 AM", // Placeholder
+                                type: "Lecture"
+                            }))
+                        };
+
+                        set({ attendance: structuredData, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching attendance:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchFees: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/fees`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ fees: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching fees:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchExams: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/exams`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ exams: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching exams:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchResults: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/results`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ results: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching results:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchNotices: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/notices`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ notices: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching notices:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchLearningMaterials: async (filters = {}) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/learning-materials`, {
+                        params: filters,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ notes: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching learning materials:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchTickets: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/tickets`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ tickets: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching tickets:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            addTicket: async (ticketData) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/student/tickets`, ticketData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        await get().fetchTickets(); // Refresh
+                        set({ isLoading: false });
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error creating ticket:', error);
+                    set({ isLoading: false });
+                    return false;
+                }
+            },
+
             updateProfile: (data) => set((state) => ({
                 profile: { ...state.profile, ...data }
-            })),
-
-            addTicket: (ticket) => set((state) => ({
-                tickets: [{ ...ticket, id: `ST-TKT-${Date.now()}`, status: 'Open', date: new Date().toISOString() }, ...state.tickets]
-            })),
-
-            submitHomework: (id) => set((state) => ({
-                homeworkList: state.homeworkList.map(hw =>
-                    hw.id === id ? { ...hw, status: 'Submitted' } : hw
-                )
-            })),
-
-            payFee: (amount) => set((state) => ({
-                fees: {
-                    ...state.fees,
-                    paid: (state.fees?.paid || 0) + amount,
-                    pending: (state.fees?.pending || 0) - amount
-                }
             })),
 
             markAsRead: (id) => set((state) => ({
                 notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
             })),
 
-            fetchNotifications: () => {
-                // To be implemented with backend
+            acknowledgeNotice: async (id) => {
+                // Backend logic for acknowledging notice can be added here
+                set((state) => ({
+                    notices: state.notices.map(n => n._id === id ? { ...n, acknowledged: true } : n)
+                }));
             },
 
-            acknowledgeNotice: (id) => set((state) => ({
-                notices: state.notices.map(n => n.id === id ? { ...n, read: true } : n)
-            })),
-
-            submitCorrection: (correction) => set((state) => ({
-                tickets: [{ ...correction, id: `CORR-${Date.now()}`, type: 'Correction', status: 'Pending', date: new Date().toISOString() }, ...state.tickets]
-            }))
+            submitCorrection: async (correction) => {
+                return await get().addTicket({
+                    category: 'Correction',
+                    topic: `Profile Correction: ${correction.field}`,
+                    details: `Current Value: ${correction.currentValue}\nNew Value: ${correction.newValue}\nReason: ${correction.reason}`,
+                    priority: 'Normal'
+                });
+            }
         }),
         {
             name: 'student-storage',

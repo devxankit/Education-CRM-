@@ -15,6 +15,8 @@ const ParentAttendancePage = () => {
     const scrollRef = useRef(null);
 
     const attendance = useParentStore(state => state.attendance);
+    const fetchAttendance = useParentStore(state => state.fetchAttendance);
+    const isLoading = useParentStore(state => state.isLoading);
 
     const [selectedMonth, setSelectedMonth] = useState('Oct');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -23,6 +25,8 @@ const ParentAttendancePage = () => {
     useEffect(() => {
         if (!childId) {
             console.warn("No childId provided, redirected in prod.");
+        } else {
+            fetchAttendance(childId);
         }
 
         if (highlightLowAttendance && scrollRef.current) {
@@ -30,7 +34,27 @@ const ParentAttendancePage = () => {
                 scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightLowAttendance]);
+    }, [childId, highlightLowAttendance, fetchAttendance]);
+
+    // Update selected month when attendance data arrives
+    useEffect(() => {
+        if (attendance.monthly?.length > 0) {
+            setSelectedMonth(attendance.monthly[0].month);
+        }
+    }, [attendance.monthly]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Loading attendance records...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!attendance || !attendance.monthly) return null;
 
     // Handlers
     const handleBack = () => navigate(-1);
@@ -98,14 +122,14 @@ const ParentAttendancePage = () => {
                 <div>
                     <div className="flex items-center justify-between mb-3 px-1">
                         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Report</h2>
-                        <div className="flex bg-white border border-gray-200 rounded-lg p-0.5">
-                            {['Oct', 'Sep', 'Aug'].map(m => (
+                        <div className="flex bg-white border border-gray-200 rounded-lg p-0.5 overflow-x-auto no-scrollbar">
+                            {attendance.monthly.slice(0, 4).map(m => (
                                 <button
-                                    key={m}
-                                    onClick={() => handleMonthSelect(m)}
-                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedMonth === m ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500'}`}
+                                    key={m.month}
+                                    onClick={() => handleMonthSelect(m.month)}
+                                    className={`px-3 py-1 text-xs font-bold rounded-md whitespace-nowrap transition-all ${selectedMonth === m.month ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500'}`}
                                 >
-                                    {m}
+                                    {m.month}
                                 </button>
                             ))}
                         </div>

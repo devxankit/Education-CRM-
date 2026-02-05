@@ -11,9 +11,10 @@ const ParentHomeworkPage = () => {
     const logout = useParentStore(state => state.logout);
     const location = useLocation();
     const state = location.state || {};
-    const { childId, filter: initialFilter } = state;
-
     const homework = useParentStore(state => state.homework);
+    const fetchHomework = useParentStore(state => state.fetchHomework);
+    const isLoading = useParentStore(state => state.isLoading);
+
     const [activeTab, setActiveTab] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -22,13 +23,26 @@ const ParentHomeworkPage = () => {
     useEffect(() => {
         if (!childId) {
             console.warn("No childId provided, redirecting in prod.");
+        } else {
+            fetchHomework(childId);
         }
 
         if (initialFilter) {
             const map = { 'pending': 'Pending', 'completed': 'Submitted', 'late': 'Late' };
             if (map[initialFilter]) setActiveTab(map[initialFilter]);
         }
-    }, [childId, initialFilter, navigate]);
+    }, [childId, initialFilter, fetchHomework]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Fetching homework assignments...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Handlers
     const handleBack = () => navigate(-1);

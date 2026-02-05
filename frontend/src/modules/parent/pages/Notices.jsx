@@ -5,50 +5,6 @@ import { ChevronLeft, Info, Calendar, Filter, Bell, HeadphonesIcon, Home, AlertC
 import { motion, AnimatePresence } from 'framer-motion';
 import NoticeCard from '../components/notices/NoticeCard';
 
-// MOCK DATA
-const MOCK_NOTICES = [
-    {
-        id: 1,
-        title: 'Annual Sports Day 2023',
-        category: 'Event',
-        date: '2023-10-18',
-        isNew: true,
-        isImportant: true,
-        requiresAck: false,
-        isRead: false
-    },
-    {
-        id: 2,
-        title: 'Revised Fee Structure',
-        category: 'Fee',
-        date: '2023-10-15',
-        isNew: false,
-        isImportant: true,
-        requiresAck: true,
-        isRead: false
-    },
-    {
-        id: 3,
-        title: 'Winter Uniform Mandatory',
-        category: 'General',
-        date: '2023-10-10',
-        isNew: false,
-        isImportant: false,
-        requiresAck: false,
-        isRead: true
-    },
-    {
-        id: 4,
-        title: 'Parent-Teacher Meeting',
-        category: 'Academic',
-        date: '2023-10-05',
-        isNew: false,
-        isImportant: true,
-        requiresAck: true,
-        isRead: true
-    }
-];
-
 const ParentNoticesPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -56,29 +12,41 @@ const ParentNoticesPage = () => {
     const { childId, highlightImportant } = state;
     const importantRef = useRef(null);
 
+    const notices = useParentStore(state => state.notices);
+    const fetchNotices = useParentStore(state => state.fetchNotices);
+    const isLoading = useParentStore(state => state.isLoading);
+
     const [activeTab, setActiveTab] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     // 1. Entry Check & Scroll
     useEffect(() => {
-        if (!childId) {
-            console.warn("No childId provided, redirecting in prod.");
-            // navigate('/parent/dashboard');
-        }
+        fetchNotices();
 
         if (highlightImportant && importantRef.current) {
             setTimeout(() => {
                 importantRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightImportant, navigate]);
+    }, [highlightImportant, fetchNotices]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Fetching notices...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Handlers
     const handleBack = () => navigate(-1);
 
     // 2. Filter Logic
-    const filteredNotices = MOCK_NOTICES.filter(notice => {
+    const filteredNotices = notices.filter(notice => {
         const matchesTab =
             activeTab === 'All' ? true :
                 activeTab === 'Important' ? notice.isImportant :

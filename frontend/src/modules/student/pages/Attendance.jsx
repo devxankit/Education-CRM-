@@ -20,7 +20,12 @@ const AttendancePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const data = useStudentStore(state => state.attendance);
-    const [loading, setLoading] = useState(false);
+    const fetchAttendance = useStudentStore(state => state.fetchAttendance);
+    const [loading, setLoading] = useState(!data || Object.keys(data).length === 0);
+
+    useEffect(() => {
+        fetchAttendance().finally(() => setLoading(false));
+    }, [fetchAttendance]);
 
     return (
         <div ref={containerRef} className="min-h-screen bg-white md:bg-gray-50 pb-24">

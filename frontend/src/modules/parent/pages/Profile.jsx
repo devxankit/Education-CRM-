@@ -15,6 +15,9 @@ const ParentProfilePage = () => {
     const user = useParentStore(state => state.user);
     const children = useParentStore(state => state.children);
     const logout = useParentStore(state => state.logout);
+    const fetchProfile = useParentStore(state => state.fetchProfile);
+    const updateProfile = useParentStore(state => state.updateProfile);
+    const setSelectedChildId = useParentStore(state => state.setSelectedChild);
 
     const [preferences, setPreferences] = useState({
         attendance: true,
@@ -27,6 +30,7 @@ const ParentProfilePage = () => {
         email: user?.email || '',
         mobile: user?.mobile || ''
     });
+    const [isSaving, setIsSaving] = useState(false);
 
     // Handlers
     const handleLogout = () => {
@@ -44,14 +48,20 @@ const ParentProfilePage = () => {
     };
 
     const handleEditOpen = () => {
-        setEditForm({ email: user.email || '', mobile: user.mobile || '+91 98765 43210' });
+        setEditForm({ email: user.email || '', mobile: user.mobile || '' });
         setIsEditModalOpen(true);
     };
 
-    const handleEditSubmit = (e) => {
+    const handleEditSubmit = async (e) => {
         e.preventDefault();
-        // In a real app, update store here
-        setIsEditModalOpen(false);
+        setIsSaving(true);
+        const res = await updateProfile(editForm);
+        setIsSaving(false);
+        if (res.success) {
+            setIsEditModalOpen(false);
+        } else {
+            alert(res.message);
+        }
     };
 
     return (

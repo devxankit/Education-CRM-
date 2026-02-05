@@ -11,14 +11,30 @@ const TeachersPage = () => {
     const children = useParentStore(state => state.children);
     const selectedChildId = useParentStore(state => state.selectedChildId);
     const teachers = useParentStore(state => state.teachers);
+    const fetchTeachers = useParentStore(state => state.fetchTeachers);
+    const isLoading = useParentStore(state => state.isLoading);
 
-    const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
+    const selectedChild = children.find(c => c._id === selectedChildId || c.id === selectedChildId) || children[0];
+
+    React.useEffect(() => {
+        if (selectedChild?._id || selectedChild?.id) {
+            fetchTeachers(selectedChild?._id || selectedChild?.id);
+        }
+    }, [selectedChild, fetchTeachers]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Loading faculty list...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Filter teachers for selected child's class
-    const classTeachers = teachers.filter(t =>
-        t.forClass === `${selectedChild?.class}-${selectedChild?.section}` ||
-        !t.isClassTeacher
-    );
+    const classTeachers = teachers; // Backend already filters by studentId
 
     return (
         <div className="min-h-screen bg-gray-50 pb-24">

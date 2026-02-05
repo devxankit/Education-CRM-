@@ -20,13 +20,64 @@ const HomeworkPage = () => {
     const { id } = useParams();
     const containerRef = useRef(null);
 
-    const data = useStudentStore(state => state.homeworkList);
+    const homeworkList = useStudentStore(state => state.homeworkList);
+    const fetchHomework = useStudentStore(state => state.fetchHomework);
     const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(!homeworkList || homeworkList.length === 0);
     const [activeTab, setActiveTab] = useState('Pending');
     const [selectedHomework, setSelectedHomework] = useState(null);
 
-    // Initial Load & Smooth Scroll
+    // Initial Load
+    useEffect(() => {
+        fetchHomework().finally(() => setLoading(false));
+    }, [fetchHomework]);
+
+    // Transform Data
+    const data = homeworkList.map(hw => ({
+        id: hw._id,
+        title: hw.title,
+        subject: hw.subjectId?.name || "Subject",
+        status: hw.submissionStatus,
+        assignedDate: hw.createdAt,
+        dueDate: hw.dueDate,
+        teacher: hw.teacherId ? `${hw.teacherId.firstName} ${hw.teacherId.lastName}` : "Teacher",
+        instructions: hw.instructions,
+        attachments: hw.attachments,
+        submission: hw.submissionStatus === 'Submitted' || hw.submissionStatus === 'Checked' || hw.submissionStatus === 'Late' ? {
+            date: hw.updatedAt,
+            files: [] // Backend would need to return submission details if needed for display
+        } : null,
+        feedback: hw.submissionStatus === 'Checked' ? {
+            remarks: hw.feedback,
+            marks: hw.marks,
+            maxMarks: 100 // Placeholder
+        } : null
+    }));
+
+    // Update selected homework if ID changes
+    useEffect(() => {
+        if (id && data.length > 0) {
+            const hw = data.find(item => item.id === id);
+            if (hw) {
+                setSelectedHomework(hw);
+            }
+        } else if (!id) {
+            setSelectedHomework(null);
+        }
+    }, [id, data]);
+
+    // Map stats from data
+    useEffect(() => {
+        const newStats = {
+            All: data.length,
+            Pending: data.filter(h => h.status === 'Pending').length,
+            Submitted: data.filter(h => h.status === 'Submitted' || h.status === 'Checked').length,
+            Overdue: data.filter(h => h.status === 'Overdue' || h.status === 'Late').length
+        };
+        setStats(newStats);
+    }, [data]);
+
+    // Handle Smooth Scroll
     useEffect(() => {
         const lenis = new Lenis({
             duration: 1.2,
@@ -43,29 +94,8 @@ const HomeworkPage = () => {
         }
         requestAnimationFrame(raf);
 
-        // Map stats from data
-        const newStats = {
-            All: data.length,
-            Pending: data.filter(h => h.status === 'Pending').length,
-            Submitted: data.filter(h => h.status === 'Submitted' || h.status === 'Checked').length,
-            Overdue: data.filter(h => h.status === 'Overdue' || h.status === 'Late').length
-        };
-        setStats(newStats);
-
         return () => lenis.destroy();
-    }, [data]);
-
-    // Update selected homework if ID changes
-    useEffect(() => {
-        if (id && data.length > 0) {
-            const hw = data.find(item => item.id === id);
-            if (hw) {
-                setSelectedHomework(hw);
-            }
-        } else if (!id) {
-            setSelectedHomework(null);
-        }
-    }, [id, data]);
+    }, []);
 
     const handleHomeworkClick = (hw) => {
         navigate(`${hw.id}`);
@@ -74,6 +104,7 @@ const HomeworkPage = () => {
     const handleCloseDetail = () => {
         navigate('..', { relative: 'path' });
     };
+
     const filteredData = data.filter(item => {
         if (activeTab === 'All') return true;
         if (activeTab === 'Pending') return item.status === 'Pending';

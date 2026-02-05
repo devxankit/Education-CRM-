@@ -14,6 +14,8 @@ const ParentFeesPage = () => {
     const pendingRef = useRef(null);
 
     const fees = useParentStore(state => state.fees);
+    const fetchFees = useParentStore(state => state.fetchFees);
+    const isLoading = useParentStore(state => state.isLoading);
 
     const [activeTab, setActiveTab] = useState(initialTab === 'history' ? 'Receipts' : 'Structure');
     const [expandedFeeId, setExpandedFeeId] = useState(null);
@@ -23,6 +25,8 @@ const ParentFeesPage = () => {
     useEffect(() => {
         if (!childId) {
             console.warn("No childId provided, redirected in prod.");
+        } else {
+            fetchFees(childId);
         }
 
         if (highlightPendingFee && pendingRef.current) {
@@ -30,7 +34,20 @@ const ParentFeesPage = () => {
                 pendingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightPendingFee]);
+    }, [childId, highlightPendingFee, fetchFees]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Checking fee status...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!fees || !fees.summary) return null;
 
     // Handlers
     const handleBack = () => navigate(-1);

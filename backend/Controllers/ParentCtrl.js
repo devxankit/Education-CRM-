@@ -8,6 +8,7 @@ import FeeStructure from "../Models/FeeStructureModel.js";
 import ExamResult from "../Models/ExamResultModel.js";
 import Exam from "../Models/ExamModel.js";
 import Teacher from "../Models/TeacherModel.js";
+import SupportTicket from "../Models/SupportTicketModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
 
@@ -958,25 +959,71 @@ export const payChildFee = async (req, res) => {
 export const changeParentPassword = async (req, res) => {
     try {
         const parentId = req.user._id;
-        const { oldPassword, newPassword } = req.body;
+        const { currentPassword, newPassword } = req.body;
 
         const parent = await Parent.findById(parentId);
         if (!parent) {
             return res.status(404).json({ success: false, message: "Parent not found" });
         }
 
-        const isMatch = await parent.comparePassword(oldPassword);
+        const isMatch = await parent.comparePassword(currentPassword);
         if (!isMatch) {
-            return res.status(400).json({ success: false, message: "Invalid old password" });
+            return res.status(401).json({ success: false, message: "Invalid current password" });
         }
 
         parent.password = newPassword;
         await parent.save();
 
-        res.status(200).json({
-            success: true,
-            message: "Password changed successfully"
+        res.status(200).json({ success: true, message: "Password updated successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET CHILD TICKETS =================
+export const getChildTickets = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const { studentId } = req.params;
+
+        const student = await Student.findOne({ _id: studentId, parentId });
+        if (!student) {
+            return res.status(403).json({ success: false, message: "Unauthorized access" });
+        }
+
+        const tickets = await SupportTicket.find({ studentId })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, data: tickets });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CREATE CHILD TICKET =================
+export const createChildTicket = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const { studentId } = req.params;
+        const { category, topic, details, priority } = req.body;
+
+        const student = await Student.findOne({ _id: studentId, parentId });
+        if (!student) {
+            return res.status(403).json({ success: false, message: "Unauthorized access" });
+        }
+
+        const ticket = new SupportTicket({
+            instituteId: student.instituteId,
+            studentId,
+            category,
+            topic,
+            details,
+            priority: priority || "Normal"
         });
+
+        await ticket.save();
+
+        res.status(201).json({ success: true, message: "Ticket raised successfully", data: ticket });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

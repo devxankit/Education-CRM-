@@ -13,6 +13,9 @@ import Exam from "../Models/ExamModel.js";
 import ExamResult from "../Models/ExamResultModel.js";
 import FeeStructure from "../Models/FeeStructureModel.js";
 import FeePayment from "../Models/FeePaymentModel.js";
+import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
+import SupportTicket from "../Models/SupportTicketModel.js";
+import LearningMaterial from "../Models/LearningMaterialModel.js";
 
 // ================= STUDENT DASHBOARD =================
 export const getStudentDashboard = async (req, res) => {
@@ -93,10 +96,26 @@ export const getStudentDashboard = async (req, res) => {
             ? ((attendanceStats.present + attendanceStats.late + attendanceStats.halfDay * 0.5) / attendanceStats.total) * 100
             : 0;
 
+        // 6. Mock Today's Classes (Real one would query Timetable)
+        const todayClasses = [
+            { id: 1, subject: 'Mathematics', time: '09:00 AM', teacher: 'Dr. Sharma', room: 'Room 302', status: 'upcoming' },
+            { id: 2, subject: 'Physics', time: '10:30 AM', teacher: 'Prof. Verma', room: 'Lab 1', status: 'upcoming' },
+            { id: 3, subject: 'History', time: '01:00 PM', teacher: 'Ms. Iyer', room: 'Room 105', status: 'upcoming' }
+        ];
+
+        // 7. Performance Mock (Real one from Exams)
+        const performance = {
+            currentGPA: "8.4",
+            previousGPA: "8.2",
+            rank: "5th",
+            totalStudents: "45",
+            attendanceTrend: "+2%"
+        };
+
         res.status(200).json({
             success: true,
             data: {
-                student: {
+                studentProfile: {
                     firstName: student.firstName,
                     lastName: student.lastName,
                     admissionNo: student.admissionNo,
@@ -106,13 +125,22 @@ export const getStudentDashboard = async (req, res) => {
                     branchName: student.branchId?.name,
                     photo: student.documents?.photo?.url
                 },
-                summary: {
-                    attendancePercentage: Math.round(attendancePercentage),
-                    pendingHomework: homework.length, // Placeholder logic
-                    recentHomework: homework,
-                    recentNotices: notices,
-                    monthlyAttendance: attendanceStats
-                }
+                stats: {
+                    attendance: Math.round(attendancePercentage),
+                    homework: homework.length,
+                    notices: notices.length,
+                    exams: 2 // Mock
+                },
+                alerts: notices.map(n => ({
+                    id: n._id,
+                    type: n.priority === 'High' ? 'Important' : 'Notice',
+                    title: n.title,
+                    message: n.content.substring(0, 50) + "...",
+                    date: n.publishDate
+                })),
+                todayClasses,
+                performance,
+                recentHomework: homework
             }
         });
     } catch (error) {
@@ -707,6 +735,188 @@ export const getStudentAcademics = async (req, res) => {
         res.status(200).json({
             success: true,
             data: academicData
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET STUDENT HOMEWORK =================
+export const getStudentHomework = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const homework = await Homework.find({
+            classId: student.classId,
+            sectionId: student.sectionId,
+            status: "published"
+        })
+            .populate("subjectId", "name code")
+            .populate("teacherId", "firstName lastName")
+            .sort({ dueDate: 1 });
+
+        // Check submission status for each homework
+        const homeworkWithStatus = await Promise.all(homework.map(async (hw) => {
+            const submission = await HomeworkSubmission.findOne({
+                homeworkId: hw._id,
+                studentId: studentId
+            });
+            return {
+                ...hw.toObject(),
+                submissionStatus: submission ? (submission.status || "Submitted") : "Pending",
+                marks: submission?.marks,
+                feedback: submission?.feedback
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: homeworkWithStatus
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= SUBMIT HOMEWORK =================
+export const submitHomework = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { homeworkId, content, attachments } = req.body;
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const homework = await Homework.findById(homeworkId);
+        if (!homework) {
+            return res.status(404).json({ success: false, message: "Homework not found" });
+        }
+
+        // Handle file uploads if any
+        let uploadedAttachments = [];
+        if (attachments && attachments.length > 0) {
+            const uploadPromises = attachments.map(async (att) => {
+                if (att.base64) {
+                    const url = await uploadBase64ToCloudinary(att.base64, `students/homework/${studentId}`);
+                    return { name: att.name, url };
+                }
+                return att;
+            });
+            uploadedAttachments = await Promise.all(uploadPromises);
+        }
+
+        const submission = await HomeworkSubmission.findOneAndUpdate(
+            { homeworkId, studentId },
+            {
+                instituteId: student.instituteId,
+                branchId: student.branchId,
+                homeworkId,
+                studentId,
+                content,
+                attachments: uploadedAttachments,
+                submissionDate: new Date(),
+                status: new Date() > homework.dueDate ? "Late" : "Submitted"
+            },
+            { upsert: true, new: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Homework submitted successfully",
+            data: submission
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET LEARNING MATERIALS (NOTES) =================
+export const getLearningMaterials = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { type, subjectId } = req.query;
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        let query = {
+            classId: student.classId,
+            status: "Published",
+            $or: [
+                { sectionId: student.sectionId },
+                { sectionId: { $exists: false } },
+                { sectionId: null }
+            ]
+        };
+
+        if (type) query.type = type;
+        if (subjectId) query.subjectId = subjectId;
+
+        const materials = await LearningMaterial.find(query)
+            .populate("subjectId", "name code")
+            .populate("teacherId", "firstName lastName")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: materials
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CREATE SUPPORT TICKET =================
+export const createSupportTicket = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { category, topic, details, priority } = req.body;
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const ticket = new SupportTicket({
+            instituteId: student.instituteId,
+            studentId,
+            category,
+            topic,
+            details,
+            priority: priority || "Normal"
+        });
+
+        await ticket.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Support ticket created successfully",
+            data: ticket
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET SUPPORT TICKETS =================
+export const getSupportTickets = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const tickets = await SupportTicket.find({ studentId })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: tickets
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

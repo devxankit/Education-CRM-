@@ -9,14 +9,38 @@ const ParentSupportPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const state = location.state || {}; // { childId, issueType } passed from other pages
+    const { childId } = state;
 
     const tickets = useParentStore(state => state.tickets);
+    const fetchTickets = useParentStore(state => state.fetchTickets);
+    const isLoading = useParentStore(state => state.isLoading);
+    const selectedChildId = useParentStore(state => state.selectedChildId);
+
+    const activeChildId = childId || selectedChildId;
+
     const [activeTab, setActiveTab] = useState('My Tickets');
+
+    useEffect(() => {
+        if (activeChildId) {
+            fetchTickets(activeChildId);
+        }
+    }, [activeChildId, fetchTickets]);
 
     const handleCreateTicket = () => {
         // Navigate to new ticket form, passing any pre-filled context
-        navigate('/parent/support/new', { state });
+        navigate('/parent/support/new', { state: { ...state, childId: activeChildId } });
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 font-medium">Checking your support tickets...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-24">
@@ -77,7 +101,7 @@ const ParentSupportPage = () => {
                                             {ticket.status}
                                         </span>
                                     </div>
-                                    <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.subject}</h3>
+                                    <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.topic}</h3>
                                     <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
                                         <span className="text-xs font-mono text-gray-400">#{ticket.id}</span>
                                         <div className="flex items-center gap-1 text-xs text-gray-400">

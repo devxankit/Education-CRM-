@@ -17,17 +17,38 @@ import { useStudentStore } from '../../../store/studentStore';
 const HelpSupportPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const supportData = useStudentStore(state => state.support) || { tickets: [], faq: [], categories: [] };
-    const persistentTickets = useStudentStore(state => state.tickets) || [];
+    const tickets = useStudentStore(state => state.tickets) || [];
+    const fetchTickets = useStudentStore(state => state.fetchTickets);
     const addTicket = useStudentStore(state => state.addTicket);
 
-    // Combine mock tickets with persistent ones for UI
-    const allTickets = [...(persistentTickets || []), ...(supportData.tickets || [])];
-
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(!tickets || tickets.length === 0);
     const [showRaiseModal, setShowRaiseModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [viewMode, setViewMode] = useState('help'); // 'help' or 'tickets'
+
+    useEffect(() => {
+        fetchTickets().finally(() => setLoading(false));
+    }, [fetchTickets]);
+
+    // Transform tickets for UI if needed
+    const allTickets = tickets.map(t => ({
+        id: t._id,
+        category: t.category,
+        topic: t.topic,
+        status: t.status,
+        priority: t.priority,
+        date: t.createdAt,
+        details: t.details,
+        response: t.response
+    }));
+
+    const supportData = {
+        faq: [
+            { question: "How to pay fees online?", answer: "Go to Fees page and click on Pay Now button. You can use cards, UPI or netbanking." },
+            { question: "Where can I find school syllabus?", answer: "Check the Notes section under Syllabus category." }
+        ],
+        categories: ["Academic", "Fee Related", "Homework", "General", "Correction"]
+    };
 
     // Initial Load & Smooth Scroll
     useEffect(() => {

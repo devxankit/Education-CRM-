@@ -12,6 +12,7 @@ export const useParentStore = create(
             children: [],
             selectedChildId: null,
             isAuthenticated: false,
+            isLoading: false,
 
             // Data
             notices: [],
@@ -101,7 +102,307 @@ export const useParentStore = create(
 
             setSelectedChild: (id) => set({ selectedChildId: id }),
 
-            // ... (Rest of actions will be implemented as APIs are integrated)
+            fetchAttendance: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/attendance`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const { summary, history, monthly } = response.data.data;
+                        set({
+                            attendance: {
+                                overall: summary.percentage,
+                                required: summary.required,
+                                total: summary.total,
+                                present: summary.present,
+                                absent: summary.absent,
+                                history: history.map(h => ({
+                                    date: new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                                    status: h.status,
+                                    type: h.type || 'Regular'
+                                })),
+                                monthly: monthly.map(m => ({
+                                    month: m.month,
+                                    percentage: m.percentage,
+                                    present: m.present,
+                                    absent: m.absent,
+                                    isLow: m.percentage < 75
+                                }))
+                            },
+                            isLoading: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching child attendance:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchHomework: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/homework`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ homework: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching child homework:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchFees: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/fees`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const { summary, breakdown, history } = response.data.data;
+                        set({
+                            fees: {
+                                summary: {
+                                    total: summary.total,
+                                    paid: summary.paid,
+                                    pending: summary.pending,
+                                    percentage: summary.percentage,
+                                    nextDue: summary.nextDueDate || 'N/A'
+                                },
+                                breakdown: breakdown.map((item, idx) => ({
+                                    id: idx + 1,
+                                    head: item.name,
+                                    total: item.amount,
+                                    status: item.status,
+                                    installments: item.installments || [{ term: 'Full Payment', due: item.dueDate, amount: item.amount, status: item.status }]
+                                })),
+                                receipts: history.map(tx => ({
+                                    id: tx.id,
+                                    date: tx.date,
+                                    amount: tx.amount,
+                                    mode: tx.method,
+                                    status: tx.status
+                                }))
+                            },
+                            isLoading: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching child fees:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchExams: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/exams`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({
+                            exams: response.data.data.map((exam, idx) => ({
+                                id: exam.id,
+                                title: exam.title,
+                                type: exam.type,
+                                date: exam.date,
+                                percentage: exam.percentage,
+                                grade: exam.grade,
+                                status: exam.status,
+                                isLatest: idx === 0
+                            })),
+                            isLoading: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching child exams:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchTeachers: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/teachers`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ teachers: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching child teachers:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchDocuments: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/documents`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ documents: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching child documents:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchNotices: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/notices`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ notices: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching notices:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            acknowledgeNotice: async (noticeId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    await axios.post(`${API_URL}/parent/portal/notices/${noticeId}/acknowledge`, {}, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const { notices } = get();
+                    set({
+                        notices: notices.map(n => n.id === noticeId ? { ...n, acknowledged: true } : n)
+                    });
+                } catch (error) {
+                    console.error('Error acknowledging notice:', error);
+                }
+            },
+
+            fetchProfile: async () => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ user: response.data.data, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching parent profile:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            updateProfile: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/parent/portal/profile`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ user: response.data.data });
+                        return { success: true };
+                    }
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    return { success: false, message: error.response?.data?.message || 'Update failed' };
+                }
+            },
+
+            changePassword: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/parent/portal/change-password`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    return response.data;
+                } catch (error) {
+                    console.error('Error changing password:', error);
+                    return { success: false, message: error.response?.data?.message || 'Password change failed' };
+                }
+            },
+
+            payFee: async (studentId, paymentData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/parent/portal/child/${studentId}/pay-fee`, paymentData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        // Refresh fees after payment
+                        get().fetchFees(studentId);
+                        return response.data;
+                    }
+                } catch (error) {
+                    console.error('Error paying fee:', error);
+                    return { success: false, message: error.response?.data?.message || 'Payment failed' };
+                }
+            },
+
+            fetchTickets: async (studentId) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/tickets`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const transformed = response.data.data.map(t => ({
+                            id: t._id,
+                            category: t.category,
+                            topic: t.topic,
+                            details: t.details,
+                            status: t.status,
+                            priority: t.priority,
+                            date: new Date(t.createdAt).toLocaleDateString(),
+                            response: t.response,
+                            respondedAt: t.respondedAt ? new Date(t.respondedAt).toLocaleDateString() : null
+                        }));
+                        set({ tickets: transformed, isLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching tickets:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            addTicket: async (studentId, ticketData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/parent/portal/child/${studentId}/tickets`, ticketData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const newTicket = {
+                            id: response.data.data._id,
+                            category: response.data.data.category,
+                            topic: response.data.data.topic,
+                            details: response.data.data.details,
+                            status: response.data.data.status,
+                            priority: response.data.data.priority,
+                            date: new Date(response.data.data.createdAt).toLocaleDateString()
+                        };
+                        const { tickets } = get();
+                        set({ tickets: [newTicket, ...tickets] });
+                        return { success: true };
+                    }
+                } catch (error) {
+                    console.error('Error adding ticket:', error);
+                    return { success: false, message: error.response?.data?.message || 'Failed to raise ticket' };
+                }
+            },
         }),
         {
             name: 'parent-storage',

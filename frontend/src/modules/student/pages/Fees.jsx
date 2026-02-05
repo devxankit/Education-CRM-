@@ -16,12 +16,50 @@ import { useStudentStore } from '../../../store/studentStore';
 const FeesPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
-    const data = useStudentStore(state => state.fees);
+    const fees = useStudentStore(state => state.fees);
+    const fetchFees = useStudentStore(state => state.fetchFees);
     const payFee = useStudentStore(state => state.payFee);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(!fees);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // Initial Load & Smooth Scroll
+    // Initial Load
+    useEffect(() => {
+        fetchFees().finally(() => setLoading(false));
+    }, [fetchFees]);
+
+    // Format Data
+    const formattedData = fees ? {
+        summary: {
+            totalAmount: fees.totalAmount,
+            paidAmount: fees.paidAmount,
+            pendingAmount: fees.pendingAmount,
+            dueDate: "Next Month 5th", // Placeholder
+            status: fees.pendingAmount > 0 ? "Pending" : "Cleared"
+        },
+        breakdown: fees.feeStructure?.particulars?.map(p => ({
+            name: p.name,
+            amount: p.amount,
+            status: "Linked"
+        })) || [],
+        history: fees.paymentHistory?.map(h => ({
+            id: h._id,
+            date: h.paymentDate,
+            amount: h.amount,
+            method: h.paymentMethod,
+            status: h.status
+        })) || [],
+        paymentAction: {
+            isInstallmentAvailable: true,
+            minAmount: 500
+        }
+    } : null;
+
+    const handlePaymentSuccess = (amount) => {
+        // payFee(amount); // This would call backend in real version
+        setShowSuccessModal(true);
+    };
+
+    // Smooth Scroll
     useEffect(() => {
         const lenis = new Lenis({
             duration: 1.2,
@@ -40,11 +78,6 @@ const FeesPage = () => {
 
         return () => lenis.destroy();
     }, []);
-
-    const handlePaymentSuccess = (amount) => {
-        payFee(amount);
-        setShowSuccessModal(true);
-    };
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50">
@@ -80,7 +113,7 @@ const FeesPage = () => {
             </div>
 
             <main className="max-w-lg mx-auto px-4 pt-6 pb-24">
-                {loading ? (
+                {loading || !formattedData ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                         <p className="mt-4 text-sm text-gray-500 font-medium">Loading Financials...</p>
@@ -91,19 +124,19 @@ const FeesPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ staggerChildren: 0.1 }}
                     >
-                        <FeeSummaryCard summary={data.summary} />
+                        <FeeSummaryCard summary={formattedData.summary} />
 
-                        {data.summary.pendingAmount > 0 && (
+                        {formattedData.summary.pendingAmount > 0 && (
                             <PaymentActionCard
-                                pendingAmount={data.summary.pendingAmount}
-                                config={data.paymentAction}
+                                pendingAmount={formattedData.summary.pendingAmount}
+                                config={formattedData.paymentAction}
                                 onPay={handlePaymentSuccess}
                             />
                         )}
 
-                        <FeeBreakdownList breakdown={data.breakdown} />
+                        <FeeBreakdownList breakdown={formattedData.breakdown} />
 
-                        <PaymentHistory history={data.history} />
+                        <PaymentHistory history={formattedData.history} />
                     </motion.div>
                 )}
             </main>
