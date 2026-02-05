@@ -101,3 +101,64 @@ export const sendLoginCredentialsEmail = async (to, password, fullName, role) =>
     console.log("Email Error:", error);
   }
 };
+
+// Send Parent Credentials when student is registered
+export const sendParentCredentialsEmail = async (to, password, parentName, studentName, admissionNo) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Parent Portal Credentials - ${studentName}`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
+          <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Welcome to Parent Portal</h1>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <p style="font-size: 16px; color: #374151;">Dear <b>${parentName}</b>,</p>
+            <p style="font-size: 16px; color: #374151;">Your child <b>${studentName}</b> has been successfully registered at our institution. You can now access the Parent Portal to track their academic progress, attendance, homework, and more.</p>
+            
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 10px; margin: 25px 0;">
+              <h3 style="color: #4f46e5; margin-top: 0;">Student Details</h3>
+              <p style="margin: 5px 0; color: #374151;"><b>Student Name:</b> ${studentName}</p>
+              <p style="margin: 5px 0; color: #374151;"><b>Admission No:</b> ${admissionNo}</p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #10b981;">
+              <h3 style="color: #065f46; margin-top: 0;">🔐 Your Login Credentials</h3>
+              <p style="margin: 8px 0; color: #374151;"><b>Portal URL:</b> <a href="${process.env.FRONTEND_URL}/parent/login" style="color: #4f46e5;">Login to Parent Portal</a></p>
+              <p style="margin: 8px 0; color: #374151;"><b>Mobile Number:</b> (Your registered mobile)</p>
+              <p style="margin: 8px 0; color: #374151;"><b>Password:</b> <span style="background: #4f46e5; color: white; padding: 5px 15px; border-radius: 5px; font-family: monospace; font-size: 18px;">${password}</span></p>
+            </div>
+            
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">⚠️ <b>Important:</b> Please change your password after first login for security reasons.</p>
+            </div>
+            
+            <p style="font-size: 14px; color: #6b7280;">If you have any questions, please contact the school administration.</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 25px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; text-align: center;">This is an automated message from Education CRM. Please do not reply to this email.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Parent credentials email sent to ${to} for student ${studentName}`);
+    return true;
+  } catch (error) {
+    console.log("Email Error:", error);
+    return false;
+  }
+};

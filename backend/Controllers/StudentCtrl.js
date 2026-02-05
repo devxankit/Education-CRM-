@@ -1,8 +1,11 @@
 import Student from "../Models/StudentModel.js";
+import Parent from "../Models/ParentModel.js";
 import Sequence from "../Models/SequenceModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
+import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
+import { sendParentCredentialsEmail } from "../Helpers/SendMail.js";
 import Notice from "../Models/NoticeModel.js";
 import Homework from "../Models/HomeworkModel.js";
 import Attendance from "../Models/AttendanceModel.js";
