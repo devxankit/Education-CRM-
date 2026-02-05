@@ -57,6 +57,24 @@ export const getRoles = async (req, res) => {
     }
 };
 
+// ================= GET PUBLIC ROLES (FOR LOGIN) =================
+export const getPublicRoles = async (req, res) => {
+    try {
+        // Fetch all active roles. In a multi-tenant setup, you'd filter by institute via query param.
+        const roles = await Role.find({ status: 'active' }).select('name code');
+
+        res.status(200).json({
+            success: true,
+            data: roles,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 // ================= UPDATE ROLE =================
 export const updateRole = async (req, res) => {
     try {

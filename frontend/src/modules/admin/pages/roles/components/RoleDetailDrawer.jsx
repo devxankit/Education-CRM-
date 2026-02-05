@@ -1,13 +1,36 @@
 
-import React, { useState } from 'react';
-import { X, Shield, Settings, Power, UserCheck, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+    X, Shield, Settings, Power, UserCheck, AlertTriangle, Save,
+    LayoutDashboard, Users, GraduationCap, Briefcase,
+    Banknote, Receipt, Bus, Box, FileText,
+    Bell, LifeBuoy, BarChart2
+} from 'lucide-react';
 import RoleStatusBadge from './RoleStatusBadge';
+
+const MODULES_LIST = [
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { key: 'students', label: 'Students Management', icon: <GraduationCap size={18} /> },
+    { key: 'teachers', label: 'Teacher Management', icon: <Users size={18} /> },
+    { key: 'employees', label: 'Employee Management', icon: <Briefcase size={18} /> },
+    { key: 'fees', label: 'Fees & Collections', icon: <Banknote size={18} /> },
+    { key: 'payroll', label: 'Payroll System', icon: <Receipt size={18} /> },
+    { key: 'expenses', label: 'Expense Tracking', icon: <BarChart2 size={18} /> },
+    { key: 'transport', label: 'Transport Management', icon: <Bus size={18} /> },
+    { key: 'assets', label: 'Assets & Inventory', icon: <Box size={18} /> },
+    { key: 'documents', label: 'Document Center', icon: <Shield size={18} /> },
+    { key: 'notices', label: 'Notices & Announcements', icon: <Bell size={18} /> },
+    { key: 'support', label: 'Helpdesk Support', icon: <LifeBuoy size={18} /> },
+    { key: 'reports', label: 'System Reports', icon: <FileText size={18} /> },
+    { key: 'settings', label: 'Global Settings', icon: <Settings size={18} /> },
+];
 
 const RoleDetailDrawer = ({
     isOpen,
     onClose,
     role,
     onStatusChange,
+    onUpdatePermissions, // New Prop
     isSuperAdmin
 }) => {
 
@@ -15,6 +38,44 @@ const RoleDetailDrawer = ({
     const isSystemRole = role?.type === 'system';
     const hasUsers = role?.userCount > 0;
     const isDeactivatable = !hasUsers && !isSystemRole;
+
+    // Permissions State
+    const [localPermissions, setLocalPermissions] = useState({});
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    // Sync state when role opens
+    useEffect(() => {
+        if (role && role.permissions) {
+            setLocalPermissions(role.permissions);
+        } else {
+            setLocalPermissions({});
+        }
+        setHasUnsavedChanges(false);
+    }, [role]);
+
+    const togglePermission = (key) => {
+        setLocalPermissions(prev => {
+            const current = prev[key]?.accessible;
+            return {
+                ...prev,
+                [key]: { accessible: !current } // Simple toggle for now
+            };
+        });
+        setHasUnsavedChanges(true);
+    };
+
+    const handleSavePermissions = async () => {
+        setSaving(true);
+        try {
+            await onUpdatePermissions(role.id, localPermissions);
+            setHasUnsavedChanges(false);
+        } catch (error) {
+            console.error("Failed to save", error);
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleDeactivate = () => {
         if (!isSuperAdmin) return;
@@ -86,6 +147,44 @@ const RoleDetailDrawer = ({
 
 
 
+                    {/* Permissions Configuration */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Module Access Control</h3>
+                            {hasUnsavedChanges && (
+                                <span className="text-xs text-amber-600 font-medium animate-pulse">Unsaved Changes</span>
+                            )}
+                        </div>
+
+                        <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
+                            {MODULES_LIST.map((module) => {
+                                const isAllowed = localPermissions[module.key]?.accessible;
+                                return (
+                                    <div key={module.key} className="p-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${isAllowed ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                                                {module.icon}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">{module.label}</p>
+                                                <p className="text-xs text-gray-500">{isAllowed ? 'Access Granted' : 'Restricted Access'}</p>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => togglePermission(module.key)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAllowed ? 'bg-indigo-600' : 'bg-gray-200'
+                                                }`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${isAllowed ? 'translate-x-6' : 'translate-x-1'
+                                                }`} />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Warning for System Role */}
                     {isSystemRole && (
                         <div className="bg-purple-50 p-4 rounded-lg flex gap-3 text-purple-800 text-xs border border-purple-100">
@@ -100,6 +199,17 @@ const RoleDetailDrawer = ({
 
                 {/* Footer Actions */}
                 <div className="p-4 border-t border-gray-100 bg-gray-50 flex flex-col gap-3">
+
+                    {hasUnsavedChanges && (
+                        <button
+                            onClick={handleSavePermissions}
+                            disabled={saving}
+                            className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 transition-all flex justify-center items-center gap-2"
+                        >
+                            {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save size={18} />}
+                            Save Permission Changes
+                        </button>
+                    )}
 
 
 

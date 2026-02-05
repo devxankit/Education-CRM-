@@ -44,12 +44,8 @@ const RolesList = () => {
         }
     }, []);
 
-    const isInitialMount = React.useRef(true);
     useEffect(() => {
-        if (isInitialMount.current) {
-            fetchRoles();
-            isInitialMount.current = false;
-        }
+        fetchRoles();
     }, [fetchRoles]);
 
     // -- Handlers --
@@ -112,23 +108,58 @@ const RolesList = () => {
         }
     };
 
+    const handleUpdatePermissions = async (id, permissions) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/role/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ permissions })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Update local state
+                setRoles(prev => prev.map(r => r._id === id ? { ...r, permissions } : r));
+                setSelectedRole(prev => (prev?._id === id ? { ...prev, permissions } : prev));
+                alert('Permissions updated successfully');
+            } else {
+                alert(result.message || 'Failed to update permissions');
+            }
+        } catch (error) {
+            console.error('Error updating permissions:', error);
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="h-full flex flex-col relative pb-10">
+        <div className="h-[calc(100vh-4rem)] flex flex-col p-6 bg-slate-50/50">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Role Definitions</h1>
-                    <p className="text-gray-500 text-sm">Create and manage functional roles for staff access control.</p>
+                    <h1 className="text-2xl font-bold text-slate-800 font-['Poppins'] tracking-tight">Role Definitions</h1>
+                    <p className="text-slate-500 text-sm mt-1">Manage staff roles and their access permissions.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-opacity-50 cursor-not-allowed">
-                        <Download size={16} /> Export Map
+                    <button
+                        onClick={fetchRoles}
+                        className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-white bg-white border border-slate-200 shadow-sm rounded-lg transition-all active:scale-95"
+                        title="Refresh List"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
                     </button>
+
                     {isSuperAdmin && (
                         <button
                             onClick={() => setIsCreateOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm shadow-sm"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all font-medium text-sm shadow-md shadow-indigo-200 active:scale-95"
                         >
                             <Plus size={18} /> Define New Role
                         </button>
@@ -136,32 +167,31 @@ const RolesList = () => {
                 </div>
             </div>
 
-            {/* Info Banner */}
-            <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-start gap-3 mb-6">
-                <ShieldCheck className="text-blue-600 mt-1 shrink-0" size={20} />
-                <div className="text-sm text-blue-900">
-                    <p className="font-semibold">Security Logic Active</p>
-                    <p className="opacity-80 mt-1">
-                        New roles are created with <strong>Zero Privileges</strong> by default.
-                    </p>
-                </div>
-            </div>
-
-            {/* Main Table */}
-            {fetching ? (
-                <div className="flex justify-center items-center p-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                </div>
-            ) : (
-                <RoleTable
-                    roles={roles}
-                    onRowClick={(role) => setSelectedRole(role)}
-                />
-            )}
-
-            {/* Stats */}
-            <div className="mt-4 text-xs text-center text-gray-400">
-                {roles.filter(r => r.type === 'system').length} System Roles • {roles.filter(r => r.type === 'custom').length} Custom Roles
+            {/* Main Table Card */}
+            <div className="flex-1 min-h-0 flex flex-col mb-2 bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden">
+                {fetching ? (
+                    <div className="flex-1 flex justify-center items-center">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                            <p className="text-slate-400 text-sm font-medium">Loading roles...</p>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <RoleTable
+                            roles={roles}
+                            onRowClick={(role) => setSelectedRole(role)}
+                        />
+                        {/* Footer Stats - Inside Card */}
+                        <div className="border-t border-slate-50 bg-slate-50/50 px-6 py-3 flex justify-between items-center text-xs text-slate-400 font-medium shrink-0">
+                            <span>Last synced: {new Date().toLocaleTimeString()}</span>
+                            <span className="flex gap-3">
+                                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span> {roles.filter(r => r.type === 'system').length} System</span>
+                                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> {roles.filter(r => r.type === 'custom').length} Custom</span>
+                            </span>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Drawers & Modals */}
@@ -177,6 +207,7 @@ const RolesList = () => {
                 onClose={() => setSelectedRole(null)}
                 role={selectedRole}
                 onStatusChange={handleStatusChange}
+                onUpdatePermissions={handleUpdatePermissions}
                 isSuperAdmin={isSuperAdmin}
                 loading={loading}
             />
@@ -185,4 +216,3 @@ const RolesList = () => {
 };
 
 export default RolesList;
-

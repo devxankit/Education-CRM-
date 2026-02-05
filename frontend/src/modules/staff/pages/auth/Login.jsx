@@ -4,25 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, User, Briefcase, Eye, EyeOff, Shield } from 'lucide-react';
 import { STAFF_ROLES } from '../../config/roles';
 import { useStaffAuth } from '../../context/StaffAuthContext';
-
-// Mock Auth Function (Simulating backend)
-const mockLogin = (staffId, password, role) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (staffId && password) {
-                // Return success with selected role (for dev/demo flexibility)
-                resolve({
-                    staffId,
-                    name: 'Sarah Jenkins', // In real app, name comes from DB based on ID
-                    role: role || STAFF_ROLES.FRONT_DESK,
-                    permissions: [] // In real app, permissions come from DB
-                });
-            } else {
-                reject('Invalid credentials');
-            }
-        }, 1200);
-    });
-};
+import { loginStaff, getPublicRoles } from '../../services/auth.api';
 
 const StaffLogin = () => {
     const navigate = useNavigate();
@@ -30,6 +12,7 @@ const StaffLogin = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [availableRoles, setAvailableRoles] = useState([]);
 
     // Redirect if already logged in
     React.useEffect(() => {
@@ -38,11 +21,20 @@ const StaffLogin = () => {
         }
     }, [user, navigate]);
 
+    // Fetch Roles
+    React.useEffect(() => {
+        const fetchRoles = async () => {
+            const roles = await getPublicRoles();
+            setAvailableRoles(roles);
+        };
+        fetchRoles();
+    }, []);
+
     // Form State
     const [formData, setFormData] = useState({
-        staffId: '',
+        email: '',
         password: '',
-        role: STAFF_ROLES.FRONT_DESK // Default for quick testing
+        role: '' // Added role back to state
     });
 
     const handleChange = (e) => {
@@ -50,24 +42,68 @@ const StaffLogin = () => {
         setError(''); // Clear error on edit
     };
 
+    const mapBackendRoleToFrontend = (backendCode) => {
+        if (!backendCode) return null;
+        const code = backendCode.toUpperCase();
+
+        // Exact match check
+        if (Object.values(STAFF_ROLES).includes(code)) return code;
+
+        // Pattern matching
+        if (code.includes('ACCOUNTS')) return STAFF_ROLES.ACCOUNTS;
+        if (code.includes('FRONT') || code.includes('RECEPTION')) return STAFF_ROLES.FRONT_DESK;
+        if (code.includes('TRANSPORT')) return STAFF_ROLES.TRANSPORT;
+        if (code.includes('DATA')) return STAFF_ROLES.DATA_ENTRY;
+        if (code.includes('SUPPORT')) return STAFF_ROLES.SUPPORT;
+        if (code.includes('PRINCIPAL') || code.includes('HEAD')) return STAFF_ROLES.PRINCIPAL;
+        if (code.includes('TEACHER')) return STAFF_ROLES.TEACHER;
+        if (code.includes('ADMIN')) return STAFF_ROLES.ADMIN;
+
+        return null;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Front-end validation for role selection
+        if (!formData.role) {
+            setError('Please select your access role.');
+            return;
+        }
+
         setIsLoading(true);
         setError('');
 
         try {
-            // 1. Authenticate with "Backend"
-            const user = await mockLogin(formData.staffId, formData.password, formData.role);
+            // 1. Authenticate with Backend (Passing Role for server-side validation)
+            const { user: backendUser, token } = await loginStaff(formData.email, formData.password, formData.role);
 
-            // 2. Lock the Role in Global State (Immutable Session)
-            login(user);
+            // 2. Map Backend Role to Frontend Role for Context/UI
+            // Even though backend validated it, we still need to map the complex backend code to a simple frontend constant
+            const mappedBackendRole = mapBackendRoleToFrontend(backendUser.roleId?.code);
 
-            // 3. Redirect to Dashboard (No state passing needed)
-            console.log('Login Success & Role Locked:', user.role);
+            // Fallback: If map returns null, use the role user selected (since backend said it was OK)
+            // or default to generic STAFF role
+            const finalRole = mappedBackendRole || formData.role;
+
+            const userForContext = {
+                ...backendUser,
+                id: backendUser._id,
+                role: finalRole,
+                token
+            };
+
+            // 3. Lock the Role in Global State (Immutable Session)
+            login(userForContext);
+
+            // 4. Redirect to Dashboard
+            console.log('Login Success & Role Locked:', finalRole);
             navigate('/staff/dashboard', { replace: true });
 
         } catch (err) {
-            setError(err || 'Login failed. Please try again.');
+            console.error("Login Error:", err);
+            // Show backend error message directly if available, otherwise generic
+            setError(typeof err === 'string' ? err : 'Login failed. Please check your credentials.');
         } finally {
             setIsLoading(false);
         }
@@ -89,7 +125,7 @@ const StaffLogin = () => {
                 <div className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-gray-100">
                     <form className="space-y-6" onSubmit={handleSubmit}>
 
-                        {/* Role Selection (Optional for Demo, Hidden/Auto in Prod) */}
+                        {/* Role Selection */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
                                 <Briefcase size={12} /> Access Role
@@ -98,29 +134,37 @@ const StaffLogin = () => {
                                 name="role"
                                 value={formData.role}
                                 onChange={handleChange}
+                                required
                                 className="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
                             >
-                                {Object.values(STAFF_ROLES).filter(r => r !== 'ADMIN').map((role) => (
-                                    <option key={role} value={role}>{role}</option>
-                                ))}
+                                <option value="">Select your role</option>
+                                {availableRoles.length > 0 ? (
+                                    availableRoles.map((role) => (
+                                        <option key={role._id || role.code} value={role.code}>
+                                            {role.name}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option disabled>Loading roles...</option>
+                                )}
                             </select>
                         </div>
 
-                        {/* Staff ID */}
+                        {/* Staff ID / Email */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                <User size={12} /> Staff ID / Email
+                                <User size={12} /> Staff Email
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
-                                    id="staffId"
-                                    name="staffId"
-                                    type="text"
+                                    id="email"
+                                    name="email"
+                                    type="email"
                                     required
-                                    value={formData.staffId}
+                                    value={formData.email}
                                     onChange={handleChange}
                                     className="appearance-none block w-full px-3 py-2.5 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
-                                    placeholder="e.g. STF-2024-001"
+                                    placeholder="Enter your registered email"
                                 />
                             </div>
                         </div>

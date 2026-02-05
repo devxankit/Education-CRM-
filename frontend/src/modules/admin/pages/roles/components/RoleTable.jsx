@@ -18,34 +18,34 @@ const RoleTable = ({ roles, onRowClick }) => {
     }
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+        <div className="h-full flex flex-col">
+            <div className="overflow-x-auto flex-1 overflow-y-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm border-b border-slate-100">
                         <tr>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Role Identity</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Type</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Default Access</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Assigned Users</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Status</th>
-                            <th className="px-4 py-4 border-b border-gray-100 w-10"></th>
+                            <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Role Identity</th>
+                            <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Default Access</th>
+                            <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Assigned Users</th>
+                            <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Status</th>
+                            <th className="px-4 py-4 w-10"></th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-sm">
+                    <tbody className="divide-y divide-slate-50 text-sm bg-white">
                         {roles.map((role) => (
                             <tr
                                 key={role.id}
                                 onClick={() => onRowClick(role)}
-                                className="group hover:bg-indigo-50/30 transition-colors cursor-pointer"
+                                className="group hover:bg-slate-50/80 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-indigo-500"
                             >
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${role.type === 'system' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
-                                            <Shield size={18} />
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-2.5 rounded-xl ${role.type === 'system' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'} transition-transform group-hover:scale-110`}>
+                                            <Shield size={20} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900">{role.name}</p>
-                                            <p className="text-xs text-gray-500 font-mono mt-0.5">{role.code}</p>
+                                            <p className="font-bold text-slate-800">{role.name}</p>
+                                            <p className="text-[11px] text-slate-400 font-mono mt-0.5 uppercase tracking-wide">{role.code}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -54,14 +54,14 @@ const RoleTable = ({ roles, onRowClick }) => {
                                     <RoleStatusBadge type={role.type} />
                                 </td>
 
-                                <td className="px-6 py-4 text-gray-600">
-                                    {role.defaultDashboard}
+                                <td className="px-6 py-4 text-slate-500 font-medium">
+                                    {role.defaultDashboard || 'Standard'}
                                 </td>
 
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1.5 text-gray-600">
-                                        <Users size={14} className="text-gray-400" />
-                                        <span className="font-medium">{role.userCount}</span>
+                                    <div className="flex items-center gap-2 text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg w-fit border border-slate-100">
+                                        <Users size={14} className="text-slate-400" />
+                                        <span className="font-semibold text-xs">{role.userCount} Staff</span>
                                     </div>
                                 </td>
 
@@ -69,8 +69,8 @@ const RoleTable = ({ roles, onRowClick }) => {
                                     <RoleStatusBadge status={role.status} />
                                 </td>
 
-                                <td className="px-4 py-4 text-gray-400">
-                                    <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <td className="px-4 py-4 text-slate-300">
+                                    <ChevronRight size={18} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-indigo-400" />
                                 </td>
                             </tr>
                         ))}
@@ -78,10 +78,7 @@ const RoleTable = ({ roles, onRowClick }) => {
                 </table>
             </div>
 
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex justify-between">
-                <span>Showing {roles.length} Roles</span>
-                <span>System Definition</span>
-            </div>
+            {/* removed footer from here as it is moved to parent */}
         </div>
     );
 };

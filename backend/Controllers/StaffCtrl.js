@@ -132,7 +132,7 @@ export const deleteStaff = async (req, res) => {
 // ================= STAFF LOGIN =================
 export const loginStaff = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, role } = req.body;
 
         const staff = await Staff.findOne({ email }).populate('roleId');
         if (!staff) {
@@ -157,6 +157,18 @@ export const loginStaff = async (req, res) => {
             });
         }
 
+        // Validate Role if provided
+        if (role) {
+            const assignedRoleCode = staff.roleId?.code || '';
+            // Check if the assigned role code contains the requested role string (e.g. ROLE_ACCOUNTS_OFFICER contains ACCOUNTS)
+            if (!assignedRoleCode.toUpperCase().includes(role.toUpperCase())) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Access Denied: You are not authorized to login as ${role}. Your assigned role is ${staff.roleId?.name || 'different'}.`
+                });
+            }
+        }
+
         const token = generateToken(staff._id, "Staff");
 
         // Update last login
@@ -173,6 +185,33 @@ export const loginStaff = async (req, res) => {
         res.status(500).json({
             success: false,
             message: error.message,
+        });
+    }
+};
+
+// ================= GET STAFF PERMISSIONS =================
+export const getStaffPermissions = async (req, res) => {
+    try {
+        const staffId = req.user.id; // User ID from auth middleware
+        const staff = await Staff.findById(staffId).populate('roleId');
+
+        if (!staff) {
+            return res.status(404).json({
+                success: false,
+                message: "Staff not found"
+            });
+        }
+
+        const permissions = staff.roleId ? staff.roleId.permissions : {};
+
+        res.status(200).json({
+            success: true,
+            data: permissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 };
