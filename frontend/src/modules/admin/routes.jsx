@@ -33,9 +33,11 @@ import Taxes from './pages/finance/Taxes';
 import Classes from './pages/academics/Classes';
 import Sections from './pages/academics/Sections';
 import SubjectsMaster from './pages/academics/SubjectsMaster';
+import WeeklyTimetable from './pages/academics/WeeklyTimetable';
 import ProgramsMaster from './pages/academics/ProgramsMaster';
 import TeacherMapping from './pages/academics/TeacherMapping';
 import ExamPolicies from './pages/academics/ExamPolicies';
+import Exams from './pages/academics/Exams';
 
 // Operations Management Pages
 import AdmissionRules from './pages/operations/AdmissionsRules';
@@ -122,9 +124,11 @@ const adminRoutes = [
 
                     { path: 'academics/subjects', element: <SubjectsMaster /> },
                     { path: 'academics/programs', element: <ProgramsMaster /> },
+                    { path: 'academics/timetable', element: <WeeklyTimetable /> },
 
                     { path: 'academics/teacher-mapping', element: <TeacherMapping /> },
                     { path: 'academics/exam-policies', element: <ExamPolicies /> },
+                    { path: 'academics/exams', element: <Exams /> },
 
                     // 5. People Management
                     { path: 'people/students/add', element: <StudentAdmission /> },

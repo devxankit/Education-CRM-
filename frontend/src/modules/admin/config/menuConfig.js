@@ -63,8 +63,10 @@ export const adminMenuConfig = [
             { id: 'sections', label: 'Sections', path: '/admin/academics/sections' },
             { id: 'subjects', label: 'Subjects', path: '/admin/academics/subjects' },
             { id: 'programs', label: 'Programs / Courses', path: '/admin/academics/programs' },
+            { id: 'timetable', label: 'Weekly Timetable', path: '/admin/academics/timetable' },
             { id: 'teacher-mapping', label: 'Teacher–Subject Mapping', path: '/admin/academics/teacher-mapping' },
-            { id: 'exam-policies', label: 'Exam Policies', path: '/admin/academics/exam-policies' }
+            { id: 'exam-policies', label: 'Exam Policies', path: '/admin/academics/exam-policies' },
+            { id: 'exams', label: 'Exams & Scheduling', path: '/admin/academics/exams' }
         ]
     },
     {

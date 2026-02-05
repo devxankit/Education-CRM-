@@ -4,6 +4,7 @@ import Section from "../Models/SectionModel.js";
 import Parent from "../Models/ParentModel.js";
 import Sequence from "../Models/SequenceModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
+import Timetable from "../Models/TimetableModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
@@ -715,6 +716,39 @@ export const getStudentAcademics = async (req, res) => {
             .populate("teacherId", "firstName lastName email phone photo")
             .populate("academicYearId", "name");
 
+        // Fetch timetable for this section
+        const timetableData = await Timetable.findOne({
+            sectionId: studentData.sectionId,
+            status: "active"
+        })
+            .populate("schedule.Mon.subjectId schedule.Mon.teacherId")
+            .populate("schedule.Tue.subjectId schedule.Tue.teacherId")
+            .populate("schedule.Wed.subjectId schedule.Wed.teacherId")
+            .populate("schedule.Thu.subjectId schedule.Thu.teacherId")
+            .populate("schedule.Fri.subjectId schedule.Fri.teacherId")
+            .populate("schedule.Sat.subjectId schedule.Sat.teacherId");
+
+        // Transform timetable to frontend format
+        const formattedTimetable = {
+            Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+        };
+
+        if (timetableData && timetableData.schedule) {
+            Object.keys(formattedTimetable).forEach(day => {
+                if (timetableData.schedule[day]) {
+                    formattedTimetable[day] = timetableData.schedule[day].map(item => ({
+                        id: item._id,
+                        time: `${item.startTime} - ${item.endTime}`,
+                        subject: item.subjectId?.name || "N/A",
+                        teacher: item.teacherId ? `${item.teacherId.firstName} ${item.teacherId.lastName}` : "N/A",
+                        room: item.room || "N/A",
+                        type: item.type || "offline",
+                        link: item.link
+                    }));
+                }
+            });
+        }
+
         const academicData = {
             classInfo: {
                 className: studentData.classId?.name || "N/A",
@@ -747,9 +781,7 @@ export const getStudentAcademics = async (req, res) => {
                     classesPerWeek: 4 // Default placeholder
                 };
             }),
-            timetable: {
-                Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
-            },
+            timetable: formattedTimetable,
             totalSubjects: subjects.length
         };
 

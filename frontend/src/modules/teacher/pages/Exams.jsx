@@ -99,15 +99,17 @@ const ExamsPage = () => {
                     ) : filteredExams.length > 0 ? (
                         filteredExams.map(exam => (
                             <div key={exam._id}>
-                                {exam.subjects.map(subject => (
-                                    <ExamCard
-                                        key={`${exam._id}_${subject.subjectId}`}
-                                        exam={exam}
-                                        subject={subject}
-                                        onEnterMarks={(ex) => handleEnterMarks(ex, subject)}
-                                        onClick={() => navigate(`/teacher/exams/${exam._id}`)}
-                                    />
-                                ))}
+                                {exam.subjects?.length > 0 ? (
+                                    exam.subjects.map(subject => (
+                                        <ExamCard
+                                            key={`${exam._id}_${subject.subjectId}`}
+                                            exam={exam}
+                                            subject={subject}
+                                            onEnterMarks={(ex) => handleEnterMarks(ex, subject)}
+                                            onClick={() => navigate(`/teacher/exams/${exam._id}`)}
+                                        />
+                                    ))
+                                ) : null}
                             </div>
                         ))
                     ) : (

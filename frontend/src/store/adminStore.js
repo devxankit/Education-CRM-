@@ -27,6 +27,8 @@ export const useAdminStore = create(
             branches: [],
             academicYears: [],
             teacherMappings: [],
+            timetable: null,
+            timetableRules: null,
             toasts: [],
             roles: [
                 { id: 1, name: 'Super Admin', code: 'ROLE_SUPER_ADMIN', type: 'system', description: 'Full access to all modules.', defaultDashboard: '/admin/dashboard', status: 'active', userCount: 2 },
@@ -682,6 +684,56 @@ export const useAdminStore = create(
                     console.error('Error removing assignment:', error);
                     get().addToast(error.response?.data?.message || 'Error removing assignment', 'error');
                     return false;
+                }
+            },
+
+            // Actions: Timetable
+            fetchTimetable: async (params) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/timetable`, {
+                        params,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ timetable: response.data.data });
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching timetable:', error);
+                    get().addToast('Error fetching timetable', 'error');
+                }
+            },
+            saveTimetable: async (timetableData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/timetable`, timetableData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ timetable: response.data.data });
+                        get().addToast('Timetable saved successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error saving timetable:', error);
+                    get().addToast('Error saving timetable', 'error');
+                    throw error;
+                }
+            },
+
+            fetchTimetableRules: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/timetable-rule?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ timetableRules: response.data.data });
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching timetable rules:', error);
                 }
             },
 

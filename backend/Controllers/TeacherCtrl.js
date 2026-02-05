@@ -9,6 +9,7 @@ import Class from "../Models/ClassModel.js";
 import Student from "../Models/StudentModel.js";
 import Homework from "../Models/HomeworkModel.js";
 import Notice from "../Models/NoticeModel.js";
+import Timetable from "../Models/TimetableModel.js";
 import Attendance from "../Models/AttendanceModel.js";
 import Exam from "../Models/ExamModel.js";
 import ExamResult from "../Models/ExamResultModel.js";
@@ -38,12 +39,6 @@ export const getTeacherDashboard = async (req, res) => {
 
         // 3. Get Homework Stats
         const totalHomeworks = await Homework.countDocuments({ teacherId });
-        const recentHomeworks = await Homework.find({ teacherId })
-            .populate("classId", "name")
-            .populate("sectionId", "name")
-            .populate("subjectId", "name")
-            .sort({ createdAt: -1 })
-            .limit(5);
 
         // 4. Get Recent Notices
         const recentNotices = await Notice.find({
@@ -53,17 +48,39 @@ export const getTeacherDashboard = async (req, res) => {
             .sort({ publishDate: -1 })
             .limit(5);
 
-        // 5. Class Distribution for Chart
-        const classStats = await Promise.all(mappings.map(async (m) => {
-            const studentCount = m.sectionId?._id
-                ? await Student.countDocuments({ sectionId: m.sectionId._id, status: "active" })
-                : 0;
-            return {
-                className: `${m.classId?.name || "N/A"} - ${m.sectionId?.name || "N/A"}`,
-                subjectName: m.subjectId?.name || "N/A",
-                studentCount
-            };
-        }));
+        // 5. Get Today's Schedule from Timetable
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const today = days[new Date().getDay()];
+        
+        const todayTimetables = await Timetable.find({
+            [`schedule.${today}.teacherId`]: teacherId
+        })
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate(`schedule.${today}.subjectId`, "name");
+
+        const todayClasses = [];
+        todayTimetables.forEach(tt => {
+            const dailySchedule = tt.schedule[today] || [];
+            dailySchedule.forEach(item => {
+                if (item.teacherId?.toString() === teacherId.toString()) {
+                    todayClasses.push({
+                        id: tt._id + "_" + item._id,
+                        classId: tt.classId?._id,
+                        sectionId: tt.sectionId?._id,
+                        classSection: `${tt.classId?.name || "N/A"} - ${tt.sectionId?.name || "N/A"}`,
+                        subject: item.subjectId?.name || "N/A",
+                        time: `${item.startTime} - ${item.endTime}`,
+                        room: item.room || "N/A",
+                        type: item.type || "offline",
+                        status: "Pending" // Default status
+                    });
+                }
+            });
+        });
+
+        // Sort by start time if needed
+        todayClasses.sort((a, b) => a.time.localeCompare(b.time));
 
         res.status(200).json({
             success: true,
@@ -74,9 +91,8 @@ export const getTeacherDashboard = async (req, res) => {
                     totalStudents,
                     totalHomeworks
                 },
-                recentHomeworks,
                 recentNotices,
-                classStats
+                todayClasses // Replaced classStats with real today's schedule
             }
         });
     } catch (error) {
@@ -729,10 +745,14 @@ export const getTeacherExams = async (req, res) => {
         // Format response
         const formattedExams = exams.map(exam => {
             // Filter subjects to only those the teacher teaches
-            const teacherSubjectIds = mappings.map(m => m.subjectId?.toString());
-            const relevantSubjects = exam.subjects.filter(s =>
-                teacherSubjectIds.includes(s.subjectId?._id?.toString())
-            );
+            const teacherSubjectIds = mappings
+                .map(m => m.subjectId?.toString())
+                .filter(id => id);
+
+            const relevantSubjects = (exam.subjects || []).filter(s => {
+                const subId = s.subjectId?._id ? s.subjectId._id.toString() : s.subjectId?.toString();
+                return subId && teacherSubjectIds.includes(subId);
+            });
 
             return {
                 _id: exam._id,
@@ -982,7 +1002,7 @@ export const gradeSubmission = async (req, res) => {
                 gradedAt: new Date()
             },
             { new: true }
-        );
+        ).populate("studentId", "firstName lastName admissionNo rollNo photo");
 
         if (!submission) {
             return res.status(404).json({ success: false, message: "Submission not found" });

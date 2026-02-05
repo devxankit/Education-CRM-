@@ -60,14 +60,8 @@ const TeacherDashboard = () => {
         date: new Date(notice.publishDate || notice.createdAt).toLocaleDateString()
     }));
 
-    // Format today's classes (from classStats)
-    const todayClasses = (dashboardData?.classStats || []).map((cls, index) => ({
-        id: `class-${index}`,
-        name: cls.className,
-        subject: cls.subjectName,
-        students: cls.studentCount,
-        status: 'Pending'
-    }));
+    // Format today's classes from real timetable data
+    const todayClasses = dashboardData?.todayClasses || [];
 
     const performanceStats = {
         attendanceCompletion: 85,
