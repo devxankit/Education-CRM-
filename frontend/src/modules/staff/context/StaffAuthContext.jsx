@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { STAFF_ROLES } from '../config/roles';
+import { getMyPermissions } from '../services/auth.api';
 
 const StaffAuthContext = createContext(null);
 
@@ -15,6 +16,23 @@ export const StaffAuthProvider = ({ children }) => {
             return null;
         }
     });
+
+    const [permissions, setPermissions] = useState({});
+
+    // Fetch Permissions Logic
+    const fetchPermissions = React.useCallback(async () => {
+        const perms = await getMyPermissions();
+        setPermissions(perms || {});
+    }, []);
+
+    // Sync Permissions on User Change
+    useEffect(() => {
+        if (user) {
+            fetchPermissions();
+        } else {
+            setPermissions({});
+        }
+    }, [user, fetchPermissions]);
 
     // 2. Login function: sets the role ONCE.
     const login = React.useCallback((userData) => {
@@ -37,12 +55,14 @@ export const StaffAuthProvider = ({ children }) => {
     // 3. Logout function: clears everything
     const logout = React.useCallback(() => {
         setUser(null);
+        setPermissions({});
         localStorage.removeItem('staff_user');
     }, []);
 
     const value = React.useMemo(() => ({
-        user, login, logout, isAuthenticated: !!user
-    }), [user, login, logout]);
+        user, login, logout, isAuthenticated: !!user,
+        permissions, fetchPermissions
+    }), [user, login, logout, permissions, fetchPermissions]);
 
     return (
         <StaffAuthContext.Provider value={value}>

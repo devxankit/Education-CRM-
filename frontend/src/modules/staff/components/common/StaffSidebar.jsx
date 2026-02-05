@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Users, GraduationCap, Briefcase,
     Banknote, Receipt, Bus, Box, FileText,
-    Bell, LifeBuoy, BarChart2, Shield, Settings
+    Bell, LifeBuoy, BarChart2, Shield, Settings, Lock
 } from 'lucide-react';
 import { useStaffAuth } from '../../context/StaffAuthContext';
 
 const StaffSidebar = () => {
-    const { user } = useStaffAuth();
+    const { user, permissions: contextPermissions, fetchPermissions } = useStaffAuth();
     const location = useLocation();
+
+    // Refresh permissions on navigation
+    useEffect(() => {
+        if (fetchPermissions) {
+            fetchPermissions();
+        }
+    }, [location.pathname, fetchPermissions]);
 
     // Menu Configuration
     const MENU_ITEMS = [
@@ -74,13 +81,47 @@ const StaffSidebar = () => {
                                 const Icon = item.icon;
                                 const isActive = location.pathname.startsWith(item.path);
 
+                                // Determine Permission Key from path
+                                // e.g., /staff/students -> students
+                                const permKey = item.path.split('/')[2];
+
+                                // Permission Logic
+                                // 1. Locate permissions object (flattened or nested), prefer fresh context permissions
+                                const permissions = (Object.keys(contextPermissions || {}).length > 0)
+                                    ? contextPermissions
+                                    : (user?.permissions || user?.roleId?.permissions || {});
+
+                                const hasPermissions = Object.keys(permissions).length > 0;
+                                const roleCode = user?.roleId?.code || user?.role; // Code from populated role or flat role
+
+                                let isRestricted = false;
+
+                                // Allow Super Admin / Admin bypassing permissions
+                                const isSuperUser = ['ROLE_SUPER_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(roleCode);
+
+                                if (!isSuperUser) {
+                                    if (hasPermissions) {
+                                        // Check explicit permission for ALL modules including dashboard
+                                        // If permission key is missing, access is denied (Zero Trust)
+                                        isRestricted = !permissions[permKey]?.accessible;
+                                    } else {
+                                        // No permissions configured -> Restrict access (Zero Trust)
+                                        // This ensures newly created roles must be explicitly granted access
+                                        isRestricted = true;
+                                    }
+                                }
+
+                                if (isRestricted) {
+                                    return null;
+                                }
+
                                 return (
                                     <NavLink
                                         key={item.path}
                                         to={item.path}
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium text-sm group ${isActive
-                                                ? 'bg-indigo-50 text-indigo-700 font-bold'
-                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                            ? 'bg-indigo-50 text-indigo-700 font-bold'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                     >
                                         <Icon

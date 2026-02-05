@@ -1,52 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, User, FileText, Bus, Banknote, LifeBuoy, Menu, X, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, User, FileText, Bus, Banknote, LifeBuoy, Menu, X, ChevronRight, Lock } from 'lucide-react';
 import { useStaffAuth } from '../../context/StaffAuthContext';
 import { STAFF_ROLES } from '../../config/roles';
 
 const StaffBottomNav = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout } = useStaffAuth();
+    const { user, logout, permissions: contextPermissions, fetchPermissions } = useStaffAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Refresh permissions on navigation
+    useEffect(() => {
+        if (fetchPermissions) {
+            fetchPermissions();
+        }
+    }, [location.pathname, fetchPermissions]);
+
+    // Check Access
+    const checkAccess = (path) => {
+        if (!path) return false;
+        const key = path.split('/')[2];
+
+        const permissions = (Object.keys(contextPermissions || {}).length > 0)
+            ? contextPermissions
+            : (user?.permissions || user?.roleId?.permissions || {});
+
+        const hasPermissions = Object.keys(permissions).length > 0;
+        const roleCode = user?.roleId?.code || user?.role;
+        const isSuperUser = ['ROLE_SUPER_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(roleCode);
+
+        if (isSuperUser) return true;
+        // if (key === 'dashboard') return true; // Removed absolute bypass to respect permission settings
+        if (key === 'profile') return true; // Always allow profile
+
+        if (hasPermissions) {
+            return permissions[key]?.accessible === true;
+        } else {
+            // Zero Trust: No permissions = No Access
+            return false;
+        }
+    };
 
     // Helper to check active state including sub-routes
     const isActive = (path) => location.pathname.startsWith(path);
 
-    // Determine the primary operational module based on role
-    const getRoleModule = () => {
-        const role = user?.role;
-        switch (role) {
-            case STAFF_ROLES.ACCOUNTS:
-                return { path: '/staff/fees', icon: Banknote, label: 'Finance' };
-            case STAFF_ROLES.TRANSPORT:
-                return { path: '/staff/transport', icon: Bus, label: 'Transport' };
-            case STAFF_ROLES.DATA_ENTRY:
-                return { path: '/staff/teachers', icon: FileText, label: 'Registry' };
-            case STAFF_ROLES.SUPPORT:
-                return { path: '/staff/support', icon: LifeBuoy, label: 'Support' };
-            case STAFF_ROLES.FRONT_DESK:
-                return { path: '/staff/support', icon: LifeBuoy, label: 'Inquiry' };
-            default:
-                return { path: '/staff/notices', icon: FileText, label: 'Notices' };
-        }
-    };
-
-    const roleModule = getRoleModule();
-
-    const navItems = [
+    // All possible navigation options in priority order
+    const allNavOptions = [
         { path: '/staff/dashboard', icon: LayoutDashboard, label: 'Home' },
-        { path: '/staff/students', icon: Users, label: 'People' }, // Renamed from Students
-        roleModule,
+        { path: '/staff/students', icon: Users, label: 'People' },
+        { path: '/staff/fees', icon: Banknote, label: 'Finance' },
+        { path: '/staff/transport', icon: Bus, label: 'Transport' },
+        { path: '/staff/teachers', icon: FileText, label: 'Registry' },
         { path: '/staff/reports', icon: BarChart2, label: 'Reports' },
+        { path: '/staff/documents', icon: FileText, label: 'Docs' },
+        { path: '/staff/support', icon: LifeBuoy, label: 'Support' },
     ];
+
+    // Filter allowed modules
+    const allowedNavs = allNavOptions.filter(item => checkAccess(item.path));
+
+    // Logic: If role has 5 or fewer modules, show ALL of them directly. 
+    // Otherwise show 4 + Menu.
+    const showMenu = allowedNavs.length > 5;
+    const visibleItems = showMenu ? allowedNavs.slice(0, 4) : allowedNavs;
+    const hiddenItems = showMenu ? allowedNavs.slice(4) : [];
 
     return (
         <>
             {/* Bottom Navigation Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-40 md:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <div className="flex items-center justify-around h-16">
-                    {navItems.map((item) => {
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 pb-safe z-40 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                <div className="flex items-center justify-around h-20 px-2">
+                    {visibleItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.path);
 
@@ -55,32 +80,38 @@ const StaffBottomNav = () => {
                                 key={item.path}
                                 to={item.path}
                                 onClick={() => setIsMenuOpen(false)}
-                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-200 relative ${active ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-500'
+                                className={`flex flex-col items-center justify-center w-full h-full transition-all duration-300 group ${active ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
                                     }`}
                             >
-                                {active && (
-                                    <span className="absolute top-0 w-8 h-1 bg-indigo-600 rounded-b-full"></span>
-                                )}
-                                <Icon
-                                    size={active ? 24 : 22}
-                                    strokeWidth={active ? 2.5 : 2}
-                                    className={`transition-all duration-200 ${active ? '-translate-y-0.5' : ''}`}
-                                />
-                                <span className="text-[10px] font-medium tracking-tight">
+                                <div className={`relative p-2 rounded-xl transition-all duration-300 ${active ? 'bg-indigo-50 shadow-sm -translate-y-1' : 'group-hover:bg-gray-50'}`}>
+                                    <Icon
+                                        size={22}
+                                        strokeWidth={active ? 2.5 : 2}
+                                        className={`transition-all duration-300 ${active ? 'text-indigo-600' : 'text-gray-400'}`}
+                                    />
+                                    {active && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-600 rounded-full"></span>}
+                                </div>
+                                <span className={`mt-1 text-[10px] font-bold tracking-wide transition-all duration-300 ${active ? 'text-indigo-700' : 'text-gray-500'}`}>
                                     {item.label}
                                 </span>
                             </NavLink>
                         );
                     })}
 
-                    {/* Menu Trigger */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-200 relative ${isMenuOpen ? 'text-indigo-600' : 'text-gray-400'}`}
-                    >
-                        <Menu size={22} strokeWidth={2} />
-                        <span className="text-[10px] font-medium tracking-tight">Menu</span>
-                    </button>
+                    {/* Menu Trigger - Only if items overflow > 5 */}
+                    {showMenu && (
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className={`flex flex-col items-center justify-center w-full h-full transition-all duration-300 group ${isMenuOpen ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                        >
+                            <div className={`p-2 rounded-xl transition-all duration-300 ${isMenuOpen ? 'bg-indigo-50 shadow-sm -translate-y-1' : 'group-hover:bg-gray-50'}`}>
+                                <Menu size={22} strokeWidth={isMenuOpen ? 2.5 : 2} />
+                            </div>
+                            <span className={`mt-1 text-[10px] font-bold tracking-wide transition-all duration-300 ${isMenuOpen ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                Menu
+                            </span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -88,7 +119,7 @@ const StaffBottomNav = () => {
             {isMenuOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 md:hidden animate-fade-in" onClick={() => setIsMenuOpen(false)}>
                     <div
-                        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 animate-slide-up"
+                        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 animate-slide-up max-h-[85vh] overflow-y-auto"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Drawer Header */}
@@ -107,30 +138,22 @@ const StaffBottomNav = () => {
                             </button>
                         </div>
 
-                        {/* Grid Menu */}
+                        {/* Additional/Hidden Items Grid */}
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">More Apps</h4>
                         <div className="grid grid-cols-4 gap-4 mb-6">
-                            <MenuLink to="/staff/profile" icon={User} label="Profile" onClick={() => setIsMenuOpen(false)} />
-                            <MenuLink to="/staff/documents" icon={FileText} label="Docs" onClick={() => setIsMenuOpen(false)} />
-                            <MenuLink to="/staff/settings" icon={LifeBuoy} label="Settings" onClick={() => setIsMenuOpen(false)} />
-                            <MenuLink to="/staff/transport" icon={Bus} label="Transport" onClick={() => setIsMenuOpen(false)} />
-                        </div>
+                            <MenuLink to="/staff/profile" icon={User} label="Profile" onClick={() => setIsMenuOpen(false)} allowed={true} />
+                            <MenuLink to="/staff/settings" icon={LifeBuoy} label="Settings" onClick={() => setIsMenuOpen(false)} allowed={checkAccess('/staff/settings')} />
 
-                        {/* Additional Links List */}
-                        <div className="space-y-2 mb-6">
-                            <div className="bg-gray-50 rounded-xl overflow-hidden">
-                                <button onClick={() => { navigate('/staff/fees'); setIsMenuOpen(false); }} className="w-full flex items-center justify-between p-4 hover:bg-gray-100 transition-colors border-b border-gray-100">
-                                    <span className="text-sm font-bold text-gray-700 flex items-center gap-3">
-                                        <Banknote size={18} className="text-gray-400" /> Fees & Finance
-                                    </span>
-                                    <ChevronRight size={16} className="text-gray-300" />
-                                </button>
-                                <button onClick={() => { navigate('/staff/teachers'); setIsMenuOpen(false); }} className="w-full flex items-center justify-between p-4 hover:bg-gray-100 transition-colors">
-                                    <span className="text-sm font-bold text-gray-700 flex items-center gap-3">
-                                        <Users size={18} className="text-gray-400" /> Teachers Directory
-                                    </span>
-                                    <ChevronRight size={16} className="text-gray-300" />
-                                </button>
-                            </div>
+                            {hiddenItems.map(item => (
+                                <MenuLink
+                                    key={item.path}
+                                    to={item.path}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    allowed={true}
+                                />
+                            ))}
                         </div>
 
                         {/* Logout */}
@@ -148,13 +171,17 @@ const StaffBottomNav = () => {
 };
 
 // Helper for Grid Menu Item
-const MenuLink = ({ to, icon: Icon, label, onClick }) => (
-    <NavLink to={to} onClick={onClick} className="flex flex-col items-center gap-2 group">
-        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-600 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors border border-gray-100">
-            <Icon size={20} />
-        </div>
-        <span className="text-[10px] font-medium text-gray-600">{label}</span>
-    </NavLink>
-);
+const MenuLink = ({ to, icon: Icon, label, onClick, allowed = true }) => {
+    if (!allowed) return null;
+
+    return (
+        <NavLink to={to} onClick={onClick} className="flex flex-col items-center gap-2 group">
+            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-600 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors border border-gray-100">
+                <Icon size={20} />
+            </div>
+            <span className="text-[10px] font-medium text-gray-600">{label}</span>
+        </NavLink>
+    );
+};
 
 export default StaffBottomNav;

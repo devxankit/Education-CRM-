@@ -3,11 +3,15 @@ import {
     createRole,
     getRoles,
     updateRole,
-    deleteRole
+    deleteRole,
+    getPublicRoles
 } from "../Controllers/RoleCtrl.js";
 import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
+
+// Public route to fetch roles (for login page)
+router.get("/public", getPublicRoles);
 
 router.use(AuthMiddleware);
 router.use(isInstitute);
