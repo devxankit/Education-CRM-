@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Clock } from 'lucide-react';
 
-const AttendanceRow = ({ student, status, onStatusChange }) => {
+const AttendanceRow = ({ student, status, onStatusChange, disabled }) => {
     const statusConfig = {
         'Present': { color: 'bg-green-100 text-green-700 border-green-200', icon: Check },
         'Absent': { color: 'bg-red-50 text-red-600 border-red-200', icon: X },
@@ -29,9 +29,9 @@ const AttendanceRow = ({ student, status, onStatusChange }) => {
                     return (
                         <motion.button
                             key={s}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => onStatusChange(student.id, s)}
-                            className={`p-1.5 rounded-md transition-all relative ${isActive ? config.color + ' shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            whileTap={disabled ? {} : { scale: 0.95 }}
+                            onClick={() => !disabled && onStatusChange(student.id, s)}
+                            className={`p-1.5 rounded-md transition-all relative ${isActive ? config.color + ' shadow-sm' : 'text-gray-400 hover:text-gray-600'} ${disabled ? 'cursor-not-allowed opacity-80' : ''}`}
                         >
                             {/* <config.icon size={16} strokeWidth={2.5} /> */}
                             <span className={`text-[10px] font-bold px-1 ${isActive ? '' : 'hidden'}`}>{s.charAt(0)}</span>

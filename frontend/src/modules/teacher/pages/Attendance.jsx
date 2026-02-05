@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { Info, Calendar as CalendarIcon, Users, Loader2 } from 'lucide-react';
+import { Info, Calendar as CalendarIcon, Users, Loader2, Lock, Clock } from 'lucide-react';
 import gsap from 'gsap';
 import { useTeacherStore } from '../../../store/teacherStore';
 
@@ -23,17 +23,23 @@ const AttendancePage = () => {
     const isFetchingClasses = useTeacherStore(state => state.isFetchingClasses);
     const isFetchingStudents = useTeacherStore(state => state.isFetchingStudents);
     const submitAttendanceAction = useTeacherStore(state => state.submitAttendance);
+    const fetchProfile = useTeacherStore(state => state.fetchProfile); // Get fetchProfile from store
+    const profile = useTeacherStore(state => state.profile); // Get profile from store
 
     const [selectedMapping, setSelectedMapping] = useState(null);
     const [attendanceState, setAttendanceState] = useState({});
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const fetchAttendanceByDate = useTeacherStore(state => state.fetchAttendanceByDate);
+    const isFetchingAttendance = useTeacherStore(state => state.isFetchingAttendance);
 
-    // Fetch Classes on Mount
+    // Fetch Initial Data on Mount
     useEffect(() => {
+        fetchProfile();
         fetchAssignedClasses();
-    }, [fetchAssignedClasses]);
+    }, [fetchProfile, fetchAssignedClasses]); // Add fetchProfile and fetchAssignedClasses to dependencies for completeness, though Zustand functions are stable
 
     // Flatten mappings for the selector
-    const flatMappings = assignedClasses.flatMap(sub =>
+    const flatMappings = React.useMemo(() => assignedClasses.flatMap(sub =>
         sub.classes.map(cls => ({
             id: `${sub.subjectId}_${cls.classId}_${cls.sectionId}`,
             subjectId: sub.subjectId,
@@ -42,7 +48,7 @@ const AttendancePage = () => {
             sectionId: cls.sectionId,
             className: cls.fullClassName,
         }))
-    );
+    ), [assignedClasses]);
 
     // Default to first mapping if none selected
     useEffect(() => {
@@ -51,25 +57,56 @@ const AttendancePage = () => {
         }
     }, [flatMappings, selectedMapping]);
 
-    // Fetch Students when mapping changes
+    // Load Attendance Data (Existing or New)
     useEffect(() => {
-        if (selectedMapping) {
-            fetchClassStudents(selectedMapping.classId, selectedMapping.sectionId);
-        }
-    }, [selectedMapping, fetchClassStudents]);
+        const loadAttendance = async () => {
+            if (!selectedMapping) return;
 
-    // Initialize/Update Attendance State when students change
+            // 1. Fetch Students
+            await fetchClassStudents(selectedMapping.classId, selectedMapping.sectionId);
+
+            // 2. Try to fetch existing attendance for this date
+            const existing = await fetchAttendanceByDate({
+                classId: selectedMapping.classId,
+                sectionId: selectedMapping.sectionId,
+                subjectId: selectedMapping.subjectId,
+                date: selectedDate
+            });
+
+            if (existing && existing.attendanceData) {
+                const map = {};
+                existing.attendanceData.forEach(entry => {
+                    const studentId = entry.studentId._id || entry.studentId;
+                    map[studentId] = entry.status;
+                });
+                setAttendanceState(map);
+            } else {
+                // Initialize new attendance (default Present)
+                // Use a functional update to ensure we use the latest students from the store
+            }
+        };
+
+        loadAttendance();
+    }, [selectedMapping, selectedDate, fetchClassStudents, fetchAttendanceByDate]);
+
+    // Separate effect to initialize default state when students change and NO existing record was found
     useEffect(() => {
-        if (students.length > 0) {
+        // If we have students but no attendance state (or empty state), initialize it
+        // ONLY initialize with defaults if it's TODAY. For past dates, empty means no record.
+        if (isToday(selectedDate) && students.length > 0 && Object.keys(attendanceState).length === 0) {
             const initialMap = {};
             students.forEach(s => {
                 initialMap[s._id] = 'Present';
             });
             setAttendanceState(initialMap);
-        } else {
-            setAttendanceState({});
         }
-    }, [students]);
+    }, [students, attendanceState, selectedDate]);
+
+    // Reset attendance state when mapping or date changes to force re-initialization
+    useEffect(() => {
+        setAttendanceState({});
+    }, [selectedMapping, selectedDate]);
+
 
     // Smooth Scroll
     useEffect(() => {
@@ -96,23 +133,29 @@ const AttendancePage = () => {
         }
     }, [students]);
 
-    const profile = useTeacherStore(state => state.profile);
     const isSubmitting = useTeacherStore(state => state.isSubmittingAttendance);
 
-    useEffect(() => {
-        if (!profile || !profile._id) {
-            useTeacherStore.getState().fetchProfile();
-        }
-    }, [profile]);
-
     const handleStatusChange = (studentId, status) => {
+        // Check if editing is allowed
+        if (!isToday(selectedDate)) return;
+
         setAttendanceState(prev => ({
             ...prev,
             [studentId]: status
         }));
     };
 
+    const isToday = (dateStr) => {
+        const today = new Date().toISOString().split('T')[0];
+        return dateStr === today;
+    };
+
     const handleSubmit = async () => {
+        if (!isToday(selectedDate)) {
+            alert("Attendance can only be marked or updated for today.");
+            return;
+        }
+
         if (Object.keys(attendanceState).length === 0) {
             alert("No students to mark attendance for.");
             return;
@@ -130,7 +173,7 @@ const AttendancePage = () => {
                 classId: selectedMapping?.classId,
                 sectionId: selectedMapping?.sectionId,
                 subjectId: selectedMapping?.subjectId,
-                date: new Date().toISOString(),
+                date: selectedDate,
                 attendanceData,
                 academicYearId: profile?.currentAcademicYear || profile?.academicYearId || "65af736f987654edcba98765", // Fallback or from profile
                 branchId: profile?.branchId?._id || profile?.branchId || "65af736f987654edcba12345"
@@ -160,6 +203,8 @@ const AttendancePage = () => {
         subject: m.subjectName
     }));
 
+    const isLocked = !isToday(selectedDate);
+
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-28">
             {/* Header */}
@@ -176,9 +221,12 @@ const AttendancePage = () => {
                         </button>
                         <h1 className="text-lg font-bold text-gray-900">Attendance</h1>
                     </div>
-                    <button className="text-gray-400 hover:text-indigo-600 transition-colors">
-                        <Info size={20} />
-                    </button>
+                    {isLocked && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full border border-amber-100">
+                            <Lock size={14} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Locked</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -194,24 +242,44 @@ const AttendancePage = () => {
                 />
 
                 <div className="flex items-center justify-between mb-4 px-1">
-                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
-                        <CalendarIcon size={14} className="text-gray-400" />
-                        {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    <div className="relative group">
+                        <div className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors cursor-pointer">
+                            <CalendarIcon size={14} className="text-gray-400" />
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                max={new Date().toISOString().split('T')[0]}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="bg-transparent outline-none cursor-pointer"
+                            />
+                        </div>
                     </div>
                     <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-1 rounded inline-block">
-                        {isFetchingStudents ? '...' : students.length} Students
+                        {(isFetchingStudents || isFetchingAttendance) ? '...' : students.length} Students
                     </span>
                 </div>
 
+                {isLocked && (
+                    <div className="mb-4 bg-amber-50 border border-amber-100 p-3 rounded-2xl flex items-start gap-3">
+                        <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg">
+                            <Info size={16} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-amber-800">Past Record View</p>
+                            <p className="text-[10px] text-amber-600 font-medium">You are viewing attendance for a past date. Changes are disabled.</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* 2. Attendance List */}
                 <div ref={listRef} className="pb-4">
-                    {isFetchingStudents ? (
+                    {(isFetchingStudents || isFetchingAttendance) ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-4" />
-                            <p className="text-sm text-gray-500 font-medium font-['Inter']">Loading student list...</p>
+                            <p className="text-sm text-gray-500 font-medium font-['Inter']">Synchronizing data...</p>
                         </div>
-                    ) : students.length > 0 ? (
-                        students.map(student => (
+                    ) : (isLocked ? (Object.keys(attendanceState).length > 0 ? students : []) : students).length > 0 ? (
+                        (isLocked ? (Object.keys(attendanceState).length > 0 ? students : []) : students).map(student => (
                             <AttendanceRow
                                 key={student._id}
                                 student={{
@@ -221,8 +289,14 @@ const AttendancePage = () => {
                                 }}
                                 status={attendanceState[student._id]}
                                 onStatusChange={handleStatusChange}
+                                disabled={isLocked}
                             />
                         ))
+                    ) : isLocked ? (
+                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                            <Clock className="mx-auto text-gray-300 mb-3" size={32} />
+                            <p className="text-sm text-gray-400 font-medium font-['Inter']">No attendance record found for this date.</p>
+                        </div>
                     ) : (
                         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
                             <Users className="mx-auto text-gray-300 mb-3" size={32} />
@@ -233,11 +307,13 @@ const AttendancePage = () => {
             </main>
 
             {/* 3. Bottom Action Bar */}
-            <AttendanceSummaryBar
-                stats={stats}
-                onSubmit={handleSubmit}
-                disabled={isFetchingStudents || students.length === 0}
-            />
+            {!isLocked && (
+                <AttendanceSummaryBar
+                    stats={stats}
+                    onSubmit={handleSubmit}
+                    disabled={isFetchingStudents || students.length === 0 || isSubmitting}
+                />
+            )}
         </div>
     );
 };

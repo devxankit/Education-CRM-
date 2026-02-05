@@ -21,12 +21,11 @@ const ProfilePage = () => {
     const assignedClasses = useTeacherStore(state => state.assignedClasses);
     const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
 
-    // Fetch Profile on Mount
+    // Fetch Initial Data
     useEffect(() => {
-        // Only fetch if we don't have real data or if the store says we aren't already fetching
         fetchProfile();
         fetchAssignedClasses();
-    }, []); // Run once on mount
+    }, [fetchProfile, fetchAssignedClasses]);
 
     // Initial Mock Preferences/Academic for display if not in profile
     const academicInfo = profile.academic || {
@@ -40,10 +39,22 @@ const ProfilePage = () => {
         ]
     };
 
-    const securityInfo = profile.security || {
-        lastLogin: "Today, 09:24 AM",
-        passwordLastChanged: "2 months ago",
-        twoFactorEnabled: true
+    const formatSecurityDate = (dateString) => {
+        if (!dateString) return "Not available";
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    const securityInfo = {
+        lastLogin: formatSecurityDate(profile.lastLogin),
+        passwordLastChanged: profile.passwordChangedAt ? new Date(profile.passwordChangedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Never",
+        twoFactorEnabled: profile.twoFactorEnabled || false
     };
 
     // Smooth Scroll
@@ -81,7 +92,7 @@ const ProfilePage = () => {
     const handleLogout = () => {
         if (window.confirm("Are you sure you want to logout?")) {
             logout();
-            navigate('/login');
+            navigate('/teacher/login');
         }
     };
 

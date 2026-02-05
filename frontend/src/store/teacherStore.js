@@ -24,8 +24,10 @@ export const useTeacherStore = create(
             isFetchingProfile: false,
             isFetchingClasses: false,
             isFetchingStudents: false,
-            fetchAssignedClasses: async () => {
+            fetchAssignedClasses: async (force = false) => {
                 if (get().isFetchingClasses) return;
+                if (!force && get().assignedClasses.length > 0) return;
+
                 set({ isFetchingClasses: true });
                 try {
                     const token = localStorage.getItem('token');
@@ -43,6 +45,11 @@ export const useTeacherStore = create(
             },
             fetchClassStudents: async (classId, sectionId) => {
                 if (get().isFetchingStudents) return;
+                // Optional: Cache check (if same class/section already loaded)
+                if (get().classStudents.length > 0 &&
+                    get().classStudents[0].classId === classId &&
+                    get().classStudents[0].sectionId === sectionId) return;
+
                 set({ isFetchingStudents: true });
                 try {
                     const token = localStorage.getItem('token');
@@ -51,7 +58,9 @@ export const useTeacherStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set({ classStudents: response.data.data });
+                        // Store the IDs to allow the guard to work
+                        const studentsWithContext = response.data.data.map(s => ({ ...s, classId, sectionId }));
+                        set({ classStudents: studentsWithContext });
                     }
                 } catch (error) {
                     console.error('Error fetching class students:', error);
@@ -59,8 +68,10 @@ export const useTeacherStore = create(
                     set({ isFetchingStudents: false });
                 }
             },
-            fetchProfile: async () => {
+            fetchProfile: async (force = false) => {
                 if (get().isFetchingProfile) return;
+                if (!force && get().profile?._id) return;
+
                 set({ isFetchingProfile: true });
                 try {
                     const token = localStorage.getItem('token');
@@ -87,6 +98,7 @@ export const useTeacherStore = create(
             // Attendance
             attendanceRecords: [],
             isSubmittingAttendance: false,
+            isFetchingAttendance: false,
             submitAttendance: async (record) => {
                 set({ isSubmittingAttendance: true });
                 try {
@@ -110,12 +122,32 @@ export const useTeacherStore = create(
                     set({ isSubmittingAttendance: false });
                 }
             },
+            fetchAttendanceByDate: async (params) => {
+                set({ isFetchingAttendance: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/attendance/by-date`, {
+                        params,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error fetching attendance by date:', error);
+                    return null;
+                } finally {
+                    set({ isFetchingAttendance: false });
+                }
+            },
 
             // Homework
             homeworkList: [],
             isFetchingHomework: false,
             isCreatingHomework: false,
             fetchHomeworkList: async (filters = {}) => {
+                if (get().isFetchingHomework) return;
                 set({ isFetchingHomework: true });
                 try {
                     const token = localStorage.getItem('token');

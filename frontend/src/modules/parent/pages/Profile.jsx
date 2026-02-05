@@ -28,7 +28,7 @@ const ParentProfilePage = () => {
     // Handlers
     const handleLogout = () => {
         alert("Logged out successfully");
-        navigate('/login');
+        navigate('/parent/login');
     };
 
     const handleChildClick = (childId) => {

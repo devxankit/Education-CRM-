@@ -129,7 +129,8 @@ export const createTeacher = async (req, res) => {
             experience,
             joiningDate: joiningDate || new Date(),
             teachingStatus: teachingStatus || 'Active',
-            status: status || 'active'
+            status: status || 'active',
+            passwordChangedAt: new Date()
         });
 
         await teacher.save();
@@ -543,6 +544,17 @@ export const markAttendance = async (req, res) => {
         // Use start of day for date consistency
         const attendanceDate = new Date(date);
         attendanceDate.setHours(0, 0, 0, 0);
+
+        // RESTRICTION: Teachers can only mark/update attendance for TODAY
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (req.role.toLowerCase() === 'teacher' && attendanceDate.getTime() !== today.getTime()) {
+            return res.status(403).json({
+                success: false,
+                message: "Teachers are only allowed to mark or update attendance for today's date."
+            });
+        }
 
         // Check if attendance already exists for this date/class/section/subject
         const query = {

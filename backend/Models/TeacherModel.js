@@ -79,6 +79,13 @@ const teacherSchema = new mongoose.Schema(
         lastLogin: {
             type: Date,
         },
+        passwordChangedAt: {
+            type: Date,
+        },
+        twoFactorEnabled: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

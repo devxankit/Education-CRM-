@@ -40,7 +40,7 @@ const SettingsPage = () => {
         if (confirm("Are you sure you want to logout?")) {
             // Mock Logout
             alert("Logged out successfully");
-            navigate('/login');
+            navigate('/student/login');
         }
     };
 

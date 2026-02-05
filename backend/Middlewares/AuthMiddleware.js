@@ -19,16 +19,17 @@ export const AuthMiddleware = asyncHandler(async (req, res, next) => {
 
     let user = null;
     const role = decoded?.role || 'institute';
+    const normalizedRole = role.toLowerCase();
 
-    if (role === 'institute') {
+    if (normalizedRole === 'institute') {
       user = await Institute.findById(decoded?.id);
-    } else if (role === 'Staff') {
+    } else if (normalizedRole === 'staff') {
       user = await Staff.findById(decoded?.id);
-    } else if (role === 'Student') {
+    } else if (normalizedRole === 'student') {
       user = await Student.findById(decoded?.id);
-    } else if (role === 'Teacher') {
+    } else if (normalizedRole === 'teacher') {
       user = await Teacher.findById(decoded?.id);
-    } else if (role === 'Parent') {
+    } else if (normalizedRole === 'parent') {
       user = await Parent.findById(decoded?.id);
     }
 
@@ -37,7 +38,7 @@ export const AuthMiddleware = asyncHandler(async (req, res, next) => {
     }
 
     req.user = user;
-    req.role = role; // Attach role for further authorization
+    req.role = normalizedRole; // Store as lowercase for consistent checking
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: "Token invalid, please login again" });
@@ -52,21 +53,21 @@ export const isInstitute = asyncHandler(async (req, res, next) => {
 });
 
 export const isAdmin = asyncHandler(async (req, res, next) => {
-  if (!req.user || (req.role !== 'institute' && req.role !== 'Staff')) {
+  if (!req.user || (req.role !== 'institute' && req.role !== 'staff')) {
     return res.status(403).json({ success: false, message: "Not authorized as admin" });
   }
   next();
 });
 
 export const isStudent = asyncHandler(async (req, res, next) => {
-  if (!req.user || req.role !== 'Student') {
+  if (!req.user || req.role !== 'student') {
     return res.status(403).json({ success: false, message: "Not authorized as student" });
   }
   next();
 });
 
 export const isTeacher = asyncHandler(async (req, res, next) => {
-  if (!req.user || req.role !== 'Teacher') {
+  if (!req.user || req.role !== 'teacher') {
     return res.status(403).json({ success: false, message: "Not authorized as teacher" });
   }
   next();
