@@ -212,10 +212,15 @@ export const useParentStore = create(
                                 title: exam.title,
                                 type: exam.type,
                                 date: exam.date,
-                                percentage: exam.percentage,
+                                percentage: exam.overall,
                                 grade: exam.grade,
                                 status: exam.status,
-                                isLatest: idx === 0
+                                isLatest: idx === 0,
+                                totalMarks: exam.totalMarks,
+                                obtainedMarks: exam.obtainedMarks,
+                                remarks: exam.remarks,
+                                overall: exam.overall,
+                                subjects: exam.subjects
                             })),
                             isLoading: false
                         });

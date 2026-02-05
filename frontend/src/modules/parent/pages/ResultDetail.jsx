@@ -8,14 +8,10 @@ import { useParentStore } from '../../../store/parentStore';
 const ResultDetailPage = () => {
     const { examId } = useParams();
     const navigate = useNavigate();
-    const results = useParentStore(state => state.results);
-    const [result, setResult] = useState(null);
-    const [expandedSubject, setExpandedSubject] = useState(null);
+    const exams = useParentStore(state => state.exams);
+    const result = exams.find(e => e.id === examId || e.id === parseInt(examId));
 
-    useEffect(() => {
-        const data = results[examId] || results[1];
-        setResult(data);
-    }, [examId, results]);
+    const [expandedSubject, setExpandedSubject] = useState(null);
 
     const toggleSubject = (name) => {
         if (expandedSubject === name) setExpandedSubject(null);

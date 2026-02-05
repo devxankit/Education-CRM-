@@ -8,26 +8,41 @@ const NewTicketPage = () => {
     const location = useLocation();
     const state = location.state || {};
     const addTicket = useParentStore(state => state.addTicket);
+    const selectedChildId = useParentStore(state => state.selectedChildId);
+    const studentId = state.childId || selectedChildId;
 
     // Auto-fill form based on source context
     const [formData, setFormData] = useState({
         category: state.issueType ? state.issueType.charAt(0).toUpperCase() + state.issueType.slice(1) : 'General',
         subject: '',
-        message: ''
+        message: '',
+        priority: 'Normal'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const categories = ['General', 'Attendance', 'Fees', 'Homework', 'Transport', 'Other'];
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!studentId) {
+            alert("No student associated. Please select a child first.");
+            return;
+        }
+
         setIsSubmitting(true);
+        const res = await addTicket(studentId, {
+            category: formData.category,
+            topic: formData.subject,
+            details: formData.message,
+            priority: formData.priority
+        });
 
-        addTicket(formData);
-
-        setTimeout(() => {
-            navigate('/parent/support');
-        }, 800);
+        setIsSubmitting(false);
+        if (res.success) {
+            navigate('/parent/support', { state: { childId: studentId } });
+        } else {
+            alert(res.message);
+        }
     };
 
     return (

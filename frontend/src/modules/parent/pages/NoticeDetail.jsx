@@ -3,34 +3,36 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Calendar, User, Download, FileText, Share2, CheckSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MOCK_NOTICE_DETAILS } from '../data/mockData';
+import { useParentStore } from '../../../store/parentStore';
 
 const NoticeDetailPage = () => {
     const { noticeId } = useParams();
     const navigate = useNavigate();
-    const [notice, setNotice] = useState(null);
+    const notices = useParentStore(state => state.notices);
+    const acknowledgeNotice = useParentStore(state => state.acknowledgeNotice);
+
+    const notice = notices.find(n => n.id === noticeId || n.id === parseInt(noticeId));
+
     const [isAcknowledging, setIsAcknowledging] = useState(false);
     const [showAckModal, setShowAckModal] = useState(false);
 
-    useEffect(() => {
-        const data = MOCK_NOTICE_DETAILS[noticeId] || MOCK_NOTICE_DETAILS[1];
-        setNotice(data);
-        // Simulate "Mark as Read" logic here
-    }, [noticeId]);
-
-    const handleAcknowledge = () => {
+    const handleAcknowledge = async () => {
         setIsAcknowledging(true);
-        setTimeout(() => {
-            setNotice(prev => ({
-                ...prev,
-                ackStatus: new Date().toLocaleDateString()
-            }));
-            setIsAcknowledging(false);
+        const res = await acknowledgeNotice(noticeId);
+        setIsAcknowledging(false);
+        if (res.success) {
             setShowAckModal(false);
-        }, 1500);
+        } else {
+            alert(res.message);
+        }
     };
 
-    if (!notice) return <div className="p-10 text-center"><span className="loading loading-spinner text-indigo-600"></span></div>;
+    if (!notice) return (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+            <h2 className="text-lg font-bold text-gray-900">Notice Not Found</h2>
+            <button onClick={() => navigate(-1)} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg">Go Back</button>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">

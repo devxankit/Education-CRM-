@@ -9,15 +9,20 @@ const HomeworkDetailPage = () => {
     const { homeworkId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const homeworkDetails = useParentStore(state => state.homeworkDetails);
-    const [homework, setHomework] = useState(null);
+    const homeworkList = useParentStore(state => state.homework);
 
-    useEffect(() => {
-        const data = homeworkDetails[homeworkId] || homeworkDetails[1];
-        setHomework(data);
-    }, [homeworkId, homeworkDetails]);
+    const homework = homeworkList.find(h => h.id === homeworkId || h.id === parseInt(homeworkId));
 
-    if (!homework) return <div className="p-10 text-center"><span className="loading loading-spinner text-indigo-600"></span></div>;
+    if (!homework) return (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="text-gray-400" size={32} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Homework Not Found</h2>
+            <p className="text-sm text-gray-500 mt-2">The selected assignment could not be loaded or has been removed.</p>
+            <button onClick={() => navigate(-1)} className="mt-6 px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm">Go Back</button>
+        </div>
+    );
 
     const getStatusTheme = (status) => {
         switch (status) {
