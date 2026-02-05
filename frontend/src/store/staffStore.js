@@ -1,16 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { initialStudents } from '../modules/staff/data/studentData';
+// import { initialStudents } from '../modules/staff/data/studentData'; // Deprecated
 import { initialTeachers } from '../modules/staff/data/teacherData';
 import { initialTickets, initialNotices } from '../modules/staff/data/supportData';
 import { initialPayroll, initialExpenses } from '../modules/staff/data/financeData';
 import { initialAssets, initialInventory } from '../modules/staff/data/inventoryData';
+import { getAllStudents, admitStudent, updateStudentInfo } from '../modules/staff/services/student.api';
 
 export const useStaffStore = create(
     persist(
         (set, get) => ({
             // State
-            students: initialStudents,
+            students: [],
             teachers: initialTeachers,
             employees: [], // Add if needed
             tickets: initialTickets,
@@ -40,12 +41,48 @@ export const useStaffStore = create(
             })),
 
             // Actions: Students
-            addStudent: (student) => set((state) => ({
-                students: [...state.students, { ...student, id: `STU-${Date.now()}` }]
-            })),
-            updateStudent: (id, data) => set((state) => ({
-                students: state.students.map(s => s.id === id ? { ...s, ...data } : s)
-            })),
+            fetchStudents: async () => {
+                try {
+                    const data = await getAllStudents();
+                    // Ensure compatibility by mapping _id to id if needed
+                    const mapped = data.map(s => ({ ...s, id: s._id || s.id }));
+                    set({ students: mapped });
+                } catch (err) {
+                    console.error("Failed to update store students", err);
+                }
+            },
+
+            addStudent: async (studentData) => {
+                try {
+                    const response = await admitStudent(studentData);
+                    if (response.success) {
+                        const newStudent = { ...response.data, id: response.data._id };
+                        set((state) => ({
+                            students: [...state.students, newStudent]
+                        }));
+                        return Promise.resolve(newStudent);
+                    }
+                } catch (error) {
+                    console.error("Add student failed", error);
+                    throw error;
+                }
+            },
+
+            updateStudent: async (id, data) => {
+                try {
+                    const response = await updateStudentInfo(id, data);
+                    if (response.success) {
+                        set((state) => ({
+                            students: state.students.map(s => (s.id === id || s._id === id) ? { ...s, ...data } : s)
+                        }));
+                        return Promise.resolve(response.data);
+                    }
+                } catch (error) {
+                    console.error("Update student failed", error);
+                    throw error;
+                }
+            },
+
             deleteStudent: (id) => set((state) => ({
                 students: state.students.filter(s => s.id !== id)
             })),

@@ -25,6 +25,7 @@ const RoleTable = ({ roles, onRowClick }) => {
                         <tr>
                             <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Role Identity</th>
                             <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Permissions</th>
                             <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Default Access</th>
                             <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Assigned Users</th>
                             <th className="px-6 py-4 font-semibold text-xs text-slate-500 uppercase tracking-wider">Status</th>
@@ -52,6 +53,15 @@ const RoleTable = ({ roles, onRowClick }) => {
 
                                 <td className="px-6 py-4">
                                     <RoleStatusBadge type={role.type} />
+                                </td>
+
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-100 shadow-sm cursor-pointer hover:bg-indigo-100 transition-colors">
+                                            <Shield size={12} className="text-indigo-600" />
+                                            {Object.values(role.permissions || {}).filter(p => p.accessible).length} Modules
+                                        </span>
+                                    </div>
                                 </td>
 
                                 <td className="px-6 py-4 text-slate-500 font-medium">

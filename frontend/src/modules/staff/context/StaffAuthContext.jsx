@@ -1,7 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { STAFF_ROLES } from '../config/roles';
 import { getMyPermissions } from '../services/auth.api';
+import { API_URL } from '../../../app/api';
 
 const StaffAuthContext = createContext(null);
 
@@ -25,13 +27,38 @@ export const StaffAuthProvider = ({ children }) => {
         setPermissions(perms || {});
     }, []);
 
-    // Sync Permissions on User Change
+    // Sync Permissions on User Change & Socket Connection
     useEffect(() => {
-        if (user) {
-            fetchPermissions();
-        } else {
+        if (!user) {
             setPermissions({});
+            return;
         }
+
+        // Initial Fetch
+        fetchPermissions();
+
+        // Socket Connection for Real-time Updates
+        const SOCKET_URL = API_URL.replace('/api/v1', '');
+        const socket = io(SOCKET_URL);
+
+        socket.on('connect', () => {
+            console.log('🔌 Staff Socket Connected');
+        });
+
+        socket.on('role_updated', (data) => {
+            // Check if match
+            const myRoleId = user?.roleId?._id || (typeof user?.roleId === 'string' ? user.roleId : null);
+
+            if (myRoleId && data.roleId === myRoleId) {
+                console.log('🔔 Permission Updated Real-time', data);
+                fetchPermissions();
+            }
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+
     }, [user, fetchPermissions]);
 
     // 2. Login function: sets the role ONCE.

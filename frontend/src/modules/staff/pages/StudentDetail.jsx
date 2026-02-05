@@ -15,6 +15,7 @@ const StudentDetail = () => {
     const navigate = useNavigate();
     const { user } = useStaffAuth();
     const students = useStaffStore(state => state.students);
+    const fetchStudents = useStaffStore(state => state.fetchStudents);
 
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,18 +24,24 @@ const StudentDetail = () => {
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
 
     useEffect(() => {
-        setLoading(true);
-        setError(null);
-        setTimeout(() => {
-            const found = students.find(s => s.id === studentId);
+        const load = async () => {
+            setLoading(true);
+            setError(null);
+
+            if (students.length === 0) {
+                await fetchStudents();
+            }
+
+            const found = students.find(s => s.id === studentId || s._id === studentId);
             if (found) {
                 setStudent(found);
             } else {
-                setError('Student not found');
+                if (students.length > 0) setError('Student not found');
             }
             setLoading(false);
-        }, 300);
-    }, [studentId, students]);
+        };
+        load();
+    }, [studentId, students, fetchStudents]);
 
     if (loading) {
         return (

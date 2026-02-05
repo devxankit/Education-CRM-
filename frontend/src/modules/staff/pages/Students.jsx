@@ -9,16 +9,26 @@ import { useStaffStore } from '../../../store/staffStore';
 const StaffStudentsPage = () => {
     const navigate = useNavigate();
     const students = useStaffStore(state => state.students);
+    const fetchStudents = useStaffStore(state => state.fetchStudents);
     const { user } = useStaffAuth();
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
+
+    // Fetch real students from API
+    React.useEffect(() => {
+        fetchStudents();
+    }, [fetchStudents]);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterClass, setFilterClass] = useState('All');
 
     // 1. Filtering Logic
     const filteredStudents = students.filter(student => {
-        const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const name = student?.name || '';
+        const id = student?.id || student?._id || '';
+
+        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            id.toLowerCase().includes(searchTerm.toLowerCase());
+
         const matchesClass = filterClass === 'All' || student.class === filterClass;
         return matchesSearch && matchesClass;
     });
@@ -87,10 +97,10 @@ const StaffStudentsPage = () => {
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs">
-                                {student.name.charAt(0)}
+                                {student?.name ? student.name.charAt(0) : '?'}
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold text-gray-900">{student.name}</h3>
+                                <h3 className="text-sm font-bold text-gray-900">{student?.name || 'Unknown Student'}</h3>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-[10px] font-bold bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded border border-gray-100">{student.id}</span>
                                     <span className="text-[10px] text-gray-400">• {student.class}</span>

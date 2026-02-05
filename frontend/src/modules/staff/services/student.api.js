@@ -1,76 +1,71 @@
-// student.api.js - Staff Module Student API Service
-// This service will be used for backend integration
 
-// Mock data for initial setup (will be replaced with actual API calls)
-const MOCK_STUDENTS = [
-    { id: 'STU-2024-001', name: 'Aarav Gupta', class: 'X-A', status: 'Active', contact: '9876543210', feeStatus: 'Paid', route: 'Route-A', docsStatus: 'Verified' },
-    { id: 'STU-2024-002', name: 'Ishita Sharma', class: 'X-A', status: 'Active', contact: '9876543211', feeStatus: 'Due', route: 'Route-B', docsStatus: 'Pending' },
-    { id: 'STU-2024-003', name: 'Rohan Mehta', class: 'IX-B', status: 'Inactive', contact: '9876543212', feeStatus: 'Overdue', route: 'Unassigned', docsStatus: 'Missing' },
-];
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 
-/**
- * Fetch all students
- * @returns {Promise<Array>} List of students
- */
-export const fetchStudents = async () => {
-    // TODO: Replace with actual API call
-    // return await fetch('/api/staff/students').then(res => res.json());
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_STUDENTS), 300);
-    });
+const getAuthHeaders = () => {
+    // 1. Prioritize Staff Token
+    try {
+        const staffUser = JSON.parse(localStorage.getItem('staff_user') || 'null');
+        if (staffUser && staffUser.token) {
+            return { headers: { 'Authorization': `Bearer ${staffUser.token}` } };
+        }
+    } catch (e) {
+        console.error("Error parsing staff_user for token", e);
+    }
+
+    // 2. Fallback to global token
+    const token = localStorage.getItem('token');
+    return {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    };
 };
 
-/**
- * Fetch student by ID
- * @param {string} studentId - Student ID
- * @returns {Promise<Object|null>} Student object or null
- */
-export const fetchStudentById = async (studentId) => {
-    // TODO: Replace with actual API call
-    // return await fetch(`/api/staff/students/${studentId}`).then(res => res.json());
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const student = MOCK_STUDENTS.find(s => s.id === studentId);
-            resolve(student || null);
-        }, 300);
-    });
+// Get All Students
+export const getAllStudents = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/student`, getAuthHeaders());
+        if (response.data.success) {
+            return response.data.data;
+        }
+        return [];
+    } catch (error) {
+        console.error("Error fetching students:", error);
+        return [];
+    }
 };
 
-/**
- * Search students
- * @param {string} query - Search query
- * @param {Object} filters - Filter options
- * @returns {Promise<Array>} Filtered list of students
- */
-export const searchStudents = async (query, filters = {}) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let results = MOCK_STUDENTS;
-
-            if (query) {
-                const lowerQuery = query.toLowerCase();
-                results = results.filter(s =>
-                    s.name.toLowerCase().includes(lowerQuery) ||
-                    s.id.toLowerCase().includes(lowerQuery)
-                );
-            }
-
-            if (filters.class) {
-                results = results.filter(s => s.class === filters.class);
-            }
-
-            if (filters.status) {
-                results = results.filter(s => s.status === filters.status);
-            }
-
-            resolve(results);
-        }, 300);
-    });
+// Get Student By ID
+export const getStudentById = async (id) => {
+    try {
+        const response = await axios.get(`${API_URL}/student/${id}`, getAuthHeaders());
+        if (response.data.success) {
+            return response.data.data;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching student details:", error);
+        return null;
+    }
 };
 
-export default {
-    fetchStudents,
-    fetchStudentById,
-    searchStudents,
+// Admit New Student
+export const admitStudent = async (studentData) => {
+    try {
+        const response = await axios.post(`${API_URL}/student/admit`, studentData, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+
+// Update Student
+export const updateStudentInfo = async (id, studentData) => {
+    try {
+        const response = await axios.put(`${API_URL}/student/${id}`, studentData, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
 };

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, User, FileText, Bus, Banknote, LifeBuoy, Menu, X, ChevronRight, Lock } from 'lucide-react';
+import {
+    LayoutDashboard, Users, BarChart2, User, FileText, Bus, Banknote,
+    LifeBuoy, Menu, X, ChevronRight, Lock, Briefcase, Receipt, Box, Bell, Shield
+} from 'lucide-react';
 import { useStaffAuth } from '../../context/StaffAuthContext';
 import { STAFF_ROLES } from '../../config/roles';
 
@@ -10,12 +13,7 @@ const StaffBottomNav = () => {
     const { user, logout, permissions: contextPermissions, fetchPermissions } = useStaffAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // Refresh permissions on navigation
-    useEffect(() => {
-        if (fetchPermissions) {
-            fetchPermissions();
-        }
-    }, [location.pathname, fetchPermissions]);
+    // Permissions are managed globally by StaffAuthContext (Initial Fetch + Socket Updates)
 
     // Check Access
     const checkAccess = (path) => {
@@ -46,25 +44,32 @@ const StaffBottomNav = () => {
     const isActive = (path) => location.pathname.startsWith(path);
 
     // All possible navigation options in priority order
+    // Ensure this list covers ALL available Sidebar modules so they appear if allowed
     const allNavOptions = [
         { path: '/staff/dashboard', icon: LayoutDashboard, label: 'Home' },
-        { path: '/staff/students', icon: Users, label: 'People' },
-        { path: '/staff/fees', icon: Banknote, label: 'Finance' },
+        { path: '/staff/students', icon: Users, label: 'Students' },
+        { path: '/staff/fees', icon: Banknote, label: 'Fees' },
+        { path: '/staff/payroll', icon: Receipt, label: 'Payroll' },
+        { path: '/staff/expenses', icon: BarChart2, label: 'Expenses' },
         { path: '/staff/transport', icon: Bus, label: 'Transport' },
-        { path: '/staff/teachers', icon: FileText, label: 'Registry' },
-        { path: '/staff/reports', icon: BarChart2, label: 'Reports' },
-        { path: '/staff/documents', icon: FileText, label: 'Docs' },
+        { path: '/staff/teachers', icon: FileText, label: 'Teachers' },
+        { path: '/staff/employees', icon: Briefcase, label: 'Staff' },
+        { path: '/staff/assets', icon: Box, label: 'Assets' },
+        { path: '/staff/reports', icon: FileText, label: 'Reports' },
+        { path: '/staff/documents', icon: Shield, label: 'Docs' },
+        { path: '/staff/notices', icon: Bell, label: 'Notices' },
         { path: '/staff/support', icon: LifeBuoy, label: 'Support' },
     ];
 
     // Filter allowed modules
     const allowedNavs = allNavOptions.filter(item => checkAccess(item.path));
 
-    // Logic: If role has 5 or fewer modules, show ALL of them directly. 
-    // Otherwise show 4 + Menu.
-    const showMenu = allowedNavs.length > 5;
-    const visibleItems = showMenu ? allowedNavs.slice(0, 4) : allowedNavs;
-    const hiddenItems = showMenu ? allowedNavs.slice(4) : [];
+    // Logic: If role has 6 or fewer modules, show ALL of them directly.
+    // Otherwise show 5 + Menu (Total 6 slots).
+    // This accommodates roles with slightly more permissions (like Accountant with 6).
+    const showMenu = allowedNavs.length > 6;
+    const visibleItems = showMenu ? allowedNavs.slice(0, 5) : allowedNavs;
+    const hiddenItems = showMenu ? allowedNavs.slice(5) : [];
 
     return (
         <>

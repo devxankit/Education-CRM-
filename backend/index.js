@@ -5,12 +5,34 @@ dotenv.config();
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import http from "http";
+import { Server } from "socket.io";
 import { dbConnect } from "./Config/dbConnect.js";
 import { errorHandler } from "./Helpers/helpers.js";
 import routes from "./app.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+const server = http.createServer(app);
+
+// ✅ Socket.IO Setup
+const io = new Server(server, {
+  cors: {
+    origin: "*", // allow all or specific frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Provide io instance to controllers
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('🔌 Socket Connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('🔌 Socket Disconnected:', socket.id);
+  });
+});
 
 // ✅ Connect DB
 dbConnect();
@@ -31,6 +53,6 @@ app.use("/", routes);
 app.use(errorHandler);
 
 // ✅ Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running Port ${PORT} ❤️`);
 });

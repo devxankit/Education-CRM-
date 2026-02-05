@@ -11,12 +11,8 @@ const StaffSidebar = () => {
     const { user, permissions: contextPermissions, fetchPermissions } = useStaffAuth();
     const location = useLocation();
 
-    // Refresh permissions on navigation
-    useEffect(() => {
-        if (fetchPermissions) {
-            fetchPermissions();
-        }
-    }, [location.pathname, fetchPermissions]);
+    // Permissions are managed globally by StaffAuthContext (Initial Fetch + Socket Updates)
+    // No need to re-fetch on every route change.
 
     // Menu Configuration
     const MENU_ITEMS = [

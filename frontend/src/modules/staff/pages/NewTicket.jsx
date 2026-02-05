@@ -9,11 +9,10 @@ const NewTicket = () => {
     const { ticketId } = useParams();
     const isEditMode = !!ticketId;
 
-    const { tickets, addTicket, updateTicket } = useStaffStore(state => ({
-        tickets: state.tickets,
-        addTicket: state.addTicket,
-        updateTicket: state.updateTicket
-    }));
+    // Use separate selectors to prevent infinite loops
+    const tickets = useStaffStore(state => state.tickets);
+    const addTicket = useStaffStore(state => state.addTicket);
+    const updateTicket = useStaffStore(state => state.updateTicket);
 
     const [loading, setLoading] = useState(false);
 

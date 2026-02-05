@@ -8,11 +8,10 @@ const NewAdmission = () => {
     const { studentId } = useParams();
     const isEditMode = !!studentId;
 
-    const { students, addStudent, updateStudent } = useStaffStore(state => ({
-        students: state.students,
-        addStudent: state.addStudent,
-        updateStudent: state.updateStudent
-    }));
+    // Use separate selectors to prevent excessive re-renders (infinite loop fix)
+    const students = useStaffStore(state => state.students);
+    const addStudent = useStaffStore(state => state.addStudent);
+    const updateStudent = useStaffStore(state => state.updateStudent);
 
     const [loading, setLoading] = useState(false);
 
@@ -50,11 +49,11 @@ const NewAdmission = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-        setTimeout(() => {
+        try {
             const finalData = {
                 ...formData,
                 name: `${formData.firstName} ${formData.lastName}`,
@@ -62,15 +61,19 @@ const NewAdmission = () => {
             };
 
             if (isEditMode) {
-                updateStudent(studentId, finalData);
+                await updateStudent(studentId, finalData);
             } else {
-                addStudent(finalData);
+                await addStudent(finalData);
             }
 
             setLoading(false);
             alert(`Student record ${isEditMode ? 'updated' : 'created'} successfully!`);
             navigate('/staff/students');
-        }, 1000);
+        } catch (error) {
+            setLoading(false);
+            alert(`Error: ${error.message || 'Operation failed'}`);
+            console.error(error);
+        }
     };
 
     return (

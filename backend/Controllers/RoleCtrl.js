@@ -94,6 +94,12 @@ export const updateRole = async (req, res) => {
             });
         }
 
+        // Notify connected clients about role update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('role_updated', { roleId: role._id, permissions: role.permissions });
+        }
+
         res.status(200).json({
             success: true,
             message: "Role updated successfully",
