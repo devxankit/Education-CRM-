@@ -71,6 +71,38 @@ export const getNotices = async (req, res) => {
     }
 };
 
+// ================= GET STAFF NOTICES (Audience Filtered) =================
+export const getStaffNotices = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const branchId = req.user.branchId;
+        const role = req.role; // From AuthMiddleware (teacher, staff, institute)
+
+        const audienceFilter = ["All Staff"];
+        if (role === 'teacher') audienceFilter.push("All Teachers");
+
+        let query = {
+            instituteId,
+            status: "PUBLISHED",
+            audiences: { $in: audienceFilter }
+        };
+
+        if (branchId && branchId !== "all") {
+            query.branchId = branchId;
+        }
+
+        const notices = await Notice.find(query)
+            .sort({ publishDate: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: notices,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= UPDATE NOTICE =================
 export const updateNotice = async (req, res) => {
     try {

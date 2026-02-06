@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { Search, Filter, Plus, Clock, CheckCircle, AlertCircle, ChevronRight, User, MessageSquare } from 'lucide-react';
@@ -7,15 +7,26 @@ import { useStaffStore } from '../../../store/staffStore';
 const Support = () => {
     const navigate = useNavigate();
     const tickets = useStaffStore(state => state.tickets);
+    const fetchTickets = useStaffStore(state => state.fetchTickets);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
+
+    useEffect(() => {
+        fetchTickets();
+    }, [fetchTickets]);
 
     // Access: Support (Full), Admin (Full), Others (View/Create Own)
     // For now, let's assume all staff can access the dashboard to see tickets relevant to them or generally.
 
     const filteredTickets = tickets.filter(ticket => {
-        const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const topic = ticket.topic || '';
+        const id = ticket.id || ticket._id || '';
+        const studentName = ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}`.toLowerCase() : '';
+
+        const matchesSearch = topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            studentName.includes(searchTerm.toLowerCase());
+
         const matchesStatus = filterStatus === 'All' || ticket.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
@@ -23,7 +34,8 @@ const Support = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Open': return 'bg-red-50 text-red-700 border-red-200';
-            case 'In Progress': return 'bg-amber-50 text-amber-700 border-amber-200';
+            case 'In-Progress': return 'bg-amber-50 text-amber-700 border-amber-200';
+            case 'Resolved': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
             case 'Closed': return 'bg-green-50 text-green-700 border-green-200';
             default: return 'bg-gray-50 text-gray-500';
         }
@@ -31,8 +43,9 @@ const Support = () => {
 
     const getPriorityIcon = (priority) => {
         switch (priority) {
+            case 'Urgent': return <AlertCircle size={14} className="text-red-600 font-bold" />;
             case 'High': return <AlertCircle size={14} className="text-red-500" />;
-            case 'Medium': return <Clock size={14} className="text-amber-500" />;
+            case 'Normal': return <Clock size={14} className="text-amber-500" />;
             case 'Low': return <CheckCircle size={14} className="text-blue-500" />;
             default: return null;
         }
@@ -74,7 +87,8 @@ const Support = () => {
                     >
                         <option value="All">All Status</option>
                         <option value="Open">Open</option>
-                        <option value="In Progress">In Progress</option>
+                        <option value="In-Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
                         <option value="Closed">Closed</option>
                     </select>
                 </div>
@@ -98,16 +112,25 @@ const Support = () => {
                                 <tr key={ticket.id} onClick={() => navigate(`/staff/support/${ticket.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${ticket.unread ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 text-gray-400">
                                                 <MessageSquare size={16} />
                                             </div>
                                             <div>
-                                                <p className={`text-sm ${ticket.unread ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>{ticket.subject}</p>
-                                                <p className="text-xs text-gray-500 font-mono">{ticket.id} • {ticket.date}</p>
+                                                <p className="text-sm font-bold text-gray-900">{ticket.topic}</p>
+                                                <p className="text-[10px] text-gray-500 font-mono">{ticket.id.slice(-8)} • {new Date(ticket.createdAt).toLocaleDateString()}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 font-medium">{ticket.entity}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                                                {ticket.studentId?.firstName?.charAt(0)}
+                                            </div>
+                                            <span className="text-sm text-gray-600 font-medium">
+                                                {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'}
+                                            </span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusColor(ticket.status)}`}>
                                             {ticket.status}
@@ -144,11 +167,13 @@ const Support = () => {
                                         {ticket.priority}
                                     </span>
                                 </div>
-                                <span className="text-[10px] text-gray-400">{ticket.date}</span>
+                                <span className="text-[10px] text-gray-400">{new Date(ticket.createdAt).toLocaleDateString()}</span>
                             </div>
 
-                            <h3 className={`text-sm ${ticket.unread ? 'font-bold text-gray-900' : 'font-medium text-gray-800'} mb-1`}>{ticket.subject}</h3>
-                            <p className="text-xs text-gray-500 mb-2">{ticket.entity}</p>
+                            <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.topic}</h3>
+                            <p className="text-xs text-gray-500 mb-2">
+                                By: {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'}
+                            </p>
 
                             <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono border-t border-gray-50 pt-2">
                                 <MessageSquare size={12} /> {ticket.id}

@@ -13,6 +13,7 @@ import SafetyRulesPanel from './components/hostel-config/SafetyRulesPanel';
 const HostelConfig = () => {
     const { fetchBranches, branches, fetchHostelConfig, saveHostelConfig, toggleHostelLock } = useAdminStore();
     const user = useAppStore(state => state.user);
+    console.log(user,"hugyv")
     const [branchId, setBranchId] = useState(user?.branchId || 'main');
 
     // Global State

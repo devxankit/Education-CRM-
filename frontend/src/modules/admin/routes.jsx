@@ -43,6 +43,9 @@ import Exams from './pages/academics/Exams';
 import AdmissionRules from './pages/operations/AdmissionsRules';
 import TransportConfig from './pages/operations/TransportConfig';
 import HostelConfig from './pages/operations/HostelConfig';
+import AddHostel from './pages/operations/hostels/AddHostel';
+import HostelList from './pages/operations/hostels/HostelList';
+import HostelDetails from './pages/operations/hostels/HostelDetails';
 import DocumentRules from './pages/operations/DocumentRules';
 import CommunicationRules from './pages/operations/CommunicationRules';
 import AssetRules from './pages/operations/AssetRules';
@@ -157,6 +160,10 @@ const adminRoutes = [
                     { path: 'operations/inventory', element: <InventoryCategories /> },
                     { path: 'operations/inventory/assets', element: <AssetsMaster /> }, // New Route
                     { path: 'operations/hostel-config', element: <HostelConfig /> },
+                    { path: 'operations/hostels', element: <HostelList /> },
+                    { path: 'operations/hostels/add', element: <AddHostel /> },
+                    { path: 'operations/hostels/edit/:id', element: <AddHostel /> },
+                    { path: 'operations/hostels/view/:id', element: <HostelDetails /> },
                     { path: 'operations/document-rules', element: <DocumentRules /> },
                     { path: 'operations/communication-rules', element: <CommunicationRules /> }, // Communication Governance
 

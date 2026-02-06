@@ -1,5 +1,62 @@
-// staff.api.js - Staff Module Staff/Employee API Service
-// This service will be used for backend integration
+import axios from 'axios';
+import { API_URL } from '@/app/api';
+
+const getAuthHeaders = () => {
+    try {
+        const staffUser = JSON.parse(localStorage.getItem('staff_user') || 'null');
+        if (staffUser && staffUser.token) {
+            return { headers: { 'Authorization': `Bearer ${staffUser.token}` } };
+        }
+    } catch (e) {
+        console.error("Error parsing staff_user for token", e);
+    }
+    return { headers: {} };
+};
+
+/**
+ * Fetch staff profile
+ * @returns {Promise<Object|null>} Staff profile object or null
+ */
+export const getStaffProfile = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/staff/profile`, getAuthHeaders());
+        if (response.data.success) {
+            return response.data.data;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching staff profile:", error);
+        return null;
+    }
+};
+
+/**
+ * Change staff password
+ * @param {Object} passwords - {currentPassword, newPassword}
+ * @returns {Promise<Object>} Response object
+ */
+export const changePassword = async (passwords) => {
+    try {
+        const response = await axios.post(`${API_URL}/staff/change-password`, passwords, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        return error.response?.data || { success: false, message: "Network error" };
+    }
+};
+
+/**
+ * Update staff profile (profilePic, bannerPic, name, phone)
+ * @param {Object} profileData - {profilePic?, bannerPic?, name?, phone?}
+ * @returns {Promise<Object>} Response object
+ */
+export const updateStaffProfile = async (profileData) => {
+    try {
+        const response = await axios.put(`${API_URL}/staff/update-profile`, profileData, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        return error.response?.data || { success: false, message: "Network error" };
+    }
+};
 
 // Mock data for initial setup (will be replaced with actual API calls)
 const MOCK_EMPLOYEES = [
@@ -70,4 +127,7 @@ export default {
     fetchEmployeeById,
     fetchTeachers,
     fetchTeacherById,
+    getStaffProfile,
+    changePassword,
+    updateStaffProfile
 };

@@ -9,33 +9,38 @@ const NewTicket = () => {
     const { ticketId } = useParams();
     const isEditMode = !!ticketId;
 
-    // Use separate selectors to prevent infinite loops
     const tickets = useStaffStore(state => state.tickets);
-    const addTicket = useStaffStore(state => state.addTicket);
-    const updateTicket = useStaffStore(state => state.updateTicket);
+    const students = useStaffStore(state => state.students);
+    const fetchStudents = useStaffStore(state => state.fetchStudents);
+    const addTicketAction = useStaffStore(state => state.addTicketAction);
+    const updateTicketAction = useStaffStore(state => state.updateTicketAction);
 
     const [loading, setLoading] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
-        title: '',
-        priority: 'Medium',
+        topic: '',
+        priority: 'Normal',
         category: 'General',
-        student: '',
-        description: ''
+        studentId: '',
+        details: ''
     });
+
+    useEffect(() => {
+        if (students.length === 0) fetchStudents();
+    }, [fetchStudents, students.length]);
 
     // Fetch data for edit mode
     useEffect(() => {
         if (isEditMode) {
-            const ticket = tickets.find(t => t.id === ticketId);
+            const ticket = tickets.find(t => t.id === ticketId || t._id === ticketId);
             if (ticket) {
                 setFormData({
-                    title: ticket.title || '',
-                    priority: ticket.priority || 'Medium',
+                    topic: ticket.topic || '',
+                    priority: ticket.priority || 'Normal',
                     category: ticket.category || 'General',
-                    student: ticket.student || '',
-                    description: ticket.description || ''
+                    studentId: ticket.studentId?._id || ticket.studentId || '',
+                    details: ticket.details || ''
                 });
             }
         }
@@ -45,20 +50,27 @@ const NewTicket = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        if (!formData.studentId) {
+            alert("Please select a student");
+            return;
+        }
 
-        setTimeout(() => {
+        setLoading(true);
+        try {
             if (isEditMode) {
-                updateTicket(ticketId, formData);
+                await updateTicketAction(ticketId, formData);
             } else {
-                addTicket(formData);
+                await addTicketAction(formData);
             }
-            setLoading(false);
             alert(`Support Ticket ${isEditMode ? 'Updated' : 'Created'} Successfully!`);
             navigate('/staff/support');
-        }, 1000);
+        } catch (err) {
+            alert("Operation failed: " + (err.message || "Unknown error"));
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -77,11 +89,11 @@ const NewTicket = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500">Subject / Title</label>
+                        <label className="text-xs font-medium text-gray-500">Subject / Topic</label>
                         <input
                             required
-                            name="title"
-                            value={formData.title}
+                            name="topic"
+                            value={formData.topic}
                             onChange={handleChange}
                             type="text"
                             className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -98,10 +110,10 @@ const NewTicket = () => {
                                 onChange={handleChange}
                                 className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                             >
-                                <option>Low</option>
-                                <option>Medium</option>
-                                <option>High</option>
-                                <option>Urgent</option>
+                                <option value="Low">Low</option>
+                                <option value="Normal">Normal</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
                             </select>
                         </div>
                         <div className="space-y-1">
@@ -112,33 +124,39 @@ const NewTicket = () => {
                                 onChange={handleChange}
                                 className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                             >
-                                <option>General</option>
-                                <option>Fees</option>
-                                <option>Transport</option>
-                                <option>Academics</option>
-                                <option>IT Support</option>
+                                <option value="General">General</option>
+                                <option value="Academic">Academic</option>
+                                <option value="Fee Related">Fee Related</option>
+                                <option value="Homework">Homework</option>
+                                <option value="Correction">Correction</option>
                             </select>
                         </div>
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500">Student Name / ID (If applicable)</label>
-                        <input
-                            name="student"
-                            value={formData.student}
+                        <label className="text-xs font-medium text-gray-500">Select Student</label>
+                        <select
+                            required
+                            name="studentId"
+                            value={formData.studentId}
                             onChange={handleChange}
-                            type="text"
-                            className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="e.g. Aarav Gupta (STU-101)"
-                        />
+                            className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                        >
+                            <option value="">-- Choose Student --</option>
+                            {students.map(s => (
+                                <option key={s.id} value={s.id}>
+                                    {s.firstName} {s.lastName} ({s.admissionNo})
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500">Description</label>
+                        <label className="text-xs font-medium text-gray-500">Detailed Description</label>
                         <textarea
                             required
-                            name="description"
-                            value={formData.description}
+                            name="details"
+                            value={formData.details}
                             onChange={handleChange}
                             rows="4"
                             className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"

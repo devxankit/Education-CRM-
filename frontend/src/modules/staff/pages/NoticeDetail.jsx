@@ -2,96 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, AlertTriangle, FileText, Download, Clock } from 'lucide-react';
 import { useStaffAuth } from '../context/StaffAuthContext';
-
-// --- MOCK DATA (Multiple notices for filtering by ID) ---
-const MOCK_NOTICES_DATA = [
-    {
-        id: 'N-2024-001',
-        title: 'Emergency: School Closed Tomorrow due to Heavy Rain Forecast',
-        category: 'Emergency',
-        priority: 'Urgent',
-        date: '10 Oct 2024, 02:30 PM',
-        sender: 'Principal\'s Office',
-        content: `
-            <p>Dear Staff,</p>
-            <p>Due to the red alert issued by the meteorological department regarding heavy rainfall, the school administration has decided to keep the school <strong>closed tomorrow, 11th October 2024</strong>.</p>
-            <p>This applies to all students and non-essential staff. Essential maintenance team members are requested to remain on standby.</p>
-            <p>Online classes will proceed as per the schedule shared by the academic coordinator.</p>
-            <p>Stay safe.</p>
-            <br/>
-            <p>Regards,<br/>Principal</p>
-        `,
-        attachments: [
-            { name: 'District_Order_Circular.pdf', size: '1.2 MB' }
-        ],
-        status: 'Pending'
-    },
-    {
-        id: 'N-2024-002',
-        title: 'Annual Day Celebration Schedule',
-        category: 'Event',
-        priority: 'Normal',
-        date: '08 Oct 2024, 10:00 AM',
-        sender: 'Cultural Committee',
-        content: `
-            <p>Dear Staff,</p>
-            <p>The Annual Day celebration is scheduled for <strong>25th November 2024</strong>.</p>
-            <p>Please submit your program proposals by 20th October.</p>
-            <br/>
-            <p>Regards,<br/>Cultural Committee</p>
-        `,
-        attachments: [],
-        status: 'Read'
-    },
-    {
-        id: 'N-2024-003',
-        title: 'Salary Revision Notification',
-        category: 'HR',
-        priority: 'Important',
-        date: '05 Oct 2024, 04:00 PM',
-        sender: 'HR Department',
-        content: `
-            <p>Dear Staff,</p>
-            <p>We are pleased to announce a salary revision effective from November 2024.</p>
-            <p>Individual letters will be shared via email.</p>
-            <br/>
-            <p>Regards,<br/>HR Department</p>
-        `,
-        attachments: [
-            { name: 'Salary_Revision_Policy.pdf', size: '850 KB' }
-        ],
-        status: 'Pending'
-    }
-];
+import { useStaffStore } from '../../../store/staffStore';
 
 const NoticeDetail = () => {
     const { noticeId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
+    const notices = useStaffStore(state => state.notices);
 
     const [notice, setNotice] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [status, setStatus] = useState('Pending');
+    const [status, setStatus] = useState('Pending'); // Still pending locally until ack integration
     const [isAcknowledging, setIsAcknowledging] = useState(false);
 
-    // Fetch notice data based on ID from URL
+    // Fetch notice data based on ID from Store
     useEffect(() => {
         setLoading(true);
         setError(null);
 
-        // Simulate API call - In real app, replace with actual API fetch
-        setTimeout(() => {
-            const foundNotice = MOCK_NOTICES_DATA.find(n => n.id === noticeId);
-            if (foundNotice) {
-                setNotice(foundNotice);
-                setStatus(foundNotice.status);
-            } else {
-                setError('Notice not found');
-            }
-            setLoading(false);
-        }, 300);
-    }, [noticeId]);
+        const foundNotice = notices.find(n => n.noticeId === noticeId || n._id === noticeId || n.id === noticeId);
+        if (foundNotice) {
+            setNotice(foundNotice);
+            // Default to 'Pending' for now as ack state isn't in backend yet
+        } else {
+            setError('Notice not found');
+        }
+        setLoading(false);
+    }, [noticeId, notices]);
 
     // Loading state
     if (loading) {
@@ -137,7 +75,7 @@ const NoticeDetail = () => {
                 <div className="flex-1">
                     <h1 className="text-sm font-bold text-gray-900 line-clamp-1">{notice.title}</h1>
                     <p className="text-[10px] text-gray-500 font-mono">
-                        {notice.date} • {notice.category}
+                        {new Date(notice.publishDate).toLocaleDateString()} • {notice.category}
                     </p>
                 </div>
             </div>
@@ -147,14 +85,14 @@ const NoticeDetail = () => {
                 {/* Meta Card */}
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-start justify-between">
                     <div>
-                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">From</p>
-                        <p className="font-bold text-gray-900 text-sm">{notice.sender}</p>
+                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">Issue Date</p>
+                        <p className="font-bold text-gray-900 text-sm">{new Date(notice.publishDate).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-gray-500 font-bold uppercase mb-1">Priority</p>
-                        <span className={`px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1 ${notice.priority === 'Urgent' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                        <span className={`px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1 ${notice.priority?.toUpperCase() === 'URGENT' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
                             }`}>
-                            {notice.priority === 'Urgent' && <AlertTriangle size={12} />}
+                            {notice.priority?.toUpperCase() === 'URGENT' && <AlertTriangle size={12} />}
                             {notice.priority}
                         </span>
                     </div>

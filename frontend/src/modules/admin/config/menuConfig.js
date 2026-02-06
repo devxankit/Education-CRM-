@@ -110,6 +110,7 @@ export const adminMenuConfig = [
             { id: 'support-rules', label: 'Helpdesk Rules', path: '/admin/operations/support-rules' },
             { id: 'inventory', label: 'Inventory Categories', path: '/admin/operations/inventory' },
             { id: 'assets-master', label: 'Assets Master', path: '/admin/operations/inventory/assets' },
+            { id: 'hostels', label: 'Hostel Management', path: '/admin/operations/hostels' },
             { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
             { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' }
         ]

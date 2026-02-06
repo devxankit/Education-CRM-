@@ -157,6 +157,29 @@ export const admitStudent = async (req, res) => {
         const admissionData = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
+        // 0. Resolve Branch ID
+        let branchId = admissionData.branchId;
+
+        // Fetch class/section data early to get branchId if not provided
+        let classData = null;
+        let sectionData = null;
+        if (admissionData.classId) {
+            classData = await Class.findById(admissionData.classId);
+            if (classData && !branchId) branchId = classData.branchId;
+        }
+        if (admissionData.sectionId) {
+            sectionData = await Section.findById(admissionData.sectionId);
+        }
+
+        // Fallback to staff's branch if still not found and not 'all'
+        if (!branchId && req.user.branchId && req.user.branchId !== "all") {
+            branchId = req.user.branchId;
+        }
+
+        if (!branchId) {
+            return res.status(400).json({ success: false, message: "Branch ID is required for admission" });
+        }
+
         // 1. Internal Unique Check (parentEmail)
         if (admissionData.parentEmail) {
             const existingStudent = await Student.findOne({ parentEmail: admissionData.parentEmail });
@@ -166,21 +189,15 @@ export const admitStudent = async (req, res) => {
         }
 
         // 1.1 Capacity Check
-        if (admissionData.sectionId && admissionData.classId) {
-            const classData = await Class.findById(admissionData.classId);
-            const section = await Section.findById(admissionData.sectionId);
+        if (classData && sectionData) {
+            const studentCount = await Student.countDocuments({ sectionId: admissionData.sectionId, status: { $ne: 'withdrawn' } });
+            const studentCapacity = classData.capacity || 40;
 
-            if (classData && section) {
-                const studentCount = await Student.countDocuments({ sectionId: admissionData.sectionId, status: 'active' });
-                // Use class capacity for all its sections
-                const studentCapacity = classData.capacity || 40;
-
-                if (studentCount >= studentCapacity) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `Section '${section.name}' is full. Class '${classData.name}' limited to ${studentCapacity} students per section.`
-                    });
-                }
+            if (studentCount >= studentCapacity) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Section '${sectionData.name}' is full. Class '${classData.name}' limited to ${studentCapacity} students per section.`
+                });
             }
         }
 
@@ -195,9 +212,17 @@ export const admitStudent = async (req, res) => {
         const admissionNo = `${sequence.prefix || 'ADM'}-${currentYear}-${sequence.sequenceValue.toString().padStart(4, '0')}`;
 
         // 3. Handle Cloudinary Document Uploads
+        const defaultDocStatus = req.role === 'institute' ? 'approved' : 'in_review';
+        const defaultStudentStatus = req.role === 'institute' ? 'active' : 'in_review';
+
         if (admissionData.documents) {
-            const uploadPromises = Object.keys(admissionData.documents).map(async (key) => {
+            const keys = Object.keys(admissionData.documents);
+            for (const key of keys) {
                 const doc = admissionData.documents[key];
+                // Set default status based on who's creating the record
+                doc.status = defaultDocStatus;
+                doc.date = new Date().toISOString();
+
                 if (doc && doc.base64) {
                     try {
                         const cloudinaryUrl = await uploadBase64ToCloudinary(doc.base64, `students/documents/${instituteId}`);
@@ -207,51 +232,44 @@ export const admitStudent = async (req, res) => {
                         console.error(`Error uploading ${key} to Cloudinary:`, uploadError);
                     }
                 }
-            });
-            await Promise.all(uploadPromises);
+            }
         }
 
-        // 4. Create/Find Parent and generate password if parentEmail and parentMobile are provided
+        // 4. Create/Find Parent
         let parentId = admissionData.parentId;
         let parentPassword = null;
         let parentCreated = false;
 
-        if (admissionData.parentEmail && admissionData.parentMobile) {
-            // Check if parent already exists with this mobile
+        if (!parentId && admissionData.parentEmail && admissionData.parentMobile) {
             let parent = await Parent.findOne({
                 mobile: admissionData.parentMobile,
                 instituteId
             });
 
             if (!parent) {
-                // Generate random password for new parent
                 parentPassword = "123456";
                 const parentCode = `PRT-${Date.now().toString().slice(-6)}`;
 
-                // Create new parent
                 parent = new Parent({
                     instituteId,
-                    branchId: admissionData.branchId,
-                    name: admissionData.parentName || admissionData.fatherName || admissionData.guardianName || "Parent",
+                    branchId, // Use the resolved branchId
+                    name: admissionData.parentName || "Parent",
                     mobile: admissionData.parentMobile,
                     email: admissionData.parentEmail,
                     relationship: admissionData.parentRelationship || "Father",
                     address: admissionData.address,
                     occupation: admissionData.parentOccupation,
                     code: parentCode,
-                    password: parentPassword // Will be hashed by model pre-save hook
+                    password: parentPassword
                 });
 
                 await parent.save();
                 parentCreated = true;
-                console.log(`Parent created: ${parent._id} with mobile: ${admissionData.parentMobile}`);
             }
-
             parentId = parent._id;
         }
 
         // 5. Create Student
-        // Sanitize empty IDs
         const sanitizeFields = ['parentId', 'classId', 'sectionId', 'branchId'];
         sanitizeFields.forEach(field => {
             if (admissionData[field] === "") delete admissionData[field];
@@ -261,9 +279,10 @@ export const admitStudent = async (req, res) => {
             ...admissionData,
             admissionNo,
             instituteId,
-            branchId: admissionData.branchId,
-            parentId: admissionData.parentId || parentId, // Use generated or provided
-            password: admissionData.password || '12345678' // Default password for portal login
+            branchId, // Use the resolved branchId
+            parentId: admissionData.parentId || parentId,
+            password: admissionData.password || '12345678',
+            status: defaultStudentStatus
         });
 
         await student.save();

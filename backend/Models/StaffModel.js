@@ -30,8 +30,8 @@ const staffSchema = new mongoose.Schema(
             required: true,
         },
         branchId: {
-            type: String, // "all" or Branch ObjectId as string
-            default: "all",
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Branch",
         },
         status: {
             type: String,
@@ -43,6 +43,14 @@ const staffSchema = new mongoose.Schema(
         },
         phone: {
             type: String,
+        },
+        profilePic: {
+            type: String,
+            default: "",
+        },
+        bannerPic: {
+            type: String,
+            default: "",
         }
     },
     { timestamps: true }

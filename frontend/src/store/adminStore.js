@@ -1326,6 +1326,117 @@ export const useAdminStore = create(
                     get().addToast(error.response?.data?.message || 'Error toggling hostel lock', 'error');
                 }
             },
+
+            // Actions: Hostels
+            hostels: [],
+            fetchHostels: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/hostel?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ hostels: response.data.data });
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching hostels:', error);
+                }
+            },
+            createHostel: async (hostelData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/hostel`, hostelData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            hostels: [response.data.data, ...state.hostels]
+                        }));
+                        get().addToast('Hostel created successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error creating hostel:', error);
+                    get().addToast(error.response?.data?.message || 'Error creating hostel', 'error');
+                    throw error;
+                }
+            },
+            updateHostel: async (id, hostelData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/hostel/${id}`, hostelData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            hostels: state.hostels.map(h => h._id === id ? response.data.data : h)
+                        }));
+                        get().addToast('Hostel updated successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error updating hostel:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating hostel', 'error');
+                    throw error;
+                }
+            },
+            fetchHostelById: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/hostel/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching hostel by ID:', error);
+                    // get().addToast(error.response?.data?.message || 'Error fetching hostel', 'error');
+                }
+            },
+            deleteHostel: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/hostel/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            hostels: state.hostels.filter(h => h._id !== id)
+                        }));
+                        get().addToast('Hostel deleted successfully', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting hostel:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting hostel', 'error');
+                    throw error;
+                }
+            },
+
+            // Actions: Upload
+            uploadFile: async (file, folder = 'general') => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('folder', folder);
+
+                    const response = await axios.post(`${API_URL}/upload/single`, formData, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                    if (response.data.success) {
+                        return response.data.url;
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    get().addToast('Error uploading file', 'error');
+                    throw error;
+                }
+            },
         }),
         {
             name: 'admin-storage',

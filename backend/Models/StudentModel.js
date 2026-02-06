@@ -109,11 +109,11 @@ const studentSchema = new mongoose.Schema(
         },
         // Documents
         documents: {
-            photo: { name: String, status: String, date: String, url: String },
-            birthCert: { name: String, status: String, date: String, url: String },
-            transferCert: { name: String, status: String, date: String, url: String },
-            aadhar: { name: String, status: String, date: String, url: String },
-            prevMarksheet: { name: String, status: String, date: String, url: String },
+            photo: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
+            birthCert: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
+            transferCert: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
+            aadhar: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
+            prevMarksheet: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
         },
         address: {
             type: String,
@@ -133,8 +133,8 @@ const studentSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["active", "alumni", "withdrawn", "inactive"],
-            default: "active",
+            enum: ["active", "alumni", "withdrawn", "inactive", "in_review"],
+            default: "in_review",
         },
         lastLogin: {
             type: Date,

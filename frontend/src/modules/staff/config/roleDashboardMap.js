@@ -4,7 +4,7 @@ import { STAFF_ROLES } from './roles';
 // Mapping roles to their specific dashboard widgets and configurations
 export const ROLE_DASHBOARD_MAP = {
     [STAFF_ROLES.FRONT_DESK]: {
-        primaryWidgets: ['TodayAdmissions', 'VisitorRequests', 'PendingDocuments'],
+        primaryWidgets: ['TotalAdmissions', 'PendingAdmissions', 'TodayAdmissions', 'PendingDocuments'],
         secondaryWidgets: ['TotalStudents', 'AdminNotices'],
         quickActions: ['AddNewInquiry', 'UploadDocuments', 'ViewPendingAdmissions'],
         bannerText: "Manage admissions, inquiries & front desk operations"
@@ -34,7 +34,7 @@ export const ROLE_DASHBOARD_MAP = {
         bannerText: "Resolve student & parent queries efficiently"
     },
     [STAFF_ROLES.PRINCIPAL]: {
-        primaryWidgets: ['TodayAdmissions', 'ClassSectionUpdates', 'TeacherStatus'],
+        primaryWidgets: ['TotalAdmissions', 'PendingAdmissions', 'TodayAdmissions', 'TeacherStatus'],
         secondaryWidgets: ['AdminNotices', 'AcademicCalendar'],
         quickActions: ['UpdateClassInfo', 'ViewPendingAdmissions', 'AddNewInquiry'],
         bannerText: "Academic & Administrative Leadership"

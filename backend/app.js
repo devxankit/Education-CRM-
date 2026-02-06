@@ -32,10 +32,12 @@ import HostelConfigRouter from "./Routers/HostelConfigRouter.js";
 import AssetCategoryRouter from "./Routers/AssetCategoryRouter.js";
 import AssetRuleRouter from "./Routers/AssetRuleRouter.js";
 import SupportRuleRouter from "./Routers/SupportRuleRouter.js";
+import SupportTicketRouter from "./Routers/SupportTicketRouter.js";
 import DocumentRuleRouter from "./Routers/DocumentRuleRouter.js";
 import ExamPolicyRouter from "./Routers/ExamPolicyRouter.js";
 import ExamRouter from "./Routers/ExamRouter.js";
 // import ChecklistRouter from "./Routers/ChecklistRouter.js";
+import HostelRouter from "./routes/HostelRouter.js";
 
 const router = Router();
 
@@ -68,9 +70,11 @@ router.use("/api/v1/admission-rule", AdmissionRuleRouter);
 router.use("/api/v1/transport-route", TransportRouteRouter);
 router.use("/api/v1/transport-config", TransportConfigRouter);
 router.use("/api/v1/hostel-config", HostelConfigRouter);
+router.use("/api/v1/hostel", HostelRouter);
 router.use("/api/v1/asset-category", AssetCategoryRouter);
 router.use("/api/v1/asset-rule", AssetRuleRouter);
 router.use("/api/v1/support-rule", SupportRuleRouter);
+router.use("/api/v1/support-ticket", SupportTicketRouter);
 router.use("/api/v1/document-rule", DocumentRuleRouter);
 router.use("/api/v1/exam-policy", ExamPolicyRouter);
 router.use("/api/v1/exam", ExamRouter);
