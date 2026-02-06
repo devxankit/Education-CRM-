@@ -1,18 +1,26 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { useExamPolicyStore } from '../../../../../../store/examPolicyStore';
 
 const PromotionRulesConfig = ({ isLocked }) => {
-
-    const [rules, setRules] = useState({
-        minAttendance: 75,
-        failSubjectLimit: 2, // Max failures allowed before detention
-        graceMarksLimit: 10,
-        allowConditionPromotion: true
-    });
+    const { policy } = useExamPolicyStore();
+    const rules = policy?.promotionCriteria || {
+        minAttendancePercentage: 75,
+        failSubjectLimit: 2,
+        maxGraceMarks: 10,
+        allowConditionalPromotion: true
+    };
 
     const handleChange = (field, value) => {
         if (isLocked) return;
-        setRules(prev => ({ ...prev, [field]: value }));
+        useExamPolicyStore.setState({
+            policy: {
+                ...policy,
+                promotionCriteria: {
+                    ...rules,
+                    [field]: value
+                }
+            }
+        });
     };
 
     return (
@@ -30,9 +38,9 @@ const PromotionRulesConfig = ({ isLocked }) => {
                         <div>
                             <label className="block text-sm text-gray-700 mb-1">Minimum Attendance Required (%)</label>
                             <input
-                                type="number" value={rules.minAttendance} min="0" max="100"
+                                type="number" value={rules.minAttendancePercentage} min="0" max="100"
                                 disabled={isLocked}
-                                onChange={(e) => handleChange('minAttendance', e.target.value)}
+                                onChange={(e) => handleChange('minAttendancePercentage', Number(e.target.value))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-indigo-500"
                             />
                         </div>
@@ -41,7 +49,7 @@ const PromotionRulesConfig = ({ isLocked }) => {
                             <select
                                 value={rules.failSubjectLimit}
                                 disabled={isLocked}
-                                onChange={(e) => handleChange('failSubjectLimit', e.target.value)}
+                                onChange={(e) => handleChange('failSubjectLimit', Number(e.target.value))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none bg-white"
                             >
                                 <option value="1">1 Subject</option>
@@ -58,9 +66,9 @@ const PromotionRulesConfig = ({ isLocked }) => {
                         <div>
                             <label className="block text-sm text-gray-700 mb-1">Max Grace Marks (Total Cap)</label>
                             <input
-                                type="number" value={rules.graceMarksLimit}
+                                type="number" value={rules.maxGraceMarks}
                                 disabled={isLocked}
-                                onChange={(e) => handleChange('graceMarksLimit', e.target.value)}
+                                onChange={(e) => handleChange('maxGraceMarks', Number(e.target.value))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-indigo-500"
                             />
                             <p className="text-xs text-gray-500 mt-1">Maximum extra marks a moderator can award to pass a student.</p>
@@ -69,9 +77,9 @@ const PromotionRulesConfig = ({ isLocked }) => {
                         <div className="flex items-center gap-3 pt-2">
                             <input
                                 type="checkbox" id="condProm"
-                                checked={rules.allowConditionPromotion}
+                                checked={rules.allowConditionalPromotion}
                                 disabled={isLocked}
-                                onChange={(e) => handleChange('allowConditionPromotion', e.target.checked)}
+                                onChange={(e) => handleChange('allowConditionalPromotion', e.target.checked)}
                                 className="w-5 h-5 text-indigo-600 rounded"
                             />
                             <label htmlFor="condProm" className="text-sm text-gray-700 cursor-pointer">Allow Conditional Promotion (with Warning)</label>

@@ -1,23 +1,41 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Trash2, AlertCircle, Plus } from 'lucide-react';
+import { useExamPolicyStore } from '../../../../../../store/examPolicyStore';
 
 const ExamTypesConfig = ({ isLocked }) => {
-
-    // Mock Data
-    const [examTypes, setExamTypes] = useState([
-        { id: 1, name: 'Unit Test 1', weightage: 10, marks: 25, included: true },
-        { id: 2, name: 'Mid Term Exam', weightage: 30, marks: 100, included: true },
-        { id: 3, name: 'Unit Test 2', weightage: 10, marks: 25, included: true },
-        { id: 4, name: 'Final Annual Exam', weightage: 50, marks: 100, included: true }
-    ]);
+    const { policy, savePolicy } = useExamPolicyStore();
+    const examTypes = policy?.examTypes || [];
 
     const handleChange = (id, field, value) => {
         if (isLocked) return;
-        setExamTypes(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+        const updatedExamTypes = examTypes.map(e => e._id === id ? { ...e, [field]: value } : e);
+        useExamPolicyStore.setState({ 
+            policy: { ...policy, examTypes: updatedExamTypes } 
+        });
     };
 
-    const totalWeight = examTypes.reduce((sum, item) => item.included ? sum + Number(item.weightage) : sum, 0);
+    const handleAdd = () => {
+        if (isLocked) return;
+        const newType = {
+            name: 'New Exam Type',
+            weightage: 0,
+            maxMarks: 100,
+            isIncluded: true
+        };
+        useExamPolicyStore.setState({
+            policy: { ...policy, examTypes: [...examTypes, newType] }
+        });
+    };
+
+    const handleRemove = (id) => {
+        if (isLocked) return;
+        const updatedExamTypes = examTypes.filter(e => e._id !== id);
+        useExamPolicyStore.setState({
+            policy: { ...policy, examTypes: updatedExamTypes }
+        });
+    };
+
+    const totalWeight = examTypes.reduce((sum, item) => item.isIncluded ? sum + Number(item.weightage) : sum, 0);
 
     return (
         <div className="space-y-6">
@@ -44,23 +62,23 @@ const ExamTypesConfig = ({ isLocked }) => {
                         </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-gray-100">
-                        {examTypes.map((exam) => (
-                            <tr key={exam.id} className="hover:bg-gray-50">
+                        {examTypes.map((exam, index) => (
+                            <tr key={exam._id || index} className="hover:bg-gray-50">
                                 <td className="px-5 py-3">
                                     <input
                                         type="text"
                                         value={exam.name}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(exam.id, 'name', e.target.value)}
+                                        onChange={(e) => handleChange(exam._id, 'name', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 disabled:text-gray-500"
                                     />
                                 </td>
                                 <td className="px-5 py-3">
                                     <input
                                         type="number"
-                                        value={exam.marks}
+                                        value={exam.maxMarks}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(exam.id, 'marks', e.target.value)}
+                                        onChange={(e) => handleChange(exam._id, 'maxMarks', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-center disabled:bg-gray-100 disabled:text-gray-500"
                                     />
                                 </td>
@@ -69,8 +87,8 @@ const ExamTypesConfig = ({ isLocked }) => {
                                         <input
                                             type="number"
                                             value={exam.weightage}
-                                            disabled={isLocked || !exam.included}
-                                            onChange={(e) => handleChange(exam.id, 'weightage', e.target.value)}
+                                            disabled={isLocked || !exam.isIncluded}
+                                            onChange={(e) => handleChange(exam._id, 'weightage', e.target.value)}
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-center disabled:bg-gray-100 disabled:text-gray-400 font-bold text-gray-700"
                                         />
                                         <span className="absolute right-2 top-1.5 text-xs text-gray-400">%</span>
@@ -79,15 +97,18 @@ const ExamTypesConfig = ({ isLocked }) => {
                                 <td className="px-5 py-3 text-center">
                                     <input
                                         type="checkbox"
-                                        checked={exam.included}
+                                        checked={exam.isIncluded}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(exam.id, 'included', e.target.checked)}
+                                        onChange={(e) => handleChange(exam._id, 'isIncluded', e.target.checked)}
                                         className="w-4 h-4 text-indigo-600 rounded cursor-pointer disabled:cursor-not-allowed"
                                     />
                                 </td>
                                 <td className="px-5 py-3 text-right">
                                     {!isLocked && (
-                                        <button className="text-gray-400 hover:text-red-500">
+                                        <button 
+                                            onClick={() => handleRemove(exam._id)}
+                                            className="text-gray-400 hover:text-red-500"
+                                        >
                                             <Trash2 size={16} />
                                         </button>
                                     )}
@@ -98,7 +119,10 @@ const ExamTypesConfig = ({ isLocked }) => {
                 </table>
                 {!isLocked && (
                     <div className="p-3 border-t border-gray-100 bg-gray-50">
-                        <button className="flex items-center gap-2 text-indigo-600 text-sm font-medium hover:underline">
+                        <button 
+                            onClick={handleAdd}
+                            className="flex items-center gap-2 text-indigo-600 text-sm font-medium hover:underline"
+                        >
                             <Plus size={16} /> Add Examination Type
                         </button>
                     </div>
