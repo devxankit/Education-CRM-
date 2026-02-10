@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Info, Calendar, Filter, Bell, HeadphonesIcon, Home, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useParentStore } from '../../../store/parentStore';
 import NoticeCard from '../components/notices/NoticeCard';
 
 const ParentNoticesPage = () => {

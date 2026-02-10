@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Trash2, Calendar, Clock, MapPin, CheckCircle } from 'lucide-react';
 import { useAdminExamStore } from '../../../../../../store/adminExamStore';
 import { useAdminStore } from '../../../../../../store/adminStore';
 import { useAppStore } from '../../../../../../store/index';
+import { useExamPolicyStore } from '../../../../../../store/examPolicyStore';
 
 const ExamFormModal = ({ isOpen, onClose, exam }) => {
     const { createExam, updateExam, isProcessing } = useAdminExamStore();
     const { classes, subjects, fetchClasses, fetchSubjects, academicYears, fetchAcademicYears } = useAdminStore();
+    const { policy, fetchPolicy } = useExamPolicyStore();
     const { user } = useAppStore();
 
     const [formData, setFormData] = useState({
@@ -24,56 +26,78 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
     const [selectedClasses, setSelectedClasses] = useState([]);
     const [examSubjects, setExamSubjects] = useState([]);
 
+    const hasFetchedInitial = useRef(false);
+
+    // 1. Initial Data Fetch (Classes, Subjects, Years) - Run once when modal opens
     useEffect(() => {
-        if (isOpen) {
-            const branchId = user?.branchId || 'main'; // Fallback
+        if (isOpen && !hasFetchedInitial.current) {
+            const branchId = user?.branchId || 'main';
             fetchClasses(branchId);
             fetchSubjects(branchId);
             fetchAcademicYears();
-
-            if (exam) {
-                setFormData({
-                    examName: exam.examName || '',
-                    examType: exam.examType || 'Internal',
-                    academicYearId: exam.academicYearId?._id || exam.academicYearId || '',
-                    startDate: exam.startDate ? new Date(exam.startDate).toISOString().split('T')[0] : '',
-                    endDate: exam.endDate ? new Date(exam.endDate).toISOString().split('T')[0] : '',
-                    description: exam.description || '',
-                    classes: exam.classes?.map(c => c._id || c) || [],
-                    subjects: exam.subjects || [],
-                    status: exam.status || 'Published'
-                });
-                setSelectedClasses(exam.classes?.map(c => c._id || c) || []);
-                setExamSubjects(exam.subjects?.map(s => ({
-                    ...s,
-                    date: s.date ? new Date(s.date).toISOString().split('T')[0] : ''
-                })) || []);
-            } else {
-                setFormData({
-                    examName: '',
-                    examType: 'Internal',
-                    academicYearId: academicYears[0]?._id || '',
-                    startDate: '',
-                    endDate: '',
-                    description: '',
-                    classes: [],
-                    subjects: [],
-                    status: 'Published'
-                });
-                setSelectedClasses([]);
-                setExamSubjects([]);
-            }
+            hasFetchedInitial.current = true;
         }
-    }, [isOpen, exam, fetchClasses, fetchSubjects, fetchAcademicYears, user, academicYears]);
+        if (!isOpen) {
+            hasFetchedInitial.current = false;
+        }
+    }, [isOpen, user?.branchId, fetchClasses, fetchSubjects, fetchAcademicYears]);
+
+    // 2. Fetch Policy only when academicYearId changes
+    useEffect(() => {
+        if (isOpen && formData.academicYearId) {
+            fetchPolicy(formData.academicYearId);
+        }
+    }, [isOpen, formData.academicYearId, fetchPolicy]);
+
+    // 3. Handle Exam Data for Editing - Run when exam or modal status changes
+    useEffect(() => {
+        if (isOpen && exam) {
+            setFormData({
+                examName: exam.examName || '',
+                examType: exam.examType || '',
+                academicYearId: exam.academicYearId?.id || exam.academicYearId?._id || exam.academicYearId || '',
+                startDate: exam.startDate ? new Date(exam.startDate).toISOString().split('T')[0] : '',
+                endDate: exam.endDate ? new Date(exam.endDate).toISOString().split('T')[0] : '',
+                description: exam.description || '',
+                classes: exam.classes?.map(c => c.id || c._id || c) || [],
+                subjects: exam.subjects || [],
+                status: exam.status || 'Published'
+            });
+            setSelectedClasses(exam.classes?.map(c => c.id || c._id || c) || []);
+            setExamSubjects(exam.subjects?.map(s => ({
+                ...s,
+                date: s.date ? new Date(s.date).toISOString().split('T')[0] : ''
+            })) || []);
+        } else if (isOpen && !exam && academicYears.length > 0 && !formData.academicYearId) {
+            setFormData(prev => ({
+                ...prev,
+                academicYearId: academicYears[0]?._id || academicYears[0]?.id
+            }));
+        }
+    }, [isOpen, exam, academicYears]);
+
+    // Update marks when exam type changes
+    useEffect(() => {
+        const selectedType = policy?.examTypes?.find(t => t.name === formData.examType);
+        if (selectedType && examSubjects.length > 0) {
+            const updated = examSubjects.map(s => ({
+                ...s,
+                maxMarks: selectedType.maxMarks,
+                passingMarks: Math.ceil(selectedType.maxMarks * 0.33)
+            }));
+            setExamSubjects(updated);
+        }
+    }, [formData.examType, policy]);
 
     const handleAddSubjectRow = () => {
+        const selectedType = policy?.examTypes?.find(t => t.name === formData.examType);
         setExamSubjects([...examSubjects, {
             subjectId: '',
             date: '',
             startTime: '10:00 AM',
             endTime: '01:00 PM',
-            maxMarks: 100,
-            passingMarks: 33,
+            maxMarks: selectedType?.maxMarks || 100,
+            passingMarks: selectedType ? Math.ceil(selectedType.maxMarks * 0.33) : 33,
             roomNo: ''
         }]);
     };
@@ -93,8 +117,9 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
 
         const finalData = {
             ...formData,
+            branchId: user?.branchId || user?.branch, // Ensure branchId is sent
             classes: selectedClasses,
-            subjects: examSubjects.filter(s => s.subjectId) // Only include rows with a subject selected
+            subjects: examSubjects.filter(s => s.subjectId && s.date) // Validation for subject submission
         };
 
         let result;
@@ -154,13 +179,21 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1">Exam Type</label>
                                 <select
+                                    required
                                     value={formData.examType}
                                     onChange={(e) => setFormData({ ...formData, examType: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm"
                                 >
-                                    <option value="Internal">Internal</option>
-                                    <option value="External">External</option>
-                                    <option value="Competitive">Competitive</option>
+                                    <option value="">Select Category</option>
+                                    {policy?.examTypes?.filter(t => t.isIncluded).map(type => (
+                                        <option key={type._id} value={type.name}>{type.name}</option>
+                                    ))}
+                                    {!policy?.examTypes?.length && (
+                                        <>
+                                            <option value="Internal">Internal</option>
+                                            <option value="External">External</option>
+                                        </>
+                                    )}
                                 </select>
                             </div>
                             <div>
@@ -218,8 +251,8 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                                     <label
                                         key={cls._id}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all cursor-pointer text-xs font-bold ${selectedClasses.includes(cls._id)
-                                                ? 'bg-indigo-600 border-indigo-700 text-white shadow-md'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
+                                            ? 'bg-indigo-600 border-indigo-700 text-white shadow-md'
+                                            : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
                                             }`}
                                     >
                                         <input

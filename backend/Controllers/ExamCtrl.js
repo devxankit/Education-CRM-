@@ -2,6 +2,7 @@ import Exam from "../Models/ExamModel.js";
 import ExamPolicy from "../Models/ExamPolicyModel.js";
 import Class from "../Models/ClassModel.js";
 import Subject from "../Models/SubjectModel.js";
+import Branch from "../Models/BranchModel.js";
 import asyncHandler from "express-async-handler";
 
 /**
@@ -34,7 +35,15 @@ export const getExams = asyncHandler(async (req, res) => {
  */
 export const createExam = asyncHandler(async (req, res) => {
     const instituteId = req.user.instituteId || req.user._id;
-    const branchId = req.user.branchId || req.body.branchId;
+    let branchId = req.user.branchId || req.user.branch || req.body.branchId;
+
+    if (!branchId && req.role === 'institute') {
+        const firstBranch = await Branch.findOne({ instituteId, isActive: true });
+        if (firstBranch) {
+            branchId = firstBranch._id;
+        }
+    }
+
     const {
         academicYearId,
         examName,
@@ -51,11 +60,21 @@ export const createExam = asyncHandler(async (req, res) => {
         return res.status(400).json({ success: false, message: "Please provide all required fields" });
     }
 
+    if (!branchId) {
+        return res.status(400).json({ success: false, message: "Branch ID is required to create an exam." });
+    }
+
     // Check if the exam type is valid as per policy
     const policy = await ExamPolicy.findOne({ instituteId, academicYearId });
     if (policy) {
-        const validExamType = policy.examTypes.find(t => t.name === examName || t.name === examType);
-        // We can add more strict validation here if needed
+        const policyExamType = policy.examTypes.find(t => t.isIncluded && (t.name === examType || t.name === examName));
+
+        if (policyExamType) {
+            // If the exam matches a policy type, ensure subjects follow the maxMarks
+            subjects.forEach(sub => {
+                if (!sub.maxMarks) sub.maxMarks = policyExamType.maxMarks;
+            });
+        }
     }
 
     const exam = new Exam({

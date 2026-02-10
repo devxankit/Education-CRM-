@@ -110,14 +110,14 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        const { summary, history, monthly } = response.data.data;
+                        const { summary, history = [], monthly = [] } = response.data.data;
                         set({
                             attendance: {
-                                overall: summary.percentage,
-                                required: summary.required,
-                                total: summary.total,
-                                present: summary.present,
-                                absent: summary.absent,
+                                overall: summary?.percentage || 0,
+                                required: summary?.required || 75,
+                                total: summary?.total || 0,
+                                present: summary?.present || 0,
+                                absent: summary?.absent || 0,
                                 history: history.map(h => ({
                                     date: new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
                                     status: h.status,
@@ -148,7 +148,7 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set({ homework: response.data.data, isLoading: false });
+                        set({ homework: response.data.data || [], isLoading: false });
                     }
                 } catch (error) {
                     console.error('Error fetching child homework:', error);
@@ -164,29 +164,29 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        const { summary, breakdown, history } = response.data.data;
+                        const { summary, breakdown = [], receipts = [] } = response.data.data;
                         set({
                             fees: {
                                 summary: {
-                                    total: summary.total,
-                                    paid: summary.paid,
-                                    pending: summary.pending,
-                                    percentage: summary.percentage,
-                                    nextDue: summary.nextDueDate || 'N/A'
+                                    total: summary.total || 0,
+                                    paid: summary.paid || 0,
+                                    pending: summary.pending || 0,
+                                    percentage: summary.percentage || 0,
+                                    nextDue: summary.nextDue || 'N/A'
                                 },
                                 breakdown: breakdown.map((item, idx) => ({
                                     id: idx + 1,
-                                    head: item.name,
-                                    total: item.amount,
-                                    status: item.status,
-                                    installments: item.installments || [{ term: 'Full Payment', due: item.dueDate, amount: item.amount, status: item.status }]
+                                    head: item.head || item.name || 'N/A',
+                                    total: item.total || item.amount || 0,
+                                    status: item.status || 'Due',
+                                    installments: item.installments || [{ term: 'Full Payment', due: item.dueDate, amount: item.total || item.amount, status: item.status }]
                                 })),
-                                receipts: history.map(tx => ({
-                                    id: tx.id,
-                                    date: tx.date,
-                                    amount: tx.amount,
-                                    mode: tx.method,
-                                    status: tx.status
+                                receipts: receipts.map(tx => ({
+                                    id: tx.id || tx.receiptNo,
+                                    date: tx.date || tx.paymentDate,
+                                    amount: tx.amount || tx.amountPaid,
+                                    mode: tx.mode || tx.paymentMethod,
+                                    status: tx.status || 'Success'
                                 }))
                             },
                             isLoading: false

@@ -4,11 +4,12 @@ import { Eye, EyeOff, Globe, Lock } from 'lucide-react';
 
 const VisibilityConfig = ({ isLocked }) => {
     const { policy } = useExamPolicyStore();
-    const resultPublishing = policy?.resultPublishing || {
+    const visibilityRules = policy?.visibilityRules || {
         autoPublishResults: false,
         showRankInReportCard: true,
         showPercentile: false,
-        allowParentView: true
+        allowParentView: true,
+        showGraceMarksToParents: false
     };
 
     const handleChange = (field, value) => {
@@ -16,8 +17,8 @@ const VisibilityConfig = ({ isLocked }) => {
         useExamPolicyStore.setState({
             policy: {
                 ...policy,
-                resultPublishing: {
-                    ...resultPublishing,
+                visibilityRules: {
+                    ...visibilityRules,
                     [field]: value
                 }
             }
@@ -45,7 +46,7 @@ const VisibilityConfig = ({ isLocked }) => {
                             </div>
                             <input
                                 type="checkbox"
-                                checked={resultPublishing.autoPublishResults}
+                                checked={visibilityRules.autoPublishResults}
                                 disabled={isLocked}
                                 onChange={(e) => handleChange('autoPublishResults', e.target.checked)}
                                 className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
@@ -59,7 +60,7 @@ const VisibilityConfig = ({ isLocked }) => {
                             </div>
                             <input
                                 type="checkbox"
-                                checked={resultPublishing.allowParentView}
+                                checked={visibilityRules.allowParentView}
                                 disabled={isLocked}
                                 onChange={(e) => handleChange('allowParentView', e.target.checked)}
                                 className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
@@ -77,7 +78,7 @@ const VisibilityConfig = ({ isLocked }) => {
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white rounded border border-gray-200">
-                                    {resultPublishing.showRankInReportCard ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-red-600" />}
+                                    {visibilityRules.showRankInReportCard ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-red-600" />}
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-700 block">Show Class Rank</label>
@@ -86,7 +87,7 @@ const VisibilityConfig = ({ isLocked }) => {
                             </div>
                             <input
                                 type="checkbox"
-                                checked={resultPublishing.showRankInReportCard}
+                                checked={visibilityRules.showRankInReportCard}
                                 disabled={isLocked}
                                 onChange={(e) => handleChange('showRankInReportCard', e.target.checked)}
                                 className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
@@ -96,7 +97,7 @@ const VisibilityConfig = ({ isLocked }) => {
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white rounded border border-gray-200">
-                                    {resultPublishing.showPercentile ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-red-600" />}
+                                    {visibilityRules.showPercentile ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-red-600" />}
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-700 block">Show Percentile</label>
@@ -105,7 +106,7 @@ const VisibilityConfig = ({ isLocked }) => {
                             </div>
                             <input
                                 type="checkbox"
-                                checked={resultPublishing.showPercentile}
+                                checked={visibilityRules.showPercentile}
                                 disabled={isLocked}
                                 onChange={(e) => handleChange('showPercentile', e.target.checked)}
                                 className="w-5 h-5 text-indigo-600 rounded cursor-pointer"

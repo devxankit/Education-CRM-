@@ -14,6 +14,7 @@ const ParentHomeworkPage = () => {
     const homework = useParentStore(state => state.homework);
     const fetchHomework = useParentStore(state => state.fetchHomework);
     const isLoading = useParentStore(state => state.isLoading);
+    const selectedChildIdStore = useParentStore(state => state.selectedChildId);
 
     const [activeTab, setActiveTab] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,17 +22,16 @@ const ParentHomeworkPage = () => {
 
     // 1. Entry Check & Filter Init
     useEffect(() => {
-        if (!childId) {
-            console.warn("No childId provided, redirecting in prod.");
-        } else {
-            fetchHomework(childId);
+        const idToUse = childId || selectedChildIdStore;
+        if (idToUse) {
+            fetchHomework(idToUse);
         }
 
         if (initialFilter) {
             const map = { 'pending': 'Pending', 'completed': 'Submitted', 'late': 'Late' };
             if (map[initialFilter]) setActiveTab(map[initialFilter]);
         }
-    }, [childId, initialFilter, fetchHomework]);
+    }, [childId, selectedChildIdStore, initialFilter, fetchHomework]);
 
     if (isLoading) {
         return (

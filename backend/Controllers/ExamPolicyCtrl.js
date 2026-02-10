@@ -35,7 +35,9 @@ export const getExamPolicy = asyncHandler(async (req, res) => {
                 visibilityRules: {
                     autoPublishResults: false,
                     showGraceMarksToParents: false,
-                    showRankInClass: true,
+                    showRankInReportCard: true,
+                    showPercentile: false,
+                    allowParentView: true,
                 },
                 isLocked: false, // Default to unlocked for first setup
             }

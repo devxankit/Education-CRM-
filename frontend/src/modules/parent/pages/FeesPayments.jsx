@@ -16,6 +16,7 @@ const ParentFeesPage = () => {
     const fees = useParentStore(state => state.fees);
     const fetchFees = useParentStore(state => state.fetchFees);
     const isLoading = useParentStore(state => state.isLoading);
+    const selectedChildIdStore = useParentStore(state => state.selectedChildId);
 
     const [activeTab, setActiveTab] = useState(initialTab === 'history' ? 'Receipts' : 'Structure');
     const [expandedFeeId, setExpandedFeeId] = useState(null);
@@ -23,10 +24,9 @@ const ParentFeesPage = () => {
 
     // 1. Entry Check & Scroll
     useEffect(() => {
-        if (!childId) {
-            console.warn("No childId provided, redirected in prod.");
-        } else {
-            fetchFees(childId);
+        const idToUse = childId || selectedChildIdStore;
+        if (idToUse) {
+            fetchFees(idToUse);
         }
 
         if (highlightPendingFee && pendingRef.current) {
@@ -34,7 +34,7 @@ const ParentFeesPage = () => {
                 pendingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightPendingFee, fetchFees]);
+    }, [childId, selectedChildIdStore, highlightPendingFee, fetchFees]);
 
     if (isLoading) {
         return (

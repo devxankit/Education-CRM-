@@ -23,8 +23,7 @@ const examSchema = new mongoose.Schema(
             trim: true,
         },
         examType: {
-            type: String,
-            enum: ["Internal", "External", "Competitive"],
+            type: String, // e.g., "Unit Test 1", "Mid-Term", "Final" (Synced with Policy)
             default: "Internal",
         },
         startDate: {

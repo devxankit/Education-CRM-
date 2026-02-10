@@ -42,7 +42,9 @@ const examPolicySchema = new mongoose.Schema(
             autoPublishResults: { type: Boolean, default: false },
             publishDate: { type: Date },
             showGraceMarksToParents: { type: Boolean, default: false },
-            showRankInClass: { type: Boolean, default: true },
+            showRankInReportCard: { type: Boolean, default: true },
+            showPercentile: { type: Boolean, default: false },
+            allowParentView: { type: Boolean, default: true },
         },
         isLocked: {
             type: Boolean,

@@ -12,12 +12,18 @@ const PromotionRulesConfig = ({ isLocked }) => {
 
     const handleChange = (field, value) => {
         if (isLocked) return;
+
+        // Allow raw value for better typing experience
+        const finalValue = (field === 'minAttendancePercentage' || field === 'maxGraceMarks') && value === ''
+            ? ''
+            : value;
+
         useExamPolicyStore.setState({
             policy: {
                 ...policy,
                 promotionCriteria: {
                     ...rules,
-                    [field]: value
+                    [field]: finalValue
                 }
             }
         });
@@ -40,7 +46,7 @@ const PromotionRulesConfig = ({ isLocked }) => {
                             <input
                                 type="number" value={rules.minAttendancePercentage} min="0" max="100"
                                 disabled={isLocked}
-                                onChange={(e) => handleChange('minAttendancePercentage', Number(e.target.value))}
+                                onChange={(e) => handleChange('minAttendancePercentage', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-indigo-500"
                             />
                         </div>
@@ -68,7 +74,7 @@ const PromotionRulesConfig = ({ isLocked }) => {
                             <input
                                 type="number" value={rules.maxGraceMarks}
                                 disabled={isLocked}
-                                onChange={(e) => handleChange('maxGraceMarks', Number(e.target.value))}
+                                onChange={(e) => handleChange('maxGraceMarks', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-indigo-500"
                             />
                             <p className="text-xs text-gray-500 mt-1">Maximum extra marks a moderator can award to pass a student.</p>

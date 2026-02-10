@@ -6,18 +6,19 @@ const ExamTypesConfig = ({ isLocked }) => {
     const { policy, savePolicy } = useExamPolicyStore();
     const examTypes = policy?.examTypes || [];
 
-    const handleChange = (id, field, value) => {
+    const handleChange = (index, field, value) => {
         if (isLocked) return;
-        const updatedExamTypes = examTypes.map(e => e._id === id ? { ...e, [field]: value } : e);
-        useExamPolicyStore.setState({ 
-            policy: { ...policy, examTypes: updatedExamTypes } 
+        const updatedExamTypes = [...examTypes];
+        updatedExamTypes[index] = { ...updatedExamTypes[index], [field]: value };
+        useExamPolicyStore.setState({
+            policy: { ...policy, examTypes: updatedExamTypes }
         });
     };
 
     const handleAdd = () => {
         if (isLocked) return;
         const newType = {
-            name: 'New Exam Type',
+            name: '',
             weightage: 0,
             maxMarks: 100,
             isIncluded: true
@@ -27,9 +28,9 @@ const ExamTypesConfig = ({ isLocked }) => {
         });
     };
 
-    const handleRemove = (id) => {
+    const handleRemove = (index) => {
         if (isLocked) return;
-        const updatedExamTypes = examTypes.filter(e => e._id !== id);
+        const updatedExamTypes = examTypes.filter((_, i) => i !== index);
         useExamPolicyStore.setState({
             policy: { ...policy, examTypes: updatedExamTypes }
         });
@@ -69,7 +70,8 @@ const ExamTypesConfig = ({ isLocked }) => {
                                         type="text"
                                         value={exam.name}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(exam._id, 'name', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'name', e.target.value)}
+                                        placeholder="Enter exam name (e.g. Unit Test 1)"
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 disabled:text-gray-500"
                                     />
                                 </td>
@@ -78,7 +80,7 @@ const ExamTypesConfig = ({ isLocked }) => {
                                         type="number"
                                         value={exam.maxMarks}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(exam._id, 'maxMarks', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'maxMarks', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-center disabled:bg-gray-100 disabled:text-gray-500"
                                     />
                                 </td>
@@ -88,7 +90,7 @@ const ExamTypesConfig = ({ isLocked }) => {
                                             type="number"
                                             value={exam.weightage}
                                             disabled={isLocked || !exam.isIncluded}
-                                            onChange={(e) => handleChange(exam._id, 'weightage', e.target.value)}
+                                            onChange={(e) => handleChange(index, 'weightage', e.target.value)}
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-center disabled:bg-gray-100 disabled:text-gray-400 font-bold text-gray-700"
                                         />
                                         <span className="absolute right-2 top-1.5 text-xs text-gray-400">%</span>
@@ -99,14 +101,14 @@ const ExamTypesConfig = ({ isLocked }) => {
                                         type="checkbox"
                                         checked={exam.isIncluded}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(exam._id, 'isIncluded', e.target.checked)}
+                                        onChange={(e) => handleChange(index, 'isIncluded', e.target.checked)}
                                         className="w-4 h-4 text-indigo-600 rounded cursor-pointer disabled:cursor-not-allowed"
                                     />
                                 </td>
                                 <td className="px-5 py-3 text-right">
                                     {!isLocked && (
-                                        <button 
-                                            onClick={() => handleRemove(exam._id)}
+                                        <button
+                                            onClick={() => handleRemove(index)}
                                             className="text-gray-400 hover:text-red-500"
                                         >
                                             <Trash2 size={16} />
@@ -119,7 +121,7 @@ const ExamTypesConfig = ({ isLocked }) => {
                 </table>
                 {!isLocked && (
                     <div className="p-3 border-t border-gray-100 bg-gray-50">
-                        <button 
+                        <button
                             onClick={handleAdd}
                             className="flex items-center gap-2 text-indigo-600 text-sm font-medium hover:underline"
                         >

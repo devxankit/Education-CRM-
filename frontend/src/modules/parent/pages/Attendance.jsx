@@ -17,16 +17,16 @@ const ParentAttendancePage = () => {
     const attendance = useParentStore(state => state.attendance);
     const fetchAttendance = useParentStore(state => state.fetchAttendance);
     const isLoading = useParentStore(state => state.isLoading);
+    const selectedChildIdStore = useParentStore(state => state.selectedChildId);
 
     const [selectedMonth, setSelectedMonth] = useState('Oct');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     // 1. Entry Check & Scrolling
     useEffect(() => {
-        if (!childId) {
-            console.warn("No childId provided, redirected in prod.");
-        } else {
-            fetchAttendance(childId);
+        const idToUse = childId || selectedChildIdStore;
+        if (idToUse) {
+            fetchAttendance(idToUse);
         }
 
         if (highlightLowAttendance && scrollRef.current) {
@@ -34,7 +34,7 @@ const ParentAttendancePage = () => {
                 scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightLowAttendance, fetchAttendance]);
+    }, [childId, selectedChildIdStore, highlightLowAttendance, fetchAttendance]);
 
     // Update selected month when attendance data arrives
     useEffect(() => {

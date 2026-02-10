@@ -17,28 +17,24 @@ const ParentExamsPage = () => {
     const exams = useParentStore(state => state.exams);
     const fetchExams = useParentStore(state => state.fetchExams);
     const isLoading = useParentStore(state => state.isLoading);
+    const selectedChildIdStore = useParentStore(state => state.selectedChildId);
 
     const [activeTab, setActiveTab] = useState('All');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     // 1. Entry Check & Scroll
     useEffect(() => {
-        if (!childId) {
-            console.warn("No childId provided, redirecting in prod.");
-            // navigate('/parent/dashboard'); // Original comment, keeping it.
-        } else {
-            fetchExams(childId);
+        const idToUse = childId || selectedChildIdStore;
+        if (idToUse) {
+            fetchExams(idToUse);
         }
 
         if (highlightLatestResult && latestExamRef.current) {
             setTimeout(() => {
-                // Note: The instruction provided `scrollRef.current` here, but `latestExamRef` is defined.
-                // Assuming `scrollRef` is intended to be `latestExamRef` or defined elsewhere.
-                // For faithful adherence to the instruction, `scrollRef.current` is used.
                 latestExamRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, highlightLatestResult, fetchExams]); // Changed dependency from navigate to fetchExams
+    }, [childId, selectedChildIdStore, highlightLatestResult, fetchExams]); // Changed dependency from navigate to fetchExams
 
     if (isLoading) {
         return (
