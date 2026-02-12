@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Users, GraduationCap, Briefcase,
     Banknote, Receipt, Bus, Box, FileText,
-    Bell, LifeBuoy, BarChart2, Shield, Settings, Lock
+    Bell, LifeBuoy, BarChart2, Shield, Settings, Lock, ClipboardCheck
 } from 'lucide-react';
 import { useStaffAuth } from '../../context/StaffAuthContext';
 
@@ -25,6 +25,7 @@ const StaffSidebar = () => {
             header: 'People', items: [
                 { path: '/staff/students', icon: GraduationCap, label: 'Students' },
                 { path: '/staff/teachers', icon: Users, label: 'Teachers' },
+                { path: '/staff/teacher-attendance', icon: ClipboardCheck, label: 'Teacher Attendance' },
                 { path: '/staff/employees', icon: Briefcase, label: 'Employees' },
             ]
         },

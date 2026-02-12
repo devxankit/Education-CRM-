@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import TeacherLayout from './layouts/TeacherLayout';
+import TeacherAuthGuard from './components/auth/TeacherAuthGuard';
 import Login from './pages/auth/Login';
 import TeacherDashboard from './pages/Dashboard';
 import ClassesPage from './pages/Classes';
@@ -17,6 +18,7 @@ import HomeworkDetailPage from './pages/HomeworkDetail';
 import SubmissionsPage from './pages/Submissions';
 import ClassDetailPage from './pages/ClassDetail';
 import ExamDetailPage from './pages/ExamDetail';
+import TeacherPayroll from './pages/Payroll';
 
 const teacherRoutes = [
     {
@@ -28,8 +30,11 @@ const teacherRoutes = [
                 element: <Navigate to="dashboard" replace />,
             },
             {
-                element: <TeacherLayout />,
+                element: <TeacherAuthGuard />,
                 children: [
+                    {
+                        element: <TeacherLayout />,
+                        children: [
                     { path: 'dashboard', element: <TeacherDashboard /> },
                     { path: 'classes', element: <ClassesPage /> },
                     { path: 'classes/:id', element: <ClassDetailPage /> },
@@ -42,10 +47,13 @@ const teacherRoutes = [
                     { path: 'exams/:id', element: <ExamDetailPage /> },
                     { path: 'reports', element: <ReportsPage /> },
                     { path: 'profile', element: <ProfilePage /> },
+                    { path: 'payroll', element: <TeacherPayroll /> },
                     { path: 'notices', element: <NoticesPage /> },
                     { path: 'notices/:id', element: <NoticeDetail /> },
                     { path: 'support', element: <SupportPage /> },
                     { path: 'help', element: <TeacherHelpPage /> },
+                        ]
+                    }
                 ]
             }
         ]

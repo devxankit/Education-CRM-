@@ -2,6 +2,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
+import AdminAuthGuard from './components/auth/AdminAuthGuard';
 
 // Pages
 import Login from './pages/auth/Login';
@@ -26,6 +27,7 @@ import AccessControl from './pages/users/AccessControl';
 import FeeStructures from './pages/finance/FeeStructures';
 import FeePolicies from './pages/finance/FeePolicies';
 import PayrollRules from './pages/finance/PayrollRules';
+import Payroll from './pages/finance/Payroll';
 import ExpenseCategories from './pages/finance/ExpenseCategories';
 import Taxes from './pages/finance/Taxes';
 
@@ -94,10 +96,13 @@ const adminRoutes = [
         element: <OutletWrapper />,
         children: [
             { path: 'login', element: <Login /> },
-            // Protected Routes
+            // Protected Routes – token nahi to /admin/login pe bhejo
             {
-                element: <AdminLayout />,
+                element: <AdminAuthGuard />,
                 children: [
+                    {
+                        element: <AdminLayout />,
+                        children: [
                     { index: true, element: <Navigate to="dashboard" replace /> },
                     { path: 'dashboard', element: <Dashboard /> },
 
@@ -148,6 +153,7 @@ const adminRoutes = [
                     { path: 'finance/fee-structures', element: <FeeStructures /> },
                     { path: 'finance/fee-policies', element: <FeePolicies /> },
                     { path: 'finance/payroll-rules', element: <PayrollRules /> },
+                    { path: 'finance/payroll', element: <Payroll /> },
                     { path: 'finance/expense-categories', element: <ExpenseCategories /> },
                     { path: 'finance/taxes', element: <Taxes /> },
 
@@ -200,6 +206,8 @@ const adminRoutes = [
                     { path: 'audit/security', element: <SecurityAudit /> },
 
                     { path: '*', element: <Navigate to="/admin/dashboard" replace /> }
+                        ]
+                    }
                 ]
             }
         ]

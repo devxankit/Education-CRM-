@@ -6,9 +6,11 @@ import { useStaffAuth } from '../../context/StaffAuthContext';
 const StaffRoleGuard = () => {
     const { isAuthenticated, user, logout } = useStaffAuth();
     const location = useLocation();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const hasToken = !!token || !!(user && user.token);
 
-    // 1. If not logged in, force to login
-    if (!isAuthenticated) {
+    // 1. Token nahi to login pe bhejo
+    if (!hasToken || !isAuthenticated) {
         return <Navigate to="/staff/login" state={{ from: location }} replace />;
     }
 

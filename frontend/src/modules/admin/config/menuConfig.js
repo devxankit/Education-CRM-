@@ -93,6 +93,7 @@ export const adminMenuConfig = [
             { id: 'fee-structures', label: 'Fee Structures', path: '/admin/finance/fee-structures' },
             { id: 'fee-policies', label: 'Fee Policies', path: '/admin/finance/fee-policies' },
             { id: 'payroll-rules', label: 'Payroll Rules', path: '/admin/finance/payroll-rules' },
+            { id: 'payroll', label: 'Payroll Management', path: '/admin/finance/payroll' },
             { id: 'expense-categories', label: 'Expense Categories', path: '/admin/finance/expense-categories' },
             { id: 'taxes', label: 'Tax & Deductions', path: '/admin/finance/taxes' }
         ]

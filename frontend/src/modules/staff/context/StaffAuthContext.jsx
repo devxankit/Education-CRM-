@@ -84,6 +84,7 @@ export const StaffAuthProvider = ({ children }) => {
         setUser(null);
         setPermissions({});
         localStorage.removeItem('staff_user');
+        localStorage.removeItem('token');
     }, []);
 
     const value = React.useMemo(() => ({

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, UserCheck, Search } from 'lucide-react';
 
 const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, subjectId, className, teachersList = [] }) => {
@@ -7,17 +7,27 @@ const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, subjectId,
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTeacherId, setSelectedTeacherId] = useState(null);
 
+    // Debug: Log teachers data (must be before early return)
+    useEffect(() => {
+        if (isOpen) {
+            console.log('AssignTeacherModal - Teachers List:', teachersList);
+            console.log('AssignTeacherModal - Subject ID:', subjectId);
+            console.log('AssignTeacherModal - Teachers Count:', teachersList.length);
+        }
+    }, [isOpen, teachersList, subjectId]);
+
     if (!isOpen) return null;
 
     // Filter teachers who have this subject in their eligibleSubjects
     const eligibleTeachers = teachersList.filter(teacher => {
-        // If teacher has eligibleSubjects array, check if current subject is in it
-        if (teacher.eligibleSubjects && Array.isArray(teacher.eligibleSubjects)) {
-            return teacher.eligibleSubjects.some(subject =>
-                (subject._id || subject) === subjectId
-            );
+        // If teacher has eligibleSubjects array and it's not empty, check if current subject is in it
+        if (teacher.eligibleSubjects && Array.isArray(teacher.eligibleSubjects) && teacher.eligibleSubjects.length > 0) {
+            return teacher.eligibleSubjects.some(subject => {
+                const subId = typeof subject === 'object' ? (subject._id || subject.id) : subject;
+                return subId === subjectId || subId?.toString() === subjectId?.toString();
+            });
         }
-        // If no eligibleSubjects defined, show all teachers (backward compatibility)
+        // If no eligibleSubjects defined or empty array, show all teachers (backward compatibility)
         return true;
     });
 
@@ -97,7 +107,12 @@ const AssignTeacherModal = ({ isOpen, onClose, onAssign, subjectName, subjectId,
 
                     {filteredTeachers.length === 0 && (
                         <div className="p-8 text-center text-gray-500 text-sm">
-                            No teachers found matching "{searchTerm}"
+                            {teachersList.length === 0 
+                                ? 'No teachers available. Please add teachers first.'
+                                : searchTerm 
+                                    ? `No teachers found matching "${searchTerm}"`
+                                    : 'No teachers available for this subject.'
+                            }
                         </div>
                     )}
                 </div>

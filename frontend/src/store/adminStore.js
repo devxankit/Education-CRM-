@@ -352,13 +352,16 @@ export const useAdminStore = create(
                     });
                     if (response.data.success) {
                         set((state) => ({
-                            feeStructures: state.feeStructures.filter(fs => fs._id !== id)
+                            feeStructures: state.feeStructures.filter(fs => (fs._id || fs.id) !== id)
                         }));
                         get().addToast('Fee structure deleted', 'success');
+                        return true;
                     }
+                    return false;
                 } catch (error) {
                     console.error('Error deleting fee structure:', error);
                     get().addToast(error.response?.data?.message || 'Error deleting fee structure', 'error');
+                    return false;
                 }
             },
 
@@ -464,13 +467,15 @@ export const useAdminStore = create(
                     });
                     if (response.data.success) {
                         set((state) => ({
-                            taxes: state.taxes.map(t => t._id === id ? response.data.data : t)
+                            taxes: state.taxes.map(t => (t._id === id || t.id === id) ? response.data.data : t)
                         }));
                         get().addToast('Tax rule updated', 'success');
+                        return response.data.data;
                     }
                 } catch (error) {
                     console.error('Error updating tax:', error);
                     get().addToast(error.response?.data?.message || 'Error updating tax', 'error');
+                    throw error;
                 }
             },
             deleteTax: async (id) => {
@@ -481,13 +486,15 @@ export const useAdminStore = create(
                     });
                     if (response.data.success) {
                         set((state) => ({
-                            taxes: state.taxes.filter(t => t._id !== id)
+                            taxes: state.taxes.filter(t => t._id !== id && t.id !== id)
                         }));
                         get().addToast('Tax rule deleted', 'success');
+                        return true;
                     }
                 } catch (error) {
                     console.error('Error deleting tax:', error);
                     get().addToast(error.response?.data?.message || 'Error deleting tax', 'error');
+                    throw error;
                 }
             },
 
@@ -866,6 +873,100 @@ export const useAdminStore = create(
                     console.error('Error saving payroll rule:', error);
                     get().addToast(error.response?.data?.message || 'Error saving payroll rule', 'error');
                 }
+            },
+
+            // Actions: Payroll
+            payrolls: [],
+            fetchPayrolls: async (filters = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams();
+                    Object.keys(filters).forEach(key => {
+                        if (filters[key]) params.append(key, filters[key]);
+                    });
+                    const response = await axios.get(`${API_URL}/payroll?${params.toString()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ payrolls: response.data.data });
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching payrolls:', error);
+                    get().addToast(error.response?.data?.message || 'Error fetching payrolls', 'error');
+                }
+            },
+            createPayroll: async (payrollData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/payroll`, payrollData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            payrolls: [response.data.data, ...state.payrolls]
+                        }));
+                        get().addToast('Payroll created successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error creating payroll:', error);
+                    get().addToast(error.response?.data?.message || 'Error creating payroll', 'error');
+                    return null;
+                }
+            },
+            updatePayroll: async (id, payrollData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/payroll/${id}`, payrollData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            payrolls: state.payrolls.map(p => (p._id || p.id) === id ? response.data.data : p)
+                        }));
+                        get().addToast('Payroll updated successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error updating payroll:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating payroll', 'error');
+                    return null;
+                }
+            },
+            deletePayroll: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/payroll/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            payrolls: state.payrolls.filter(p => (p._id || p.id) !== id)
+                        }));
+                        get().addToast('Payroll deleted successfully', 'success');
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error deleting payroll:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting payroll', 'error');
+                    return false;
+                }
+            },
+            fetchStaff: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/staff?branchId=${branchId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching staff:', error);
+                }
+                return [];
             },
 
             // Actions: Expense Categories

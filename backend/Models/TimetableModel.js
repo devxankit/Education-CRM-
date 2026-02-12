@@ -20,12 +20,17 @@ const timetableSchema = new mongoose.Schema(
         classId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Class",
-            required: true,
+            // Required for school, optional for college
+        },
+        courseId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Course",
+            // Required for college, optional for school
         },
         sectionId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Section",
-            required: true,
+            // Required for school, optional for college
         },
         schedule: {
             Mon: [
@@ -115,7 +120,8 @@ const timetableSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// One timetable per section per academic year
-timetableSchema.index({ academicYearId: 1, sectionId: 1 }, { unique: true });
+// Unique indexes: For school (section-based) and college (course-based)
+timetableSchema.index({ academicYearId: 1, sectionId: 1 }, { unique: true, sparse: true });
+timetableSchema.index({ academicYearId: 1, courseId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("Timetable", timetableSchema);

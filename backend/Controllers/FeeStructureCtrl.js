@@ -6,7 +6,7 @@ export const createFeeStructure = async (req, res) => {
     try {
         const {
             name, academicYearId, branchId, totalAmount,
-            applicableClasses, applicableCourses, components, installments
+            applicableClasses, applicableCourses, components, installments, status
         } = req.body;
         const instituteId = req.user._id;
 
@@ -15,6 +15,32 @@ export const createFeeStructure = async (req, res) => {
         }
         if (!mongoose.Types.ObjectId.isValid(academicYearId)) {
             return res.status(400).json({ success: false, message: "Invalid Academic Year ID" });
+        }
+
+        // Validation: Check for duplicate fee structure
+        // Same branch + same academic year + overlapping classes cannot have multiple structures
+        if (applicableClasses && applicableClasses.length > 0) {
+            const existingStructures = await FeeStructure.find({
+                instituteId,
+                branchId,
+                academicYearId,
+                status: { $in: ['active', 'draft'] } // Only check active and draft
+            }).populate('applicableClasses', '_id');
+
+            for (const existing of existingStructures) {
+                const existingClassIds = existing.applicableClasses?.map(c => c._id?.toString() || c.toString()) || [];
+                const newClassIds = applicableClasses.map(c => c.toString());
+                
+                // Check if any class overlaps
+                const hasOverlap = newClassIds.some(clsId => existingClassIds.includes(clsId));
+                
+                if (hasOverlap) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `A fee structure already exists for this branch, academic year, and class combination. Please edit the existing structure "${existing.name}" or select different classes.`
+                    });
+                }
+            }
         }
 
         const feeStructure = new FeeStructure({
@@ -27,7 +53,7 @@ export const createFeeStructure = async (req, res) => {
             applicableCourses: applicableCourses || [],
             components: components || [],
             installments: installments || [],
-            status: "draft"
+            status: status || "active" // Default to active, allow draft if explicitly set
         });
 
         await feeStructure.save();
@@ -85,11 +111,45 @@ export const updateFeeStructure = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
+        const instituteId = req.user._id;
+
+        const existingStructure = await FeeStructure.findById(id);
+        if (!existingStructure) {
+            return res.status(404).json({ success: false, message: "Fee structure not found" });
+        }
+
+        // Validation: Check for duplicate fee structure (if branch/year/classes are being updated)
+        const branchId = updateData.branchId || existingStructure.branchId;
+        const academicYearId = updateData.academicYearId || existingStructure.academicYearId;
+        const applicableClasses = updateData.applicableClasses || existingStructure.applicableClasses;
+
+        if (applicableClasses && applicableClasses.length > 0) {
+            const duplicateStructures = await FeeStructure.find({
+                _id: { $ne: id }, // Exclude current structure
+                instituteId,
+                branchId,
+                academicYearId,
+                status: { $in: ['active', 'draft'] }
+            }).populate('applicableClasses', '_id');
+
+            for (const duplicate of duplicateStructures) {
+                const duplicateClassIds = duplicate.applicableClasses?.map(c => c._id?.toString() || c.toString()) || [];
+                const newClassIds = applicableClasses.map(c => c.toString());
+                
+                const hasOverlap = newClassIds.some(clsId => duplicateClassIds.includes(clsId));
+                
+                if (hasOverlap) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Cannot update: A fee structure "${duplicate.name}" already exists for this branch, academic year, and class combination.`
+                    });
+                }
+            }
+        }
 
         // If locking/activating
         if (updateData.status === "active") {
-            const structure = await FeeStructure.findById(id);
-            if (structure.totalAmount <= 0) {
+            if (existingStructure.totalAmount <= 0) {
                 return res.status(400).json({
                     success: false,
                     message: "Cannot activate structure with zero total amount"

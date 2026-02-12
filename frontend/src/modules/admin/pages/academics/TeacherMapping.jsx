@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Filter, Save, HelpCircle, AlertCircle, MapPin } from 'lucide-react';
+import { Filter, Save, HelpCircle, AlertCircle, MapPin, GraduationCap, School } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
@@ -9,6 +9,7 @@ import AssignTeacherModal from './components/mapping/AssignTeacherModal';
 const TeacherMapping = () => {
     const {
         classes, fetchClasses,
+        courses, fetchCourses,
         sections, fetchSections,
         teachers, fetchTeachers,
         academicYears, fetchAcademicYears,
@@ -20,7 +21,9 @@ const TeacherMapping = () => {
     const user = useAppStore(state => state.user);
 
     // Selections
+    const [mappingMode, setMappingMode] = useState('school'); // 'school' or 'college'
     const [selectedClassId, setSelectedClassId] = useState('');
+    const [selectedCourseId, setSelectedCourseId] = useState('');
     const [selectedSectionId, setSelectedSectionId] = useState('');
     const [selectedYearId, setSelectedYearId] = useState('');
     const [selectedBranchId, setSelectedBranchId] = useState(null);
@@ -46,12 +49,13 @@ const TeacherMapping = () => {
         }
     }, [user, branches, selectedBranchId]);
 
-    // Fetch classes when branch is selected
+    // Fetch classes and courses when branch is selected
     useEffect(() => {
         if (selectedBranchId) {
             fetchClasses(selectedBranchId);
+            fetchCourses(selectedBranchId);
         }
-    }, [selectedBranchId, fetchClasses]);
+    }, [selectedBranchId, fetchClasses, fetchCourses]);
 
     // Set Active Year initially
     useEffect(() => {
@@ -64,30 +68,53 @@ const TeacherMapping = () => {
 
     // Fetch Sections when Class changes
     useEffect(() => {
-        if (selectedClassId) {
+        if (selectedClassId && mappingMode === 'school') {
             fetchSections(selectedClassId);
             setSelectedSectionId(''); // Reset section
         }
-    }, [selectedClassId, fetchSections]);
+    }, [selectedClassId, mappingMode, fetchSections]);
 
-    // Auto-select first section
-    const currentSections = sections[selectedClassId] || [];
+    // Reset selections when mode changes
     useEffect(() => {
-        if (currentSections.length > 0 && !selectedSectionId) {
+        if (mappingMode === 'school') {
+            setSelectedCourseId('');
+            setSelectedClassId('');
+            setSelectedSectionId('');
+        } else {
+            setSelectedClassId('');
+            setSelectedSectionId('');
+        }
+    }, [mappingMode]);
+
+    // Auto-select first section (only for school mode)
+    const currentSections = mappingMode === 'school' ? (sections[selectedClassId] || []) : [];
+    useEffect(() => {
+        if (mappingMode === 'school' && currentSections.length > 0 && !selectedSectionId) {
             setSelectedSectionId(currentSections[0]._id);
         }
-    }, [currentSections, selectedSectionId]);
+    }, [currentSections, selectedSectionId, mappingMode]);
 
     // Fetch Mappings when context changes
     const loadMappings = useCallback(() => {
-        if (selectedYearId && selectedSectionId) {
-            fetchTeacherMappings({
-                academicYearId: selectedYearId,
-                sectionId: selectedSectionId,
-                classId: selectedClassId
-            });
+        if (selectedYearId) {
+            // For school: require sectionId, for college: require courseId (no sectionId)
+            if (mappingMode === 'school' && selectedSectionId) {
+                fetchTeacherMappings({
+                    academicYearId: selectedYearId,
+                    sectionId: selectedSectionId,
+                    classId: selectedClassId,
+                    courseId: null
+                });
+            } else if (mappingMode === 'college' && selectedCourseId) {
+                fetchTeacherMappings({
+                    academicYearId: selectedYearId,
+                    sectionId: null,
+                    classId: null,
+                    courseId: selectedCourseId
+                });
+            }
         }
-    }, [selectedYearId, selectedSectionId, selectedClassId, fetchTeacherMappings]);
+    }, [selectedYearId, selectedSectionId, selectedClassId, selectedCourseId, mappingMode, fetchTeacherMappings]);
 
     useEffect(() => {
         loadMappings();
@@ -100,7 +127,11 @@ const TeacherMapping = () => {
     };
 
     const handleAssignConfirm = async (teacher) => {
-        if (!activeSubject || !selectedYearId || !selectedSectionId) return;
+        if (!activeSubject || !selectedYearId) return;
+        
+        // For school: require sectionId, for college: require courseId
+        if (mappingMode === 'school' && !selectedSectionId) return;
+        if (mappingMode === 'college' && !selectedCourseId) return;
 
         const targetBranchId = user?.branchId?.length === 24 ? user.branchId : selectedBranchId;
 
@@ -112,8 +143,9 @@ const TeacherMapping = () => {
         const success = await assignTeacherMapping({
             academicYearId: selectedYearId,
             branchId: targetBranchId,
-            classId: selectedClassId,
-            sectionId: selectedSectionId,
+            classId: mappingMode === 'school' ? selectedClassId : null,
+            courseId: mappingMode === 'college' ? selectedCourseId : null,
+            sectionId: mappingMode === 'school' ? selectedSectionId : null,
             subjectId: activeSubject.subjectId,
             teacherId: teacher.id || teacher._id
         });
@@ -130,7 +162,8 @@ const TeacherMapping = () => {
         if (window.confirm(`Remove ${row.teacherName} from ${row.subjectName}?`)) {
             const success = await removeTeacherMapping({
                 academicYearId: selectedYearId,
-                sectionId: selectedSectionId,
+                sectionId: mappingMode === 'school' ? selectedSectionId : null,
+                courseId: mappingMode === 'college' ? selectedCourseId : null,
                 subjectId: row.subjectId
             });
             if (success) loadMappings();
@@ -139,6 +172,7 @@ const TeacherMapping = () => {
 
     const activeYear = academicYears.find(y => y._id === selectedYearId);
     const selectedClass = classes.find(c => c._id === selectedClassId);
+    const selectedCourse = courses.find(c => c._id === selectedCourseId);
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -146,7 +180,7 @@ const TeacherMapping = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Teacher Allocation</h1>
-                    <p className="text-gray-500 text-sm">Map faculty to subjects for specific classes/sections.</p>
+                    <p className="text-gray-500 text-sm">Map faculty to subjects for specific classes/sections or courses/programs.</p>
                 </div>
 
                 <div className="flex gap-3">
@@ -159,73 +193,133 @@ const TeacherMapping = () => {
             </div>
 
             {/* Context Filters */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
-
-                <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
-                    <select
-                        value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)}
-                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        {academicYears.map(year => (
-                            <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(Active)' : ''}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Class</label>
-                    <select
-                        value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)}
-                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        <option value="">-- Select Class --</option>
-                        {classes.map(cls => (
-                            <option key={cls._id} value={cls._id}>{cls.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Section</label>
-                    <select
-                        value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)}
-                        disabled={!selectedClassId}
-                        className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                    >
-                        <option value="">-- Select Section --</option>
-                        {currentSections.map(sec => (
-                            <option key={sec._id} value={sec._id}>{sec.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Branch Selector */}
-                <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
-                    <MapPin size={16} className="text-indigo-500" />
-                    <select
-                        value={selectedBranchId || ''}
-                        onChange={(e) => setSelectedBranchId(e.target.value)}
-                        disabled={user?.branchId && user.branchId !== 'all'}
-                        className="text-sm font-semibold border-none bg-transparent outline-none focus:ring-0 cursor-pointer text-indigo-700"
-                    >
-                        {branches.map(b => (
-                            <option key={b._id} value={b._id}>{b.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                {activeYear && (
-                    <div className="ml-auto flex items-center gap-2 text-sm text-gray-500 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
-                        <span className="font-bold text-blue-700">Year {activeYear.name}</span> ({activeYear.status === 'active' ? 'Active' : 'Closed'})
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
+                {/* Mode Toggle */}
+                <div className="mb-4 flex items-center gap-4">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mode:</label>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setMappingMode('school')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                mappingMode === 'school'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <School size={16} />
+                            School (Class)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMappingMode('college')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                mappingMode === 'college'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <GraduationCap size={16} />
+                            College (Course)
+                        </button>
                     </div>
-                )}
+                </div>
 
+                <div className="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
+                        <select
+                            value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)}
+                            className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            {academicYears.map(year => (
+                                <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(Active)' : ''}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* School Mode: Class Selection */}
+                    {mappingMode === 'school' && (
+                        <>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                    <School size={12} />
+                                    Class
+                                </label>
+                                <select
+                                    value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value="">-- Select Class --</option>
+                                    {classes.map(cls => (
+                                        <option key={cls._id} value={cls._id}>{cls.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Section</label>
+                                <select
+                                    value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)}
+                                    disabled={!selectedClassId}
+                                    className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                                >
+                                    <option value="">-- Select Section --</option>
+                                    {currentSections.map(sec => (
+                                        <option key={sec._id} value={sec._id}>{sec.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    )}
+
+                    {/* College Mode: Course Selection (No Section) */}
+                    {mappingMode === 'college' && (
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <GraduationCap size={12} />
+                                Course/Program
+                            </label>
+                            <select
+                                value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)}
+                                className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[200px] outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="">-- Select Course --</option>
+                                {courses.map(course => (
+                                    <option key={course._id} value={course._id}>
+                                        {course.name} ({course.code})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Branch Selector */}
+                    <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
+                        <MapPin size={16} className="text-indigo-500" />
+                        <select
+                            value={selectedBranchId || ''}
+                            onChange={(e) => setSelectedBranchId(e.target.value)}
+                            disabled={user?.branchId && user.branchId !== 'all'}
+                            className="text-sm font-semibold border-none bg-transparent outline-none focus:ring-0 cursor-pointer text-indigo-700"
+                        >
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {activeYear && (
+                        <div className="ml-auto flex items-center gap-2 text-sm text-gray-500 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                            <span className="font-bold text-blue-700">Year {activeYear.name}</span> ({activeYear.status === 'active' ? 'Active' : 'Closed'})
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Grid */}
             <div className="flex-1">
-                {selectedSectionId ? (
+                {(mappingMode === 'school' && selectedSectionId) || (mappingMode === 'college' && selectedCourseId) ? (
                     <MappingTable
                         mappings={teacherMappings}
                         onAssignClick={handleAssignClick}
@@ -234,7 +328,12 @@ const TeacherMapping = () => {
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center">
                         <AlertCircle className="text-gray-300 mb-3" size={48} />
-                        <p className="text-gray-500">Select a Class and Section to manage teacher allocations.</p>
+                        <p className="text-gray-500">
+                            {mappingMode === 'school' 
+                                ? 'Select a Class and Section to manage teacher allocations.'
+                                : 'Select a Course to manage teacher allocations.'
+                            }
+                        </p>
                     </div>
                 )}
             </div>
@@ -247,7 +346,10 @@ const TeacherMapping = () => {
                 subjectName={activeSubject?.subjectName}
                 subjectId={activeSubject?.subjectId}
                 teachersList={teachers}
-                className={`${selectedClass?.name || ''} - ${currentSections.find(s => s._id === selectedSectionId)?.name || ''}`}
+                className={mappingMode === 'school' 
+                    ? `${selectedClass?.name || ''} - ${currentSections.find(s => s._id === selectedSectionId)?.name || ''}`
+                    : `${selectedCourse?.name || ''}`
+                }
             />
 
         </div>

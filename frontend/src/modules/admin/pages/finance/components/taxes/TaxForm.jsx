@@ -45,7 +45,12 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(formData);
+        // Convert rate to number
+        const dataToSave = {
+            ...formData,
+            rate: parseFloat(formData.rate) || 0
+        };
+        onSave(dataToSave);
     };
 
     return (

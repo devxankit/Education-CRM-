@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Users, BarChart2, User, FileText, Bus, Banknote,
-    LifeBuoy, Menu, X, ChevronRight, Lock, Briefcase, Receipt, Box, Bell, Shield
+    LifeBuoy, Menu, X, ChevronRight, Lock, Briefcase, Receipt, Box, Bell, Shield, ClipboardCheck
 } from 'lucide-react';
 import { useStaffAuth } from '../../context/StaffAuthContext';
 import { STAFF_ROLES } from '../../config/roles';
@@ -53,6 +53,7 @@ const StaffBottomNav = () => {
         { path: '/staff/expenses', icon: BarChart2, label: 'Expenses' },
         { path: '/staff/transport', icon: Bus, label: 'Transport' },
         { path: '/staff/teachers', icon: FileText, label: 'Teachers' },
+        { path: '/staff/teacher-attendance', icon: ClipboardCheck, label: 'T.Attendance' },
         { path: '/staff/employees', icon: Briefcase, label: 'Staff' },
         { path: '/staff/assets', icon: Box, label: 'Assets' },
         { path: '/staff/reports', icon: FileText, label: 'Reports' },

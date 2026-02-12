@@ -10,9 +10,11 @@ import SubjectFormModal from './components/subjects/SubjectFormModal';
 const SubjectsMaster = () => {
     const subjects = useAdminStore(state => state.subjects);
     const classes = useAdminStore(state => state.classes);
+    const courses = useAdminStore(state => state.courses);
     const branches = useAdminStore(state => state.branches);
     const fetchSubjects = useAdminStore(state => state.fetchSubjects);
     const fetchClasses = useAdminStore(state => state.fetchClasses);
+    const fetchCourses = useAdminStore(state => state.fetchCourses);
     const fetchBranches = useAdminStore(state => state.fetchBranches);
     const addSubject = useAdminStore(state => state.addSubject);
     const updateSubject = useAdminStore(state => state.updateSubject);
@@ -38,7 +40,8 @@ const SubjectsMaster = () => {
         const branchId = selectedBranchId || 'main';
         fetchSubjects(branchId);
         fetchClasses(branchId);
-    }, [selectedBranchId, fetchSubjects, fetchClasses]);
+        fetchCourses(branchId);
+    }, [selectedBranchId, fetchSubjects, fetchClasses, fetchCourses]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
@@ -190,6 +193,7 @@ const SubjectsMaster = () => {
                 onCreate={handleCreate}
                 initialData={editingSubject}
                 classes={classes}
+                courses={courses}
             />
         </div>
     );

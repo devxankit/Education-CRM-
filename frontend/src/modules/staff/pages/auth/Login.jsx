@@ -93,6 +93,7 @@ const StaffLogin = () => {
                 token
             };
 
+            localStorage.setItem('token', token);
             // 3. Lock the Role in Global State (Immutable Session)
             login(userForContext);
 

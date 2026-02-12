@@ -12,7 +12,7 @@ router.use(AuthMiddleware);
 router.use(isInstitute);
 
 router.get("/", getPayrollRule);
-router.post("/save", savePayrollRule);
+router.post("/", savePayrollRule);
 router.put("/:id/lock", togglePayrollLock);
 
 export default router;

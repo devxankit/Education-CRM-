@@ -9,17 +9,40 @@ import LeaveDeductionPanel from './components/payroll-rules/LeaveDeductionPanel'
 import PayrollSchedulePanel from './components/payroll-rules/PayrollSchedulePanel';
 
 const PayrollRules = () => {
-    const { fetchPayrollRule, savePayrollRule } = useAdminStore();
+    const { fetchPayrollRule, savePayrollRule, academicYears, fetchAcademicYears } = useAdminStore();
 
     // Global State
-    const [financialYear, setFinancialYear] = useState('2025-26');
+    const [financialYear, setFinancialYear] = useState('');
     const [rule, setRule] = useState(null);
     const [isLocked, setIsLocked] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Fetch academic years on mount
     useEffect(() => {
+        const loadAcademicYears = async () => {
+            await fetchAcademicYears();
+        };
+        loadAcademicYears();
+    }, [fetchAcademicYears]);
+
+    // Set default financial year when academic years are loaded
+    useEffect(() => {
+        if (academicYears.length > 0 && !financialYear) {
+            const activeYear = academicYears.find(ay => ay.status === 'active') || academicYears[0];
+            if (activeYear?.name) {
+                setFinancialYear(activeYear.name);
+            }
+        } else if (!financialYear && academicYears.length === 0) {
+            // Fallback if no academic years
+            setFinancialYear('2025-26');
+        }
+    }, [academicYears, financialYear]);
+
+    useEffect(() => {
+        if (!financialYear) return; // Don't fetch if financial year is not set
+        
         const loadRule = async () => {
             setLoading(true);
             const data = await fetchPayrollRule(financialYear);
@@ -97,10 +120,20 @@ const PayrollRules = () => {
                         <select
                             value={financialYear}
                             onChange={(e) => setFinancialYear(e.target.value)}
-                            className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer"
+                            className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer min-w-[120px]"
                         >
-                            <option>2025-26</option>
-                            <option>2024-25</option>
+                            {academicYears.length > 0 ? (
+                                academicYears.map(ay => (
+                                    <option key={ay._id || ay.id} value={ay.name}>
+                                        {ay.name} {ay.status === 'active' ? '(Active)' : ''}
+                                    </option>
+                                ))
+                            ) : (
+                                <>
+                                    <option value="2025-26">2025-26</option>
+                                    <option value="2024-25">2024-25</option>
+                                </>
+                            )}
                         </select>
                     </div>
                 </div>

@@ -18,7 +18,7 @@ const FeeComponentsEditor = ({ components, onChange, readOnly }) => {
     };
 
     const handleRemove = (id) => {
-        onChange(components.filter(c => c.id !== id));
+        onChange(components.filter(c => (c.id || c._id) !== id));
     };
 
     const totalCalculated = components.reduce((sum, c) => sum + c.amount, 0);
@@ -28,7 +28,7 @@ const FeeComponentsEditor = ({ components, onChange, readOnly }) => {
             <div className="flex justify-between items-end">
                 <h4 className="text-sm font-bold text-gray-700">Fee Components Breakdown</h4>
                 <span className="text-xs font-mono font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded">
-                    Total: ${totalCalculated.toLocaleString()}
+                    Total: ₹{totalCalculated.toLocaleString()}
                 </span>
             </div>
 
@@ -99,26 +99,29 @@ const FeeComponentsEditor = ({ components, onChange, readOnly }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {components.map((comp) => (
-                            <tr key={comp.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-2 font-medium text-gray-800">{comp.name}</td>
-                                <td className="px-4 py-2 text-gray-500 text-xs">{comp.frequency}</td>
-                                <td className="px-4 py-2">
-                                    {comp.isMandatory ?
-                                        <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100 uppercase font-bold">Yes</span> :
-                                        <span className="text-[10px] text-gray-400">Optional</span>
-                                    }
-                                </td>
-                                <td className="px-4 py-2 text-right font-mono font-medium">${comp.amount.toLocaleString()}</td>
-                                {!readOnly && (
-                                    <td className="px-4 py-2 text-right">
-                                        <button onClick={() => handleRemove(comp.id)} className="text-gray-400 hover:text-red-600">
-                                            <Trash2 size={14} />
-                                        </button>
+                        {components.map((comp, idx) => {
+                            const compId = comp.id || comp._id || idx;
+                            return (
+                                <tr key={compId} className="hover:bg-gray-50">
+                                    <td className="px-4 py-2 font-medium text-gray-800">{comp.name || 'N/A'}</td>
+                                    <td className="px-4 py-2 text-gray-500 text-xs">{comp.frequency || 'Annual'}</td>
+                                    <td className="px-4 py-2">
+                                        {comp.isMandatory ?
+                                            <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100 uppercase font-bold">Yes</span> :
+                                            <span className="text-[10px] text-gray-400">Optional</span>
+                                        }
                                     </td>
-                                )}
-                            </tr>
-                        ))}
+                                    <td className="px-4 py-2 text-right font-mono font-medium">₹{(comp.amount || 0).toLocaleString()}</td>
+                                    {!readOnly && (
+                                        <td className="px-4 py-2 text-right">
+                                            <button onClick={() => handleRemove(compId)} className="text-gray-400 hover:text-red-600">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </td>
+                                    )}
+                                </tr>
+                            );
+                        })}
                         {components.length === 0 && (
                             <tr>
                                 <td colSpan={readOnly ? 4 : 5} className="text-center py-4 text-gray-400 italic text-xs">

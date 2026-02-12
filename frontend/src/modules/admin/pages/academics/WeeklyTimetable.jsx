@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, Plus, Trash2, Clock, MapPin, Video, Filter, AlertCircle } from 'lucide-react';
+import { Save, Plus, Trash2, Clock, MapPin, Video, Filter, AlertCircle, School, GraduationCap } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
@@ -7,6 +7,7 @@ const WeeklyTimetable = () => {
     const {
         branches, fetchBranches,
         classes, fetchClasses,
+        courses, fetchCourses,
         sections, fetchSections,
         academicYears, fetchAcademicYears,
         teachers, fetchTeachers,
@@ -19,10 +20,14 @@ const WeeklyTimetable = () => {
 
     const user = useAppStore(state => state.user);
 
+    // Mode: 'school' or 'college'
+    const [timetableMode, setTimetableMode] = useState('school');
+
     // Selections
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const [selectedYearId, setSelectedYearId] = useState('');
     const [selectedClassId, setSelectedClassId] = useState('');
+    const [selectedCourseId, setSelectedCourseId] = useState('');
     const [selectedSectionId, setSelectedSectionId] = useState('');
     const [activeDay, setActiveDay] = useState('Mon');
 
@@ -52,15 +57,28 @@ const WeeklyTimetable = () => {
         }
     }, [user, branches]);
 
-    // Fetch classes and mappings when branch changes
+    // Fetch classes, courses and mappings when branch changes
     useEffect(() => {
         if (selectedBranchId) {
             fetchClasses(selectedBranchId);
+            fetchCourses(selectedBranchId);
             fetchSubjects(selectedBranchId);
             fetchTeacherMappings({ branchId: selectedBranchId });
             fetchTimetableRules(selectedBranchId);
         }
     }, [selectedBranchId]);
+
+    // Reset selections when mode changes
+    useEffect(() => {
+        if (timetableMode === 'school') {
+            setSelectedCourseId('');
+            setSelectedClassId('');
+            setSelectedSectionId('');
+        } else {
+            setSelectedClassId('');
+            setSelectedSectionId('');
+        }
+    }, [timetableMode]);
 
     // Set Active Year
     useEffect(() => {
@@ -80,35 +98,63 @@ const WeeklyTimetable = () => {
 
     // Fetch Timetable when context changes
     useEffect(() => {
-        if (selectedYearId && selectedSectionId) {
-            fetchTimetable({ academicYearId: selectedYearId, sectionId: selectedSectionId })
-                .then(data => {
-                    if (data && data.schedule) {
-                        // Ensure all days exist
-                        const fullSchedule = { ...data.schedule };
-                        days.forEach(day => {
-                            if (!fullSchedule[day]) fullSchedule[day] = [];
-                        });
-                        setLocalSchedule(fullSchedule);
-                    } else {
-                        setLocalSchedule({ Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] });
-                    }
-                    
-                    // Auto-select first working day if current activeDay is not working
-                    if (timetableRules?.workingDays?.length > 0) {
-                        const currentDayFullName = activeDay === 'Mon' ? 'Monday' : activeDay === 'Tue' ? 'Tuesday' : activeDay === 'Wed' ? 'Wednesday' : activeDay === 'Thu' ? 'Thursday' : activeDay === 'Fri' ? 'Friday' : activeDay === 'Sat' ? 'Saturday' : 'Sunday';
-                        
-                        if (!timetableRules.workingDays.includes(currentDayFullName)) {
-                            const firstWorkingDay = days.find(d => {
-                                const fullName = d === 'Mon' ? 'Monday' : d === 'Tue' ? 'Tuesday' : d === 'Wed' ? 'Wednesday' : d === 'Thu' ? 'Thursday' : d === 'Fri' ? 'Friday' : d === 'Sat' ? 'Saturday' : 'Sunday';
-                                return timetableRules.workingDays.includes(fullName);
+        if (selectedYearId) {
+            // For school: require sectionId, for college: require courseId
+            if (timetableMode === 'school' && selectedSectionId) {
+                fetchTimetable({ academicYearId: selectedYearId, sectionId: selectedSectionId })
+                    .then(data => {
+                        if (data && data.schedule) {
+                            const fullSchedule = { ...data.schedule };
+                            days.forEach(day => {
+                                if (!fullSchedule[day]) fullSchedule[day] = [];
                             });
-                            if (firstWorkingDay) setActiveDay(firstWorkingDay);
+                            setLocalSchedule(fullSchedule);
+                        } else {
+                            setLocalSchedule({ Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] });
                         }
-                    }
-                });
+                        
+                        // Auto-select first working day
+                        if (timetableRules?.workingDays?.length > 0) {
+                            const currentDayFullName = activeDay === 'Mon' ? 'Monday' : activeDay === 'Tue' ? 'Tuesday' : activeDay === 'Wed' ? 'Wednesday' : activeDay === 'Thu' ? 'Thursday' : activeDay === 'Fri' ? 'Friday' : activeDay === 'Sat' ? 'Saturday' : 'Sunday';
+                            
+                            if (!timetableRules.workingDays.includes(currentDayFullName)) {
+                                const firstWorkingDay = days.find(d => {
+                                    const fullName = d === 'Mon' ? 'Monday' : d === 'Tue' ? 'Tuesday' : d === 'Wed' ? 'Wednesday' : d === 'Thu' ? 'Thursday' : d === 'Fri' ? 'Friday' : d === 'Sat' ? 'Saturday' : 'Sunday';
+                                    return timetableRules.workingDays.includes(fullName);
+                                });
+                                if (firstWorkingDay) setActiveDay(firstWorkingDay);
+                            }
+                        }
+                    });
+            } else if (timetableMode === 'college' && selectedCourseId) {
+                fetchTimetable({ academicYearId: selectedYearId, courseId: selectedCourseId })
+                    .then(data => {
+                        if (data && data.schedule) {
+                            const fullSchedule = { ...data.schedule };
+                            days.forEach(day => {
+                                if (!fullSchedule[day]) fullSchedule[day] = [];
+                            });
+                            setLocalSchedule(fullSchedule);
+                        } else {
+                            setLocalSchedule({ Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] });
+                        }
+                        
+                        // Auto-select first working day
+                        if (timetableRules?.workingDays?.length > 0) {
+                            const currentDayFullName = activeDay === 'Mon' ? 'Monday' : activeDay === 'Tue' ? 'Tuesday' : activeDay === 'Wed' ? 'Wednesday' : activeDay === 'Thu' ? 'Thursday' : activeDay === 'Fri' ? 'Friday' : activeDay === 'Sat' ? 'Saturday' : 'Sunday';
+                            
+                            if (!timetableRules.workingDays.includes(currentDayFullName)) {
+                                const firstWorkingDay = days.find(d => {
+                                    const fullName = d === 'Mon' ? 'Monday' : d === 'Tue' ? 'Tuesday' : d === 'Wed' ? 'Wednesday' : d === 'Thu' ? 'Thursday' : d === 'Fri' ? 'Friday' : d === 'Sat' ? 'Saturday' : 'Sunday';
+                                    return timetableRules.workingDays.includes(fullName);
+                                });
+                                if (firstWorkingDay) setActiveDay(firstWorkingDay);
+                            }
+                        }
+                    });
+            }
         }
-    }, [selectedYearId, selectedSectionId, timetableRules]);
+    }, [selectedYearId, selectedSectionId, selectedCourseId, timetableMode, timetableRules]);
 
     // Time Helper Functions
     const timeToMinutes = (timeStr) => {
@@ -223,8 +269,19 @@ const WeeklyTimetable = () => {
     };
 
     const handleSave = async () => {
-        if (!selectedYearId || !selectedSectionId || !selectedClassId || !selectedBranchId) {
-            alert('Please select all required fields');
+        if (!selectedYearId || !selectedBranchId) {
+            alert('Please select Academic Year and Branch');
+            return;
+        }
+
+        // For school: require classId and sectionId, for college: require courseId
+        if (timetableMode === 'school' && (!selectedClassId || !selectedSectionId)) {
+            alert('Please select Class and Section');
+            return;
+        }
+
+        if (timetableMode === 'college' && !selectedCourseId) {
+            alert('Please select Course');
             return;
         }
 
@@ -283,8 +340,9 @@ const WeeklyTimetable = () => {
             await saveTimetable({
                 academicYearId: selectedYearId,
                 branchId: selectedBranchId,
-                classId: selectedClassId,
-                sectionId: selectedSectionId,
+                classId: timetableMode === 'school' ? selectedClassId : null,
+                courseId: timetableMode === 'college' ? selectedCourseId : null,
+                sectionId: timetableMode === 'school' ? selectedSectionId : null,
                 schedule: cleanedSchedule
             });
         } catch (error) {
@@ -309,7 +367,38 @@ const WeeklyTimetable = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-6">
+                {/* Mode Toggle */}
+                <div className="mb-4 flex items-center gap-4 pb-4 border-b border-gray-100">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mode:</label>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setTimetableMode('school')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                timetableMode === 'school'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <School size={16} />
+                            School (Class)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTimetableMode('college')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                timetableMode === 'college'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <GraduationCap size={16} />
+                            College (Course)
+                        </button>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5 ml-1">Branch</label>
@@ -331,33 +420,60 @@ const WeeklyTimetable = () => {
                             {academicYears.map(y => <option key={y._id} value={y._id}>{y.name}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5 ml-1">Class</label>
-                        <select
-                            value={selectedClassId}
-                            onChange={(e) => setSelectedClassId(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                        >
-                            <option value="">Select Class</option>
-                            {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5 ml-1">Section</label>
-                        <select
-                            value={selectedSectionId}
-                            onChange={(e) => setSelectedSectionId(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-                            disabled={!selectedClassId}
-                        >
-                            <option value="">Select Section</option>
-                            {(sections[selectedClassId] || []).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                        </select>
-                    </div>
+
+                    {/* School Mode: Class & Section */}
+                    {timetableMode === 'school' && (
+                        <>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                                    <School size={12} />
+                                    Class
+                                </label>
+                                <select
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                >
+                                    <option value="">Select Class</option>
+                                    {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5 ml-1">Section</label>
+                                <select
+                                    value={selectedSectionId}
+                                    onChange={(e) => setSelectedSectionId(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    disabled={!selectedClassId}
+                                >
+                                    <option value="">Select Section</option>
+                                    {(sections[selectedClassId] || []).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                </select>
+                            </div>
+                        </>
+                    )}
+
+                    {/* College Mode: Course */}
+                    {timetableMode === 'college' && (
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                                <GraduationCap size={12} />
+                                Course/Program
+                            </label>
+                            <select
+                                value={selectedCourseId}
+                                onChange={(e) => setSelectedCourseId(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                            >
+                                <option value="">Select Course</option>
+                                {courses.map(c => <option key={c._id} value={c._id}>{c.name} ({c.code})</option>)}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {selectedSectionId ? (
+            {(timetableMode === 'school' && selectedSectionId) || (timetableMode === 'college' && selectedCourseId) ? (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     {/* Day Tabs */}
                     <div className="flex border-b border-gray-100 overflow-x-auto hide-scrollbar">
@@ -428,7 +544,23 @@ const WeeklyTimetable = () => {
                                                 className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
                                             >
                                                 <option value="">Select Subject</option>
-                                                {subjects.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                                {subjects
+                                                    .filter(s => {
+                                                        // Filter subjects based on mode
+                                                        if (timetableMode === 'school') {
+                                                            // For school: show subjects assigned to selected class
+                                                            return !selectedClassId || (s.classIds || []).some(cid => 
+                                                                (cid._id || cid) === selectedClassId
+                                                            );
+                                                        } else {
+                                                            // For college: show subjects assigned to selected course
+                                                            return !selectedCourseId || (s.courseIds || []).some(cid => 
+                                                                (cid._id || cid) === selectedCourseId
+                                                            );
+                                                        }
+                                                    })
+                                                    .map(s => <option key={s._id} value={s._id}>{s.name}</option>)
+                                                }
                                             </select>
                                         </div>
 
@@ -536,7 +668,12 @@ const WeeklyTimetable = () => {
                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
                     <Filter className="mx-auto text-gray-300 mb-4" size={48} />
                     <h3 className="text-lg font-bold text-gray-800 mb-2">Select Context</h3>
-                    <p className="text-gray-500">Please select a class and section to manage the timetable</p>
+                    <p className="text-gray-500">
+                        {timetableMode === 'school' 
+                            ? 'Please select a class and section to manage the timetable'
+                            : 'Please select a course to manage the timetable'
+                        }
+                    </p>
                 </div>
             )}
         </div>

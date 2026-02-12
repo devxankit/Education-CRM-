@@ -8,25 +8,49 @@ import ProgramFormModal from './components/programs/ProgramFormModal';
 import SemesterStructureEditor from './components/programs/SemesterStructureEditor';
 
 const ProgramsMaster = () => {
-    const { courses, fetchCourses, addCourse, deleteCourse, updateCourse } = useAdminStore();
+    const { courses, fetchCourses, addCourse, deleteCourse, updateCourse, branches, fetchBranches } = useAdminStore();
     const user = useAppStore(state => state.user);
     const [loading, setLoading] = useState(true);
+    const [selectedBranchId, setSelectedBranchId] = useState(null);
 
     const [selectedProgramId, setSelectedProgramId] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filterType, setFilterType] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Fetch branches first
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    // Set selected branch
+    useEffect(() => {
+        if (!selectedBranchId) {
+            if (user?.branchId?.length === 24) {
+                setSelectedBranchId(user.branchId);
+            } else if (branches.length > 0) {
+                setSelectedBranchId(branches[0]._id);
+            }
+        }
+    }, [user, branches, selectedBranchId]);
+
+    // Fetch courses when branch is selected
     useEffect(() => {
         const loadCourses = async () => {
-            if (user?.branchId) {
+            const branchId = selectedBranchId || user?.branchId || 'main';
+            if (branchId) {
                 setLoading(true);
-                await fetchCourses(user.branchId || 'main');
-                setLoading(false);
+                try {
+                    await fetchCourses(branchId);
+                } catch (error) {
+                    console.error('Error loading courses:', error);
+                } finally {
+                    setLoading(false);
+                }
             }
         };
         loadCourses();
-    }, [user, fetchCourses]);
+    }, [selectedBranchId, user?.branchId, fetchCourses]);
 
     // Derived
     const selectedProgram = courses.find(p => (p._id || p.id) === selectedProgramId);

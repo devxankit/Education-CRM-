@@ -30,7 +30,7 @@ const teacherMappingSchema = new mongoose.Schema(
         sectionId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Section",
-            required: true, // Specific class section
+            // Required for school (class-based), optional for college (course-based)
         },
         subjectId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -51,10 +51,16 @@ const teacherMappingSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Unique mapping per section and subject in an academic year
+// Unique mapping per section/subject or course/subject in an academic year
+// For school: academicYearId + sectionId + subjectId
+// For college: academicYearId + courseId + subjectId
 teacherMappingSchema.index(
     { academicYearId: 1, sectionId: 1, subjectId: 1 },
-    { unique: true }
+    { unique: true, sparse: true }
+);
+teacherMappingSchema.index(
+    { academicYearId: 1, courseId: 1, subjectId: 1 },
+    { unique: true, sparse: true }
 );
 
 export default mongoose.model("TeacherMapping", teacherMappingSchema);

@@ -11,14 +11,20 @@ export const assignTeacher = async (req, res) => {
 
         const instituteId = req.user._id;
 
+        // For school: use sectionId, for college: use courseId (no sectionId)
+        const query = courseId 
+            ? { academicYearId, courseId, subjectId }
+            : { academicYearId, sectionId, subjectId };
+
         const mapping = await TeacherMapping.findOneAndUpdate(
-            { academicYearId, sectionId, subjectId },
+            query,
             {
                 $set: {
                     instituteId,
                     branchId,
-                    classId,
-                    courseId,
+                    classId: classId || null,
+                    courseId: courseId || null,
+                    sectionId: sectionId || null,
                     teacherId,
                     status: "active"
                 }
@@ -42,10 +48,18 @@ export const getMappings = async (req, res) => {
         const { academicYearId, sectionId, classId, courseId } = req.query;
         const instituteId = req.user._id;
 
-        if (!academicYearId || !sectionId) {
+        if (!academicYearId) {
             return res.status(400).json({
                 success: false,
-                message: "Academic Year and Section are required"
+                message: "Academic Year is required"
+            });
+        }
+
+        // For school: require sectionId, for college: require courseId
+        if (!courseId && !sectionId) {
+            return res.status(400).json({
+                success: false,
+                message: "Either Section (for school) or Course (for college) is required"
             });
         }
 
@@ -56,11 +70,13 @@ export const getMappings = async (req, res) => {
 
         const subjects = await Subject.find(subjectQuery).select("name code type category");
 
-        // 2. Get existing mappings for this section in this year
-        const existingMappings = await TeacherMapping.find({
-            academicYearId,
-            sectionId
-        }).populate("teacherId", "firstName lastName email");
+        // 2. Get existing mappings - for school use sectionId, for college use courseId
+        const mappingQuery = courseId 
+            ? { academicYearId, courseId }
+            : { academicYearId, sectionId };
+
+        const existingMappings = await TeacherMapping.find(mappingQuery)
+            .populate("teacherId", "firstName lastName email");
 
         // 3. Merge subjects with mappings
         const result = subjects.map(sub => {
@@ -107,8 +123,14 @@ export const removeMapping = async (req, res) => {
 // ================= REMOVE BY CONTEXT (Deselect) =================
 export const removeMappingByContext = async (req, res) => {
     try {
-        const { academicYearId, sectionId, subjectId } = req.body;
-        await TeacherMapping.findOneAndDelete({ academicYearId, sectionId, subjectId });
+        const { academicYearId, sectionId, courseId, subjectId } = req.body;
+        
+        // For school: use sectionId, for college: use courseId
+        const query = courseId 
+            ? { academicYearId, courseId, subjectId }
+            : { academicYearId, sectionId, subjectId };
+        
+        await TeacherMapping.findOneAndDelete(query);
 
         res.status(200).json({
             success: true,

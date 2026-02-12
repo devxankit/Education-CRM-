@@ -7,20 +7,27 @@ export const upsertTimetable = async (req, res) => {
             academicYearId,
             branchId,
             classId,
+            courseId,
             sectionId,
             schedule
         } = req.body;
 
         const instituteId = req.user.instituteId || req.user._id;
 
+        // For school: use sectionId, for college: use courseId
+        const query = courseId 
+            ? { academicYearId, courseId }
+            : { academicYearId, sectionId };
+
         const timetable = await Timetable.findOneAndUpdate(
-            { academicYearId, sectionId },
+            query,
             {
                 instituteId,
                 branchId,
-                classId,
+                classId: classId || null,
+                courseId: courseId || null,
+                sectionId: sectionId || null,
                 academicYearId,
-                sectionId,
                 schedule,
                 status: "active"
             },
@@ -40,16 +47,29 @@ export const upsertTimetable = async (req, res) => {
 // ================= GET TIMETABLE BY CONTEXT =================
 export const getTimetable = async (req, res) => {
     try {
-        const { academicYearId, sectionId } = req.query;
+        const { academicYearId, sectionId, courseId } = req.query;
 
-        if (!academicYearId || !sectionId) {
+        if (!academicYearId) {
             return res.status(400).json({
                 success: false,
-                message: "Academic Year and Section are required"
+                message: "Academic Year is required"
             });
         }
 
-        const timetable = await Timetable.findOne({ academicYearId, sectionId })
+        // For school: require sectionId, for college: require courseId
+        if (!courseId && !sectionId) {
+            return res.status(400).json({
+                success: false,
+                message: "Either Section (for school) or Course (for college) is required"
+            });
+        }
+
+        // Query based on mode
+        const query = courseId 
+            ? { academicYearId, courseId }
+            : { academicYearId, sectionId };
+
+        const timetable = await Timetable.findOne(query)
             .populate("schedule.Mon.subjectId schedule.Mon.teacherId")
             .populate("schedule.Tue.subjectId schedule.Tue.teacherId")
             .populate("schedule.Wed.subjectId schedule.Wed.teacherId")

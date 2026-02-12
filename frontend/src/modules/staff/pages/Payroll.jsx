@@ -32,13 +32,14 @@ const Payroll = () => {
 
     const canManagePayroll = [STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN].includes(user?.role);
 
-    const totalExpense = MOCK_PAYROLL.reduce((acc, curr) => acc + curr.amount, 0);
-    const pendingCount = MOCK_PAYROLL.filter(p => p.status === 'Pending').length;
+    const payrollData = payrollList || [];
+    const totalExpense = payrollData.reduce((acc, curr) => acc + (curr?.amount || 0), 0);
+    const pendingCount = payrollData.filter(p => p?.status === 'Pending').length;
 
-    const filteredList = MOCK_PAYROLL.filter(p => {
+    const filteredList = payrollData.filter(p => {
         if (filterType === 'All') return true;
-        if (filterType === 'Teacher') return p.role === 'Teacher';
-        return p.role !== 'Teacher';
+        if (filterType === 'Teacher') return p?.role === 'Teacher';
+        return p?.role !== 'Teacher';
     });
 
     return (
@@ -89,14 +90,14 @@ const Payroll = () => {
                     />
                     <StatCard
                         label="Processed"
-                        value={MOCK_PAYROLL.length - pendingCount}
+                        value={payrollData.length - pendingCount}
                         sub="Paid this month"
                         icon={ArrowUpRight}
                         color="green"
                     />
                     <StatCard
                         label="Staff Count"
-                        value={MOCK_PAYROLL.length}
+                        value={payrollData.length}
                         sub="Active Payroll"
                         icon={Users}
                         color="blue"
@@ -123,37 +124,43 @@ const Payroll = () => {
                     </div>
 
                     <div className="divide-y divide-gray-100">
-                        {filteredList.map(item => (
-                            <div
-                                key={item.id}
-                                onClick={() => navigate(`/staff/payroll/${item.id}`)}
-                                className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group cursor-pointer"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-white
-                                        ${item.role === 'Teacher' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
-                                        {item.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-900">{item.name}</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] uppercase font-bold text-gray-400">{item.role}</span>
-                                            <span className="text-xs font-medium text-gray-500">• ₹{item.amount.toLocaleString()}</span>
+                        {filteredList.length === 0 ? (
+                            <div className="p-8 text-center text-gray-400 text-sm">
+                                No payroll records found
+                            </div>
+                        ) : (
+                            filteredList.map(item => (
+                                <div
+                                    key={item?.id || Math.random()}
+                                    onClick={() => navigate(`/staff/payroll/${item?.id}`)}
+                                    className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-white
+                                            ${item?.role === 'Teacher' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
+                                            {(item?.name || 'N').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">{item?.name || 'Unknown'}</p>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] uppercase font-bold text-gray-400">{item?.role || 'Staff'}</span>
+                                                <span className="text-xs font-medium text-gray-500">• ₹{(item?.amount || 0).toLocaleString()}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center gap-3">
-                                    <div className={`px-2 py-1 rounded text-[10px] font-bold border ${item.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                                        }`}>
-                                        {item.status}
+                                    <div className="flex items-center gap-3">
+                                        <div className={`px-2 py-1 rounded text-[10px] font-bold border ${item?.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                                            }`}>
+                                            {item?.status || 'Pending'}
+                                        </div>
+                                        <button className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors">
+                                            <ChevronRight size={18} />
+                                        </button>
                                     </div>
-                                    <button className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors">
-                                        <ChevronRight size={18} />
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

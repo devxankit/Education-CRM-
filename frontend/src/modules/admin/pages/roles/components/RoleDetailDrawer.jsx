@@ -4,7 +4,7 @@ import {
     X, Shield, Settings, Power, UserCheck, AlertTriangle, Save,
     LayoutDashboard, Users, GraduationCap, Briefcase,
     Banknote, Receipt, Bus, Box, FileText,
-    Bell, LifeBuoy, BarChart2
+    Bell, LifeBuoy, BarChart2, ClipboardCheck
 } from 'lucide-react';
 import RoleStatusBadge from './RoleStatusBadge';
 
@@ -12,6 +12,7 @@ const MODULES_LIST = [
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { key: 'students', label: 'Students Management', icon: <GraduationCap size={18} /> },
     { key: 'teachers', label: 'Teacher Management', icon: <Users size={18} /> },
+    { key: 'teacher-attendance', label: 'Teacher Attendance', icon: <ClipboardCheck size={18} /> },
     { key: 'employees', label: 'Employee Management', icon: <Briefcase size={18} /> },
     { key: 'fees', label: 'Fees & Collections', icon: <Banknote size={18} /> },
     { key: 'payroll', label: 'Payroll System', icon: <Receipt size={18} /> },

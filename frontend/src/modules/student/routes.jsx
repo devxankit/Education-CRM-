@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import StudentAuthGuard from './components/auth/StudentAuthGuard';
 
 // Placeholder Lazy loading components
 import StudentDashboard from './pages/Dashboard';
@@ -46,8 +47,11 @@ const studentRoutes = [
                 element: <Navigate to="dashboard" replace />,
             },
             {
-                element: <StudentLayout />,
+                element: <StudentAuthGuard />,
                 children: [
+                    {
+                        element: <StudentLayout />,
+                        children: [
                     {
                         path: 'dashboard',
                         element: <StudentDashboard />,
@@ -108,17 +112,12 @@ const studentRoutes = [
                         path: 'help',
                         element: <StudentHelp />,
                     },
-                ],
+                        ],
+                    },
+                    { path: 'settings', element: <StudentSettings /> },
+                    { path: 'profile/correction', element: <ProfileCorrection /> },
+                ]
             },
-            {
-                path: 'settings',
-                element: <StudentSettings />,
-            },
-            {
-                path: 'profile/correction',
-                element: <ProfileCorrection />,
-            },
-            // Add other student routes here
         ],
     },
 ];

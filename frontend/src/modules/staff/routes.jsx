@@ -45,6 +45,8 @@ import Inventory from './pages/Inventory';
 import AddInventoryItem from './pages/AddInventoryItem';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import MyPayroll from './pages/MyPayroll';
+import TeacherAttendance from './pages/TeacherAttendance';
 
 // Helper to render Outlet for the provider wrapper
 const OutletWrapper = () => <Outlet />;
@@ -75,6 +77,7 @@ const staffRoutes = [
                             { path: 'teachers/new', element: <AddTeacher /> },
                             { path: 'teachers/:teacherId', element: <TeacherDetail /> },
                             { path: 'teachers/:teacherId/edit', element: <AddTeacher /> }, // Reusing AddTeacher for Edit
+                            { path: 'teacher-attendance', element: <TeacherAttendance /> },
 
                             { path: 'fees', element: <Fees /> },
                             { path: 'documents', element: <Documents /> },
@@ -89,6 +92,7 @@ const staffRoutes = [
 
                             { path: 'reports', element: <Reports /> },
                             { path: 'profile', element: <Profile /> },
+                            { path: 'my-payroll', element: <MyPayroll /> },
                             { path: 'settings', element: <Settings /> },
 
                             { path: 'employees', element: <Employees /> },

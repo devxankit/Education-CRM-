@@ -7,7 +7,7 @@ import { useStaffStore } from '../../../store/staffStore';
 
 const Fees = () => {
     const { user } = useStaffAuth();
-    const students = useStaffStore(state => state.students);
+    const students = useStaffStore(state => state.students) || [];
     const canEdit = user?.role === STAFF_ROLES.ACCOUNTS || user?.role === STAFF_ROLES.ADMIN;
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -16,9 +16,11 @@ const Fees = () => {
 
     // Filter Logic
     const filteredFees = students.filter(student => {
-        const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.id.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'All' || student.feeStatus === filterStatus;
+        const name = student?.name || '';
+        const id = student?.id || '';
+        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = filterStatus === 'All' || student?.feeStatus === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
@@ -80,13 +82,13 @@ const Fees = () => {
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs">
-                                {student.name.charAt(0)}
+                                {(student?.name || 'N').charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold text-gray-900">{student.name}</h3>
-                                <p className="text-[10px] text-gray-500">{student.id} • {student.class}</p>
-                                <div className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${getStatusColor(student.feeStatus)}`}>
-                                    {student.feeStatus}
+                                <h3 className="text-sm font-bold text-gray-900">{student?.name || 'Unknown'}</h3>
+                                <p className="text-[10px] text-gray-500">{student?.id || 'N/A'} • {student?.class || 'N/A'}</p>
+                                <div className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${getStatusColor(student?.feeStatus || 'Due')}`}>
+                                    {student?.feeStatus || 'Due'}
                                 </div>
                             </div>
                         </div>
@@ -131,11 +133,11 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
                     <ArrowLeft size={20} className="text-gray-600" />
                 </button>
                 <div className="flex-1">
-                    <h2 className="text-base font-bold text-gray-900 leading-none">{student.name}</h2>
-                    <p className="text-xs text-gray-500 mt-0.5">{student.id}</p>
+                    <h2 className="text-base font-bold text-gray-900 leading-none">{student?.name || 'Unknown'}</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">{student?.id || 'N/A'}</p>
                 </div>
                 <div className={`text-xs font-bold px-2 py-1 rounded bg-gray-100`}>
-                    {student.class}
+                    {student?.class || 'N/A'}
                 </div>
             </div>
 
@@ -144,19 +146,19 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
                 {/* Summary Card */}
                 <div className="bg-slate-900 text-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-200">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Outstanding</p>
-                    <h1 className="text-3xl font-bold mb-4">₹{(student.fees?.pending || 0).toLocaleString()}</h1>
+                    <h1 className="text-3xl font-bold mb-4">₹{(student?.fees?.pending || 0).toLocaleString()}</h1>
 
                     <div className="space-y-2">
                         <div className="flex justify-between text-xs text-slate-300">
                             <span>Paid</span>
-                            <span className="text-emerald-400 font-bold">₹{(student.fees?.paid || 0).toLocaleString()}</span>
+                            <span className="text-emerald-400 font-bold">₹{(student?.fees?.paid || 0).toLocaleString()}</span>
                         </div>
                         <div className="w-full bg-white/10 rounded-full h-1.5">
-                            <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: `${((student.fees?.paid || 0) / (student.fees?.total || 1)) * 100}%` }}></div>
+                            <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: `${((student?.fees?.paid || 0) / (student?.fees?.total || 1)) * 100}%` }}></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-slate-500">
                             <span>0%</span>
-                            <span>Total Due: ₹{(student.fees?.total || 0).toLocaleString()}</span>
+                            <span>Total Due: ₹{(student?.fees?.total || 0).toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -164,14 +166,14 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
                 {/* Installments List */}
                 <h3 className="text-sm font-bold text-gray-900 mb-3 ml-1">Installments</h3>
                 <div className="space-y-3">
-                    {student.installments?.map((inst) => (
-                        <InstallmentCard key={inst.id} installment={inst} canEdit={canEdit} />
+                    {(student?.installments || []).map((inst) => (
+                        <InstallmentCard key={inst?.id || Math.random()} installment={inst} canEdit={canEdit} />
                     ))}
                 </div>
             </div>
 
             {/* Bottom Action Bar (Context Aware) */}
-            {canEdit && (student.fees?.pending || 0) > 0 && (
+            {canEdit && (student?.fees?.pending || 0) > 0 && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
                     <button onClick={() => alert('Collecting Fees Logic')} className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 transition-transform">
                         <Wallet size={18} /> Collect Fees
@@ -183,18 +185,18 @@ const FeeDetailModal = ({ student, onClose, canEdit }) => {
 };
 
 const InstallmentCard = ({ installment, canEdit }) => {
-    const isPaid = installment.status === 'Paid';
-    const isOverdue = installment.status === 'Overdue';
+    const isPaid = installment?.status === 'Paid';
+    const isOverdue = installment?.status === 'Overdue';
 
     return (
         <div className={`rounded-xl p-4 border transition-all ${isPaid ? 'bg-gray-50 border-gray-100 opacity-75' : 'bg-white border-gray-200 shadow-sm'}`}>
             <div className="flex justify-between items-start mb-2">
                 <div>
-                    <h4 className={`font-bold text-sm ${isPaid ? 'text-gray-600' : 'text-gray-900'}`}>{installment.title}</h4>
-                    <p className="text-[10px] text-gray-500">Due: {installment.dueDate}</p>
+                    <h4 className={`font-bold text-sm ${isPaid ? 'text-gray-600' : 'text-gray-900'}`}>{installment?.title || 'N/A'}</h4>
+                    <p className="text-[10px] text-gray-500">Due: {installment?.dueDate || 'N/A'}</p>
                 </div>
                 <span className={`text-sm font-bold ${isPaid ? 'text-emerald-600' : 'text-gray-900'}`}>
-                    ₹{installment.amount.toLocaleString()}
+                    ₹{(installment?.amount || 0).toLocaleString()}
                 </span>
             </div>
 
@@ -202,10 +204,10 @@ const InstallmentCard = ({ installment, canEdit }) => {
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isPaid ? 'bg-emerald-100 text-emerald-700' :
                     isOverdue ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-600'
                     }`}>
-                    {installment.status}
+                    {installment?.status || 'Due'}
                 </span>
 
-                {isPaid && installment.receipt && (
+                {isPaid && installment?.receipt && (
                     <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium bg-white px-2 py-0.5 rounded border border-gray-200">
                         <FileText size={10} /> {installment.receipt}
                     </div>
