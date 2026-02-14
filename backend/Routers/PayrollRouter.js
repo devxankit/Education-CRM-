@@ -6,13 +6,13 @@ import {
     updatePayroll,
     deletePayroll
 } from "../Controllers/PayrollCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-// All routes require authentication
+// All routes require authentication (Institute + Staff with accounts access)
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 // Routes
 router.post("/", createPayroll);

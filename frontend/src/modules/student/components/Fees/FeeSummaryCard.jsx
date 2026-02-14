@@ -6,14 +6,23 @@ const FeeSummaryCard = ({ summary }) => {
     const cardRef = useRef(null);
 
     useEffect(() => {
-        gsap.fromTo(cardRef.current,
-            { y: 20, opacity: 0, scale: 0.95 },
-            { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }
-        );
+        if (cardRef.current) {
+            gsap.fromTo(cardRef.current,
+                { y: 20, opacity: 0, scale: 0.95 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }
+            );
+        }
     }, []);
 
-    const isOverdue = summary.status === 'Overdue';
-    const isPaid = summary.status === 'Paid';
+    const safeSummary = summary ?? {};
+    const pendingAmount = safeSummary.pendingAmount ?? 0;
+    const paidAmount = safeSummary.paidAmount ?? 0;
+    const totalAmount = safeSummary.totalAmount ?? 1;
+    const status = safeSummary.status ?? 'Pending';
+    const nextDueDate = safeSummary.nextDueDate;
+
+    const isOverdue = status === 'Overdue';
+    const isPaid = status === 'Paid';
 
     return (
         <div ref={cardRef} className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden mb-6">
@@ -26,7 +35,7 @@ const FeeSummaryCard = ({ summary }) => {
                         <p className="text-gray-400 text-sm font-medium uppercase tracking-wider mb-1">Total Outstanding</p>
                         <div className="flex items-start gap-1">
                             <IndianRupee size={24} className="mt-1.5 opacity-80" />
-                            <span className="text-4xl font-bold tracking-tight">{summary.pendingAmount.toLocaleString('en-IN')}</span>
+                            <span className="text-4xl font-bold tracking-tight">{Number(pendingAmount).toLocaleString('en-IN')}</span>
                         </div>
                     </div>
                     <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5
@@ -34,20 +43,20 @@ const FeeSummaryCard = ({ summary }) => {
                             isOverdue ? 'bg-red-500/10 border-red-500/20 text-red-400' :
                                 'bg-orange-500/10 border-orange-500/20 text-orange-300'}`}>
                         {isPaid ? <CheckCircle size={12} /> : isOverdue ? <AlertCircle size={12} /> : <Clock size={12} />}
-                        {summary.status}
+                        {status}
                     </div>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="mb-4">
                     <div className="flex justify-between text-xs font-medium text-gray-400 mb-2">
-                        <span>Paid: ₹{summary.paidAmount.toLocaleString('en-IN')}</span>
-                        <span>Total: ₹{summary.totalAmount.toLocaleString('en-IN')}</span>
+                        <span>Paid: ₹{Number(paidAmount).toLocaleString('en-IN')}</span>
+                        <span>Total: ₹{Number(totalAmount).toLocaleString('en-IN')}</span>
                     </div>
                     <div className="h-2 w-full bg-gray-700/50 rounded-full overflow-hidden">
                         <div
                             className={`h-full rounded-full transition-all duration-1000 ease-out ${isPaid ? 'bg-emerald-500' : 'bg-orange-500'}`}
-                            style={{ width: `${(summary.paidAmount / summary.totalAmount) * 100}%` }}
+                            style={{ width: `${(paidAmount / totalAmount) * 100}%` }}
                         ></div>
                     </div>
                 </div>
@@ -58,7 +67,7 @@ const FeeSummaryCard = ({ summary }) => {
                         <span className={isOverdue ? 'text-red-300' : ''}>
                             {isOverdue ? 'Overdue since ' : 'Next Due: '}
                             <span className="font-bold text-white">
-                                {new Date(summary.nextDueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                {nextDueDate ? new Date(nextDueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                             </span>
                         </span>
                     </div>

@@ -1,32 +1,31 @@
 
 import React, { useState, useMemo } from 'react';
-import { Building2, Users, ChevronRight, Briefcase, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { Building2, Users, ChevronRight, Briefcase, ChevronLeft, ChevronRight as ChevronRightIcon, Plus } from 'lucide-react';
 import DepartmentStatusBadge from './DepartmentStatusBadge';
 
 const DepartmentList = ({ departments, selectedId, onSelect, onAdd }) => {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 8;
 
-    const totalPages = Math.ceil(departments.length / itemsPerPage);
+    const totalPages = Math.max(1, Math.ceil(departments.length / itemsPerPage));
 
     const paginatedDepartments = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
         return departments.slice(start, start + itemsPerPage);
     }, [departments, currentPage, itemsPerPage]);
 
-    // Reset page if departments change (e.g., search)
     React.useEffect(() => {
         setCurrentPage(1);
     }, [departments.length]);
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
                 <h3 className="font-bold text-gray-800">Departments</h3>
-                <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full">{departments.length}</span>
+                <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full">{departments.length}</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
                 {paginatedDepartments.map((dept) => (
                     <div
                         key={dept._id}
@@ -50,18 +49,16 @@ const DepartmentList = ({ departments, selectedId, onSelect, onAdd }) => {
                             <DepartmentStatusBadge status={dept.status} />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <span className="text-[10px] text-gray-400 block mb-0.5 flex items-center gap-1">
-                                    <Users size={10} /> Employees
-                                </span>
-                                <span className="text-xs font-bold text-gray-700">{dept.employeeCount}</span>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                            <div className="flex items-center gap-1.5">
+                                <Users size={12} className="text-gray-400" />
+                                <span className="text-xs font-bold text-gray-700">{dept.employeeCount ?? 0}</span>
+                                <span className="text-[10px] text-gray-400">employees</span>
                             </div>
-                            <div>
-                                <span className="text-[10px] text-gray-400 block mb-0.5 flex items-center gap-1">
-                                    <Briefcase size={10} /> Designations
-                                </span>
-                                <span className="text-xs font-bold text-gray-700">{dept.designationsCount}</span>
+                            <div className="flex items-center gap-1.5">
+                                <Briefcase size={12} className="text-gray-400" />
+                                <span className="text-xs font-bold text-gray-700">{dept.designationsCount ?? (dept.designations?.length ?? 0)}</span>
+                                <span className="text-[10px] text-gray-400">roles</span>
                             </div>
                         </div>
 
@@ -73,8 +70,12 @@ const DepartmentList = ({ departments, selectedId, onSelect, onAdd }) => {
                 ))}
 
                 {departments.length === 0 && (
-                    <div className="text-center py-10 text-gray-400 text-sm">
-                        No departments found.
+                    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <div className="p-4 rounded-xl bg-gray-50 mb-3">
+                            <Building2 size={32} className="text-gray-300" />
+                        </div>
+                        <p className="text-gray-500 text-sm font-medium mb-1">No departments yet</p>
+                        <p className="text-gray-400 text-xs">Use the button below to add one</p>
                     </div>
                 )}
             </div>
@@ -102,12 +103,12 @@ const DepartmentList = ({ departments, selectedId, onSelect, onAdd }) => {
                 </div>
             )}
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <div className="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
                 <button
                     onClick={onAdd}
-                    className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
+                    className="w-full py-3 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
                 >
-                    + Add New Department
+                    <Plus size={18} /> Add Department
                 </button>
             </div>
         </div>

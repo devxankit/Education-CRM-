@@ -20,9 +20,17 @@ const accessControlSchema = new mongoose.Schema(
             type: Number,
             default: 3,
         },
+        lockoutMinutes: {
+            type: Number,
+            default: 15,
+        },
         ipWhitelistEnabled: {
             type: Boolean,
             default: false,
+        },
+        ipWhitelist: {
+            type: [String],
+            default: [],
         },
         passwordExpiryDays: {
             type: Number,

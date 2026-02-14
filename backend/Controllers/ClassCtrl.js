@@ -39,18 +39,14 @@ export const getClasses = async (req, res) => {
         const { branchId } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
-        }
-
-        // Basic validation to avoid CastError 500
-        if (branchId.length !== 24 && branchId !== 'main') {
-            return res.status(200).json({ success: true, data: [] });
-        }
-
         const query = { instituteId, status: "active" };
-        if (branchId !== 'main') {
+        if (branchId && branchId !== 'main') {
+            if (branchId.length !== 24) {
+                return res.status(200).json({ success: true, data: [] });
+            }
             query.branchId = branchId;
+        } else if (branchId === 'main') {
+            // Keep 'main' as special - no branchId filter for institute-wide
         }
 
         const classes = await Class.find(query);

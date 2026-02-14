@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Smartphone, Globe, Clock, AlertTriangle, Save } from 'lucide-react';
+import { Smartphone, Globe, Clock, AlertTriangle, Save, Plus, Trash2 } from 'lucide-react';
 import { API_URL } from '@/app/api';
 
 const AccessControl = () => {
@@ -9,7 +9,9 @@ const AccessControl = () => {
         force2FA: false,
         sessionTimeout: 30,
         maxLoginAttempts: 3,
+        lockoutMinutes: 15,
         ipWhitelistEnabled: false,
+        ipWhitelist: [],
         passwordExpiryDays: 90
     });
     const [fetching, setFetching] = useState(true);
@@ -26,7 +28,16 @@ const AccessControl = () => {
             });
             const data = await response.json();
             if (data.success && data.data) {
-                setPolicies(data.data);
+                const d = data.data;
+                setPolicies({
+                    force2FA: d.force2FA ?? false,
+                    sessionTimeout: d.sessionTimeout ?? 30,
+                    maxLoginAttempts: d.maxLoginAttempts ?? 3,
+                    lockoutMinutes: d.lockoutMinutes ?? 15,
+                    ipWhitelistEnabled: d.ipWhitelistEnabled ?? false,
+                    ipWhitelist: Array.isArray(d.ipWhitelist) ? d.ipWhitelist : [],
+                    passwordExpiryDays: d.passwordExpiryDays ?? 90
+                });
             }
         } catch (error) {
             console.error('Error fetching policies:', error);
@@ -48,13 +59,17 @@ const AccessControl = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
+            const toSave = {
+                ...policies,
+                ipWhitelist: (policies.ipWhitelist || []).filter(ip => String(ip).trim())
+            };
             const response = await fetch(`${API_URL}/access-control`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(policies)
+                body: JSON.stringify(toSave)
             });
 
             const result = await response.json();
@@ -103,7 +118,7 @@ const AccessControl = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h4 className="text-sm font-semibold text-gray-900">Enforce Multi-Factor Authentication</h4>
-                                <p className="text-xs text-gray-500">Require OTP for all Staff logins.</p>
+                                <p className="text-xs text-gray-500">OTP will be sent to staff email at login when enabled.</p>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -116,7 +131,7 @@ const AccessControl = () => {
                             </label>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-50">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Max Failed Attempts</label>
                                 <select
@@ -130,11 +145,31 @@ const AccessControl = () => {
                                 </select>
                             </div>
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Lockout Duration (Minutes)</label>
+                                <input
+                                    type="number"
+                                    min="5"
+                                    max="120"
+                                    value={policies.lockoutMinutes ?? 15}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        handleChange('lockoutMinutes', isNaN(v) || v < 5 ? 15 : Math.min(120, v));
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none"
+                                    placeholder="15"
+                                />
+                                <p className="text-xs text-gray-500 mt-0.5">Block after max failed attempts</p>
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Password Rotation (Days)</label>
                                 <input
                                     type="number"
+                                    min="1"
                                     value={policies.passwordExpiryDays}
-                                    onChange={(e) => handleChange('passwordExpiryDays', parseInt(e.target.value))}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        handleChange('passwordExpiryDays', isNaN(v) || v < 1 ? 90 : v);
+                                    }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none"
                                 />
                             </div>
@@ -153,7 +188,7 @@ const AccessControl = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h4 className="text-sm font-semibold text-gray-900">IP Whitelisting</h4>
-                                <p className="text-xs text-gray-500">Only allow login from recognized office IPs.</p>
+                                <p className="text-xs text-gray-500">Only allow Staff login from recognized office IPs.</p>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -166,10 +201,53 @@ const AccessControl = () => {
                             </label>
                         </div>
 
+                        {policies.ipWhitelistEnabled && (
+                            <div className="pt-4 border-t border-gray-50">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Allowed IPs</label>
+                                <div className="space-y-2">
+                                    {(Array.isArray(policies.ipWhitelist) ? policies.ipWhitelist : []).map((ip, idx) => (
+                                        <div key={idx} className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={ip}
+                                                onChange={(e) => {
+                                                    const list = [...(policies.ipWhitelist || [])];
+                                                    list[idx] = e.target.value;
+                                                    handleChange('ipWhitelist', list);
+                                                }}
+                                                placeholder="IPv4 Address"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const list = [...(policies.ipWhitelist || [])];
+                                                    list.splice(idx, 1);
+                                                    handleChange('ipWhitelist', list);
+                                                }}
+                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Remove"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange('ipWhitelist', [...(policies.ipWhitelist || []), ''])}
+                                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    >
+                                        <Plus size={16} /> Add IP
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="pt-4 border-t border-gray-50">
                             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <Clock size={16} className="text-gray-400" /> Inactive Session Timeout (Minutes)
+                                <Clock size={16} className="text-gray-400" /> Staff Session Timeout (Minutes)
                             </label>
+                            <p className="text-xs text-gray-500 mb-2">JWT expiry for Staff login. Session ends after this duration.</p>
                             <div className="flex items-center gap-4">
                                 <input
                                     type="range" min="5" max="120" step="5"

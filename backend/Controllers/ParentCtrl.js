@@ -5,6 +5,8 @@ import Homework from "../Models/HomeworkModel.js";
 import Notice from "../Models/NoticeModel.js";
 import FeePayment from "../Models/FeePaymentModel.js";
 import FeeStructure from "../Models/FeeStructureModel.js";
+import Tax from "../Models/TaxModel.js";
+import { calculateTax, calculateTaxFromRules } from "../Helpers/calculateTax.js";
 import ExamResult from "../Models/ExamResultModel.js";
 import Exam from "../Models/ExamModel.js";
 import Teacher from "../Models/TeacherModel.js";
@@ -329,14 +331,17 @@ export const getParentDashboard = async (req, res) => {
                 .sort({ createdAt: -1 })
                 .populate("examId", "title");
 
-            // Get fee summary
+            // Get fee summary (with tax)
             const feeStructure = await FeeStructure.findOne({
                 applicableClasses: student.classId,
                 status: "active"
             });
             const feePayments = await FeePayment.find({ studentId: student._id, status: "Success" });
             const totalPaid = feePayments.reduce((sum, p) => sum + p.amountPaid, 0);
-            const totalAmount = feeStructure?.totalAmount || 0;
+            const baseAmount = feeStructure?.totalAmount || 0;
+            const branchId = feeStructure?.branchId || student.branchId;
+            const { totalTax } = branchId ? await calculateTax(baseAmount, branchId, "fees", student.instituteId) : { totalTax: 0 };
+            const totalAmount = baseAmount + totalTax;
 
             // Generate alerts
             const alerts = [];
@@ -601,23 +606,34 @@ export const getChildFees = async (req, res) => {
         }).sort({ paymentDate: -1 });
 
         const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
-        const totalAmount = feeStructures.reduce((sum, fs) => sum + fs.totalAmount, 0);
 
-        // Build breakdown by fee structure
+        // Fetch taxes for student's branch
+        const branchId = student.branchId?.toString();
+        const taxes = branchId ? await Tax.find({ branchId, isActive: true }).lean() : [];
+
+        // Build breakdown by fee structure (with tax)
+        let totalAmount = 0;
         const breakdown = feeStructures.map(fs => {
+            const baseAmount = fs.totalAmount || 0;
+            const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fees");
+            const fsTotal = baseAmount + totalTax;
+            totalAmount += fsTotal;
+
             const structurePayments = payments.filter(
                 p => p.feeStructureId?.toString() === fs._id.toString()
             );
             const paidAmount = structurePayments.reduce((sum, p) => sum + p.amountPaid, 0);
-            const pending = fs.totalAmount - paidAmount;
+            const pending = fsTotal - paidAmount;
 
             return {
                 id: fs._id,
                 head: fs.name,
-                total: fs.totalAmount,
+                total: fsTotal,
+                baseAmount,
+                totalTax,
                 paid: paidAmount,
                 pending,
-                status: pending === 0 ? "Paid" : (paidAmount > 0 ? "Partial" : "Due"),
+                status: pending <= 0 ? "Paid" : (paidAmount > 0 ? "Partial" : "Due"),
                 installments: fs.installments?.map(inst => ({
                     term: inst.name,
                     amount: inst.amount,

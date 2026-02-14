@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Briefcase, Eye, EyeOff, Shield } from 'lucide-react';
+import { Lock, User, Briefcase, Eye, EyeOff, Shield, Mail } from 'lucide-react';
 import { STAFF_ROLES } from '../../config/roles';
 import { useStaffAuth } from '../../context/StaffAuthContext';
-import { loginStaff, getPublicRoles } from '../../services/auth.api';
+import { loginStaff, verifyOtpStaff, getPublicRoles } from '../../services/auth.api';
 
 const StaffLogin = () => {
     const navigate = useNavigate();
@@ -34,8 +34,11 @@ const StaffLogin = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        role: '' // Added role back to state
+        role: ''
     });
+    const [otpStep, setOtpStep] = useState(false);
+    const [tempToken, setTempToken] = useState('');
+    const [otp, setOtp] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -52,7 +55,7 @@ const StaffLogin = () => {
         // Pattern matching
         if (code.includes('ACCOUNTS')) return STAFF_ROLES.ACCOUNTS;
         if (code.includes('FRONT') || code.includes('RECEPTION')) return STAFF_ROLES.FRONT_DESK;
-        if (code.includes('TRANSPORT')) return STAFF_ROLES.TRANSPORT;
+        if (code.includes('TRANSPORT') || code.includes('TRASPORT')) return STAFF_ROLES.TRANSPORT;
         if (code.includes('DATA')) return STAFF_ROLES.DATA_ENTRY;
         if (code.includes('SUPPORT')) return STAFF_ROLES.SUPPORT;
         if (code.includes('PRINCIPAL') || code.includes('HEAD')) return STAFF_ROLES.PRINCIPAL;
@@ -65,9 +68,12 @@ const StaffLogin = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Front-end validation for role selection
         if (!formData.role) {
             setError('Please select your access role.');
+            return;
+        }
+        if (otpStep && otp.length !== 6) {
+            setError('Please enter the 6-digit OTP.');
             return;
         }
 
@@ -75,30 +81,33 @@ const StaffLogin = () => {
         setError('');
 
         try {
-            // 1. Authenticate with Backend (Passing Role for server-side validation)
-            const { user: backendUser, token } = await loginStaff(formData.email, formData.password, formData.role);
+            if (otpStep && tempToken) {
+                const { user: backendUser, token } = await verifyOtpStaff(tempToken, otp, formData.role);
+                const mappedBackendRole = mapBackendRoleToFrontend(backendUser.roleId?.code);
+                const finalRole = mappedBackendRole || formData.role;
+                const userForContext = { ...backendUser, id: backendUser._id, role: finalRole, token };
+                localStorage.setItem('token', token);
+                login(userForContext);
+                navigate('/staff/dashboard', { replace: true });
+                return;
+            }
 
-            // 2. Map Backend Role to Frontend Role for Context/UI
-            // Even though backend validated it, we still need to map the complex backend code to a simple frontend constant
+            const result = await loginStaff(formData.email, formData.password, formData.role);
+
+            if (result.requires2FA && result.tempToken) {
+                setTempToken(result.tempToken);
+                setOtpStep(true);
+                setOtp('');
+                setError('');
+                return;
+            }
+
+            const { user: backendUser, token } = result;
             const mappedBackendRole = mapBackendRoleToFrontend(backendUser.roleId?.code);
-
-            // Fallback: If map returns null, use the role user selected (since backend said it was OK)
-            // or default to generic STAFF role
             const finalRole = mappedBackendRole || formData.role;
-
-            const userForContext = {
-                ...backendUser,
-                id: backendUser._id,
-                role: finalRole,
-                token
-            };
-
+            const userForContext = { ...backendUser, id: backendUser._id, role: finalRole, token };
             localStorage.setItem('token', token);
-            // 3. Lock the Role in Global State (Immutable Session)
             login(userForContext);
-
-            // 4. Redirect to Dashboard
-            console.log('Login Success & Role Locked:', finalRole);
             navigate('/staff/dashboard', { replace: true });
 
         } catch (err) {
@@ -126,6 +135,55 @@ const StaffLogin = () => {
                 <div className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-gray-100">
                     <form className="space-y-6" onSubmit={handleSubmit}>
 
+                        {otpStep ? (
+                            <>
+                                <div className="text-center mb-4">
+                                    <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                                        <Mail size={24} className="text-green-600" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900">Enter OTP</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Check your email <strong>{formData.email}</strong> for the 6-digit code</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Verification Code</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={otp}
+                                        onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '')); setError(''); }}
+                                        placeholder="000000"
+                                        className="block w-full px-4 py-3 text-center text-xl tracking-[0.5em] font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                        autoFocus
+                                    />
+                                </div>
+                                {error && (
+                                    <div className="rounded-md bg-red-50 p-4 border border-red-100">
+                                        <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                                    </div>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || otp.length !== 6}
+                                    className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? (
+                                        <span className="flex items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Verifying...
+                                        </span>
+                                    ) : 'Verify OTP'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setOtpStep(false); setTempToken(''); setOtp(''); setError(''); }}
+                                    className="text-sm text-gray-500 hover:text-indigo-600"
+                                >
+                                    ← Back to login
+                                </button>
+                            </>
+                        ) : (
+                            <>
                         {/* Role Selection */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5 flex items-center gap-1">
@@ -225,6 +283,8 @@ const StaffLogin = () => {
                                 )}
                             </button>
                         </div>
+                            </>
+                        )}
                     </form>
 
                     <div className="mt-6">

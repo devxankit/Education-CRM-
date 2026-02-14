@@ -19,6 +19,16 @@ export const loginStaff = async (email, password, role) => {
         });
 
         if (response.data.success) {
+            if (response.data.requires2FA && response.data.tempToken) {
+                return {
+                    requires2FA: true,
+                    tempToken: response.data.tempToken,
+                    message: response.data.message || 'OTP sent to your email'
+                };
+            }
+            if (!response.data.token) {
+                throw new Error(response.data.message || 'Login failed');
+            }
             return {
                 user: response.data.data,
                 token: response.data.token
@@ -27,7 +37,33 @@ export const loginStaff = async (email, password, role) => {
             throw new Error(response.data.message || 'Login failed');
         }
     } catch (error) {
-        throw error.response?.data?.message || error.message || 'Login failed';
+        const msg = error.response?.data?.message || error.message || 'Login failed';
+        throw typeof msg === 'string' ? msg : 'Login failed';
+    }
+};
+
+export const verifyOtpStaff = async (tempToken, otp, role) => {
+    try {
+        const response = await axios.post(`${API_URL}/staff/verify-otp`, {
+            tempToken,
+            otp,
+            role
+        });
+
+        if (response.data.success) {
+            if (!response.data.token) {
+                throw new Error(response.data.message || 'Verification failed');
+            }
+            return {
+                user: response.data.data,
+                token: response.data.token
+            };
+        } else {
+            throw new Error(response.data.message || 'Verification failed');
+        }
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Invalid OTP';
+        throw typeof msg === 'string' ? msg : 'Invalid OTP';
     }
 };
 

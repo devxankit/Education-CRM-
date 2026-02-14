@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { getDashboardStats } from '../services/dashboard.api';
+import { getMyNotices } from '../services/notices.api';
 
 import {
-    Users, FileText, ClipboardList, Wallet, Ticket, Bus,
+    Users, FileText, ClipboardList, Wallet, Ticket, Bus, Store,
     AlertCircle, CheckCircle, Clock, Plus, Upload, Filter,
     Download, Search, Shield, ChevronRight, Info, AlertTriangle,
     Briefcase, UserPlus, User, Bell, Sparkles, TrendingUp,
@@ -12,12 +13,13 @@ import {
 } from 'lucide-react';
 import { ROLE_DASHBOARD_MAP } from '../config/roleDashboardMap';
 import toast from 'react-hot-toast';
-
+    
 const StaffDashboard = () => {
     const navigate = useNavigate();
-    const { user } = useStaffAuth();
+    const { user, permissions: contextPermissions } = useStaffAuth();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [alerts, setAlerts] = useState([]);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -31,7 +33,25 @@ const StaffDashboard = () => {
                 setLoading(false);
             }
         };
-        if (user) fetchStats();
+        const fetchAlerts = async () => {
+            try {
+                const notices = await getMyNotices();
+                const recent = (notices || []).slice(0, 5).map(n => ({
+                    id: n._id || n.id,
+                    title: n.title || 'Notice',
+                    content: n.content || '',
+                    priority: n.priority || 'Normal',
+                    publishDate: n.publishDate || n.createdAt
+                }));
+                setAlerts(recent);
+            } catch (e) {
+                setAlerts([]);
+            }
+        };
+        if (user) {
+            fetchStats();
+            fetchAlerts();
+        }
     }, [user]);
 
     if (!user || !user.roleId) return null;
@@ -39,6 +59,22 @@ const StaffDashboard = () => {
     // Support both direct role string and populated role object
     const currentRole = user.role || user.roleId?.code;
     const config = ROLE_DASHBOARD_MAP[currentRole];
+
+    // Check menu access (same logic as StaffBottomNav)
+    const checkAccess = (path) => {
+        if (!path) return false;
+        const key = path.split('/')[2];
+        const permissions = (Object.keys(contextPermissions || {}).length > 0)
+            ? contextPermissions
+            : (user?.permissions || user?.roleId?.permissions || {});
+        const hasPermissions = Object.keys(permissions).length > 0;
+        const roleCode = user?.roleId?.code || user?.role;
+        const isSuperUser = ['ROLE_SUPER_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(roleCode);
+        if (isSuperUser) return true;
+        if (key === 'profile' || key === 'dashboard') return true;
+        if (hasPermissions) return permissions[key]?.accessible === true;
+        return false;
+    };
 
     const handleNavigation = (path, stateData = {}) => {
         navigate(path, { state: { source: 'dashboard', ...stateData } });
@@ -62,13 +98,23 @@ const StaffDashboard = () => {
                 case 'OpenTickets': return { title: 'Support Tickets', count, icon: Ticket, color: 'text-violet-600', bg: 'bg-violet-50/50', border: 'border-violet-100', path: '/staff/support' };
                 case 'MyClasses': return { title: 'My Classes', count, icon: Briefcase, color: 'text-indigo-600', bg: 'bg-indigo-50/50', border: 'border-indigo-100', path: '/staff/teachers' };
                 case 'TodayAttendance': return { title: 'Attendance', count, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100', path: '/staff/students' };
+                case 'PendingPayroll': return { title: 'Pending Payroll', count, icon: Wallet, color: 'text-violet-600', bg: 'bg-violet-50/50', border: 'border-violet-100', path: '/staff/payroll' };
+                case 'UnpaidExpenses': return { title: 'Unpaid Expenses', count, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50/50', border: 'border-rose-100', path: '/staff/expenses' };
+                case 'SystemHealth': return { title: 'System Health', count: count === 'OK' ? '✓' : count, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50/50', border: 'border-emerald-100', path: '/staff/dashboard' };
+                case 'AllStaffOverview': return { title: 'Total Staff', count, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50/50', border: 'border-blue-100', path: '/staff/employees' };
                 default: return { title: key.replace(/([A-Z])/g, ' $1').trim(), count, icon: Info, color: 'text-gray-600', bg: 'bg-gray-50/50', border: 'border-gray-100', path: '/staff/dashboard' };
             }
         };
 
+        const filteredWidgets = config.primaryWidgets.filter(key => {
+            const props = getWidgetProps(key);
+            return checkAccess(props.path);
+        });
+        if (filteredWidgets.length === 0) return null;
+
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                {config.primaryWidgets.map(key => {
+                {filteredWidgets.map(key => {
                     const props = getWidgetProps(key);
                     const Icon = props.icon;
                     return (
@@ -107,10 +153,26 @@ const StaffDashboard = () => {
             'ViewPendingAdmissions': { label: 'Admissions', icon: Users, color: 'bg-blue-600', path: '/staff/students' },
             'ViewFeeLedger': { label: 'Fee Ledger', icon: Search, color: 'bg-emerald-600', path: '/staff/fees' },
             'ProcessPayroll': { label: 'Payroll', icon: Wallet, color: 'bg-violet-600', path: '/staff/payroll' },
+            'AddExpense': { label: 'Add Expense', icon: Plus, color: 'bg-rose-600', path: '/staff/expenses/new' },
+            'ManageVendors': { label: 'Vendors', icon: Store, color: 'bg-amber-600', path: '/staff/vendors' },
             'AddStudent': { label: 'New Student', icon: Plus, color: 'bg-indigo-600', path: '/staff/students/new' },
+            'AddEmployee': { label: 'Add Staff', icon: UserPlus, color: 'bg-indigo-600', path: '/staff/employees/new' },
+            'AddTeacher': { label: 'Add Teacher', icon: Plus, color: 'bg-indigo-600', path: '/staff/teachers/new' },
             'MarkAttendance': { label: 'Attendance', icon: CheckCircle, color: 'bg-emerald-600', path: '/staff/students' },
             'ViewOpenTickets': { label: 'Support Inbox', icon: Bell, color: 'bg-rose-600', path: '/staff/support' },
+            'AssignStudentRoute': { label: 'Assign Route', icon: Bus, color: 'bg-indigo-600', path: '/staff/transport' },
+            'ViewRouteDetails': { label: 'View Routes', icon: Bus, color: 'bg-indigo-600', path: '/staff/transport' },
+            'ReportTransportIssue': { label: 'Report Issue', icon: AlertTriangle, color: 'bg-amber-600', path: '/staff/transport' },
+            'RespondToTicket': { label: 'Respond', icon: Bell, color: 'bg-rose-600', path: '/staff/support' },
+            'CloseTicket': { label: 'Close Ticket', icon: CheckCircle, color: 'bg-emerald-600', path: '/staff/support' },
+            'VerifyDocuments': { label: 'Verify Docs', icon: Shield, color: 'bg-orange-600', path: '/staff/documents' },
         };
+
+        const filteredActions = config.quickActions.filter(actionKey => {
+            const action = ACTIONS[actionKey];
+            return action && checkAccess(action.path);
+        });
+        if (filteredActions.length === 0) return null;
 
         return (
             <div className="mb-8">
@@ -121,7 +183,7 @@ const StaffDashboard = () => {
                     </h3>
                 </div>
                 <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                    {config.quickActions.slice(0, 10).map(actionKey => {
+                    {filteredActions.slice(0, 10).map(actionKey => {
                         const action = ACTIONS[actionKey] || { label: actionKey, icon: Info, color: 'bg-gray-600', path: '/staff/dashboard' };
                         const Icon = action.icon;
                         return (
@@ -223,27 +285,40 @@ const StaffDashboard = () => {
                         <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">Today</span>
                     </div>
                     <div className="space-y-4">
-                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:border-indigo-100 transition-all duration-300">
-                            <div className="flex gap-3">
-                                <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={16} />
-                                <div>
-                                    <p className="text-xs font-bold text-gray-900">Weekly Backup Pending</p>
-                                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">The system will perform a partial backup on Sunday at midnight. Support will be offline for 30 mins.</p>
-                                </div>
+                        {alerts.length > 0 ? (
+                            alerts.map((alert) => {
+                                const isUrgent = (alert.priority || '').toUpperCase() === 'URGENT' || (alert.priority || '').toUpperCase() === 'IMPORTANT';
+                                return (
+                                    <div
+                                        key={alert.id}
+                                        onClick={() => navigate(`/staff/notices/${alert.id}`)}
+                                        className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:border-indigo-100 transition-all duration-300 cursor-pointer"
+                                    >
+                                        <div className="flex gap-3">
+                                            {isUrgent ? (
+                                                <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={16} />
+                                            ) : (
+                                                <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-bold text-gray-900">{alert.title}</p>
+                                                <p className="text-[10px] text-gray-500 mt-1 leading-relaxed line-clamp-2">{alert.content || 'View details...'}</p>
+                                            </div>
+                                            <ChevronRight size={14} className="text-gray-400 shrink-0 mt-1" />
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="p-6 text-center text-gray-400">
+                                <Bell size={24} className="mx-auto mb-2 opacity-50" />
+                                <p className="text-xs">No new alerts</p>
                             </div>
-                        </div>
-                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:border-indigo-100 transition-all duration-300">
-                            <div className="flex gap-3">
-                                <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={16} />
-                                <div>
-                                    <p className="text-xs font-bold text-gray-900">Profile Updates Success</p>
-                                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Staff profile pictures and custom banners are now live. Personalize your workspace in the profile section!</p>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
+                {checkAccess('/staff/reports') && (
                 <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-8 rounded-[2rem] shadow-xl shadow-indigo-200 text-white relative overflow-hidden group">
                     <div className="relative z-10 h-full flex flex-col justify-between">
                         <div>
@@ -251,13 +326,17 @@ const StaffDashboard = () => {
                             <h2 className="text-2xl font-black leading-tight mb-2">Grow your <br /> Institution</h2>
                             <p className="text-indigo-100 text-xs font-medium">Use advanced analytics of the ERP to track student performance and fee growth.</p>
                         </div>
-                        <button className="mt-8 bg-white/20 backdrop-blur-md text-white py-3 px-6 rounded-2xl text-xs font-black w-fit hover:bg-white hover:text-indigo-600 transition-all active:scale-95">
+                        <button
+                            onClick={() => handleNavigation('/staff/reports')}
+                            className="mt-8 bg-white/20 backdrop-blur-md text-white py-3 px-6 rounded-2xl text-xs font-black w-fit hover:bg-white hover:text-indigo-600 transition-all active:scale-95"
+                        >
                             Open Analytics
                         </button>
                     </div>
                     <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="absolute bottom-0 left-0 ml-12 mb-12 w-24 h-24 bg-amber-400/20 rounded-full blur-2xl"></div>
                 </div>
+                )}
             </div>
         </div>
     );

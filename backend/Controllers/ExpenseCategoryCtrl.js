@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 export const createExpenseCategory = async (req, res) => {
     try {
         const { name, code, type, budgetLimit, approvalRequired, branchId } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId || !mongoose.Types.ObjectId.isValid(branchId)) {
             return res.status(400).json({ success: false, message: "Valid Branch ID is required" });
@@ -37,7 +37,7 @@ export const createExpenseCategory = async (req, res) => {
 export const getExpenseCategories = async (req, res) => {
     try {
         const { branchId, isActive } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
 

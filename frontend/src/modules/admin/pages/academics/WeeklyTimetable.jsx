@@ -211,10 +211,24 @@ const WeeklyTimetable = () => {
     const handleUpdatePeriod = (index, field, value) => {
         setLocalSchedule(prev => {
             const updatedDay = [...prev[activeDay]];
-            updatedDay[index] = { ...updatedDay[index], [field]: value };
+            const currentPeriod = updatedDay[index];
             
-            // If subject changes, we might want to check if the current teacher is still valid
-            // But for now, we'll just clear the error for this row when anything changes
+            // If subject changes, clear the teacher selection if teacher is not assigned to new subject
+            if (field === 'subjectId' && value) {
+                const newSubjectId = value;
+                const currentTeacherId = currentPeriod.teacherId?._id || currentPeriod.teacherId;
+                
+                // Check if current teacher is assigned to the new subject
+                if (currentTeacherId && !isTeacherAssignedToSubject(currentTeacherId, newSubjectId)) {
+                    updatedDay[index] = { ...currentPeriod, [field]: value, teacherId: '' };
+                } else {
+                    updatedDay[index] = { ...currentPeriod, [field]: value };
+                }
+            } else {
+                updatedDay[index] = { ...currentPeriod, [field]: value };
+            }
+            
+            // Clear validation errors for this row when anything changes
             const errorKey = `${activeDay}-${index}`;
             if (validationErrors[errorKey]) {
                 const newErrors = { ...validationErrors };
@@ -228,14 +242,14 @@ const WeeklyTimetable = () => {
 
     // Helper to get filtered teachers for a subject
     const getFilteredTeachers = (subjectId) => {
-        if (!subjectId) return teachers;
+        if (!subjectId) return []; // Return empty if no subject selected
         
         // Find teachers mapped to this subject
         const mappedTeacherIds = teacherMappings
             .filter(m => (m.subjectId?._id || m.subjectId) === subjectId)
             .map(m => m.teacherId?._id || m.teacherId);
             
-        if (mappedTeacherIds.length === 0) return teachers; // If no mapping, show all (or could show none)
+        if (mappedTeacherIds.length === 0) return []; // Return empty if no teachers mapped to this subject
         
         return teachers.filter(t => mappedTeacherIds.includes(t._id || t.id));
     };
@@ -317,8 +331,182 @@ const WeeklyTimetable = () => {
                     newErrors[`${day}-${index}-time`] = timeValidation.message;
                     hasError = true;
                 }
+
+                // 3. Period Duration Validation
+                if (period.startTime && period.endTime && timetableRules?.periodDuration) {
+                    const startMins = timeToMinutes(period.startTime);
+                    const endMins = timeToMinutes(period.endTime);
+                    const duration = endMins - startMins;
+                    const expectedDuration = timetableRules.periodDuration;
+                    if (Math.abs(duration - expectedDuration) > 5) { // Allow 5 min tolerance
+                        newErrors[`${day}-${index}-duration`] = `Period duration should be ${expectedDuration} minutes (currently ${duration} min)`;
+                        hasError = true;
+                    }
+                }
             });
+
+            // 4. Max Periods Per Day Validation (Student)
+            if (timetableRules?.maxPeriodsStudent && localSchedule[day].length > timetableRules.maxPeriodsStudent) {
+                newErrors[`${day}-max-periods`] = `Maximum ${timetableRules.maxPeriodsStudent} periods allowed per day`;
+                hasError = true;
+            }
+
+            // 5. Teacher Overlap Validation
+            if (timetableRules?.preventTeacherOverlap !== false) {
+                const teacherPeriods = {};
+                localSchedule[day].forEach((period, index) => {
+                    const teacherId = period.teacherId?._id || period.teacherId;
+                    if (teacherId && period.startTime && period.endTime) {
+                        if (!teacherPeriods[teacherId]) {
+                            teacherPeriods[teacherId] = [];
+                        }
+                        teacherPeriods[teacherId].push({ index, startTime: period.startTime, endTime: period.endTime });
+                    }
+                });
+
+                Object.keys(teacherPeriods).forEach(teacherId => {
+                    const periods = teacherPeriods[teacherId];
+                    for (let i = 0; i < periods.length; i++) {
+                        for (let j = i + 1; j < periods.length; j++) {
+                            const p1 = periods[i];
+                            const p2 = periods[j];
+                            const start1 = timeToMinutes(p1.startTime);
+                            const end1 = timeToMinutes(p1.endTime);
+                            const start2 = timeToMinutes(p2.startTime);
+                            const end2 = timeToMinutes(p2.endTime);
+
+                            if ((start1 < end2 && end1 > start2)) {
+                                newErrors[`${day}-${p1.index}-overlap`] = "Teacher has overlapping periods";
+                                newErrors[`${day}-${p2.index}-overlap`] = "Teacher has overlapping periods";
+                                hasError = true;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 6. Room Overlap Validation
+            if (timetableRules?.preventRoomOverlap !== false) {
+                const roomPeriods = {};
+                localSchedule[day].forEach((period, index) => {
+                    const room = period.room;
+                    if (room && period.startTime && period.endTime) {
+                        if (!roomPeriods[room]) {
+                            roomPeriods[room] = [];
+                        }
+                        roomPeriods[room].push({ index, startTime: period.startTime, endTime: period.endTime });
+                    }
+                });
+
+                Object.keys(roomPeriods).forEach(room => {
+                    const periods = roomPeriods[room];
+                    for (let i = 0; i < periods.length; i++) {
+                        for (let j = i + 1; j < periods.length; j++) {
+                            const p1 = periods[i];
+                            const p2 = periods[j];
+                            const start1 = timeToMinutes(p1.startTime);
+                            const end1 = timeToMinutes(p1.endTime);
+                            const start2 = timeToMinutes(p2.startTime);
+                            const end2 = timeToMinutes(p2.endTime);
+
+                            if ((start1 < end2 && end1 > start2)) {
+                                newErrors[`${day}-${p1.index}-room-overlap`] = "Room is already booked for this time";
+                                newErrors[`${day}-${p2.index}-room-overlap`] = "Room is already booked for this time";
+                                hasError = true;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 7. Max Consecutive Periods Validation
+            if (timetableRules?.maxConsecutive) {
+                const sortedPeriods = [...localSchedule[day]]
+                    .filter(p => p.startTime && p.endTime)
+                    .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+                let consecutiveCount = 1;
+                let maxConsecutive = 1;
+                for (let i = 1; i < sortedPeriods.length; i++) {
+                    const prevEnd = timeToMinutes(sortedPeriods[i - 1].endTime);
+                    const currStart = timeToMinutes(sortedPeriods[i].startTime);
+                    if (currStart <= prevEnd + 15) { // 15 min break tolerance
+                        consecutiveCount++;
+                        maxConsecutive = Math.max(maxConsecutive, consecutiveCount);
+                    } else {
+                        consecutiveCount = 1;
+                    }
+                }
+
+                if (maxConsecutive > timetableRules.maxConsecutive) {
+                    newErrors[`${day}-consecutive`] = `Maximum ${timetableRules.maxConsecutive} consecutive periods allowed`;
+                    hasError = true;
+                }
+            }
         });
+
+        // 8. Weekly Validations - Max Periods Per Teacher
+        if (timetableRules?.maxPeriodsTeacher) {
+            const teacherWeeklyCounts = {};
+            Object.keys(localSchedule).forEach(day => {
+                localSchedule[day].forEach(period => {
+                    const teacherId = period.teacherId?._id || period.teacherId;
+                    if (teacherId) {
+                        if (!teacherWeeklyCounts[teacherId]) {
+                            teacherWeeklyCounts[teacherId] = { count: 0, periods: [] };
+                        }
+                        teacherWeeklyCounts[teacherId].count++;
+                        teacherWeeklyCounts[teacherId].periods.push({ day, teacherId, period });
+                    }
+                });
+            });
+
+            Object.keys(teacherWeeklyCounts).forEach(teacherId => {
+                if (teacherWeeklyCounts[teacherId].count > timetableRules.maxPeriodsTeacher) {
+                    teacherWeeklyCounts[teacherId].periods.forEach(({ day, period }) => {
+                        const periodIndex = localSchedule[day].indexOf(period);
+                        if (periodIndex !== -1) {
+                            newErrors[`${day}-${periodIndex}-teacher-max`] = `Teacher exceeds weekly limit (${teacherWeeklyCounts[teacherId].count}/${timetableRules.maxPeriodsTeacher})`;
+                            hasError = true;
+                        }
+                    });
+                }
+            });
+        }
+
+        // 9. Weekly Validations - Max Weekly Hours
+        if (timetableRules?.maxWeeklyHours) {
+            const teacherWeeklyHours = {};
+            Object.keys(localSchedule).forEach(day => {
+                localSchedule[day].forEach(period => {
+                    const teacherId = period.teacherId?._id || period.teacherId;
+                    if (teacherId && period.startTime && period.endTime) {
+                        if (!teacherWeeklyHours[teacherId]) {
+                            teacherWeeklyHours[teacherId] = 0;
+                        }
+                        const startMins = timeToMinutes(period.startTime);
+                        const endMins = timeToMinutes(period.endTime);
+                        const durationHours = (endMins - startMins) / 60;
+                        teacherWeeklyHours[teacherId] += durationHours;
+                    }
+                });
+            });
+
+            Object.keys(teacherWeeklyHours).forEach(teacherId => {
+                if (teacherWeeklyHours[teacherId] > timetableRules.maxWeeklyHours) {
+                    // Find all periods for this teacher and mark them
+                    Object.keys(localSchedule).forEach(day => {
+                        localSchedule[day].forEach((period, index) => {
+                            const periodTeacherId = period.teacherId?._id || period.teacherId;
+                            if (periodTeacherId === teacherId) {
+                                newErrors[`${day}-${index}-weekly-hours`] = `Teacher exceeds weekly hours limit (${teacherWeeklyHours[teacherId].toFixed(1)}h/${timetableRules.maxWeeklyHours}h)`;
+                                hasError = true;
+                            }
+                        });
+                    });
+                }
+            });
+        }
 
         if (hasError) {
             setValidationErrors(newErrors);
@@ -330,12 +518,36 @@ const WeeklyTimetable = () => {
             // Clean up localSchedule to only include essential IDs for saving
             const cleanedSchedule = {};
             Object.keys(localSchedule).forEach(day => {
-                cleanedSchedule[day] = localSchedule[day].map(period => ({
-                    ...period,
-                    subjectId: period.subjectId?._id || period.subjectId,
-                    teacherId: period.teacherId?._id || period.teacherId
-                }));
+                cleanedSchedule[day] = localSchedule[day]
+                    .filter(period => period.subjectId) // Only include periods with a subject
+                    .map(period => {
+                        const subjectId = period.subjectId?._id || period.subjectId;
+                        const teacherId = period.teacherId?._id || period.teacherId;
+                        
+                        // Only include teacherId if it's a valid value (not empty string)
+                        const cleanedPeriod = {
+                            subjectId: subjectId || null,
+                            startTime: period.startTime || '',
+                            endTime: period.endTime || '',
+                            room: period.room || '',
+                            type: period.type || 'offline',
+                            link: period.link || ''
+                        };
+                        
+                        // Only add teacherId if it exists and is not empty
+                        if (teacherId && teacherId !== '') {
+                            cleanedPeriod.teacherId = teacherId;
+                        }
+                        
+                        return cleanedPeriod;
+                    });
             });
+
+            // Ensure academicYearId is not empty before sending
+            if (!selectedYearId || selectedYearId === '') {
+                alert('Please select Academic Year');
+                return;
+            }
 
             await saveTimetable({
                 academicYearId: selectedYearId,
@@ -417,6 +629,7 @@ const WeeklyTimetable = () => {
                             onChange={(e) => setSelectedYearId(e.target.value)}
                             className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
                         >
+                            <option value="">Select Academic Year</option>
                             {academicYears.map(y => <option key={y._id} value={y._id}>{y.name}</option>)}
                         </select>
                     </div>
@@ -505,10 +718,23 @@ const WeeklyTimetable = () => {
                     </div>
 
                     <div className="p-6">
+                        {/* Day-level validation errors */}
                         {validationErrors[`${activeDay}-day`] && (
                             <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-sm font-medium">
                                 <AlertCircle size={18} />
                                 {validationErrors[`${activeDay}-day`]}
+                            </div>
+                        )}
+                        {validationErrors[`${activeDay}-max-periods`] && (
+                            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-sm font-medium">
+                                <AlertCircle size={18} />
+                                {validationErrors[`${activeDay}-max-periods`]}
+                            </div>
+                        )}
+                        {validationErrors[`${activeDay}-consecutive`] && (
+                            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-sm font-medium">
+                                <AlertCircle size={18} />
+                                {validationErrors[`${activeDay}-consecutive`]}
                             </div>
                         )}
                         <div className="flex items-center justify-between mb-6">
@@ -569,32 +795,66 @@ const WeeklyTimetable = () => {
                                             <select
                                                 value={period.teacherId?._id || period.teacherId || ''}
                                                 onChange={(e) => handleUpdatePeriod(index, 'teacherId', e.target.value)}
-                                                className={`w-full px-3 py-2 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all ${!isTeacherAssignedToSubject(period.teacherId?._id || period.teacherId, period.subjectId?._id || period.subjectId) ? 'border-red-500 text-red-600' : 'border-gray-200'}`}
+                                                disabled={!period.subjectId?._id && !period.subjectId}
+                                                className={`w-full px-3 py-2 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                                    !isTeacherAssignedToSubject(period.teacherId?._id || period.teacherId, period.subjectId?._id || period.subjectId) 
+                                                        ? 'border-red-500 text-red-600' 
+                                                        : 'border-gray-200'
+                                                } ${!period.subjectId?._id && !period.subjectId ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
-                                                <option value="">Select Teacher</option>
-                                                {/* Highlight assigned teachers or show only them */}
-                                                <optgroup label="Assigned Teachers">
-                                                    {getFilteredTeachers(period.subjectId?._id || period.subjectId).map(t => (
-                                                        <option key={t._id || t.id} value={t._id || t.id}>{t.firstName} {t.lastName}</option>
-                                                    ))}
-                                                </optgroup>
-                                                <optgroup label="All Teachers">
-                                                    {teachers.map(t => (
-                                                        <option key={t._id || t.id} value={t._id || t.id}>{t.firstName} {t.lastName}</option>
-                                                    ))}
-                                                </optgroup>
+                                                <option value="">
+                                                    {!period.subjectId?._id && !period.subjectId 
+                                                        ? 'Select Subject First' 
+                                                        : getFilteredTeachers(period.subjectId?._id || period.subjectId).length === 0
+                                                        ? 'No Teachers Assigned'
+                                                        : 'Select Teacher'}
+                                                </option>
+                                                {/* Show only teachers assigned to the selected subject */}
+                                                {getFilteredTeachers(period.subjectId?._id || period.subjectId).map(t => (
+                                                    <option key={t._id || t.id} value={t._id || t.id}>
+                                                        {t.firstName} {t.lastName}
+                                                    </option>
+                                                ))}
                                             </select>
+                                            {period.subjectId?._id || period.subjectId ? (
+                                                getFilteredTeachers(period.subjectId?._id || period.subjectId).length === 0 && (
+                                                    <p className="text-[10px] text-amber-600 mt-1 ml-1">
+                                                        No teachers assigned to this subject
+                                                    </p>
+                                                )
+                                            ) : null}
                                         </div>
 
-                                        {validationErrors[`${activeDay}-${index}`] && (
-                                            <div className="absolute -bottom-5 left-4 text-[10px] font-bold text-red-500">
-                                                {validationErrors[`${activeDay}-${index}`]}
-                                            </div>
-                                        )}
-
-                                        {validationErrors[`${activeDay}-${index}-time`] && (
-                                            <div className="absolute -bottom-5 right-4 text-[10px] font-bold text-red-500">
-                                                {validationErrors[`${activeDay}-${index}-time`]}
+                                        {/* Display all validation errors for this period */}
+                                        {(validationErrors[`${activeDay}-${index}`] || 
+                                          validationErrors[`${activeDay}-${index}-time`] ||
+                                          validationErrors[`${activeDay}-${index}-duration`] ||
+                                          validationErrors[`${activeDay}-${index}-overlap`] ||
+                                          validationErrors[`${activeDay}-${index}-room-overlap`] ||
+                                          validationErrors[`${activeDay}-${index}-teacher-max`] ||
+                                          validationErrors[`${activeDay}-${index}-weekly-hours`]) && (
+                                            <div className="absolute -bottom-5 left-4 text-[10px] font-bold text-red-500 space-y-0.5 max-w-[300px]">
+                                                {validationErrors[`${activeDay}-${index}`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}`]}</div>
+                                                )}
+                                                {validationErrors[`${activeDay}-${index}-time`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}-time`]}</div>
+                                                )}
+                                                {validationErrors[`${activeDay}-${index}-duration`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}-duration`]}</div>
+                                                )}
+                                                {validationErrors[`${activeDay}-${index}-overlap`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}-overlap`]}</div>
+                                                )}
+                                                {validationErrors[`${activeDay}-${index}-room-overlap`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}-room-overlap`]}</div>
+                                                )}
+                                                {validationErrors[`${activeDay}-${index}-teacher-max`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}-teacher-max`]}</div>
+                                                )}
+                                                {validationErrors[`${activeDay}-${index}-weekly-hours`] && (
+                                                    <div>{validationErrors[`${activeDay}-${index}-weekly-hours`]}</div>
+                                                )}
                                             </div>
                                         )}
 

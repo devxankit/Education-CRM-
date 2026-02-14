@@ -1,78 +1,85 @@
 
 import React, { useState, useMemo } from 'react';
-import { User, Shield, AlertTriangle, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Edit2, Trash2, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
 
-const DesignationList = ({ designations, onEdit, onDelete }) => {
+const DesignationList = ({ designations, onEdit, onDelete, onAdd, showAddButton = true }) => {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 4;
+    const itemsPerPage = 8;
 
-    const totalPages = Math.ceil(designations.length / itemsPerPage);
+    const totalPages = Math.max(1, Math.ceil(designations.length / itemsPerPage));
 
     const paginatedDesignations = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
         return designations.slice(start, start + itemsPerPage);
     }, [designations, currentPage, itemsPerPage]);
 
-    // Reset page if designations change
     React.useEffect(() => {
-        if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(totalPages);
-        }
+        if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
     }, [designations.length, totalPages, currentPage]);
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2">
             {paginatedDesignations.map((des, index) => {
                 const actualIndex = (currentPage - 1) * itemsPerPage + index;
                 return (
-                    <div key={actualIndex} className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:border-gray-200 hover:shadow-md transition-all group flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-blue-50 text-blue-600">
-                                <User size={16} />
+                    <div
+                        key={actualIndex}
+                        className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:border-indigo-100 hover:shadow transition-all group flex flex-wrap sm:flex-nowrap items-center justify-between gap-3"
+                    >
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
+                                <User size={18} />
                             </div>
-                            <div>
-                                <h4 className="text-sm font-bold text-gray-800">{des.name}</h4>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[10px] text-gray-500 font-mono bg-gray-50 px-1 rounded">{des.code}</span>
-                                    <span className="text-[10px] text-blue-600 font-bold">Level {des.level}</span>
+                            <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-gray-800 truncate">{des.name}</h4>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    <span className="text-[10px] text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{des.code}</span>
+                                    <span className="text-[10px] text-indigo-600 font-bold">Lvl {des.level}</span>
                                     {des.reportsTo && (
-                                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                                            → Reports to {des.reportsTo}
-                                        </span>
+                                        <span className="text-[10px] text-gray-400 truncate">→ {des.reportsTo}</span>
                                     )}
+                                    <span className={`text-[10px] font-bold ${des.status === 'Active' ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {des.status}
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="text-right">
-                                <span className="block text-xs font-bold text-gray-700">{des.employeeCount || 0} Staff</span>
-                                <span className={`text-[10px] uppercase font-bold ${des.status === 'Active' ? 'text-green-500' : 'text-gray-400'}`}>{des.status}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => onEdit(des, actualIndex)}
-                                    className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors"
-                                    title="Edit Designation"
-                                >
-                                    <Edit2 size={16} />
-                                </button>
-                                <button
-                                    onClick={() => onDelete(actualIndex)}
-                                    className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Delete Designation"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                onClick={() => onEdit(des, actualIndex)}
+                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="Edit"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                            <button
+                                onClick={() => onDelete(actualIndex)}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Remove"
+                            >
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
                 );
             })}
 
             {designations.length === 0 && (
-                <div className="text-center py-8 text-gray-400 text-sm border border-dashed border-gray-200 rounded-lg">
-                    No designations defined for this department yet.
+                <div className="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/80">
+                    <div className="p-4 rounded-xl bg-indigo-50/50 mb-3">
+                        <Briefcase size={32} className="text-indigo-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">No designations yet</p>
+                    <p className="text-xs text-gray-500 mb-5 max-w-[200px] text-center">Add roles like Lecturer, HOD, Accountant, etc.</p>
+                    {showAddButton && onAdd && (
+                        <button
+                            onClick={onAdd}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors"
+                        >
+                            <span>+</span> Add Designation
+                        </button>
+                    )}
                 </div>
             )}
 

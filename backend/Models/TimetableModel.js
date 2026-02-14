@@ -35,8 +35,8 @@ const timetableSchema = new mongoose.Schema(
         schedule: {
             Mon: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -46,8 +46,8 @@ const timetableSchema = new mongoose.Schema(
             ],
             Tue: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -57,8 +57,8 @@ const timetableSchema = new mongoose.Schema(
             ],
             Wed: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -68,8 +68,8 @@ const timetableSchema = new mongoose.Schema(
             ],
             Thu: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -79,8 +79,8 @@ const timetableSchema = new mongoose.Schema(
             ],
             Fri: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -90,8 +90,8 @@ const timetableSchema = new mongoose.Schema(
             ],
             Sat: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -101,8 +101,8 @@ const timetableSchema = new mongoose.Schema(
             ],
             Sun: [
                 {
-                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+                    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+                    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
                     startTime: String,
                     endTime: String,
                     room: String,
@@ -121,7 +121,21 @@ const timetableSchema = new mongoose.Schema(
 );
 
 // Unique indexes: For school (section-based) and college (course-based)
-timetableSchema.index({ academicYearId: 1, sectionId: 1 }, { unique: true, sparse: true });
-timetableSchema.index({ academicYearId: 1, courseId: 1 }, { unique: true, sparse: true });
+// Use sparse indexes - they skip documents where the indexed field is null/undefined
+// This prevents duplicate key errors when courseId or sectionId is null
+timetableSchema.index(
+    { academicYearId: 1, sectionId: 1 }, 
+    { 
+        unique: true, 
+        sparse: true
+    }
+);
+timetableSchema.index(
+    { academicYearId: 1, courseId: 1 }, 
+    { 
+        unique: true, 
+        sparse: true
+    }
+);
 
 export default mongoose.model("Timetable", timetableSchema);

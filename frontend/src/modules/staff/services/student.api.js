@@ -60,6 +60,16 @@ export const admitStudent = async (studentData) => {
     }
 };
 
+// Confirm Admission (workflow policy - docs, fee, approval)
+export const confirmAdmission = async (id) => {
+    try {
+        const response = await axios.post(`${API_URL}/student/${id}/confirm`, {}, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+
 // Update Student
 export const updateStudentInfo = async (id, studentData) => {
     try {

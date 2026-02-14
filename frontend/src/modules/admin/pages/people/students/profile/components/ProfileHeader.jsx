@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { User, Phone, Mail, MapPin, Edit } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Edit, CheckCircle } from 'lucide-react';
 
-const ProfileHeader = ({ student, onEdit }) => {
+const ProfileHeader = ({ student, onEdit, onConfirmAdmission }) => {
     // Robust name handling
     const fullName = student.name || `${student.firstName || ''} ${student.middleName || ''} ${student.lastName || ''}`.trim() || 'No Name';
 
@@ -36,12 +36,22 @@ const ProfileHeader = ({ student, onEdit }) => {
                                 <span>Roll No: {student.rollNo || 'N/A'}</span>
                             </div>
                         </div>
-                        <button
-                            onClick={onEdit}
-                            className="hidden md:flex items-center gap-1 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-indigo-100"
-                        >
-                            <Edit size={16} /> Edit Profile
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {(student.status === 'in_review' || student.status === 'pending') && onConfirmAdmission && (
+                                <button
+                                    onClick={() => onConfirmAdmission(student._id || student.id)}
+                                    className="hidden md:flex items-center gap-1 text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-emerald-100"
+                                >
+                                    <CheckCircle size={16} /> Confirm Admission
+                                </button>
+                            )}
+                            <button
+                                onClick={onEdit}
+                                className="hidden md:flex items-center gap-1 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-indigo-100"
+                            >
+                                <Edit size={16} /> Edit Profile
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
@@ -66,7 +76,11 @@ const ProfileHeader = ({ student, onEdit }) => {
 
                     {/* Status Badges */}
                     <div className="flex flex-wrap gap-2 mt-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${student.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${
+                            student.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' :
+                            (student.status === 'in_review' || student.status === 'pending') ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                            'bg-red-100 text-red-700 border-red-200'
+                        }`}>
                             {student.status || 'ACTIVE'} STUDENT
                         </span>
                         {student.transportRequired && <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border border-blue-200">Bus Traveller</span>}

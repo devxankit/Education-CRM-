@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Percent, AlertCircle, Edit, Trash2, Loader2, X, DollarSign, Building2 } from 'lucide-react';
+import { Plus, Search, Percent, AlertCircle, Edit, Trash2, Loader2, X, DollarSign, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 import TaxForm from './components/taxes/TaxForm';
@@ -16,9 +16,13 @@ const Taxes = () => {
     const [loading, setLoading] = useState(true);
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState('all'); // 'all', 'percentage', 'flat'
-    const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'active', 'inactive'
-    const [filterApplicableOn, setFilterApplicableOn] = useState('all'); // 'all', 'fees', 'transport', etc.
+    const [filterType, setFilterType] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterApplicableOn, setFilterApplicableOn] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(10);
+
+    useEffect(() => { setCurrentPage(1); }, [searchQuery, filterType, filterStatus, filterApplicableOn]);
 
     // Fetch branches and set default
     useEffect(() => {
@@ -137,11 +141,18 @@ const Taxes = () => {
             if (filterStatus === 'inactive' && tax.isActive) return false;
         }
         // Applicable on filter
-        if (filterApplicableOn !== 'all' && tax.applicableOn !== filterApplicableOn) {
-            return false;
+        if (filterApplicableOn !== 'all') {
+            const match = filterApplicableOn === 'all_charges' ? tax.applicableOn === 'all' : tax.applicableOn === filterApplicableOn;
+            if (!match) return false;
         }
         return true;
     });
+
+    // Pagination
+    const totalItems = filteredTaxes.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedTaxes = filteredTaxes.slice(startIndex, startIndex + pageSize);
 
     if (loading && taxes.length === 0) {
         return (
@@ -158,106 +169,121 @@ const Taxes = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins'] tracking-tight">Tax Configuration</h1>
-                    <p className="text-gray-500 text-sm">Define and manage tax rules applicable to fees and charges</p>
+                    <p className="text-gray-500 text-sm mt-0.5">Define and manage tax rules applicable to fees and charges</p>
                 </div>
-
-                <button
-                    onClick={handleCreate}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all font-medium text-sm shadow-md hover:shadow-lg active:scale-95"
-                >
-                    <Plus size={18} /> Add Tax Rule
-                </button>
+                <div className="flex items-center gap-3">
+                    {branches.length > 0 && (
+                        <div className="flex items-center gap-2">
+                            <MapPin size={16} className="text-gray-400" />
+                            <select
+                                value={selectedBranchId}
+                                onChange={(e) => setSelectedBranchId(e.target.value)}
+                                className="px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            >
+                                {branches.map(branch => (
+                                    <option key={branch._id} value={branch._id}>{branch.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    <button
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-md hover:shadow-lg active:scale-95"
+                    >
+                        <Plus size={18} /> Add Tax Rule
+                    </button>
+                </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">Total Rules</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1.5">Total Rules</div>
                     <div className="text-2xl font-bold text-gray-900">{taxes.length}</div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm">
-                    <div className="text-xs text-green-600 uppercase font-bold mb-1">Active</div>
-                    <div className="text-2xl font-bold text-green-700">{taxes.filter(t => t.isActive).length}</div>
+                <div className="bg-emerald-50/80 p-5 rounded-xl border border-emerald-100 shadow-sm">
+                    <div className="text-xs text-emerald-600 uppercase font-bold tracking-wider mb-1.5">Active</div>
+                    <div className="text-2xl font-bold text-emerald-700">{taxes.filter(t => t.isActive).length}</div>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
-                    <div className="text-xs text-blue-600 uppercase font-bold mb-1">Percentage</div>
-                    <div className="text-2xl font-bold text-blue-700">{taxes.filter(t => t.type === 'percentage').length}</div>
+                <div className="bg-indigo-50/80 p-5 rounded-xl border border-indigo-100 shadow-sm">
+                    <div className="text-xs text-indigo-600 uppercase font-bold tracking-wider mb-1.5">Percentage</div>
+                    <div className="text-2xl font-bold text-indigo-700">{taxes.filter(t => t.type === 'percentage').length}</div>
                 </div>
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-sm">
-                    <div className="text-xs text-orange-600 uppercase font-bold mb-1">Flat Rate</div>
-                    <div className="text-2xl font-bold text-orange-700">{taxes.filter(t => t.type === 'flat').length}</div>
+                <div className="bg-amber-50/80 p-5 rounded-xl border border-amber-100 shadow-sm">
+                    <div className="text-xs text-amber-600 uppercase font-bold tracking-wider mb-1.5">Flat Rate</div>
+                    <div className="text-2xl font-bold text-amber-700">{taxes.filter(t => t.type === 'flat').length}</div>
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6">
-                <div className="flex flex-wrap items-center gap-4">
-                    {/* Branch Selector */}
-                    {branches.length > 0 && (
-                        <select
-                            value={selectedBranchId}
-                            onChange={(e) => setSelectedBranchId(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        >
-                            {branches.map(branch => (
-                                <option key={branch._id} value={branch._id}>{branch.name}</option>
-                            ))}
-                        </select>
-                    )}
+            {/* Example: Tax applied on sample amount */}
+            {taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).length > 0 && (
+                <div className="mb-6 p-4 rounded-xl bg-indigo-50/80 border border-indigo-100">
+                    <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Example (fees applicable)</p>
+                    <p className="text-sm text-gray-700">
+                        On <span className="font-bold">₹10,000</span> base: {
+                            taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).map(t => {
+                                const amt = t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0);
+                                return `${t.name} (${t.type === 'percentage' ? t.rate + '%' : '₹' + t.rate}) = ₹${amt.toLocaleString()}`;
+                            }).join(', ')
+                        }
+                        {' → '}
+                        <span className="font-bold text-indigo-700">
+                            Total tax ₹{taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).reduce((s, t) => s + (t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0)), 0).toLocaleString()}
+                            {' '}(Grand total ₹{(10000 + taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).reduce((s, t) => s + (t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0)), 0)).toLocaleString()})
+                        </span>
+                    </p>
+                </div>
+            )}
 
-                    {/* Type Filter */}
+            {/* Filters */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
                     <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                         <option value="all">All Types</option>
                         <option value="percentage">Percentage</option>
                         <option value="flat">Flat Rate</option>
                     </select>
-
-                    {/* Status Filter */}
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
-
-                    {/* Applicable On Filter */}
                     <select
                         value={filterApplicableOn}
                         onChange={(e) => setFilterApplicableOn(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                         <option value="all">All Applicable</option>
                         <option value="fees">Tuition Fees</option>
                         <option value="transport">Transport</option>
                         <option value="admission">Admission</option>
                         <option value="hostel">Hostel</option>
-                        <option value="all">All Charges</option>
+                        <option value="all_charges">All Charges</option>
                     </select>
-
-                    {/* Search */}
-                    <div className="relative flex-1 min-w-[200px]">
+                    <div className="relative flex-1 min-w-[180px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input
                             type="text"
-                            placeholder="Search taxes..."
+                            placeholder="Search by name, code..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Tax Table */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex-1 min-h-[400px]">
-                {filteredTaxes.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex-1 min-h-[400px] flex flex-col">
+                {paginatedTaxes.length === 0 ? (
                     <div className="p-16 text-center">
                         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                             <AlertCircle size={40} className="text-gray-400" />
@@ -280,22 +306,23 @@ const Taxes = () => {
                         )}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <>
+                    <div className="overflow-x-auto flex-1">
                         <table className="w-full text-left">
-                            <thead className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+                            <thead className="bg-gray-50/80 border-b border-gray-100 sticky top-0">
                                 <tr>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tax Name</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Rate</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Applicable On</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                                    <th className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">Tax Name</th>
+                                    <th className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
+                                    <th className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Rate</th>
+                                    <th className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">Applicable On</th>
+                                    <th className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
+                                    <th className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider text-right pr-6">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {filteredTaxes.map((tax) => (
-                                    <tr key={tax._id || tax.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4">
+                            <tbody className="divide-y divide-gray-50">
+                                {paginatedTaxes.map((tax) => (
+                                    <tr key={tax._id || tax.id} className="hover:bg-gray-50/80 transition-colors group">
+                                        <td className="px-5 py-3.5">
                                             <div>
                                                 <p className="font-semibold text-gray-900">{tax.name}</p>
                                                 {tax.description && (
@@ -303,12 +330,12 @@ const Taxes = () => {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700 font-mono">
+                                        <td className="px-5 py-3.5">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 font-mono">
                                                 {tax.code}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-5 py-3.5 text-center">
                                             <div className="flex items-center justify-center gap-1">
                                                 {tax.type === 'percentage' ? (
                                                     <>
@@ -324,12 +351,12 @@ const Taxes = () => {
                                             </div>
                                             <p className="text-xs text-gray-500 mt-1 capitalize">{tax.type}</p>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                        <td className="px-5 py-3.5">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-100 text-indigo-700">
                                                 {getApplicableLabel(tax.applicableOn)}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-5 py-3.5 text-center">
                                             <button
                                                 onClick={() => handleToggleStatus(tax)}
                                                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all ${
@@ -341,8 +368,8 @@ const Taxes = () => {
                                                 {tax.isActive ? 'Active' : 'Inactive'}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center justify-end gap-2">
+                                        <td className="px-5 py-3.5">
+                                            <div className="flex items-center justify-end gap-1.5 pr-2">
                                                 <button
                                                     onClick={() => handleEdit(tax)}
                                                     className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -364,6 +391,56 @@ const Taxes = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination */}
+                    {totalItems > pageSize && (
+                        <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/30">
+                            <p className="text-sm text-gray-600">
+                                Showing <span className="font-semibold">{startIndex + 1}</span>–<span className="font-semibold">{Math.min(startIndex + pageSize, totalItems)}</span> of <span className="font-semibold">{totalItems}</span>
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage <= 1}
+                                    className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-white hover:border-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    title="Previous"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <span className="flex items-center gap-1">
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        let pageNum;
+                                        if (totalPages <= 5) pageNum = i + 1;
+                                        else if (currentPage <= 3) pageNum = i + 1;
+                                        else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                        else pageNum = currentPage - 2 + i;
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`min-w-[32px] h-8 rounded-lg text-sm font-medium transition-colors ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-indigo-600 text-white'
+                                                        : 'text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage >= totalPages}
+                                    className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-white hover:border-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    title="Next"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    </>
                 )}
             </div>
 

@@ -13,9 +13,16 @@ const PayrollFormModal = ({
     financialYear,
     teachers = [],
     staff = [],
-    viewMode = false // If true, form is read-only for viewing
+    viewMode = false, // If true, form is read-only for viewing
+    // Optional: override API functions (for staff module)
+    createPayrollFn,
+    updatePayrollFn,
+    fetchPayrollRuleFn
 }) => {
-    const { createPayroll, updatePayroll, fetchPayrollRule } = useAdminStore();
+    const adminStore = useAdminStore();
+    const createPayroll = createPayrollFn || adminStore.createPayroll;
+    const updatePayroll = updatePayrollFn || adminStore.updatePayroll;
+    const fetchPayrollRule = fetchPayrollRuleFn || adminStore.fetchPayrollRule;
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -1001,6 +1008,7 @@ const PayrollFormModal = ({
                                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
+                                
                             </button>
                             <button
                                 onClick={handleSubmit}

@@ -1,23 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { useNavigate } from 'react-router-dom';
-import { Banknote, Users, Clock, AlertCircle, FileText, ChevronRight, Download, Filter, Plus } from 'lucide-react';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { useStaffStore } from '../../../store/staffStore';
+import { Banknote, Users, Clock, FileText, ChevronRight, Download, Plus, RefreshCw } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
+import { getPayrolls, getPayrollResources, createPayroll, updatePayroll, fetchPayrollRule } from '../services/payroll.api';
+import PayrollFormModal from '../../admin/pages/finance/components/payroll/PayrollFormModal';
+
+const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const Payroll = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
-    const payrollList = useStaffStore(state => state.payroll);
+    const [payrollList, setPayrollList] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filterType, setFilterType] = useState('All');
-    const [showRunModal, setShowRunModal] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [payrollResources, setPayrollResources] = useState(null);
+    const [month, setMonth] = useState(new Date().getMonth() + 1);
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [selectedBranchId, setSelectedBranchId] = useState('');
+    const [financialYear, setFinancialYear] = useState('2025-26');
+    const [employeeType, setEmployeeType] = useState('teacher');
 
-    const handleExport = () => {
-        alert("Downloading Payroll Report for October 2024...");
+    const fetchPayrollData = async () => {
+        setLoading(true);
+        try {
+            const data = await getPayrolls({ month, year });
+            const mapped = (data || []).map(p => ({
+                ...p,
+                id: p._id,
+                name: p.employeeId?.name || [p.employeeId?.firstName, p.employeeId?.lastName].filter(Boolean).join(' ') || 'Unknown',
+                role: p.employeeType === 'teacher' ? 'Teacher' : (p.employeeId?.designation || 'Staff'),
+                amount: p.netSalary || 0,
+                status: p.status === 'paid' ? 'Paid' : 'Pending'
+            }));
+            setPayrollList(mapped);
+        } catch (err) {
+            console.error('Failed to fetch payroll', err);
+            setPayrollList([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Access Check: ACCOUNTS, ADMIN, DATA_ENTRY (View Only)
+    useEffect(() => {
+        fetchPayrollData();
+    }, [month, year]);
+
+    const handleAddPayroll = async () => {
+        const res = await getPayrollResources(financialYear);
+        if (!res) {
+            alert('Failed to load payroll resources. Please try again.');
+            return;
+        }
+        if (!res.branches?.length) {
+            alert('No branches found. Please set up branches in Admin module.');
+            return;
+        }
+        setPayrollResources(res);
+        setSelectedBranchId(res.defaultBranchId || res.branches?.[0]?._id || '');
+        if (res.defaultFinancialYear) setFinancialYear(res.defaultFinancialYear);
+        setIsFormOpen(true);
+    };
+
+    const handleExport = () => {
+        alert(`Export for ${MONTH_NAMES[month]} ${year} - integrate with export API`);
+    };
+
     if (![STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN, STAFF_ROLES.DATA_ENTRY].includes(user?.role)) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 bg-gray-50">
@@ -35,6 +85,7 @@ const Payroll = () => {
     const payrollData = payrollList || [];
     const totalExpense = payrollData.reduce((acc, curr) => acc + (curr?.amount || 0), 0);
     const pendingCount = payrollData.filter(p => p?.status === 'Pending').length;
+    const paidCount = payrollData.filter(p => p?.status === 'Paid').length;
 
     const filteredList = payrollData.filter(p => {
         if (filterType === 'All') return true;
@@ -44,7 +95,6 @@ const Payroll = () => {
 
     return (
         <div className="max-w-7xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">
-            {/* Header */}
             <div className="bg-indigo-600 px-5 pt-8 pb-16 rounded-b-[2.5rem] md:rounded-none md:pb-6 md:pt-6 md:bg-white md:border-b md:border-gray-200 relative">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -60,10 +110,10 @@ const Payroll = () => {
                         </button>
                         {canManagePayroll && (
                             <button
-                                onClick={() => setShowRunModal(true)}
+                                onClick={handleAddPayroll}
                                 className="flex-1 md:flex-none bg-white text-indigo-600 md:bg-indigo-600 md:text-white px-4 py-3 rounded-xl text-sm font-bold shadow-lg md:shadow-md flex items-center justify-center gap-2 hover:bg-white/90 md:hover:bg-indigo-700 transition-all"
                             >
-                                <Plus size={18} /> Run Payroll
+                                <Plus size={18} /> Add Payroll
                             </button>
                         )}
                     </div>
@@ -72,12 +122,43 @@ const Payroll = () => {
 
             <div className="px-4 md:px-6 -mt-8 md:mt-6 space-y-6 relative z-10">
 
+                {/* Month/Year Selector */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={month}
+                            onChange={(e) => setMonth(parseInt(e.target.value))}
+                            className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-800 bg-white"
+                        >
+                            {MONTH_NAMES.slice(1).map((m, i) => (
+                                <option key={m} value={i + 1}>{m}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={year}
+                            onChange={(e) => setYear(parseInt(e.target.value))}
+                            className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-800 bg-white"
+                        >
+                            {[year, year - 1, year - 2].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <button
+                        onClick={fetchPayrollData}
+                        disabled={loading}
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                        <RefreshCw size={18} className={`text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
+
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     <StatCard
                         label="Total Expense"
-                        value={`₹${(totalExpense / 100000).toFixed(2)}L`}
-                        sub="For Oct 2024"
+                        value={totalExpense >= 100000 ? `₹${(totalExpense / 100000).toFixed(2)}L` : `₹${totalExpense.toLocaleString()}`}
+                        sub={`${MONTH_NAMES[month]} ${year}`}
                         icon={Banknote}
                         color="indigo"
                     />
@@ -90,7 +171,7 @@ const Payroll = () => {
                     />
                     <StatCard
                         label="Processed"
-                        value={payrollData.length - pendingCount}
+                        value={paidCount}
                         sub="Paid this month"
                         icon={ArrowUpRight}
                         color="green"
@@ -98,7 +179,7 @@ const Payroll = () => {
                     <StatCard
                         label="Staff Count"
                         value={payrollData.length}
-                        sub="Active Payroll"
+                        sub="Payroll entries"
                         icon={Users}
                         color="blue"
                     />
@@ -106,7 +187,7 @@ const Payroll = () => {
 
                 {/* List Section */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-wrap gap-3">
                         <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                             <FileText size={16} className="text-indigo-600" /> Salary Register
                         </h2>
@@ -124,15 +205,20 @@ const Payroll = () => {
                     </div>
 
                     <div className="divide-y divide-gray-100">
-                        {filteredList.length === 0 ? (
+                        {loading ? (
+                            <div className="p-8 text-center text-gray-400">
+                                <RefreshCw size={24} className="animate-spin mx-auto mb-2" />
+                                <p className="text-sm">Loading payroll...</p>
+                            </div>
+                        ) : filteredList.length === 0 ? (
                             <div className="p-8 text-center text-gray-400 text-sm">
-                                No payroll records found
+                                No payroll records for {MONTH_NAMES[month]} {year}
                             </div>
                         ) : (
                             filteredList.map(item => (
                                 <div
-                                    key={item?.id || Math.random()}
-                                    onClick={() => navigate(`/staff/payroll/${item?.id}`)}
+                                    key={item?.id || item?._id}
+                                    onClick={() => navigate(`/staff/payroll/${item?.id || item?._id}`)}
                                     className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-3">
@@ -150,13 +236,10 @@ const Payroll = () => {
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <div className={`px-2 py-1 rounded text-[10px] font-bold border ${item?.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                                            }`}>
+                                        <div className={`px-2 py-1 rounded text-[10px] font-bold border ${item?.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
                                             {item?.status || 'Pending'}
                                         </div>
-                                        <button className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors">
-                                            <ChevronRight size={18} />
-                                        </button>
+                                        <ChevronRight size={18} className="text-gray-300 group-hover:text-indigo-500" />
                                     </div>
                                 </div>
                             ))
@@ -165,30 +248,23 @@ const Payroll = () => {
                 </div>
             </div>
 
-            {/* Run Payroll Modal */}
-            {showRunModal && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white w-full max-w-sm rounded-xl p-6 shadow-2xl animate-scale-up">
-                        <div className="flex items-center gap-3 text-indigo-600 mb-4">
-                            <Banknote size={24} />
-                            <h3 className="text-lg font-bold text-gray-900">Run Payroll</h3>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-6">
-                            Process salaries for <strong>October 2024</strong>?
-                            <br /><br />
-                            This will generate <strong>{pendingCount}</strong> pending payslips and notify staff.
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => setShowRunModal(false)} className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                            <button
-                                onClick={() => { setShowRunModal(false); alert('Payroll Processed!'); }}
-                                className="px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-md"
-                            >
-                                Confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {isFormOpen && (
+                <PayrollFormModal
+                    isOpen={isFormOpen}
+                    onClose={() => { setIsFormOpen(false); fetchPayrollData(); }}
+                    initialData={null}
+                    employeeType={employeeType}
+                    branchId={selectedBranchId || payrollResources?.defaultBranchId}
+                    month={month}
+                    year={year}
+                    financialYear={financialYear}
+                    teachers={payrollResources?.teachers || []}
+                    staff={payrollResources?.staff || []}
+                    viewMode={false}
+                    createPayrollFn={(data) => createPayroll(data).then(r => r?.success ? r.data : null)}
+                    updatePayrollFn={(id, data) => updatePayroll(id, data).then(r => r?.success ? r.data : null)}
+                    fetchPayrollRuleFn={fetchPayrollRule}
+                />
             )}
         </div>
     );

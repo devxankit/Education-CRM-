@@ -5,7 +5,7 @@ import { initialTeachers } from '../modules/staff/data/teacherData';
 import { initialNotices } from '../modules/staff/data/supportData';
 import { initialPayroll, initialExpenses } from '../modules/staff/data/financeData';
 import { initialAssets, initialInventory } from '../modules/staff/data/inventoryData';
-import { getAllStudents, admitStudent, updateStudentInfo } from '../modules/staff/services/student.api';
+import { getAllStudents, admitStudent, updateStudentInfo, confirmAdmission as confirmAdmissionApi } from '../modules/staff/services/student.api';
 import * as supportApi from '../modules/staff/services/support.api';
 import { getMyNotices } from '../modules/staff/services/notices.api';
 
@@ -138,6 +138,22 @@ export const useStaffStore = create(
                     }
                 } catch (error) {
                     console.error("Update student failed", error);
+                    throw error;
+                }
+            },
+
+            confirmAdmission: async (id) => {
+                try {
+                    const response = await confirmAdmissionApi(id);
+                    if (response.success) {
+                        const updatedStudent = { ...response.data, id: response.data._id };
+                        set((state) => ({
+                            students: state.students.map(s => (s.id === id || s._id === id) ? updatedStudent : s)
+                        }));
+                        return Promise.resolve(updatedStudent);
+                    }
+                } catch (error) {
+                    console.error("Confirm admission failed", error);
                     throw error;
                 }
             },

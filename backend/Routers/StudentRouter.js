@@ -1,6 +1,8 @@
 import express from "express";
 import {
     admitStudent,
+    confirmAdmission,
+    recordFeePayment,
     getStudents,
     getStudentById,
     updateStudent,
@@ -46,6 +48,8 @@ router.get("/tickets", isStudent, getSupportTickets);
 
 // Admin only routes
 router.post("/admit", isAdmin, admitStudent);
+router.post("/:id/confirm", isAdmin, confirmAdmission);
+router.post("/:id/record-fee", isAdmin, recordFeePayment);
 router.get("/", isAdmin, getStudents);
 router.get("/:id", isAdmin, getStudentById);
 router.put("/:id", isAdmin, updateStudent);

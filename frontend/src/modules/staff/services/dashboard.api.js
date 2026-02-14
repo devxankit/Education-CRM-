@@ -25,3 +25,17 @@ export const getDashboardStats = async () => {
         return null;
     }
 };
+
+export const getStaffReports = async (dateRange = 'This Month') => {
+    try {
+        const response = await axios.get(`${API_URL}/staff/reports`, {
+            ...getAuthHeaders(),
+            params: { dateRange }
+        });
+        if (response.data.success) return response.data.data;
+        return null;
+    } catch (error) {
+        console.error("Error fetching reports:", error);
+        return null;
+    }
+};

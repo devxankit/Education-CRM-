@@ -7,9 +7,15 @@ const StaffRoleGuard = () => {
     const { isAuthenticated, user, logout } = useStaffAuth();
     const location = useLocation();
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const hasToken = !!token || !!(user && user.token);
+    const staffUser = typeof window !== 'undefined' ? (() => {
+        try {
+            return JSON.parse(localStorage.getItem('staff_user') || 'null');
+        } catch { return null; }
+    })() : null;
+    const staffToken = staffUser?.token;
+    const hasToken = !!token || !!staffToken || !!(user && user.token);
 
-    // 1. Token nahi to login pe bhejo
+    // 1. Token nahi to login pe bhejo - no access without login
     if (!hasToken || !isAuthenticated) {
         return <Navigate to="/staff/login" state={{ from: location }} replace />;
     }

@@ -5,6 +5,7 @@ import {
     User, Phone, MapPin, Mail, FileText,
     Bus, ArrowLeft, Shield, AlertCircle, Clock, Briefcase, CheckCircle, BookOpen, CreditCard, Upload, Ticket
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import RoleBasedSection from '../components/students/RoleBasedSection';
@@ -22,6 +23,20 @@ const StudentDetail = () => {
     const [error, setError] = useState(null);
 
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
+    const canManage = [STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.PRINCIPAL, STAFF_ROLES.FRONT_DESK, STAFF_ROLES.ADMIN].includes(user?.role);
+
+    const handleConfirmAdmission = async () => {
+        if (!window.confirm("Confirm admission as per workflow policy? (Docs verified, fee paid, approval role required)")) return;
+        const loadingToast = toast.loading("Confirming admission...");
+        try {
+            await useStaffStore.getState().confirmAdmission(student.id || student._id);
+            setStudent(prev => prev ? { ...prev, status: 'active' } : null);
+            toast.success("Admission confirmed successfully!", { id: loadingToast });
+        } catch (error) {
+            const msg = typeof error === 'object' && error?.message ? error.message : (error?.message || "Failed to confirm");
+            toast.error(msg, { id: loadingToast });
+        }
+    };
 
     useEffect(() => {
         const load = async () => {
@@ -112,9 +127,18 @@ const StudentDetail = () => {
                         )}
                     </div>
                     <div className="flex-1">
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-3xl font-bold text-gray-900">{fullName}</h1>
                             <StatusBadge status={student.status} />
+                            {canManage && (student.status === 'in_review' || student.status === 'pending') && (
+                                <button
+                                    onClick={handleConfirmAdmission}
+                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-sm"
+                                >
+                                    <CheckCircle size={18} />
+                                    Confirm Admission
+                                </button>
+                            )}
                         </div>
                         <div className="flex flex-wrap items-center gap-y-2 gap-x-4 mt-3 text-sm text-gray-600">
                             <div className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-lg font-mono text-gray-700">

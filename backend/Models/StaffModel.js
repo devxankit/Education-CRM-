@@ -41,6 +41,9 @@ const staffSchema = new mongoose.Schema(
         lastLogin: {
             type: Date,
         },
+        loginAttempts: { type: Number, default: 0 },
+        lockUntil: { type: Date },
+        passwordChangedAt: { type: Date },
         phone: {
             type: String,
         },
@@ -59,6 +62,7 @@ const staffSchema = new mongoose.Schema(
 // Password hashing
 staffSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
+    this.passwordChangedAt = new Date();
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });

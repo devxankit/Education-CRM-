@@ -11,11 +11,9 @@ const AddTeacher = () => {
     const { teacherId } = useParams();
     const isEditMode = !!teacherId;
 
-    const { teachers, addTeacher, updateTeacher } = useStaffStore(state => ({
-        teachers: state.teachers,
-        addTeacher: state.addTeacher,
-        updateTeacher: state.updateTeacher
-    }));
+    const teachers = useStaffStore(state => state.teachers);
+    const addTeacher = useStaffStore(state => state.addTeacher);
+    const updateTeacher = useStaffStore(state => state.updateTeacher);
 
     const [isLoading, setIsLoading] = useState(false);
 

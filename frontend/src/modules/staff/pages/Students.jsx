@@ -16,17 +16,17 @@ const StaffStudentsPage = () => {
 
     const canManage = [STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.PRINCIPAL, STAFF_ROLES.FRONT_DESK, STAFF_ROLES.ADMIN].includes(user?.role);
 
-    const handleApprove = async (e, id) => {
+    const handleConfirmAdmission = async (e, id) => {
         e.stopPropagation();
-        if (!window.confirm("Activate this student record?")) return;
+        if (!window.confirm("Confirm admission as per workflow policy? (Docs verified, fee paid, approval role required)")) return;
 
-        const loadingToast = toast.loading("Updating status...");
+        const loadingToast = toast.loading("Confirming admission...");
         try {
-            await useStaffStore.getState().updateStudent(id, { status: 'active' });
-            toast.success("Student activated successfully!", { id: loadingToast });
+            await useStaffStore.getState().confirmAdmission(id);
+            toast.success("Admission confirmed successfully!", { id: loadingToast });
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to update status", { id: loadingToast });
+            const msg = typeof error === 'object' && error?.message ? error.message : (error?.message || "Failed to confirm");
+            toast.error(msg, { id: loadingToast });
         }
     };
 
@@ -150,11 +150,11 @@ const StaffStudentsPage = () => {
                                     </span>
                                     {canManage && (student.status === 'in_review' || student.status === 'pending') && (
                                         <button
-                                            onClick={(e) => handleApprove(e, student.id)}
+                                            onClick={(e) => handleConfirmAdmission(e, student.id || student._id)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all text-[9px] font-black uppercase tracking-wider shadow-sm active:scale-95"
                                         >
                                             <CheckCircle2 size={12} />
-                                            Activate
+                                            Confirm Admission
                                         </button>
                                     )}
                                 </div>

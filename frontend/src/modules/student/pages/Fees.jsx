@@ -18,7 +18,6 @@ const FeesPage = () => {
     const containerRef = useRef(null);
     const fees = useStudentStore(state => state.fees);
     const fetchFees = useStudentStore(state => state.fetchFees);
-    const payFee = useStudentStore(state => state.payFee);
     const [loading, setLoading] = useState(!fees);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -27,36 +26,62 @@ const FeesPage = () => {
         fetchFees().finally(() => setLoading(false));
     }, [fetchFees]);
 
-    // Format Data
-    const formattedData = fees ? {
-        summary: {
-            totalAmount: fees.totalAmount,
-            paidAmount: fees.paidAmount,
-            pendingAmount: fees.pendingAmount,
-            dueDate: "Next Month 5th", // Placeholder
-            status: fees.pendingAmount > 0 ? "Pending" : "Cleared"
-        },
-        breakdown: fees.feeStructure?.particulars?.map(p => ({
-            name: p.name,
-            amount: p.amount,
-            status: "Linked"
-        })) || [],
-        history: fees.paymentHistory?.map(h => ({
+    // Format Data – map backend structure to UI format
+    // Backend returns: { summary: { totalFee, totalPaid, balance }, payments: [...], structure: { components, totalAmount } }
+    const formattedData = fees ? (() => {
+        // Handle case where API returns payments array directly
+        const isPaymentsArray = Array.isArray(fees);
+        const summary = isPaymentsArray ? {} : (fees.summary ?? {});
+        const payments = isPaymentsArray ? fees : (fees.payments ?? []);
+        const structure = isPaymentsArray ? null : (fees.structure ?? {});
+
+        const totalPaid = summary.totalPaid ?? payments.reduce((s, p) => s + (p.amountPaid ?? 0), 0);
+        const totalFee = summary.totalFee ?? structure?.totalAmount ?? 0;
+        const balance = summary.balance ?? (totalFee - totalPaid);
+        const totalAmount = totalFee || structure?.totalAmount || 1;
+        const components = structure?.components ?? [];
+        const paidRatio = totalAmount > 0 ? totalPaid / totalAmount : 0;
+
+        const breakdown = components.length > 0
+            ? components.map((p, i) => ({
+                id: p._id || i,
+                type: p.name,
+                amount: p.amount ?? 0,
+                paid: Math.round((p.amount ?? 0) * paidRatio),
+                pending: Math.round((p.amount ?? 0) * (1 - paidRatio))
+            }))
+            : totalAmount > 0 ? [{ id: 0, type: 'Total Fee', amount: totalAmount, paid: totalPaid, pending: balance }] : [];
+
+        const history = payments.map(h => ({
             id: h._id,
-            date: h.paymentDate,
-            amount: h.amount,
-            method: h.paymentMethod,
+            date: h.paymentDate ? new Date(h.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A',
+            amount: h.amountPaid ?? 0,
+            mode: h.paymentMethod ?? 'N/A',
+            transactionId: h.receiptNo || h.transactionId || h._id?.toString().slice(-8),
             status: h.status
-        })) || [],
-        paymentAction: {
-            isInstallmentAvailable: true,
-            minAmount: 500
-        }
-    } : null;
+        }));
+
+        return {
+            summary: {
+                totalAmount,
+                paidAmount: totalPaid,
+                pendingAmount: balance,
+                nextDueDate: structure.installments?.[0]?.dueDate,
+                dueDate: "Next Month 5th",
+                status: balance > 0 ? "Pending" : "Cleared"
+            },
+            breakdown,
+            history,
+            paymentAction: {
+                isInstallmentAvailable: true,
+                minAmount: 500
+            }
+        };
+    })() : null;
 
     const handlePaymentSuccess = (amount) => {
-        // payFee(amount); // This would call backend in real version
         setShowSuccessModal(true);
+        fetchFees().catch(() => {}); // Refresh fee data
     };
 
     // Smooth Scroll

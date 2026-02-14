@@ -5,12 +5,12 @@ import {
     updateExpenseCategory,
     deleteExpenseCategory,
 } from "../Controllers/ExpenseCategoryCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 router.post("/", createExpenseCategory);
 router.get("/", getExpenseCategories);

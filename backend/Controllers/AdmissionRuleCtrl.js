@@ -4,7 +4,7 @@ import AdmissionRule from "../Models/AdmissionRuleModel.js";
 export const getAdmissionRule = async (req, res) => {
     try {
         const { academicYearId } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!academicYearId) {
             return res.status(400).json({ success: false, message: "Academic Year is required" });

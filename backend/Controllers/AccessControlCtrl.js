@@ -28,7 +28,18 @@ export const getAccessControlPolicies = async (req, res) => {
 export const updateAccessControlPolicies = async (req, res) => {
     try {
         const instituteId = req.user._id;
-        const updateData = req.body;
+        const allowed = ['force2FA', 'sessionTimeout', 'maxLoginAttempts', 'lockoutMinutes', 'ipWhitelistEnabled', 'ipWhitelist', 'passwordExpiryDays'];
+        const updateData = {};
+        allowed.forEach(key => {
+            if (req.body[key] !== undefined) {
+                if (['maxLoginAttempts', 'lockoutMinutes', 'sessionTimeout', 'passwordExpiryDays'].includes(key)) {
+                    const defs = { sessionTimeout: 30, maxLoginAttempts: 3, lockoutMinutes: 15, passwordExpiryDays: 90 };
+                    updateData[key] = Number(req.body[key]) || defs[key];
+                } else {
+                    updateData[key] = req.body[key];
+                }
+            }
+        });
 
         const policies = await AccessControl.findOneAndUpdate(
             { instituteId },

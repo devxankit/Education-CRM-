@@ -64,6 +64,21 @@ const Step1_Personal = ({ data, onChange }) => {
                     />
                 </div>
                 <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Age</label>
+                    <div className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-700">
+                        {data.dob
+                            ? (() => {
+                                const dob = new Date(data.dob);
+                                const today = new Date();
+                                let age = today.getFullYear() - dob.getFullYear();
+                                const m = today.getMonth() - dob.getMonth();
+                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                return `${age} ${age === 1 ? 'year' : 'years'}`;
+                            })()
+                            : '—'}
+                    </div>
+                </div>
+                <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Gender <span className="text-red-500">*</span></label>
                     <select
                         value={data.gender || ''}

@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Settings, Search, Filter, Building } from 'lucide-react';
 import { useAdminStore } from '../../../../../store/adminStore';
-import { API_URL } from '@/app/api';
 
 // Components
 import DepartmentList from './components/DepartmentList';
@@ -72,14 +71,14 @@ const Departments = () => {
     const handleSave = async (formData) => {
         try {
             if (selectedDept) {
-                // Update
-                await updateDepartment(selectedDept._id, formData);
+                const saved = await updateDepartment(selectedDept._id, formData);
                 addToast('Department updated successfully');
+                if (saved) setSelectedDept(saved);
             } else {
-                // Create
-                await addDepartment({ ...formData, branchId: selectedBranchId });
+                const saved = await addDepartment({ ...formData, branchId: selectedBranchId });
                 addToast('Department created successfully');
                 setIsCreating(false);
+                if (saved) setSelectedDept(saved);
             }
         } catch (error) {
             addToast(error.response?.data?.message || 'Failed to save department', 'error');
@@ -181,9 +180,14 @@ const Departments = () => {
                             onDelete={handleDelete}
                         />
                     ) : (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-full text-center p-6 text-gray-400">
-                            <Building size={48} className="mb-4 opacity-20" />
-                            <p>Select a department from the left to view details or create a new one.</p>
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-full min-h-[320px] text-center p-8">
+                            <div className="p-5 rounded-2xl bg-indigo-50 mb-5">
+                                <Building size={48} className="text-indigo-300" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-700 mb-2">Departments & Designations</h3>
+                            <p className="text-gray-500 text-sm max-w-sm">
+                                Select a department from the left to edit, or add a new one using the button above. Designations (roles) are added inside each department.
+                            </p>
                         </div>
                     )}
                 </div>

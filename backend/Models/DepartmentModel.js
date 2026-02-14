@@ -60,6 +60,10 @@ const departmentSchema = new mongoose.Schema(
             enum: ["Active", "Inactive"],
             default: "Active",
         },
+        description: {
+            type: String,
+            default: "",
+        },
         designations: [designationSchema],
     },
     { timestamps: true }

@@ -22,6 +22,8 @@ import PayrollDetail from './pages/PayrollDetail';
 import PayslipView from './pages/PayslipView';
 import Expenses from './pages/Expenses';
 import AddExpense from './pages/AddExpense';
+import ExpenseDetail from './pages/ExpenseDetail';
+import ExpenseInvoiceView from './pages/ExpenseInvoiceView';
 import Vendors from './pages/Vendors';
 import DocumentDetail from './pages/DocumentDetail';
 import DocumentPreview from './pages/DocumentPreview';
@@ -102,8 +104,11 @@ const staffRoutes = [
 
                             { path: 'payroll', element: <Payroll /> },
                             { path: 'payroll/:rollId', element: <PayrollDetail /> },
+                            { path: 'payroll/:rollId/slip', element: <PayslipView /> },
                             { path: 'expenses', element: <Expenses /> },
                             { path: 'expenses/new', element: <AddExpense /> },
+                            { path: 'expenses/:expenseId', element: <ExpenseDetail /> },
+                            { path: 'expenses/:expenseId/invoice', element: <ExpenseInvoiceView /> },
                             { path: 'vendors', element: <Vendors /> },
                             { path: 'documents/:type/:entityId', element: <DocumentDetail /> },
                             { path: 'documents/:type/:entityId/preview', element: <DocumentPreview /> },

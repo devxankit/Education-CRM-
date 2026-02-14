@@ -5,9 +5,15 @@ import {
     updateStaff,
     deleteStaff,
     loginStaff,
+    verifyOtpStaff,
     getStaffPermissions,
     getStaffDashboard,
+    getStaffReports,
     getStaffProfile,
+    getStaffFeeOverview,
+    recordStaffFeePayment,
+    getStaffPayrollResources,
+    getStaffExpenseResources,
     changePassword,
     updateProfile
 } from "../Controllers/StaffCtrl.js";
@@ -15,14 +21,16 @@ import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-// Public login route
+// Public routes
 router.post("/login", loginStaff);
+router.post("/verify-otp", verifyOtpStaff);
 
 // Authenticated Routes
 router.use(AuthMiddleware);
 
 // Get My Dashboard (Staff accessible)
 router.get("/dashboard", getStaffDashboard);
+router.get("/reports", getStaffReports);
 
 // Get My Profile (Staff accessible)
 router.get("/profile", getStaffProfile);
@@ -35,6 +43,12 @@ router.put("/update-profile", updateProfile);
 
 // Get My Permissions (Staff accessible)
 router.get("/permissions", getStaffPermissions);
+
+// Get Fee Overview - Students with Paid/Due status (Staff/Accounts)
+router.get("/fees/overview", getStaffFeeOverview);
+router.post("/fees/collect", recordStaffFeePayment);
+router.get("/payroll/resources", getStaffPayrollResources);
+router.get("/expenses/resources", getStaffExpenseResources);
 
 // Protected routes (Only Institute can manage staff)
 router.use(isInstitute);

@@ -39,11 +39,9 @@ export const getCourses = async (req, res) => {
         const { branchId, type } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
 
-        if (!branchId) {
-            return res.status(400).json({ success: false, message: "Branch ID is required" });
-        }
-
-        let query = { instituteId, branchId };
+        let query = { instituteId };
+        if (branchId) query.branchId = branchId;
+        query.status = "active";
         if (type && type !== 'all') {
             query.type = type;
         }

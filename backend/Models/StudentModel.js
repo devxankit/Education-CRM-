@@ -133,8 +133,12 @@ const studentSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["active", "alumni", "withdrawn", "inactive", "in_review"],
+            enum: ["active", "alumni", "withdrawn", "inactive", "in_review", "waitlisted"],
             default: "in_review",
+        },
+        isLateApplication: {
+            type: Boolean,
+            default: false,
         },
         lastLogin: {
             type: Date,

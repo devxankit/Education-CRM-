@@ -1,34 +1,36 @@
-
 import React, { useState, useEffect } from 'react';
-import { Save, AlertTriangle, ShieldCheck, X } from 'lucide-react';
+import { Save, AlertTriangle, MapPin } from 'lucide-react';
 
-const ExpenseCategoryForm = ({ category, onSave, onCancel }) => {
-
+const ExpenseCategoryForm = ({ category, onSave, onCancel, branches = [], defaultBranchId = '' }) => {
     const [formData, setFormData] = useState({
         name: '',
         code: '',
         type: 'variable',
         budgetLimit: '',
+        branchId: '',
         approvalRequired: false,
         isActive: true
     });
 
     useEffect(() => {
         if (category) {
-            setFormData(category);
+            setFormData(prev => ({
+                ...category,
+                branchId: category.branchId?._id || category.branchId || prev.branchId
+            }));
         } else {
-            // Reset for new
             const randomCode = 'EXP-' + Math.floor(1000 + Math.random() * 9000);
             setFormData({
                 name: '',
                 code: randomCode,
                 type: 'variable',
                 budgetLimit: '',
+                branchId: defaultBranchId || (branches[0]?._id || ''),
                 approvalRequired: false,
                 isActive: true
             });
         }
-    }, [category]);
+    }, [category, defaultBranchId, branches]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -48,6 +50,26 @@ const ExpenseCategoryForm = ({ category, onSave, onCancel }) => {
                 {/* Basic Details */}
                 <div className="space-y-5">
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Classification</h3>
+
+                    {branches.length > 0 && (
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                                <MapPin size={12} /> Branch <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                                required
+                                value={formData.branchId || ''}
+                                onChange={(e) => handleChange('branchId', e.target.value)}
+                                disabled={!!category}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold text-gray-700 cursor-pointer disabled:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-500"
+                            >
+                                <option value="">Select Branch</option>
+                                {branches.map((b) => (
+                                    <option key={b._id} value={b._id}>{b.name || b.code || b._id}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="space-y-1.5 focus-within:text-indigo-600 transition-colors">
                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Category Name <span className="text-rose-500">*</span></label>
@@ -109,25 +131,6 @@ const ExpenseCategoryForm = ({ category, onSave, onCancel }) => {
                         </p>
                     </div>
 
-                    <div className="p-5 rounded-2xl border border-blue-100 bg-blue-50/50 flex gap-4 transition-all hover:bg-blue-50">
-                        <div className="shrink-0 mt-0.5">
-                            <input
-                                type="checkbox"
-                                id="approvalReq"
-                                checked={formData.approvalRequired}
-                                onChange={(e) => handleChange('approvalRequired', e.target.checked)}
-                                className="w-5 h-5 text-indigo-600 rounded-lg border-blue-200 focus:ring-indigo-500 cursor-pointer transition-all"
-                            />
-                        </div>
-                        <div className="cursor-pointer select-none" onClick={() => handleChange('approvalRequired', !formData.approvalRequired)}>
-                            <label htmlFor="approvalReq" className="block text-sm font-bold text-blue-900 flex items-center gap-2 cursor-pointer">
-                                <ShieldCheck size={16} className="text-blue-500" /> Require Manager Approval
-                            </label>
-                            <p className="text-[11px] text-blue-600/80 mt-1 leading-relaxed font-medium">
-                                Mandatory audit lock. Expense vouchers will require sign-off by Finance Head.
-                            </p>
-                        </div>
-                    </div>
                 </div>
 
                 {category && (

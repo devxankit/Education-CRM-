@@ -40,6 +40,10 @@ const expenseCategorySchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        markedPaidAt: {
+            type: Date,
+            default: null,
+        },
     },
     { timestamps: true }
 );

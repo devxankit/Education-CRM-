@@ -1,9 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Calendar, AlertTriangle } from 'lucide-react';
 
 const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly }) => {
-
     // Derived
     const currentTotal = installments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
     const difference = totalAmount - currentTotal;
@@ -16,10 +14,10 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
         }
         
         if (totalAmount <= 0) {
-            // If no total amount, create empty installments
+            const labels = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];
             const newInstallments = Array.from({ length: count }, (_, i) => ({
                 id: i + 1,
-                name: '',
+                name: labels[i] ? `${labels[i]} Installment` : `Installment ${i + 1}`,
                 dueDate: '',
                 amount: 0
             }));
@@ -31,9 +29,10 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
         const amountPerInst = Math.floor(totalAmount / count);
         const remainder = totalAmount % count;
 
+        const labels = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];
         const newInstallments = Array.from({ length: count }, (_, i) => ({
             id: i + 1,
-            name: '', // Empty name - user will fill it
+            name: labels[i] ? `${labels[i]} Installment` : `Installment ${i + 1}`,
             dueDate: '',
             amount: i === 0 ? amountPerInst + remainder : amountPerInst // Add remainder to first
         }));
@@ -54,12 +53,12 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
 
             {/* Controls */}
             {!readOnly && (
-                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Split Strategy</label>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Split Strategy</label>
                         <select
                             onChange={(e) => handleCountChange(Number(e.target.value))}
-                            className="bg-white border border-gray-300 rounded text-sm px-3 py-1.5 outline-none"
+                            className="bg-white border border-gray-200 rounded-lg text-sm px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                             value={installments.length > 0 ? installments.length : ''}
                         >
                             <option value="">Select Strategy</option>
@@ -69,9 +68,9 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
                             <option value="10">Monthly (10)</option>
                         </select>
                     </div>
-                    <div className="text-right">
-                        <span className="block text-[10px] text-gray-500">Unallocated Amount</span>
-                        <span className={`block font-bold text-sm ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className="text-right px-4 py-2 rounded-lg bg-white border border-gray-200">
+                        <span className="block text-[10px] text-gray-500 uppercase font-semibold">Balance</span>
+                        <span className={`block font-bold text-base ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
                             ₹{difference.toLocaleString()}
                         </span>
                     </div>
@@ -88,47 +87,50 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
             {/* List */}
             <div className="space-y-3">
                 {installments.map((inst, idx) => {
-                    const instId = inst.id || inst._id || idx + 1;
+                    const instId = inst.id ?? inst._id ?? `inst-${idx}`;
+                    const displayNum = idx + 1;
                     return (
-                    <div key={instId} className="flex gap-4 items-center border border-gray-200 rounded-lg p-3 hover:bg-gray-50/50 transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
-                            {instId}
+                    <div key={instId} className="flex gap-4 items-center border border-gray-200 rounded-xl p-4 bg-white hover:border-indigo-200 transition-colors">
+                        <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            {displayNum}
                         </div>
 
-                        <div className="flex-1">
-                            <label className="block text-[10px] text-gray-400 mb-0.5">Title</label>
+                        <div className="flex-1 min-w-0">
+                            <label className="block text-[10px] text-gray-500 uppercase font-semibold mb-1">Title</label>
                             <input
                                 type="text"
-                                value={inst.name || ''}
+                                value={inst.name ?? ''}
                                 disabled={readOnly}
                                 onChange={(e) => handleInstallmentChange(instId, 'name', e.target.value)}
-                                className="w-full bg-transparent border-b border-gray-300 text-sm focus:border-indigo-500 outline-none pb-0.5"
+                                placeholder={`Installment ${displayNum}`}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             />
                         </div>
 
-                        <div className="w-[140px]">
-                            <label className="block text-[10px] text-gray-400 mb-0.5">Due Date</label>
+                        <div className="w-[150px] shrink-0">
+                            <label className="block text-[10px] text-gray-500 uppercase font-semibold mb-1">Due Date</label>
                             <div className="relative">
-                                <Calendar size={12} className="absolute left-0 top-1 text-gray-400" />
+                                <Calendar size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                                 <input
                                     type="date"
                                     value={inst.dueDate ? (typeof inst.dueDate === 'string' ? inst.dueDate.split('T')[0] : new Date(inst.dueDate).toISOString().split('T')[0]) : ''}
                                     disabled={readOnly}
                                     onChange={(e) => handleInstallmentChange(instId, 'dueDate', e.target.value)}
-                                    className="w-full bg-transparent border-b border-gray-300 text-sm pl-4 focus:border-indigo-500 outline-none pb-0.5"
+                                    className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                 />
                             </div>
                         </div>
 
-                        <div className="w-[100px]">
-                            <label className="block text-[10px] text-gray-400 mb-0.5">Amount</label>
+                        <div className="w-[110px] shrink-0">
+                            <label className="block text-[10px] text-gray-500 uppercase font-semibold mb-1">Amount</label>
                             <input
                                 type="number"
-                                value={inst.amount || ''}
+                                value={inst.amount ?? ''}
                                 placeholder="0"
                                 disabled={readOnly}
                                 onChange={(e) => handleInstallmentChange(instId, 'amount', Number(e.target.value) || 0)}
-                                className={`w-full bg-transparent border-b text-sm font-mono text-right outline-none pb-0.5 ${readOnly ? 'border-transparent' : 'border-gray-300 focus:border-indigo-500'}`}
+                                min={0}
+                                className={`w-full px-3 py-2 border rounded-lg text-sm font-mono text-right outline-none ${readOnly ? 'border-transparent bg-gray-50' : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'}`}
                             />
                         </div>
 
@@ -138,9 +140,12 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
             </div>
 
             {!isBalanced && !readOnly && (
-                <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 p-2 rounded border border-red-100">
-                    <AlertTriangle size={14} />
-                    <span>The installments do not sum up to the total fee amount ({totalAmount}). Please adjust.</span>
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+                    <AlertTriangle size={20} className="text-red-600 shrink-0" />
+                    <div>
+                        <p className="font-semibold text-red-800 text-sm">Amount Mismatch</p>
+                        <p className="text-red-700 text-sm mt-0.5">The installments sum (₹{currentTotal.toLocaleString()}) does not match the total fee amount (₹{totalAmount.toLocaleString()}). Difference: ₹{Math.abs(difference).toLocaleString()}. Please adjust the amounts.</p>
+                    </div>
                 </div>
             )}
         </div>

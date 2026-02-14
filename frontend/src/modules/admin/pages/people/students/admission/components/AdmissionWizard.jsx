@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronRight, ChevronLeft, Check, Save } from 'lucide-react';
 
 // Steps
@@ -7,9 +7,26 @@ import Step1_Personal from './Step1_Personal';
 import Step3_Academic from './Step3_Academic';
 import Step4_Rules from './Step4_Rules';
 import Step5_Documents from './Step5_Documents';
+import Step5_AdmissionFee from './Step5_AdmissionFee';
 import Step6_Review from './Step6_Review';
 
-const AdmissionWizard = ({ onComplete, onCancel }) => {
+const AdmissionWizard = ({ onComplete, onCancel, academicYearId, workflow = {} }) => {
+    const requireFee = workflow.requireFee === true;
+    const requireDocs = workflow.requireDocs === true;
+
+    const steps = useMemo(() => {
+        const list = [
+            { key: 'personal', label: 'Personal' },
+            { key: 'academic', label: 'Academic' },
+            { key: 'logistics', label: 'Logistics' },
+            ...(requireDocs ? [{ key: 'docs', label: 'Docs' }] : []),
+            ...(requireFee ? [{ key: 'fee', label: 'Fee' }] : []),
+            { key: 'review', label: 'Review' }
+        ];
+        return list;
+    }, [requireFee, requireDocs]);
+
+    const totalSteps = steps.length;
 
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -31,22 +48,28 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
         hostelRequired: false, bedType: '', roomType: '',
 
         // 5 (Now 4)
-        documents: {}
+        documents: {},
+        admissionFee: { collectNow: false, feeStructureId: '', amount: '', paymentMethod: 'Cash', transactionId: '', remarks: '' }
     });
 
-    const totalSteps = 5;
+    const currentStepKey = steps[currentStep - 1]?.key;
 
     const handleNext = () => {
-        // Simple validation for Step 1
-        if (currentStep === 1) {
+        if (currentStepKey === 'personal') {
             if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.parentEmail) {
                 alert("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email)");
                 return;
             }
-            // Basic email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.parentEmail)) {
                 alert("Please enter a valid Parent Email address");
+                return;
+            }
+        }
+        if (currentStepKey === 'fee' && formData.admissionFee?.collectNow) {
+            const fee = formData.admissionFee;
+            if (!fee.feeStructureId || !fee.amount || Number(fee.amount) <= 0) {
+                alert("Please select a fee structure and enter a valid amount.");
                 return;
             }
         }
@@ -58,19 +81,29 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
     };
 
     const handleSubmit = () => {
-        // Final submit logic
         onComplete(formData);
     };
 
     const isLastStep = currentStep === totalSteps;
 
     const renderStep = () => {
-        switch (currentStep) {
-            case 1: return <Step1_Personal data={formData} onChange={setFormData} />;
-            case 2: return <Step3_Academic data={formData} onChange={setFormData} />;
-            case 3: return <Step4_Rules data={formData} onChange={setFormData} />;
-            case 4: return <Step5_Documents data={formData} onChange={setFormData} />;
-            case 5: return <Step6_Review data={formData} onEditStep={setCurrentStep} />;
+        const step = steps[currentStep - 1];
+        if (!step) return null;
+        switch (step.key) {
+            case 'personal': return <Step1_Personal data={formData} onChange={setFormData} />;
+            case 'academic': return <Step3_Academic data={formData} onChange={setFormData} />;
+            case 'logistics': return <Step4_Rules data={formData} onChange={setFormData} />;
+            case 'docs': return <Step5_Documents data={formData} onChange={setFormData} />;
+            case 'fee': return <Step5_AdmissionFee data={formData} onChange={setFormData} academicYearId={academicYearId} />;
+            case 'review': return (
+                <Step6_Review
+                    data={formData}
+                    onEditStep={setCurrentStep}
+                    stepNumbers={{ personal: 1, academic: 2, logistics: 3, docs: requireDocs ? (steps.findIndex(s => s.key === 'docs') + 1) : 0, fee: requireFee ? (steps.findIndex(s => s.key === 'fee') + 1) : 0 }}
+                    showDocs={requireDocs}
+                    showFee={requireFee}
+                />
+            );
             default: return null;
         }
     };
@@ -93,11 +126,9 @@ const AdmissionWizard = ({ onComplete, onCancel }) => {
 
                 {/* Horizontal Step Labels (Hidden on mobile) */}
                 <div className="hidden md:flex justify-between mt-3 text-[10px] uppercase font-bold text-gray-400">
-                    <span className={currentStep >= 1 ? 'text-indigo-600' : ''}>1. Personal</span>
-                    <span className={currentStep >= 2 ? 'text-indigo-600' : ''}>2. Academic</span>
-                    <span className={currentStep >= 3 ? 'text-indigo-600' : ''}>3. Logistics</span>
-                    <span className={currentStep >= 4 ? 'text-indigo-600' : ''}>4. Docs</span>
-                    <span className={currentStep >= 5 ? 'text-indigo-600' : ''}>5. Review</span>
+                    {steps.map((s, i) => (
+                        <span key={s.key} className={currentStep >= i + 1 ? 'text-indigo-600' : ''}>{i + 1}. {s.label}</span>
+                    ))}
                 </div>
             </div>
 

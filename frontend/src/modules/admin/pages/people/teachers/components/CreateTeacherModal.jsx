@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Shield, Phone, Mail, Calendar, GraduationCap, Loader2 } from 'lucide-react';
+import { API_URL } from '@/app/api';
 
 const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = [], loading = false }) => {
     const [formData, setFormData] = useState({
@@ -17,13 +18,40 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
         teachingStatus: 'Active',
         status: 'active'
     });
+    const [departmentsForBranch, setDepartmentsForBranch] = useState([]);
+
+    useEffect(() => {
+        if (!formData.branchId) {
+            setDepartmentsForBranch([]);
+            return;
+        }
+        const token = localStorage.getItem('token');
+        fetch(`${API_URL}/department?branchId=${formData.branchId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then((r) => r.json())
+            .then((data) => setDepartmentsForBranch(data.success ? data.data : []))
+            .catch(() => setDepartmentsForBranch([]));
+    }, [formData.branchId]);
 
     if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => {
+            const next = { ...prev, [name]: value };
+            if (name === 'branchId') {
+                next.department = '';
+                next.designation = '';
+            } else if (name === 'department') {
+                next.designation = '';
+            }
+            return next;
+        });
     };
+
+    const selectedDept = departmentsForBranch.find((d) => d.name === formData.department);
+    const designationsForDept = selectedDept?.designations?.filter((d) => d.status === 'Active') || [];
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -116,22 +144,34 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                            <input
-                                type="text" name="department"
-                                value={formData.department} onChange={handleChange}
-                                placeholder="e.g. Science"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            />
+                            <select
+                                name="department"
+                                value={formData.department}
+                                onChange={handleChange}
+                                disabled={!formData.branchId}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium disabled:bg-gray-50 disabled:text-gray-400"
+                            >
+                                <option value="">{formData.branchId ? 'Select Department' : 'Select Branch first'}</option>
+                                {departmentsForBranch.map((d) => (
+                                    <option key={d._id} value={d.name}>{d.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                            <input
-                                type="text" name="designation"
-                                value={formData.designation} onChange={handleChange}
-                                placeholder="e.g. Senior Teacher"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            />
+                            <select
+                                name="designation"
+                                value={formData.designation}
+                                onChange={handleChange}
+                                disabled={!formData.department}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium disabled:bg-gray-50 disabled:text-gray-400"
+                            >
+                                <option value="">{formData.department ? 'Select Designation' : 'Select Department first'}</option>
+                                {designationsForDept.map((d) => (
+                                    <option key={d.code} value={d.name}>{d.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>

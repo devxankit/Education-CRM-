@@ -58,11 +58,17 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                 setComponents([]);
             }
 
-            // Set installments
+            // Set installments (strip any leading MongoDB _id from name if corrupted)
+            const cleanInstName = (n) => {
+                if (!n || typeof n !== 'string') return n || '';
+                const m = n.trim().match(/^[a-f0-9]{24}\s+/i);
+                return m ? n.slice(m[0].length).trim() : n.trim();
+            };
             if (initialData.installments && initialData.installments.length > 0) {
                 setInstallments(initialData.installments.map((inst, idx) => ({
                     ...inst,
                     id: inst.id || inst._id || idx + 1,
+                    name: cleanInstName(inst.name) || inst.name || `Installment ${idx + 1}`,
                     amount: inst.amount || 0,
                     dueDate: inst.dueDate ? (typeof inst.dueDate === 'string' ? inst.dueDate.split('T')[0] : new Date(inst.dueDate).toISOString().split('T')[0]) : ''
                 })));

@@ -64,19 +64,28 @@ export const StaffAuthProvider = ({ children }) => {
     // 2. Login function: sets the role ONCE.
     const login = React.useCallback((userData) => {
         // Enforce user structure
-        if (!userData || !userData.role) {
-            console.error("Invalid login data: Role is missing");
+        if (!userData) {
+            console.error("Invalid login data");
             return;
         }
 
-        // Strict Role Check: Ensure role is valid
-        if (!Object.values(STAFF_ROLES).includes(userData.role)) {
-            console.error("Invalid role detected");
-            return;
+        // Map custom backend role codes (e.g. ROLE_TRASPORT_CORDINATOR) to STAFF_ROLES
+        const roleCode = (userData.roleId?.code || userData.role || '').toUpperCase();
+        let frontendRole = userData.role;
+        if (!Object.values(STAFF_ROLES).includes(frontendRole)) {
+            if (roleCode.includes('TRANSPORT') || roleCode.includes('TRASPORT')) frontendRole = STAFF_ROLES.TRANSPORT;
+            else if (roleCode.includes('ACCOUNTS')) frontendRole = STAFF_ROLES.ACCOUNTS;
+            else if (roleCode.includes('FRONT') || roleCode.includes('RECEPTION')) frontendRole = STAFF_ROLES.FRONT_DESK;
+            else if (roleCode.includes('DATA')) frontendRole = STAFF_ROLES.DATA_ENTRY;
+            else if (roleCode.includes('SUPPORT')) frontendRole = STAFF_ROLES.SUPPORT;
+            else if (roleCode.includes('PRINCIPAL') || roleCode.includes('HEAD')) frontendRole = STAFF_ROLES.PRINCIPAL;
+            else if (roleCode.includes('TEACHER')) frontendRole = STAFF_ROLES.TEACHER;
+            else if (roleCode.includes('ADMIN')) frontendRole = STAFF_ROLES.ADMIN;
         }
+        const normalizedUser = { ...userData, role: frontendRole || userData.role };
 
-        setUser(userData);
-        localStorage.setItem('staff_user', JSON.stringify(userData));
+        setUser(normalizedUser);
+        localStorage.setItem('staff_user', JSON.stringify(normalizedUser));
     }, []);
 
     // 3. Logout function: clears everything

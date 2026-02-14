@@ -1,9 +1,13 @@
+import React from 'react';
+import { CalendarRange } from 'lucide-react';
 
-import React, { useState } from 'react';
-import { CalendarRange, Lock, Unlock, AlertTriangle } from 'lucide-react';
+const toDateInput = (d) => {
+    if (!d) return '';
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? '' : dt.toISOString().split('T')[0];
+};
 
 const AdmissionWindowPanel = ({ isLocked, data, onChange }) => {
-
     const rules = data || {
         isOpen: true,
         startDate: '',
@@ -17,13 +21,15 @@ const AdmissionWindowPanel = ({ isLocked, data, onChange }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-gradient-to-r from-indigo-50/50 to-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <CalendarRange className="text-indigo-600" size={20} />
+                    <div className="p-2 rounded-lg bg-indigo-100">
+                        <CalendarRange className="text-indigo-600" size={20} />
+                    </div>
                     <div>
-                        <h3 className="text-sm font-bold text-gray-900">Admission Window & Timeline</h3>
-                        <p className="text-xs text-gray-500">Define when the admission portal accepts new applications.</p>
+                        <h3 className="text-base font-bold text-gray-900">Admission Window & Timeline</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Define when the admission portal accepts new applications.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -47,28 +53,32 @@ const AdmissionWindowPanel = ({ isLocked, data, onChange }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Window Period</label>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="date"
-                                value={rules.startDate}
-                                disabled={isLocked}
-                                onChange={(e) => handleChange('startDate', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:border-indigo-500"
-                            />
-                            <span className="text-gray-400 text-xs">to</span>
-                            <input
-                                type="date"
-                                value={rules.endDate}
-                                disabled={isLocked}
-                                onChange={(e) => handleChange('endDate', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:border-indigo-500"
-                            />
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Window Period</label>
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                                <input
+                                    type="date"
+                                    value={toDateInput(rules.startDate)}
+                                    disabled={isLocked}
+                                    onChange={(e) => handleChange('startDate', e.target.value || null)}
+                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+                                />
+                            </div>
+                            <span className="text-gray-400 text-sm font-medium shrink-0">–</span>
+                            <div className="flex-1 min-w-0">
+                                <input
+                                    type="date"
+                                    value={toDateInput(rules.endDate)}
+                                    disabled={isLocked}
+                                    onChange={(e) => handleChange('endDate', e.target.value || null)}
+                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+                                />
+                            </div>
                         </div>
                     </div>
 
                     <div className="flex flex-col justify-end">
-                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 flex items-start gap-3">
+                        <div className="bg-amber-50/80 p-4 rounded-xl border border-amber-100 flex items-start gap-3">
                             <div className="mt-0.5">
                                 <input
                                     type="checkbox"

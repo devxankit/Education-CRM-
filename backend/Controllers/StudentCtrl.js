@@ -3,6 +3,8 @@ import Class from "../Models/ClassModel.js";
 import Section from "../Models/SectionModel.js";
 import Parent from "../Models/ParentModel.js";
 import Sequence from "../Models/SequenceModel.js";
+import AdmissionRule from "../Models/AdmissionRuleModel.js";
+import AcademicYear from "../Models/AcademicYearModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
 import Timetable from "../Models/TimetableModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
@@ -16,9 +18,11 @@ import Exam from "../Models/ExamModel.js";
 import ExamResult from "../Models/ExamResultModel.js";
 import FeeStructure from "../Models/FeeStructureModel.js";
 import FeePayment from "../Models/FeePaymentModel.js";
+import { calculateTax } from "../Helpers/calculateTax.js";
 import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
 import LearningMaterial from "../Models/LearningMaterialModel.js";
+import Role from "../Models/RoleModel.js";
 
 // ================= STUDENT DASHBOARD =================
 export const getStudentDashboard = async (req, res) => {
@@ -180,6 +184,111 @@ export const admitStudent = async (req, res) => {
             return res.status(400).json({ success: false, message: "Branch ID is required for admission" });
         }
 
+        // 0.1 Admission Policy Check
+        let academicYearId = admissionData.academicYearId;
+        if (!academicYearId) {
+            const activeYear = await AcademicYear.findOne({ instituteId, status: "active" }).sort({ startDate: -1 });
+            academicYearId = activeYear?._id?.toString();
+        }
+        const admissionRule = academicYearId
+            ? await AdmissionRule.findOne({ instituteId, academicYearId })
+            : null;
+
+        if (admissionRule) {
+            const { window: win, seatCapacity: seat, eligibility: elig } = admissionRule;
+
+            // Window: Admissions closed
+            if (win && win.isOpen === false) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Admissions are currently closed for this academic year."
+                });
+            }
+
+            // Window: Date range
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (win?.startDate) {
+                const start = new Date(win.startDate);
+                start.setHours(0, 0, 0, 0);
+                if (today < start) {
+                    return res.status(403).json({
+                        success: false,
+                        message: `Admission window opens on ${start.toLocaleDateString()}.`
+                    });
+                }
+            }
+            let isLateApplication = false;
+            if (win?.endDate) {
+                const end = new Date(win.endDate);
+                end.setHours(23, 59, 59, 999);
+                if (today > end) {
+                    if (!win.allowLate) {
+                        return res.status(403).json({
+                            success: false,
+                            message: "Admission window has closed. Late applications are not allowed."
+                        });
+                    }
+                    isLateApplication = true;
+                }
+            }
+
+            // Eligibility: age and class
+            if (classData && elig && Array.isArray(elig) && elig.length > 0) {
+                const className = (classData.name || "").trim().toLowerCase();
+                const rule = elig.find((e) => (e.class || "").trim().toLowerCase() === className);
+                if (rule) {
+                    const dob = admissionData.dob ? new Date(admissionData.dob) : null;
+                    if (dob) {
+                        const ageYears = (today - dob) / (365.25 * 24 * 60 * 60 * 1000);
+                        if (rule.minAge != null && ageYears < rule.minAge) {
+                            return res.status(400).json({
+                                success: false,
+                                message: `Minimum age for ${classData.name} is ${rule.minAge} years.`
+                            });
+                        }
+                        if (rule.maxAge != null && rule.maxAge > 0 && ageYears > rule.maxAge) {
+                            return res.status(400).json({
+                                success: false,
+                                message: `Maximum age for ${classData.name} is ${rule.maxAge} years.`
+                            });
+                        }
+                    }
+                    if (rule.prevClassRequired && !(admissionData.lastClass || "").trim()) {
+                        return res.status(400).json({
+                            success: false,
+                            message: `Previous class/transfer certificate is required for ${classData.name}.`
+                        });
+                    }
+                }
+            }
+
+            // Capacity & Waitlist (applied when we have section)
+            if (classData && sectionData && seat) {
+                const studentCount = await Student.countDocuments({
+                    sectionId: admissionData.sectionId,
+                    status: { $nin: ["withdrawn", "alumni"] }
+                });
+                const sectionCapacity = sectionData.capacity ?? classData.capacity ?? 40;
+                const isFull = studentCount >= sectionCapacity;
+
+                if (isFull) {
+                    if (seat.strictCapacity) {
+                        if (seat.waitlistEnabled) {
+                            // Allow creation as waitlisted
+                            admissionData._forceStatus = "waitlisted";
+                        } else {
+                            return res.status(400).json({
+                                success: false,
+                                message: `Section '${sectionData.name}' is full. Class '${classData.name}' limited to ${sectionCapacity} students.`
+                            });
+                        }
+                    }
+                }
+            }
+            admissionData._isLateApplication = isLateApplication;
+        }
+
         // 1. Internal Unique Check (parentEmail)
         if (admissionData.parentEmail) {
             const existingStudent = await Student.findOne({ parentEmail: admissionData.parentEmail });
@@ -188,10 +297,10 @@ export const admitStudent = async (req, res) => {
             }
         }
 
-        // 1.1 Capacity Check
-        if (classData && sectionData) {
-            const studentCount = await Student.countDocuments({ sectionId: admissionData.sectionId, status: { $ne: 'withdrawn' } });
-            const studentCapacity = classData.capacity || 40;
+        // 1.1 Capacity Check (skip if policy allowed waitlist)
+        if (classData && sectionData && !admissionData._forceStatus) {
+            const studentCount = await Student.countDocuments({ sectionId: admissionData.sectionId, status: { $nin: ['withdrawn', 'alumni'] } });
+            const studentCapacity = sectionData.capacity ?? classData.capacity ?? 40;
 
             if (studentCount >= studentCapacity) {
                 return res.status(400).json({
@@ -211,9 +320,11 @@ export const admitStudent = async (req, res) => {
 
         const admissionNo = `${sequence.prefix || 'ADM'}-${currentYear}-${sequence.sequenceValue.toString().padStart(4, '0')}`;
 
-        // 3. Handle Cloudinary Document Uploads
-        const defaultDocStatus = req.role === 'institute' ? 'approved' : 'in_review';
-        const defaultStudentStatus = req.role === 'institute' ? 'active' : 'in_review';
+        // 3. Handle Cloudinary Document Uploads + Workflow Policy
+        const workflow = admissionRule?.workflow;
+        const needsWorkflow = workflow && (workflow.requireDocs || workflow.requireFee);
+        const defaultDocStatus = (needsWorkflow || req.role !== 'institute') ? 'in_review' : 'approved';
+        const defaultStudentStatus = (needsWorkflow || req.role !== 'institute') ? 'in_review' : 'active';
 
         if (admissionData.documents) {
             const keys = Object.keys(admissionData.documents);
@@ -275,6 +386,13 @@ export const admitStudent = async (req, res) => {
             if (admissionData[field] === "") delete admissionData[field];
         });
 
+        const forceStatus = admissionData._forceStatus;
+        const isLate = admissionData._isLateApplication;
+        delete admissionData._forceStatus;
+        delete admissionData._isLateApplication;
+
+        const studentStatus = forceStatus || defaultStudentStatus;
+
         const student = new Student({
             ...admissionData,
             admissionNo,
@@ -282,7 +400,8 @@ export const admitStudent = async (req, res) => {
             branchId, // Use the resolved branchId
             parentId: admissionData.parentId || parentId,
             password: admissionData.password || '12345678',
-            status: defaultStudentStatus
+            status: studentStatus,
+            isLateApplication: isLate || false
         });
 
         await student.save();
@@ -306,17 +425,68 @@ export const admitStudent = async (req, res) => {
             });
         }
 
+        const msgWaitlist = studentStatus === 'waitlisted' ? " (Waitlisted - section is full)" : "";
+        const msgLate = isLate ? " (Late application)" : "";
         res.status(201).json({
             success: true,
-            message: parentCreated
+            message: (parentCreated
                 ? "Student admitted successfully. Login credentials sent to parent email."
-                : "Student admitted successfully",
+                : "Student admitted successfully") + msgWaitlist + msgLate,
             data: student,
             parentLinked: !!parentId,
-            emailSent: parentCreated && !!admissionData.parentEmail
+            emailSent: parentCreated && !!admissionData.parentEmail,
+            waitlisted: studentStatus === 'waitlisted',
+            isLateApplication: isLate
         });
     } catch (error) {
         console.error("Admission Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= RECORD FEE PAYMENT (Admin/Institute) =================
+export const recordFeePayment = async (req, res) => {
+    try {
+        const { id: studentId } = req.params;
+        const { feeStructureId, amount, paymentMethod = 'Cash', remarks } = req.body;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        if (!feeStructureId || !amount || amount <= 0) {
+            return res.status(400).json({ success: false, message: "feeStructureId and amount are required" });
+        }
+
+        const student = await Student.findById(studentId);
+        if (!student || student.instituteId?.toString() !== instituteId?.toString()) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const feeStructure = await FeeStructure.findById(feeStructureId);
+        if (!feeStructure || feeStructure.instituteId?.toString() !== instituteId?.toString()) {
+            return res.status(404).json({ success: false, message: "Fee structure not found" });
+        }
+
+        const payment = new FeePayment({
+            instituteId: student.instituteId,
+            branchId: student.branchId,
+            studentId,
+            academicYearId: feeStructure.academicYearId,
+            feeStructureId,
+            amountPaid: Number(amount),
+            paymentMethod: paymentMethod || 'Cash',
+            paymentDate: new Date(),
+            status: 'Success',
+            receiptNo: `REC-${Date.now()}-${studentId.toString().slice(-4)}`,
+            remarks: remarks || ''
+        });
+
+        await payment.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Payment recorded successfully",
+            data: { payment, receiptNo: payment.receiptNo }
+        });
+    } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -453,6 +623,91 @@ export const updateStudent = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Student record updated successfully",
+            data: student,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CONFIRM ADMISSION (Workflow Policy) =================
+export const confirmAdmission = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const student = await Student.findById(id);
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+        if (student.instituteId?.toString() !== instituteId?.toString()) {
+            return res.status(403).json({ success: false, message: "Not authorized" });
+        }
+        if (student.status === "active") {
+            return res.status(400).json({ success: false, message: "Student is already confirmed." });
+        }
+        if (student.status === "waitlisted") {
+            return res.status(400).json({ success: false, message: "Waitlisted students cannot be confirmed until promoted." });
+        }
+
+        const activeYear = await AcademicYear.findOne({ instituteId, status: "active" }).sort({ startDate: -1 });
+        const academicYearId = activeYear?._id?.toString();
+        const admissionRule = academicYearId
+            ? await AdmissionRule.findOne({ instituteId, academicYearId })
+            : null;
+
+        const workflow = admissionRule?.workflow;
+        if (workflow) {
+            const approvalRequired = (workflow.approval || "admin").toLowerCase();
+            const userRole = (req.role || "institute").toLowerCase();
+            let staffRole = "";
+            if (req.role === "staff" && req.user?.roleId) {
+                const roleObj = req.user.roleId?.code ? req.user.roleId : await Role.findById(req.user.roleId).select("code name");
+                staffRole = (roleObj?.code || roleObj?.name || "").toLowerCase();
+            }
+            const hasApprovalRole =
+                userRole === "institute" || staffRole.includes(approvalRequired);
+            if (!hasApprovalRole) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Only ${approvalRequired} can confirm admission as per policy.`,
+                });
+            }
+
+            if (workflow.requireDocs && student.documents) {
+                const docKeys = Object.keys(student.documents);
+                const pending = docKeys.filter((k) => {
+                    const d = student.documents[k];
+                    return d && (d.url || d.name) && d.status !== "approved";
+                });
+                if (pending.length > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Document verification pending. All documents must be approved before confirmation.",
+                    });
+                }
+            }
+
+            if (workflow.requireFee) {
+                const paid = await FeePayment.findOne({
+                    studentId: student._id,
+                    status: "Success",
+                });
+                if (!paid) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Fee payment is required before confirmation. Please record at least one fee payment.",
+                    });
+                }
+            }
+        }
+
+        student.status = "active";
+        await student.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Admission confirmed successfully",
             data: student,
         });
     } catch (error) {
@@ -636,8 +891,13 @@ export const getStudentFees = async (req, res) => {
         const payments = await FeePayment.find({ studentId })
             .sort({ paymentDate: -1 });
 
+        const baseAmount = feeStructure.totalAmount || 0;
+        const branchId = feeStructure.branchId || student.branchId;
+        const instituteId = feeStructure.instituteId || student.instituteId;
+        const { totalTax } = await calculateTax(baseAmount, branchId, "fees", instituteId);
+        const totalFee = baseAmount + totalTax;
+
         const totalPaid = payments.reduce((acc, curr) => acc + curr.amountPaid, 0);
-        const totalFee = feeStructure.totalAmount;
         const balance = totalFee - totalPaid;
 
         res.status(200).json({
@@ -645,6 +905,8 @@ export const getStudentFees = async (req, res) => {
             data: {
                 summary: {
                     totalFee,
+                    baseAmount,
+                    totalTax,
                     totalPaid,
                     balance
                 },

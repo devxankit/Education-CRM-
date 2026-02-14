@@ -242,6 +242,21 @@ const NewAdmission = () => {
                                 />
                             </div>
                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Age</label>
+                                <div className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/80 text-sm font-bold text-gray-700">
+                                    {formData.dob
+                                        ? (() => {
+                                            const dob = new Date(formData.dob);
+                                            const today = new Date();
+                                            let age = today.getFullYear() - dob.getFullYear();
+                                            const m = today.getMonth() - dob.getMonth();
+                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                            return `${age} ${age === 1 ? 'year' : 'years'}`;
+                                        })()
+                                        : '—'}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Gender <span className="text-red-500">*</span></label>
                                 <select
                                     name="gender"

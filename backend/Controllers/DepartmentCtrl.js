@@ -4,15 +4,17 @@ import Staff from "../Models/StaffModel.js"; // To count employees
 // ================= CREATE DEPARTMENT =================
 export const createDepartment = async (req, res) => {
     try {
-        const { name, code, type, branchId, designations } = req.body;
+        const { name, code, type, status, description, branchId, designations } = req.body;
         const instituteId = req.user._id;
 
         const department = new Department({
             instituteId,
             branchId,
             name,
-            code,
-            type,
+            code: (code || "").toUpperCase().trim(),
+            type: type || "Academic",
+            status: status || "Active",
+            description: description || "",
             designations: designations || [],
         });
 
@@ -64,7 +66,10 @@ export const getDepartments = async (req, res) => {
 export const updateDepartment = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const allowed = ['name', 'code', 'type', 'status', 'description', 'designations'];
+        const updateData = {};
+        allowed.forEach(f => { if (req.body[f] !== undefined) updateData[f] = req.body[f]; });
+        if (updateData.code) updateData.code = updateData.code.toUpperCase().trim();
 
         const department = await Department.findByIdAndUpdate(
             id,

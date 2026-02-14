@@ -102,6 +102,47 @@ export const sendLoginCredentialsEmail = async (to, password, fullName, role) =>
   }
 };
 
+// Send OTP for Staff 2FA login
+export const sendStaffOtpEmail = async (to, otp, staffName) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Your Login OTP - Education CRM`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5;">Staff Portal - Verification Code</h2>
+          <p>Hello <b>${staffName}</b>,</p>
+          <p>Use the following OTP to complete your login:</p>
+          <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This code expires in 5 minutes. Do not share it with anyone.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`OTP email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.log("OTP Email Error:", error);
+    return false;
+  }
+};
+
 // Send Parent Credentials when student is registered
 export const sendParentCredentialsEmail = async (to, password, parentName, studentName, admissionNo) => {
   try {

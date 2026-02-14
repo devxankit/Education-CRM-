@@ -173,8 +173,9 @@ export const useAdminStore = create(
                         set((state) => ({
                             students: [response.data.data, ...state.students]
                         }));
-                        get().addToast('Student admitted successfully', 'success');
-                        return response.data.data;
+                        const msg = response.data.waitlisted ? 'Student added to waitlist' : 'Student admitted successfully';
+                        get().addToast(msg, 'success');
+                        return { ...response.data.data, waitlisted: response.data.waitlisted, isLateApplication: response.data.isLateApplication };
                     }
                 } catch (error) {
                     console.error('Error admitting student:', error);
@@ -199,6 +200,41 @@ export const useAdminStore = create(
                 } catch (error) {
                     console.error('Error updating student:', error);
                     get().addToast(error.response?.data?.message || 'Error updating student', 'error');
+                    throw error;
+                }
+            },
+            recordFeePayment: async (studentId, payload) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/student/${studentId}/record-fee`, payload, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Fee recorded successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error recording fee:', error);
+                    get().addToast(error.response?.data?.message || 'Failed to record fee', 'error');
+                    throw error;
+                }
+            },
+            confirmAdmission: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/student/${id}/confirm`, {}, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            students: state.students.map(s => (s._id === id || s.id === id) ? response.data.data : s)
+                        }));
+                        get().addToast('Admission confirmed successfully', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error confirming admission:', error);
+                    get().addToast(error.response?.data?.message || 'Failed to confirm admission', 'error');
                     throw error;
                 }
             },
@@ -378,7 +414,8 @@ export const useAdminStore = create(
             fetchClasses: async (branchId) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/class?branchId=${branchId}`, {
+                    const url = branchId ? `${API_URL}/class?branchId=${branchId}` : `${API_URL}/class`;
+                    const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -748,7 +785,8 @@ export const useAdminStore = create(
             fetchCourses: async (branchId) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/course?branchId=${branchId}`, {
+                    const url = branchId ? `${API_URL}/course?branchId=${branchId}` : `${API_URL}/course`;
+                    const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -1544,3 +1582,5 @@ export const useAdminStore = create(
         }
     )
 );
+
+export default useAdminStore;

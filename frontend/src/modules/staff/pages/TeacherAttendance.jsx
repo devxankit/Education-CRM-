@@ -62,7 +62,8 @@ const TeacherAttendance = () => {
             if (data.success) {
                 const attendanceMap = {};
                 data.data.forEach(record => {
-                    attendanceMap[record.teacherId._id || record.teacherId] = {
+                    const employeeId = record.employeeId || record.teacherId?._id || record.teacherId || record.staffId?._id || record.staffId;
+                    attendanceMap[employeeId] = {
                         status: record.status,
                         checkInTime: record.checkInTime,
                         checkOutTime: record.checkOutTime,
@@ -112,7 +113,7 @@ const TeacherAttendance = () => {
             return;
         }
 
-        if (!confirm('Mark all teachers as Present for today?')) {
+        if (!confirm('Mark all teachers and staff as Present for today?')) {
             return;
         }
 
@@ -120,8 +121,9 @@ const TeacherAttendance = () => {
             setSaving(true);
             const token = localStorage.getItem('token');
             
-            const promises = teachers.map(teacher => {
-                const teacherId = teacher._id || teacher.id;
+            const promises = teachers.map(employee => {
+                const employeeId = employee._id || employee.id;
+                const employeeType = employee.type || 'teacher';
                 return fetch(`${API_URL}/teacher-attendance/mark`, {
                     method: 'POST',
                     headers: {
@@ -129,16 +131,17 @@ const TeacherAttendance = () => {
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        teacherId,
+                        teacherId: employeeId,
                         date: today,
                         status: 'Present',
-                        remarks: 'Auto-marked as present'
+                        remarks: 'Auto-marked as present',
+                        employeeType
                     })
                 });
             });
 
             await Promise.all(promises);
-            alert('All teachers marked as Present!');
+            alert('All teachers and staff marked as Present!');
             fetchAttendance();
         } catch (error) {
             console.error('Error marking all as present:', error);
@@ -148,7 +151,7 @@ const TeacherAttendance = () => {
         }
     };
 
-    const handleSaveAttendance = async (teacherId, status, remarks) => {
+    const handleSaveAttendance = async (teacherId, status, remarks, employeeType) => {
         // Only allow saving for today
         if (!isToday) {
             alert('You can only mark attendance for today\'s date.');
@@ -169,7 +172,8 @@ const TeacherAttendance = () => {
                     teacherId,
                     date: selectedDate,
                     status,
-                    remarks
+                    remarks,
+                    employeeType: employeeType || 'teacher'
                 })
             });
 
@@ -207,8 +211,12 @@ const TeacherAttendance = () => {
             setSaving(true);
             const token = localStorage.getItem('token');
             
-            const promises = Object.entries(attendance).map(([teacherId, data]) => {
+            const promises = Object.entries(attendance).map(([employeeId, data]) => {
                 if (!data.status) return Promise.resolve();
+                
+                // Find the employee to get their type
+                const employee = teachers.find(t => (t._id || t.id) === employeeId);
+                const employeeType = employee?.type || 'teacher';
                 
                 return fetch(`${API_URL}/teacher-attendance/mark`, {
                     method: 'POST',
@@ -217,10 +225,11 @@ const TeacherAttendance = () => {
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        teacherId,
+                        teacherId: employeeId,
                         date: selectedDate,
                         status: data.status,
-                        remarks: data.remarks
+                        remarks: data.remarks,
+                        employeeType
                     })
                 });
             });
@@ -298,10 +307,10 @@ const TeacherAttendance = () => {
                             Attendance Management
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-none">
-                            Teacher Attendance
+                            Employee Attendance
                         </h1>
                         <p className="mt-2 text-sm text-gray-500 font-medium tracking-tight">
-                            Mark and manage teacher attendance for {new Date(selectedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            Mark and manage attendance for teachers and staff on {new Date(selectedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                             {isToday && <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">Today</span>}
                             {isPastDate && <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold">View Only</span>}
                             {isFutureDate && <span className="ml-2 px-2 py-0.5 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold">Future Date</span>}
@@ -389,47 +398,57 @@ const TeacherAttendance = () => {
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                         </div>
-                        <h3 className="text-xl font-black text-gray-900">Loading teachers...</h3>
+                        <h3 className="text-xl font-black text-gray-900">Loading employees...</h3>
                     </div>
                 ) : filteredTeachers.length === 0 ? (
                     <div className="col-span-full py-24 text-center bg-white rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
                             <User size={40} />
                         </div>
-                        <h3 className="text-xl font-black text-gray-900">No teachers found</h3>
+                        <h3 className="text-xl font-black text-gray-900">No employees found</h3>
                         <p className="text-gray-400 font-bold mt-1">Try adjusting your search criteria.</p>
                     </div>
                 ) : (
-                    filteredTeachers.map((teacher) => {
-                        const teacherId = teacher._id || teacher.id;
-                        const currentAttendance = attendance[teacherId] || {};
-                        const status = getAttendanceStatus(teacherId);
-                        const teacherName = `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || 'N/A';
+                    filteredTeachers.map((employee) => {
+                        const employeeId = employee._id || employee.id;
+                        const currentAttendance = attendance[employeeId] || {};
+                        const status = getAttendanceStatus(employeeId);
+                        const employeeName = employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A';
+                        const employeeType = employee.type || 'teacher';
 
                         return (
                             <div
-                                key={teacherId}
+                                key={employeeId}
                                 className={`group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all duration-300 relative overflow-hidden ${
                                     isToday 
                                         ? 'hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 cursor-pointer active:scale-[0.98]' 
                                         : 'opacity-75 cursor-not-allowed'
                                 }`}
-                                onClick={() => isToday && handleMarkAttendance(teacher)}
+                                onClick={() => isToday && handleMarkAttendance(employee)}
                             >
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="flex items-center gap-4">
                                             <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 p-1 group-hover:border-indigo-200 transition-colors">
-                                                <div className="w-full h-full bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-400">
+                                                <div className={`w-full h-full rounded-xl flex items-center justify-center ${
+                                                    employeeType === 'staff' ? 'bg-purple-50 text-purple-400' : 'bg-indigo-50 text-indigo-400'
+                                                }`}>
                                                     <User size={24} />
                                                 </div>
                                             </div>
                                             <div>
                                                 <h3 className="font-black text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">
-                                                    {teacherName}
+                                                    {employeeName}
                                                 </h3>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 uppercase tracking-wider">{teacher.employeeId || 'N/A'}</span>
+                                                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 uppercase tracking-wider">{employee.employeeId || 'N/A'}</span>
+                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider ${
+                                                        employeeType === 'staff' 
+                                                            ? 'bg-purple-50 text-purple-600 border-purple-100' 
+                                                            : 'bg-blue-50 text-blue-600 border-blue-100'
+                                                    }`}>
+                                                        {employeeType === 'staff' ? 'Staff' : 'Teacher'}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -443,10 +462,10 @@ const TeacherAttendance = () => {
                                             <div className="flex justify-between items-end mb-2">
                                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                                                     <Sparkles size={10} className="text-amber-400" />
-                                                    Department
+                                                    {employeeType === 'staff' ? 'Role' : 'Department'}
                                                 </span>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-700">{teacher.department || 'N/A'}</p>
+                                            <p className="text-sm font-bold text-gray-700">{employee.department || employee.designation || 'N/A'}</p>
                                         </div>
 
                                         {currentAttendance.remarks && (
@@ -494,7 +513,10 @@ const TeacherAttendance = () => {
                         setShowAttendanceModal(false);
                         setSelectedTeacher(null);
                     }}
-                    onSave={handleSaveAttendance}
+                    onSave={(teacherId, status, remarks) => {
+                        const employeeType = selectedTeacher.type || 'teacher';
+                        handleSaveAttendance(teacherId, status, remarks, employeeType);
+                    }}
                     saving={saving}
                     isToday={isToday}
                 />

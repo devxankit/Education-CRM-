@@ -2,8 +2,10 @@ import React from 'react';
 import { Check, Edit2 } from 'lucide-react';
 import { useAdminStore } from '../../../../../../../store/adminStore';
 
-const Step6_Review = ({ data, onEditStep }) => {
+const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, showFee = true }) => {
+    const { personal = 1, academic = 2, logistics = 3, docs = 4, fee = 5 } = stepNumbers;
     const classes = useAdminStore(state => state.classes);
+    const feeStructures = useAdminStore(state => state.feeStructures);
     const sectionsObj = useAdminStore(state => state.sections);
     const transportRoutes = useAdminStore(state => state.transportRoutes);
     const branches = useAdminStore(state => state.branches);
@@ -50,22 +52,30 @@ const Step6_Review = ({ data, onEditStep }) => {
 
             <div className="max-w-3xl mx-auto">
 
-                <Section title="1. Personal Details" step={1}>
+                <Section title="1. Personal Details" step={personal}>
                     <Row label="Full Name" value={`${data.firstName} ${data.middleName || ''} ${data.lastName}`} />
                     <Row label="Date of Birth" value={data.dob} />
+                    <Row label="Age" value={data.dob ? (() => {
+                        const dob = new Date(data.dob);
+                        const today = new Date();
+                        let age = today.getFullYear() - dob.getFullYear();
+                        const m = today.getMonth() - dob.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                        return `${age} years`;
+                    })() : '-'} />
                     <Row label="Gender" value={data.gender} />
                     <Row label="Parent Email" value={data.parentEmail} />
                     <Row label="Address" value={`${data.address}, ${data.city}`} />
                 </Section>
 
-                <Section title="2. Academic Details" step={2}>
+                <Section title="2. Academic Details" step={academic}>
                     <Row label="Campus" value={branchObj?.name} />
                     <Row label="Admission No" value={data.admissionNo} />
                     <Row label="Date" value={data.admissionDate} />
                     <Row label="Class Assigned" value={`${classObj?.name || 'N/A'} - ${sectionObj?.name || 'N/A'}`} />
                 </Section>
 
-                <Section title="3. Facilities" step={3}>
+                <Section title="3. Facilities" step={logistics}>
                     <Row label="Transport" value={data.transportRequired ? 'Yes' : 'No'} />
                     {data.transportRequired && routeObj && (
                         <Row label="Route" value={`${routeObj.name} / ${stopObj?.name || 'N/A'}`} />
@@ -73,16 +83,34 @@ const Step6_Review = ({ data, onEditStep }) => {
                     <Row label="Hostel" value={data.hostelRequired ? 'Yes' : 'No'} />
                 </Section>
 
-                <Section title="4. Documents" step={4}>
-                    <div className="flex gap-2 flex-wrap">
-                        {data.documents && Object.keys(data.documents).map(key => (
-                            <span key={key} className="bg-green-50 text-green-700 border border-green-100 px-2 py-1 rounded text-xs font-bold">
-                                {data.documents[key].name}
-                            </span>
-                        ))}
-                        {(!data.documents || Object.keys(data.documents).length === 0) && <span className="text-gray-400 italic">No documents uploaded</span>}
-                    </div>
-                </Section>
+                {showDocs && docs > 0 && (
+                    <Section title="4. Documents" step={docs}>
+                        <div className="flex gap-2 flex-wrap">
+                            {data.documents && Object.keys(data.documents).map(key => (
+                                <span key={key} className="bg-green-50 text-green-700 border border-green-100 px-2 py-1 rounded text-xs font-bold">
+                                    {data.documents[key].name}
+                                </span>
+                            ))}
+                            {(!data.documents || Object.keys(data.documents).length === 0) && <span className="text-gray-400 italic">No documents uploaded</span>}
+                        </div>
+                    </Section>
+                )}
+
+                {showFee && fee > 0 && (
+                    <Section title={showDocs ? '5. Admission Fee' : '4. Admission Fee'} step={fee}>
+                        {data.admissionFee?.collectNow ? (
+                            <>
+                                <Row label="Fee Structure" value={feeStructures.find(f => f._id === data.admissionFee?.feeStructureId)?.name || '-'} />
+                                <Row label="Amount" value={`₹${Number(data.admissionFee?.amount || 0).toLocaleString('en-IN')}`} />
+                                <Row label="Payment Method" value={data.admissionFee?.paymentMethod || 'Cash'} />
+                                {data.admissionFee?.transactionId && <Row label="Transaction ID" value={data.admissionFee.transactionId} />}
+                                {data.admissionFee?.remarks && <Row label="Remarks" value={data.admissionFee.remarks} />}
+                            </>
+                        ) : (
+                            <span className="text-gray-400 italic">Fee will be collected later</span>
+                        )}
+                    </Section>
+                )}
 
             </div>
 

@@ -16,6 +16,7 @@ const StudentProfile = () => {
     const navigate = useNavigate();
     const fetchStudentById = useAdminStore(state => state.fetchStudentById);
     const updateStudent = useAdminStore(state => state.updateStudent);
+    const confirmAdmission = useAdminStore(state => state.confirmAdmission);
 
     const [activeTab, setActiveTab] = useState('academic');
     const [student, setStudent] = useState(null);
@@ -42,6 +43,14 @@ const StudentProfile = () => {
             loadStudent();
         }
     }, [id, fetchStudentById]);
+
+    const handleConfirmAdmission = async (studentId) => {
+        if (!window.confirm("Confirm admission as per workflow policy? (Docs verified, fee paid, approval role required)")) return;
+        try {
+            const result = await confirmAdmission(studentId);
+            if (result) setStudent(result);
+        } catch (e) { /* toast from store */ }
+    };
 
     const handleUpdateSave = async (studentId, updatedData) => {
         try {
@@ -102,7 +111,7 @@ const StudentProfile = () => {
             </div>
 
             {/* Profile Header */}
-            <ProfileHeader student={student} onEdit={() => setIsEditOpen(true)} />
+            <ProfileHeader student={student} onEdit={() => setIsEditOpen(true)} onConfirmAdmission={handleConfirmAdmission} />
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-6 bg-white rounded-t-xl px-2">
