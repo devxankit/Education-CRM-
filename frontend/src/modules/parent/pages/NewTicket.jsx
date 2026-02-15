@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Send, Paperclip, X } from 'lucide-react';
+import { ChevronLeft, Send, Paperclip, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useParentStore } from '../../../store/parentStore';
+import axios from 'axios';
+import { API_URL } from '../../../app/api';
 
 const NewTicketPage = () => {
     const navigate = useNavigate();
@@ -18,9 +20,53 @@ const NewTicketPage = () => {
         message: '',
         priority: 'Normal'
     });
+    const [attachment, setAttachment] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const fileInputRef = useRef(null);
+
     const categories = ['General', 'Attendance', 'Fees', 'Homework', 'Transport', 'Other'];
+
+    const handleFileSelect = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // basic validation
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File size should be less than 5MB");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setIsUploading(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${API_URL}/upload/single`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (res.data.success) {
+                setAttachment(res.data.url);
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Failed to upload image");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeAttachment = (e) => {
+        e.stopPropagation();
+        setAttachment(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,7 +80,8 @@ const NewTicketPage = () => {
             category: formData.category,
             topic: formData.subject,
             details: formData.message,
-            priority: formData.priority
+            priority: formData.priority,
+            attachment: attachment
         });
 
         setIsSubmitting(false);
@@ -100,15 +147,56 @@ const NewTicketPage = () => {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 border-dashed rounded-xl cursor-not-allowed opacity-60">
-                        <Paperclip size={18} className="text-gray-400" />
-                        <span className="text-sm text-gray-500 font-medium">Attach Image (Optional)</span>
+                    <div
+                        onClick={() => !attachment && !isUploading && fileInputRef.current.click()}
+                        className={`group relative flex items-center gap-3 p-3 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl transition-all
+                            ${attachment ? 'border-green-200 bg-green-50' : 'hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer'}
+                        `}
+                    >
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            className="hidden"
+                            accept="image/*"
+                        />
+
+                        {isUploading ? (
+                            <>
+                                <Loader2 size={20} className="text-indigo-600 animate-spin" />
+                                <span className="text-sm text-gray-500 font-bold">Uploading...</span>
+                            </>
+                        ) : attachment ? (
+                            <div className="flex-1 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-white border border-green-100 p-1">
+                                        <img src={attachment} alt="Attachment" className="w-full h-full object-cover rounded" />
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-bold text-green-700 block">Image Attached</span>
+                                        <span className="text-[10px] text-green-600">Click remove to change</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={removeAttachment}
+                                    className="p-2 hover:bg-red-100 text-red-500 rounded-full transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <Paperclip size={18} className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                                <span className="text-sm text-gray-500 font-medium group-hover:text-indigo-600 transition-colors">Attach Image (Optional)</span>
+                            </>
+                        )}
                     </div>
 
                     <button
                         type="submit"
-                        disabled={isSubmitting}
-                        className="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-indigo-200"
+                        disabled={isSubmitting || isUploading}
+                        className="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? 'Submitting...' : <><Send size={18} /> Submit Ticket</>}
                     </button>

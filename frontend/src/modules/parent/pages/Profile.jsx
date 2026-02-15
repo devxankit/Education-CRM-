@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ChevronLeft, User, Phone, Mail, Edit2, Shield, Settings,
@@ -18,6 +18,10 @@ const ParentProfilePage = () => {
     const fetchProfile = useParentStore(state => state.fetchProfile);
     const updateProfile = useParentStore(state => state.updateProfile);
     const setSelectedChildId = useParentStore(state => state.setSelectedChild);
+
+    useEffect(() => {
+        fetchProfile();
+    }, [fetchProfile]);
 
     const [preferences, setPreferences] = useState({
         attendance: true,

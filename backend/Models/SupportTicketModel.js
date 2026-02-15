@@ -12,10 +12,13 @@ const supportTicketSchema = new mongoose.Schema(
             ref: "Student",
             required: true,
         },
-        category: {
+        raisedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "raisedByType",
+        },
+        raisedByType: {
             type: String,
-            required: true,
-            enum: ["Academic", "Fee Related", "Homework", "General", "Correction"],
+            enum: ["Student", "Parent", "Staff", "Teacher"],
         },
         topic: {
             type: String,
@@ -25,6 +28,14 @@ const supportTicketSchema = new mongoose.Schema(
         details: {
             type: String,
             required: true,
+        },
+        attachment: {
+            type: String,
+        },
+        category: {
+            type: String,
+            required: true,
+            enum: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance", "Fees", "Transport", "Other"],
         },
         status: {
             type: String,

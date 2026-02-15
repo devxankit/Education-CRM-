@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Calendar, Download, FileText, CheckSquare, User, Clock } from 'lucide-react';
 
-const NoticeDetail = ({ notice, onClose }) => {
+const NoticeDetail = ({ notice, onClose, onAcknowledge }) => {
     if (!notice) return null;
 
     return (
@@ -81,7 +81,10 @@ const NoticeDetail = ({ notice, onClose }) => {
                                     This is an important circular. Please acknowledge that you have read and understood the instructions.
                                 </p>
                             </div>
-                            <button className="w-full py-2.5 bg-yellow-600 hover:bg-yellow-700 active:scale-[0.98] text-white text-sm font-bold rounded-lg transition-all shadow-sm">
+                            <button
+                                onClick={() => onAcknowledge && onAcknowledge(notice.id)}
+                                className="w-full py-2.5 bg-yellow-600 hover:bg-yellow-700 active:scale-[0.98] text-white text-sm font-bold rounded-lg transition-all shadow-sm"
+                            >
                                 I Acknowledge
                             </button>
                         </div>

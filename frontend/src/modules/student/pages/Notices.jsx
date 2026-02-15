@@ -19,18 +19,29 @@ const Notices = () => {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState('All');
 
-    const allNotices = useStudentStore(state => state.notices);
-    const [filteredNotices, setFilteredNotices] = useState(allNotices);
+    const { notices: allNotices, fetchNotices, isLoading: loading } = useStudentStore();
     const [selectedNotice, setSelectedNotice] = useState(null);
-    const [loading, setLoading] = useState(false);
     const listRef = useRef(null);
+
+    // Fetch notices on mount
+    useEffect(() => {
+        fetchNotices();
+    }, []);
 
     // Initial Load & URL ID mapping
     useEffect(() => {
         if (id && allNotices.length > 0) {
-            const notice = allNotices.find(n => n.id === parseInt(id));
+            const notice = allNotices.find(n => n._id === id);
             if (notice) {
-                setSelectedNotice(notice);
+                // Map backend keys to what frontend components expect
+                setSelectedNotice({
+                    ...notice,
+                    id: notice._id,
+                    type: notice.category,
+                    date: new Date(notice.publishDate).toLocaleDateString(),
+                    requiresAcknowledgement: notice.ackRequired && !notice.acknowledged,
+                    read: notice.acknowledged
+                });
             }
         } else if (!id) {
             setSelectedNotice(null);
@@ -38,11 +49,20 @@ const Notices = () => {
     }, [id, allNotices]);
 
     const handleNoticeClick = (notice) => {
-        navigate(`${notice.id}`);
+        navigate(`${notice._id}`);
     };
 
     const handleCloseDetail = () => {
-        navigate('..', { relative: 'path' });
+        navigate('/student/notices');
+    };
+
+    const handleAcknowledge = async (id) => {
+        const { acknowledgeNotice } = useStudentStore.getState();
+        const success = await acknowledgeNotice(id);
+        if (success) {
+            // Update local selected notice state to reflect acknowledgment
+            setSelectedNotice(prev => prev ? { ...prev, acknowledged: true, read: true, requiresAcknowledgement: false } : null);
+        }
     };
 
     // Smooth Scroll
@@ -63,26 +83,31 @@ const Notices = () => {
         return () => lenis.destroy();
     }, []);
 
-    // Filter Logic
+    // Derive filtered notices
+    const filteredNotices = allNotices.filter(n => {
+        if (activeTab === 'All') return true;
+        if (activeTab === 'Important') return n.priority === 'IMPORTANT' || n.priority === 'URGENT';
+        if (activeTab === 'Academic') return n.category === 'EXAM';
+        if (activeTab === 'General') return n.category !== 'EXAM' && n.priority !== 'IMPORTANT' && n.priority !== 'URGENT';
+        return true;
+    }).map(n => ({
+        ...n,
+        id: n._id,
+        type: n.category === 'EXAM' ? 'Academic' : (n.category === 'FEES' ? 'Fee' : 'General'),
+        date: new Date(n.publishDate).toLocaleDateString(),
+        read: n.acknowledged,
+        requiresAcknowledgement: n.ackRequired && !n.acknowledged
+    }));
+
+    // Stagger animation on filter change
     useEffect(() => {
-        if (loading) return;
-
-        let filtered = allNotices;
-        if (activeTab !== 'All') {
-            filtered = allNotices.filter(n =>
-                activeTab === 'Important' ? n.priority === 'Important' : n.type === activeTab
-            );
-        }
-        setFilteredNotices(filtered);
-
-        // Stagger animation on filter change
         if (listRef.current) {
             gsap.fromTo(listRef.current.children,
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, clearProps: 'all' }
             );
         }
-    }, [activeTab]);
+    }, [activeTab, allNotices.length]);
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-24">
@@ -121,6 +146,7 @@ const Notices = () => {
                     <NoticeDetail
                         notice={selectedNotice}
                         onClose={handleCloseDetail}
+                        onAcknowledge={handleAcknowledge}
                     />
                 )}
             </AnimatePresence>

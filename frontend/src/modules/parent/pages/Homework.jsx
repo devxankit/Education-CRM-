@@ -11,6 +11,7 @@ const ParentHomeworkPage = () => {
     const logout = useParentStore(state => state.logout);
     const location = useLocation();
     const state = location.state || {};
+    const { childId, filter: initialFilter } = state;
     const homework = useParentStore(state => state.homework);
     const fetchHomework = useParentStore(state => state.fetchHomework);
     const isLoading = useParentStore(state => state.isLoading);

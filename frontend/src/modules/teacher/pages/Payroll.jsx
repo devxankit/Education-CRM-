@@ -1,44 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Download, Receipt, Calendar, DollarSign, FileText, CheckCircle, Loader2 } from 'lucide-react';
-import { API_URL } from '@/app/api';
+import React, { useEffect, useState } from 'react';
+import { Download, Calendar, FileText, CheckCircle, Loader2, Clock, XCircle, CreditCard } from 'lucide-react';
 import { useTeacherStore } from '../../../store/teacherStore';
 
 const TeacherPayroll = () => {
-    const { user } = useTeacherStore();
-    const [payrolls, setPayrolls] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const { user, payrollHistory, fetchPayrollHistory, isFetchingPayroll } = useTeacherStore();
+
+    // Optional: Client-side filtering
+    const [filterYear, setFilterYear] = useState('All');
 
     useEffect(() => {
-        fetchPayrolls();
-    }, [selectedYear, selectedMonth, user]);
+        fetchPayrollHistory();
+    }, [fetchPayrollHistory]);
 
-    const fetchPayrolls = async () => {
-        if (!user?._id) return;
-        
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(
-                `${API_URL}/payroll?employeeType=teacher&employeeId=${user._id}&year=${selectedYear}&month=${selectedMonth}`,
-                {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }
-            );
-            const data = await response.json();
-            if (data.success) {
-                setPayrolls(data.data || []);
-            }
-        } catch (error) {
-            console.error('Error fetching payrolls:', error);
-        } finally {
-            setLoading(false);
-        }
+    const getStatusBadge = (status) => {
+        const badges = {
+            draft: { bg: 'bg-gray-100', text: 'text-gray-700', icon: FileText, label: 'Draft' },
+            approved: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle, label: 'Approved' },
+            paid: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle, label: 'Paid' },
+            cancelled: { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle, label: 'Cancelled' }
+        };
+        const badge = badges[status] || badges.draft;
+        const Icon = badge.icon;
+        return (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+                <Icon size={12} />
+                {badge.label}
+            </span>
+        );
     };
 
     const generateInvoiceHTML = (payroll) => {
-        const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' });
+        const monthName = new Date(payroll.year, payroll.month - 1).toLocaleString('default', { month: 'long' });
         const currentDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
         const paymentDate = payroll.paymentDate ? new Date(payroll.paymentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A';
         const employeeName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
@@ -87,7 +79,7 @@ const TeacherPayroll = () => {
                 <div class="payslip-container">
                     <div class="header">
                         <h1>SALARY PAYSLIP</h1>
-                        <p>For the month of ${monthName} ${selectedYear}</p>
+                        <p>For the month of ${monthName} ${payroll.year}</p>
                         <div class="company-info">
                             <p><strong>Generated On:</strong> ${currentDate}</p>
                         </div>
@@ -184,10 +176,18 @@ const TeacherPayroll = () => {
         const invoiceHTML = generateInvoiceHTML(payroll);
         invoiceWindow.document.write(invoiceHTML);
         invoiceWindow.document.close();
-        invoiceWindow.print();
+        // invoiceWindow.print(); // Optional: Auto print
     };
 
-    if (loading) {
+    // Filter logic
+    const filteredPayrolls = filterYear === 'All'
+        ? payrollHistory
+        : payrollHistory.filter(p => p.year === parseInt(filterYear));
+
+    // Get unique years for filter
+    const uniqueYears = [...new Set(payrollHistory.map(p => p.year))].sort((a, b) => b - a);
+
+    if (isFetchingPayroll && payrollHistory.length === 0) {
         return (
             <div className="h-full flex items-center justify-center">
                 <Loader2 className="animate-spin text-indigo-500" size={32} />
@@ -196,131 +196,140 @@ const TeacherPayroll = () => {
     }
 
     return (
-        <div className="h-full flex flex-col p-6">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">My Payroll</h1>
-                <p className="text-gray-500">View your salary details and download payslips</p>
-            </div>
+        <div className="min-h-screen bg-gray-50/50 pb-20 p-6">
+            <div className="max-w-5xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">My Payroll History</h1>
+                        <p className="text-gray-500">Track all your earnings, deductions, and payslips</p>
+                    </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6">
-                <div className="flex gap-4">
-                    <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                    >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                            <option key={month} value={month}>
-                                {new Date(2000, month - 1).toLocaleString('default', { month: 'long' })}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                    >
-                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
-                            <option key={year} value={year}>{year}</option>
-                        ))}
-                    </select>
+                    {uniqueYears.length > 0 && (
+                        <select
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(e.target.value)}
+                            className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="All">All Years</option>
+                            {uniqueYears.map(year => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    )}
                 </div>
-            </div>
 
-            {/* Payroll List */}
-            {payrolls.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-12 text-center">
-                    <FileText size={48} className="text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 font-medium">No payroll records found</p>
-                    <p className="text-sm text-gray-400 mt-1">Payroll for selected month/year is not available</p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {payrolls.map((payroll) => {
-                        const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' });
-                        return (
-                            <div key={payroll._id || payroll.id} className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                            Salary for {monthName} {selectedYear}
-                                        </h3>
-                                        <div className="flex items-center gap-2">
-                                            {payroll.status === 'paid' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                                    <CheckCircle size={12} />
-                                                    Paid
-                                                </span>
-                                            )}
-                                            {payroll.status === 'approved' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                                    <CheckCircle size={12} />
-                                                    Approved
-                                                </span>
-                                            )}
-                                            {payroll.status === 'draft' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                                    <FileText size={12} />
-                                                    Draft
-                                                </span>
+                {filteredPayrolls.length === 0 ? (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                            <FileText size={40} className="text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">No Payroll Records Found</h3>
+                        <p className="text-gray-500">Your payroll history will appear here once processed.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {filteredPayrolls.map((payroll) => {
+                            const monthName = new Date(payroll.year, payroll.month - 1).toLocaleString('default', { month: 'long' });
+
+                            return (
+                                <div
+                                    key={payroll._id}
+                                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                                >
+                                    {/* Card Header */}
+                                    <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                                <Calendar size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">
+                                                    {monthName} {payroll.year}
+                                                </h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded">
+                                                        {payroll.financialYear}
+                                                    </span>
+                                                    {getStatusBadge(payroll.status)}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            {(payroll.status === 'paid' || payroll.status === 'approved') && (
+                                                <button
+                                                    onClick={() => handleGenerateInvoice(payroll)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                                >
+                                                    <FileText size={16} />
+                                                    View Payslip
+                                                </button>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        {(payroll.status === 'paid' || payroll.status === 'approved') && (
-                                            <button
-                                                onClick={() => handleGenerateInvoice(payroll)}
-                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                                            >
-                                                <Receipt size={16} />
-                                                Generate Invoice
-                                            </button>
-                                        )}
-                                        {payroll.status === 'paid' && (
-                                            <button
-                                                onClick={() => handleGenerateInvoice(payroll)}
-                                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                                            >
-                                                <Download size={16} />
-                                                Download Payslip
-                                            </button>
-                                        )}
+
+                                    {/* Card Body */}
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            {/* Basic Salary */}
+                                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Basic Salary</p>
+                                                <p className="text-xl font-bold text-gray-900">₹{payroll.basicSalary?.toLocaleString()}</p>
+                                            </div>
+
+                                            {/* Total Earnings */}
+                                            <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                                                <p className="text-xs font-semibold text-green-600 uppercase mb-1">Total Earnings</p>
+                                                <p className="text-xl font-bold text-green-700">₹{payroll.totalEarnings?.toLocaleString()}</p>
+                                            </div>
+
+                                            {/* Total Deductions */}
+                                            <div className="bg-red-50 rounded-lg p-4 border border-red-100">
+                                                <p className="text-xs font-semibold text-red-600 uppercase mb-1">Total Deductions</p>
+                                                <p className="text-xl font-bold text-red-700">₹{payroll.totalDeductions?.toLocaleString()}</p>
+                                            </div>
+
+                                            {/* Net Salary */}
+                                            <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200 ring-2 ring-indigo-100">
+                                                <p className="text-xs font-semibold text-indigo-600 uppercase mb-1">Net Salary</p>
+                                                <p className="text-2xl font-bold text-indigo-700">₹{payroll.netSalary?.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer Details */}
+                                        <div className="mt-6 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                            {payroll.paymentDate && (
+                                                <div className="flex items-center gap-2">
+                                                    <Clock size={16} className="text-gray-400" />
+                                                    <span>Paid on: <span className="font-semibold text-gray-900">{new Date(payroll.paymentDate).toLocaleDateString()}</span></span>
+                                                </div>
+                                            )}
+                                            {payroll.paymentMethod && (
+                                                <div className="flex items-center gap-2">
+                                                    <CreditCard size={16} className="text-gray-400" />
+                                                    <span>Via: <span className="font-semibold text-gray-900 uppercase">{payroll.paymentMethod.replace('_', ' ')}</span></span>
+                                                </div>
+                                            )}
+                                            {payroll.transactionId && (
+                                                <div className="flex items-center gap-2">
+                                                    <FileText size={16} className="text-gray-400" />
+                                                    <span>Txn ID: <span className="font-mono text-gray-900">{payroll.transactionId}</span></span>
+                                                </div>
+                                            )}
+                                            {payroll.leaveDays > 0 && (
+                                                <div className="flex items-center gap-2 text-amber-600">
+                                                    <Calendar size={16} />
+                                                    <span>LOP Deduction: {payroll.leaveDays} Days (₹{payroll.lopAmount?.toLocaleString()})</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                        <span className="text-xs text-gray-500 uppercase font-semibold block mb-1">Basic Salary</span>
-                                        <p className="font-bold text-gray-900 text-lg">₹{payroll.basicSalary?.toLocaleString() || '0'}</p>
-                                    </div>
-                                    <div className="bg-green-50 p-3 rounded-lg">
-                                        <span className="text-xs text-green-600 uppercase font-semibold block mb-1">Earnings</span>
-                                        <p className="font-bold text-green-700 text-lg">₹{payroll.totalEarnings?.toLocaleString() || '0'}</p>
-                                    </div>
-                                    <div className="bg-red-50 p-3 rounded-lg">
-                                        <span className="text-xs text-red-600 uppercase font-semibold block mb-1">Deductions</span>
-                                        <p className="font-bold text-red-700 text-lg">₹{payroll.totalDeductions?.toLocaleString() || '0'}</p>
-                                    </div>
-                                    <div className="bg-indigo-50 p-3 rounded-lg border-2 border-indigo-300">
-                                        <span className="text-xs text-indigo-600 uppercase font-semibold block mb-1">Net Salary</span>
-                                        <p className="font-bold text-indigo-900 text-xl">₹{payroll.netSalary?.toLocaleString() || '0'}</p>
-                                    </div>
-                                </div>
-
-                                {payroll.paymentDate && (
-                                    <div className="text-sm text-gray-600 mt-4 pt-4 border-t border-gray-200">
-                                        <p><strong>Payment Date:</strong> {new Date(payroll.paymentDate).toLocaleDateString()}</p>
-                                        {payroll.paymentMethod && (
-                                            <p><strong>Payment Method:</strong> {payroll.paymentMethod.replace('_', ' ').toUpperCase()}</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

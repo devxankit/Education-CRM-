@@ -304,6 +304,23 @@ export const useStudentStore = create(
                 }
             },
 
+            fetchNotifications: async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/student/notifications`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success && Array.isArray(response.data.data)) {
+                        set({ notifications: response.data.data });
+                    } else if (response.data?.data) {
+                        set({ notifications: Array.isArray(response.data.data) ? response.data.data : [] });
+                    }
+                } catch (error) {
+                    console.error('Error fetching notifications:', error);
+                    set({ notifications: [] });
+                }
+            },
+
             fetchLearningMaterials: async (filters = {}) => {
                 set({ isLoading: true });
                 try {
@@ -341,9 +358,18 @@ export const useStudentStore = create(
                 set({ isLoading: true });
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.post(`${API_URL}/student/tickets`, ticketData, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const headers = { 'Authorization': `Bearer ${token}` };
+                    let attachmentUrl = null;
+                    if (ticketData.file && typeof File !== 'undefined' && ticketData.file instanceof File) {
+                        const formData = new FormData();
+                        formData.append('file', ticketData.file);
+                        formData.append('folder', 'support_tickets');
+                        const uploadRes = await axios.post(`${API_URL}/upload/single`, formData, { headers });
+                        if (uploadRes.data?.success && uploadRes.data?.url) attachmentUrl = uploadRes.data.url;
+                        const { file, ...rest } = ticketData;
+                        ticketData = { ...rest, ...(attachmentUrl && { attachment: attachmentUrl }) };
+                    }
+                    const response = await axios.post(`${API_URL}/student/tickets`, ticketData, { headers });
                     if (response.data.success) {
                         await get().fetchTickets(); // Refresh
                         set({ isLoading: false });
@@ -365,10 +391,21 @@ export const useStudentStore = create(
             })),
 
             acknowledgeNotice: async (id) => {
-                // Backend logic for acknowledging notice can be added here
-                set((state) => ({
-                    notices: state.notices.map(n => n._id === id ? { ...n, acknowledged: true } : n)
-                }));
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/student/notices/${id}/acknowledge`, {}, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            notices: state.notices.map(n => n._id === id ? { ...n, acknowledged: true } : n)
+                        }));
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error acknowledging notice:', error);
+                    return false;
+                }
             },
 
             submitCorrection: async (correction) => {

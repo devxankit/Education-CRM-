@@ -11,6 +11,9 @@ import ExamResult from "../Models/ExamResultModel.js";
 import Exam from "../Models/ExamModel.js";
 import Teacher from "../Models/TeacherModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
+import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
+import NoticeAcknowledgment from "../Models/NoticeAcknowledgmentModel.js";
+import TeacherMapping from "../Models/TeacherMappingModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
 
@@ -202,6 +205,11 @@ export const getLinkedStudents = async (req, res) => {
     try {
         const { parentId } = req.params;
 
+        // Security check: Parents can only view their own linked students
+        if (req.user.role === 'Parent' && req.user._id.toString() !== parentId) {
+            return res.status(403).json({ success: false, message: "Unauthorized access" });
+        }
+
         const students = await Student.find({ parentId })
             .populate("classId", "name")
             .populate("sectionId", "name")
@@ -313,17 +321,22 @@ export const getParentDashboard = async (req, res) => {
                 );
                 if (studentAttendance) {
                     totalDays++;
-                    if (studentAttendance.status === "Present") presentDays++;
+                    if (studentAttendance.status === "Present" || studentAttendance.status === "Late") presentDays++;
                 }
             });
             const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
 
-            // Get pending homework count
+            // Get pending homework count (exclude submitted)
+            const submittedHwIds = await HomeworkSubmission.find({
+                studentId: student._id
+            }).distinct("homeworkId");
+
             const pendingHomework = await Homework.countDocuments({
                 classId: student.classId,
                 sectionId: student.sectionId,
                 dueDate: { $gte: new Date() },
-                status: "published"
+                status: "published",
+                _id: { $nin: submittedHwIds }
             });
 
             // Get latest exam result
@@ -332,16 +345,42 @@ export const getParentDashboard = async (req, res) => {
                 .populate("examId", "title");
 
             // Get fee summary (with tax)
-            const feeStructure = await FeeStructure.findOne({
+            const feeStructures = await FeeStructure.find({
                 applicableClasses: student.classId,
                 status: "active"
             });
-            const feePayments = await FeePayment.find({ studentId: student._id, status: "Success" });
-            const totalPaid = feePayments.reduce((sum, p) => sum + p.amountPaid, 0);
-            const baseAmount = feeStructure?.totalAmount || 0;
-            const branchId = feeStructure?.branchId || student.branchId;
-            const { totalTax } = branchId ? await calculateTax(baseAmount, branchId, "fees", student.instituteId) : { totalTax: 0 };
-            const totalAmount = baseAmount + totalTax;
+
+            let totalPaid = 0;
+            let totalAmount = 0;
+            let pendingFees = 0;
+            let dueDate = null;
+
+            if (feeStructures.length > 0) {
+                // Get all relevant payments
+                const feePayments = await FeePayment.find({
+                    studentId: student._id,
+                    feeStructureId: { $in: feeStructures.map(fs => fs._id) },
+                    status: "Success"
+                });
+
+                // Fetch taxes for consistency
+                const taxes = student.branchId ? await Tax.find({ branchId: student.branchId, isActive: true }).lean() : [];
+
+                // Calculate totals across all structures
+                for (const fs of feeStructures) {
+                    const baseAmount = fs.totalAmount || 0;
+                    const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fees");
+
+                    totalAmount += (baseAmount + totalTax);
+
+                    if (!dueDate || (fs.installments?.[0]?.dueDate && new Date(fs.installments[0].dueDate) < new Date(dueDate))) {
+                        dueDate = fs.installments?.[0]?.dueDate;
+                    }
+                }
+
+                totalPaid = feePayments.reduce((sum, p) => sum + p.amountPaid, 0);
+                pendingFees = totalAmount - totalPaid;
+            }
 
             // Generate alerts
             const alerts = [];
@@ -365,20 +404,20 @@ export const getParentDashboard = async (req, res) => {
                     cta: "View"
                 });
             }
-            if (totalAmount > totalPaid) {
+            if (pendingFees > 0) {
                 alerts.push({
                     id: `alert-fee-${student._id}`,
                     type: "fee",
                     icon: "CreditCard",
                     title: "Fee Due",
-                    message: `₹${totalAmount - totalPaid} pending`,
+                    message: `₹${pendingFees} pending`,
                     cta: "Pay Now"
                 });
             }
 
             // Determine status
             let status = "On Track";
-            if (attendancePercentage < 75 || (totalAmount - totalPaid) > totalAmount * 0.5) {
+            if (attendancePercentage < 75 || pendingFees > 0) {
                 status = "Action Required";
             } else if (pendingHomework > 2 || attendancePercentage < 85) {
                 status = "Attention Needed";
@@ -405,8 +444,8 @@ export const getParentDashboard = async (req, res) => {
                 fees: {
                     total: totalAmount,
                     paid: totalPaid,
-                    pending: totalAmount - totalPaid,
-                    dueDate: feeStructure?.installments?.[0]?.dueDate || null
+                    pending: pendingFees,
+                    dueDate: dueDate || null
                 }
             };
         }));
@@ -515,11 +554,13 @@ export const getChildAttendance = async (req, res) => {
         res.status(200).json({
             success: true,
             data: {
-                overall: overallPercentage,
-                required: 75,
-                totalDays,
-                presentDays,
-                absentDays,
+                summary: {
+                    overall: overallPercentage,
+                    required: 75,
+                    totalDays: totalDays,
+                    presentDays: presentDays,
+                    absentDays: absentDays,
+                },
                 monthly: monthly.slice(0, 6),
                 history: history.slice(0, 30)
             }
@@ -548,17 +589,24 @@ export const getChildHomework = async (req, res) => {
             status: "published"
         })
             .populate("subjectId", "name")
-            .populate("teacherId", "name")
+            .populate("teacherId", "firstName lastName")
             .sort({ dueDate: -1 });
 
         const today = new Date();
-        const homeworkList = homeworks.map(hw => {
+
+        // Use Promise.all to fetch submission status for each homework
+        const homeworkList = await Promise.all(homeworks.map(async (hw) => {
+            const submission = await HomeworkSubmission.findOne({
+                homeworkId: hw._id,
+                studentId: student._id
+            });
+
             let status = "Pending";
-            if (new Date(hw.dueDate) < today) {
+            if (submission) {
+                status = "Submitted";
+            } else if (new Date(hw.dueDate) < today) {
                 status = "Late";
             }
-            // Note: Actual submission status would require a HomeworkSubmission model
-            // For now, we're showing based on due date
 
             return {
                 id: hw._id,
@@ -566,11 +614,11 @@ export const getChildHomework = async (req, res) => {
                 title: hw.title,
                 dueDate: hw.dueDate,
                 status,
-                teacher: hw.teacherId?.name || "N/A",
+                teacher: hw.teacherId ? `${hw.teacherId.firstName} ${hw.teacherId.lastName}` : "N/A",
                 description: hw.instructions,
                 attachments: hw.attachments || []
             };
-        });
+        }));
 
         res.status(200).json({
             success: true,
@@ -599,31 +647,35 @@ export const getChildFees = async (req, res) => {
             status: "active"
         });
 
-        // Get all payments
+        // Get all payments for this student
         const payments = await FeePayment.find({
             studentId,
             status: "Success"
         }).sort({ paymentDate: -1 });
-
-        const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
 
         // Fetch taxes for student's branch
         const branchId = student.branchId?.toString();
         const taxes = branchId ? await Tax.find({ branchId, isActive: true }).lean() : [];
 
         // Build breakdown by fee structure (with tax)
-        let totalAmount = 0;
+        let grandTotal = 0;
+        let grandPaid = 0;
         const breakdown = feeStructures.map(fs => {
             const baseAmount = fs.totalAmount || 0;
             const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fees");
             const fsTotal = baseAmount + totalTax;
-            totalAmount += fsTotal;
 
             const structurePayments = payments.filter(
                 p => p.feeStructureId?.toString() === fs._id.toString()
             );
             const paidAmount = structurePayments.reduce((sum, p) => sum + p.amountPaid, 0);
+
+            // Accumulate grand totals from active structures
+            grandTotal += fsTotal;
+            grandPaid += paidAmount;
             const pending = fsTotal - paidAmount;
+
+            let remainingPaid = paidAmount;
 
             return {
                 id: fs._id,
@@ -634,13 +686,29 @@ export const getChildFees = async (req, res) => {
                 paid: paidAmount,
                 pending,
                 status: pending <= 0 ? "Paid" : (paidAmount > 0 ? "Partial" : "Due"),
-                installments: fs.installments?.map(inst => ({
-                    term: inst.name,
-                    amount: inst.amount,
-                    due: inst.dueDate,
-                    status: paidAmount >= inst.amount ? "Paid" : (new Date(inst.dueDate) < new Date() ? "Overdue" : "Due"),
-                    mode: null
-                })) || []
+                installments: fs.installments?.map(inst => {
+                    const proportionalTax = baseAmount > 0 ? Math.round((inst.amount / baseAmount) * totalTax) : 0;
+                    const amountWithTax = inst.amount + proportionalTax;
+
+                    let status = "Due";
+                    if (remainingPaid >= amountWithTax) {
+                        status = "Paid";
+                        remainingPaid -= amountWithTax;
+                    } else if (remainingPaid > 0) {
+                        status = "Partial";
+                        remainingPaid = 0;
+                    } else if (new Date(inst.dueDate) < new Date()) {
+                        status = "Overdue";
+                    }
+
+                    return {
+                        term: inst.name,
+                        amount: amountWithTax,
+                        due: inst.dueDate,
+                        status: status,
+                        mode: null
+                    };
+                }) || []
             };
         });
 
@@ -668,9 +736,9 @@ export const getChildFees = async (req, res) => {
             success: true,
             data: {
                 summary: {
-                    total: totalAmount,
-                    paid: totalPaid,
-                    pending: totalAmount - totalPaid,
+                    total: grandTotal,
+                    paid: grandPaid,
+                    pending: grandTotal - grandPaid,
                     nextDue
                 },
                 breakdown,
@@ -697,11 +765,20 @@ export const getParentNotices = async (req, res) => {
             instituteId: parent.instituteId,
             $or: [
                 { audiences: "All Parents" },
-                { audiences: "All Students" },
+                { audiences: "All Students" }, // Often relevant to parents too
                 { audiences: { $exists: false } }
             ],
             status: "PUBLISHED"
         }).sort({ createdAt: -1 });
+
+        // Get acknowledgments for this parent
+        const acks = await NoticeAcknowledgment.find({
+            userId: parentId,
+            noticeId: { $in: notices.map(n => n._id) }
+        });
+
+        const ackMap = new Map();
+        acks.forEach(ack => ackMap.set(ack.noticeId.toString(), ack.acknowledgedAt));
 
         res.status(200).json({
             success: true,
@@ -713,7 +790,11 @@ export const getParentNotices = async (req, res) => {
                 content: n.content,
                 priority: n.priority,
                 attachments: n.attachments || [],
-                requiresAck: n.ackRequired
+                requiresAck: n.ackRequired,
+                ackStatus: ackMap.get(n._id.toString()) ? new Date(ackMap.get(n._id.toString())).toLocaleDateString() : null,
+                isImportant: ["IMPORTANT", "URGENT"].includes(n.priority),
+                isRead: !!ackMap.get(n._id.toString()), // Simple read status based on ack for now
+                acknowledged: !!ackMap.get(n._id.toString())
             }))
         });
     } catch (error) {
@@ -789,34 +870,32 @@ export const getChildTeachers = async (req, res) => {
             return res.status(403).json({ success: false, message: "Unauthorized access to student data" });
         }
 
-        // Get teachers teaching this class through homework/attendance records
-        const homeworks = await Homework.find({
-            classId: student.classId,
-            sectionId: student.sectionId
-        }).populate("teacherId", "name email phone qualifications experience")
+        // Get teachers for this section via TeacherMapping
+        const mappings = await TeacherMapping.find({
+            sectionId: student.sectionId?._id || student.sectionId,
+            status: "active"
+        })
+            .populate("teacherId", "name email phone qualifications experience")
             .populate("subjectId", "name");
 
-        // Get unique teachers
-        const teacherMap = new Map();
-        homeworks.forEach(hw => {
-            if (hw.teacherId && !teacherMap.has(hw.teacherId._id.toString())) {
-                teacherMap.set(hw.teacherId._id.toString(), {
-                    id: hw.teacherId._id,
-                    name: hw.teacherId.name,
-                    subject: hw.subjectId?.name || "N/A",
-                    qualification: hw.teacherId.qualifications || "N/A",
-                    experience: hw.teacherId.experience || "N/A",
-                    email: hw.teacherId.email,
-                    phone: hw.teacherId.phone,
-                    isClassTeacher: false,
-                    forClass: `${student.classId?.name}-${student.sectionId?.name}`
-                });
-            }
+        const teachers = mappings.map(mapping => {
+            const teacher = mapping.teacherId;
+            return {
+                id: teacher._id,
+                name: teacher.name,
+                subject: mapping.subjectId?.name || "Multiple Subjects",
+                qualification: teacher.qualifications || "N/A",
+                experience: teacher.experience || "N/A",
+                email: teacher.email,
+                phone: teacher.phone,
+                isClassTeacher: false, // Could be derived if Class model stores class teacher logic
+                forClass: `${student.classId?.name || ''}-${student.sectionId?.name || ''}`
+            };
         });
 
         res.status(200).json({
             success: true,
-            data: Array.from(teacherMap.values())
+            data: teachers
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -886,8 +965,24 @@ export const acknowledgeNotice = async (req, res) => {
             return res.status(404).json({ success: false, message: "Notice not found" });
         }
 
-        // Add parent to recipients who acknowledged (we'll use a separate model or handle it differently if needed)
-        // For now, let's just return success as "Acknowledged"
+        // Check if already acknowledged
+        const existingAck = await NoticeAcknowledgment.findOne({
+            noticeId,
+            userId: parentId
+        });
+
+        if (existingAck) {
+            return res.status(200).json({ success: true, message: "Already acknowledged" });
+        }
+
+        const newAck = new NoticeAcknowledgment({
+            noticeId,
+            userId: parentId,
+            userType: "Parent",
+            acknowledgedAt: new Date()
+        });
+
+        await newAck.save();
 
         res.status(200).json({
             success: true,
@@ -913,13 +1008,29 @@ export const getChildDocuments = async (req, res) => {
         const docs = [];
         if (student.documents) {
             Object.entries(student.documents).forEach(([key, value]) => {
-                if (value && value.url) {
+                // Determine status for frontend
+                let status = "Not Generated";
+                if (value.url) {
+                    status = "Available";
+                } else if (value.status === "in_review") {
+                    status = "Pending Upload";
+                }
+
+                // Infer type from URL or default
+                let type = "Document";
+                if (key.toLowerCase().includes("cert")) type = "Certificate";
+                else if (key.toLowerCase().includes("mark") || key.toLowerCase().includes("card")) type = "Academic";
+                else if (key.toLowerCase().includes("medical")) type = "Medical";
+
+                // Only include if url exists or status is meaningful (not just empty placeholder)
+                if (value.url || value.status) {
                     docs.push({
                         id: key,
-                        title: key.charAt(0).toUpperCase() + key.slice(1),
+                        name: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim(), // Camel to Title Case
                         url: value.url,
-                        type: "PDF",
-                        date: student.updatedAt
+                        type: type,
+                        date: value.date || student.updatedAt,
+                        status: status
                     });
                 }
             });
@@ -1007,7 +1118,11 @@ export const getChildTickets = async (req, res) => {
             return res.status(403).json({ success: false, message: "Unauthorized access" });
         }
 
-        const tickets = await SupportTicket.find({ studentId })
+        const tickets = await SupportTicket.find({
+            studentId,
+            raisedBy: parentId,
+            raisedByType: "Parent"
+        })
             .sort({ createdAt: -1 });
 
         res.status(200).json({ success: true, data: tickets });
@@ -1021,7 +1136,7 @@ export const createChildTicket = async (req, res) => {
     try {
         const parentId = req.user._id;
         const { studentId } = req.params;
-        const { category, topic, details, priority } = req.body;
+        const { category, topic, details, priority, attachment } = req.body;
 
         const student = await Student.findOne({ _id: studentId, parentId });
         if (!student) {
@@ -1031,10 +1146,13 @@ export const createChildTicket = async (req, res) => {
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
+            raisedBy: parentId,
+            raisedByType: "Parent",
             category,
             topic,
             details,
-            priority: priority || "Normal"
+            priority: priority || "Normal",
+            attachment
         });
 
         await ticket.save();

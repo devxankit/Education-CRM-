@@ -100,10 +100,10 @@ const ParentAttendancePage = () => {
             <main className="max-w-md mx-auto p-4 space-y-6">
 
                 {/* 2. Overview Card */}
-                <AttendanceOverview data={attendance} />
+                <AttendanceOverview data={attendance.summary} />
 
                 {/* 6. Low Attendance Warning */}
-                {(attendance.overall < attendance.required || highlightLowAttendance) && (
+                {(attendance.summary.overall < attendance.summary.required || highlightLowAttendance) && (
                     <div ref={scrollRef} className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                         <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
                         <div>
@@ -140,7 +140,7 @@ const ParentAttendancePage = () => {
                             <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">{data.month} 2023</h3>
+                                        <h3 className="text-lg font-bold text-gray-900">{data.month}</h3>
                                         <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase mt-1 ${data.isLow ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
                                             {data.isLow ? 'Low Attendance' : 'Good'}
                                         </span>

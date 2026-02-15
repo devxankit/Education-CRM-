@@ -13,7 +13,9 @@ const iconMap = {
 const routeMap = {
     'attendance': '/teacher/attendance',
     'homework': '/teacher/homework',
-    'query': '/teacher/support'
+    'query': '/teacher/support',
+    'classes': '/teacher/classes',
+    'students': '/teacher/classes'
 };
 
 const PendingTasksCard = ({ actions }) => {

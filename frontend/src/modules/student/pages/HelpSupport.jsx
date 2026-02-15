@@ -30,16 +30,19 @@ const HelpSupportPage = () => {
         fetchTickets().finally(() => setLoading(false));
     }, [fetchTickets]);
 
-    // Transform tickets for UI if needed
+    // Transform tickets for UI (backend uses topic, UI uses subject; backend status can be "In-Progress")
     const allTickets = tickets.map(t => ({
         id: t._id,
         category: t.category,
         topic: t.topic,
-        status: t.status,
+        subject: t.topic,
+        status: (t.status === 'In-Progress' ? 'In Progress' : t.status) || 'Open',
         priority: t.priority,
         date: t.createdAt,
+        lastUpdate: t.respondedAt || t.updatedAt || t.createdAt,
         details: t.details,
-        response: t.response
+        response: t.response,
+        updates: t.response ? [t.response] : []
     }));
 
     const supportData = {
@@ -57,7 +60,7 @@ const HelpSupportPage = () => {
                 ]
             }
         ],
-        categories: ["Academic", "Fee Related", "Homework", "General", "Correction"]
+        categories: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance Issue", "Homework Submission Issue", "Fees / Payment Issue", "Profile Correction"]
     };
 
     // Initial Load & Smooth Scroll
@@ -85,17 +88,32 @@ const HelpSupportPage = () => {
         setShowRaiseModal(true);
     };
 
+    // Map UI categories to backend enum (Academic, Fee Related, Homework, General, Correction, Attendance, Fees, Transport, Other)
+    const mapCategoryToBackend = (cat) => {
+        const map = {
+            'Attendance Issue': 'Attendance',
+            'Homework Submission Issue': 'Homework',
+            'Fees / Payment Issue': 'Fee Related',
+            'Profile Correction': 'Correction'
+        };
+        return map[cat] || (supportData.categories.includes(cat) ? cat : 'General');
+    };
+
     const handleTicketSubmit = async (ticketDetails) => {
-        // Map form fields to backend model fields
         const formattedTicket = {
-            category: ticketDetails.category,
+            category: mapCategoryToBackend(ticketDetails.category),
             topic: ticketDetails.subject,
             details: ticketDetails.description,
-            priority: 'Normal'
+            priority: 'Normal',
+            ...(ticketDetails.file && { file: ticketDetails.file })
         };
-        addTicket(formattedTicket);
-        setShowRaiseModal(false);
-        setViewMode('tickets');
+        const success = await addTicket(formattedTicket);
+        if (success) {
+            setShowRaiseModal(false);
+            setViewMode('tickets');
+        } else {
+            throw new Error('Failed to create ticket. Please try again.');
+        }
     };
 
     return (

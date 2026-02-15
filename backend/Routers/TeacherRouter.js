@@ -22,8 +22,13 @@ import {
     submitMarks,
     getHomeworkSubmissions,
     gradeSubmission,
-    getTeacherAnalytics
+    getTeacherAnalytics,
+    getTeacherPayrollHistory
 } from "../Controllers/TeacherCtrl.js";
+import {
+    getTeacherSupportTickets,
+    resolveSupportTicket
+} from "../Controllers/TeacherSupportCtrl.js";
 import {
     addEligibleSubject,
     removeEligibleSubject,
@@ -42,6 +47,7 @@ router.use(AuthMiddleware);
 // Teacher/Staff specific routes
 router.get("/profile", isTeacher, getTeacherProfile);
 router.get("/dashboard", isTeacher, getTeacherDashboard);
+router.get("/payroll", isTeacher, getTeacherPayrollHistory);
 router.get("/classes", isTeacher, getTeacherClasses);
 router.get("/students", isTeacher, getClassStudents);
 router.post("/homework", isTeacher, createHomework);
@@ -60,6 +66,10 @@ router.get("/exams", isTeacher, getTeacherExams);
 router.get("/exams/students", isTeacher, getExamStudents);
 router.get("/exams/:id", isTeacher, getExamById);
 router.post("/exams/submit-marks", isTeacher, submitMarks);
+
+// Support Tickets
+router.get("/support/tickets", isTeacher, getTeacherSupportTickets);
+router.put("/support/tickets/:ticketId/resolve", isTeacher, resolveSupportTicket);
 
 // Analytics
 router.get("/analytics", isTeacher, getTeacherAnalytics);

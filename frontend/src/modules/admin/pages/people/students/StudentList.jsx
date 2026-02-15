@@ -18,7 +18,7 @@ const StudentList = () => {
     }, [fetchStudents]);
 
     return (
-        <div className="h-full flex flex-col pb-10">
+        <div className="flex flex-col pb-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>

@@ -311,12 +311,51 @@ export const useTeacherStore = create(
             },
 
             // Support Queries
-            queries: queriesData,
-            resolveQuery: (queryId) => set((state) => ({
-                queries: state.queries.map(q =>
-                    q.id === queryId ? { ...q, status: 'Resolved' } : q
-                )
-            })),
+            queries: [],
+            isFetchingQueries: false,
+            isResolvingQuery: false,
+            fetchQueries: async () => {
+                if (get().isFetchingQueries) return;
+                set({ isFetchingQueries: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/support/tickets`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ queries: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching support queries:', error);
+                } finally {
+                    set({ isFetchingQueries: false });
+                }
+            },
+            resolveQuery: async (queryId, responseText = '') => {
+                set({ isResolvingQuery: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(
+                        `${API_URL}/teacher/support/tickets/${queryId}/resolve`,
+                        { response: responseText },
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
+                    if (response.data.success) {
+                        set((state) => ({
+                            queries: state.queries.map(q =>
+                                q._id === queryId ? { ...q, status: 'Resolved', response: responseText } : q
+                            )
+                        }));
+                        return { success: true };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    console.error('Error resolving query:', error);
+                    return { success: false, message: error.response?.data?.message };
+                } finally {
+                    set({ isResolvingQuery: false });
+                }
+            },
 
             // Marks/Exams
             exams: [],
@@ -433,6 +472,28 @@ export const useTeacherStore = create(
                 } catch (error) {
                     console.error('Error grading submission:', error);
                     return { success: false };
+                }
+            },
+
+
+            // Payroll
+            payrollHistory: [],
+            isFetchingPayroll: false,
+            fetchPayrollHistory: async () => {
+                if (get().isFetchingPayroll) return;
+                set({ isFetchingPayroll: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/payroll`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ payrollHistory: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching payroll history:', error);
+                } finally {
+                    set({ isFetchingPayroll: false });
                 }
             },
 

@@ -113,11 +113,13 @@ export const useParentStore = create(
                         const { summary, history = [], monthly = [] } = response.data.data;
                         set({
                             attendance: {
-                                overall: summary?.percentage || 0,
-                                required: summary?.required || 75,
-                                total: summary?.total || 0,
-                                present: summary?.present || 0,
-                                absent: summary?.absent || 0,
+                                summary: {
+                                    overall: summary?.overall || 0,
+                                    required: summary?.required || 75,
+                                    totalDays: summary?.totalDays || 0,
+                                    presentDays: summary?.presentDays || 0,
+                                    absentDays: summary?.absentDays || 0,
+                                },
                                 history: history.map(h => ({
                                     date: new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
                                     status: h.status,
@@ -179,7 +181,15 @@ export const useParentStore = create(
                                     head: item.head || item.name || 'N/A',
                                     total: item.total || item.amount || 0,
                                     status: item.status || 'Due',
-                                    installments: item.installments || [{ term: 'Full Payment', due: item.dueDate, amount: item.total || item.amount, status: item.status }]
+                                    installments: (item.installments && item.installments.length > 0 ? item.installments : [{
+                                        term: 'Full Payment',
+                                        due: item.dueDate,
+                                        amount: item.total || item.amount,
+                                        status: item.status
+                                    }]).map(inst => ({
+                                        ...inst,
+                                        due: inst.due ? new Date(inst.due).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'
+                                    }))
                                 })),
                                 receipts: receipts.map(tx => ({
                                     id: tx.id || tx.receiptNo,

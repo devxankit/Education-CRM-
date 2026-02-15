@@ -10,6 +10,7 @@ import TodayClassesCard from '../components/dashboard/TodayClassesCard';
 import PendingTasksCard from '../components/dashboard/PendingTasksCard';
 import QuickActionsRow from '../components/dashboard/QuickActionsRow';
 import PerformanceSnapshot from '../components/dashboard/PerformanceSnapshot';
+import PayrollHistoryCard from '../components/dashboard/PayrollHistoryCard';
 
 const TeacherDashboard = () => {
     const containerRef = useRef(null);
@@ -109,6 +110,9 @@ const TeacherDashboard = () => {
 
                 {/* 3. Summary Stats (Dynamic from API) */}
                 <PendingTasksCard actions={pendingActions} />
+
+                {/* Payroll History */}
+                <PayrollHistoryCard />
 
                 {/* 4. Today's Classes/Subjects (Core) */}
                 <TodayClassesCard classes={todayClasses} />

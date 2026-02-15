@@ -14,6 +14,8 @@ import Attendance from "../Models/AttendanceModel.js";
 import Exam from "../Models/ExamModel.js";
 import ExamResult from "../Models/ExamResultModel.js";
 import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
+import Payroll from "../Models/PayrollModel.js";
+import SupportTicket from "../Models/SupportTicketModel.js";
 
 // ================= TEACHER DASHBOARD =================
 export const getTeacherDashboard = async (req, res) => {
@@ -51,7 +53,7 @@ export const getTeacherDashboard = async (req, res) => {
         // 5. Get Today's Schedule from Timetable
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const today = days[new Date().getDay()];
-        
+
         const todayTimetables = await Timetable.find({
             [`schedule.${today}.teacherId`]: teacherId
         })
@@ -1099,6 +1101,27 @@ export const getTeacherAnalytics = async (req, res) => {
         });
     } catch (error) {
         console.error("Analytics Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER PAYROLL HISTORY =================
+export const getTeacherPayrollHistory = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+
+        const payrolls = await Payroll.find({
+            employeeId: teacherId,
+            employeeType: "teacher",
+            status: { $ne: "cancelled" }
+        })
+            .sort({ year: -1, month: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: payrolls
+        });
+    } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };

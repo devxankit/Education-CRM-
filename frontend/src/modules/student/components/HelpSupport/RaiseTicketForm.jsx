@@ -1,21 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Send, Paperclip } from 'lucide-react';
+import { X, Send, Paperclip, FileText } from 'lucide-react';
+
+const ACCEPT = 'image/*,.pdf,.doc,.docx,.png,.jpg,.jpeg';
 
 const RaiseTicketForm = ({ categories, defaultCategory, onClose, onSubmit }) => {
     const [subject, setSubject] = useState('');
     const [category, setCategory] = useState(defaultCategory || categories[0]);
     const [description, setDescription] = useState('');
+    const [attachment, setAttachment] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = useRef(null);
 
-    const handleSubmit = (e) => {
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) setAttachment(file);
+        e.target.value = '';
+    };
+
+    const handleRemoveFile = (e) => {
+        e.stopPropagation();
+        setAttachment(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API
-        setTimeout(() => {
+        try {
+            const result = onSubmit({ subject, category, description, file: attachment });
+            if (result && typeof result.then === 'function') {
+                await result;
+            }
+        } catch (err) {
+            console.error('Ticket submit error:', err);
+            alert(err?.message || 'Could not create ticket. Please try again.');
+        } finally {
             setIsSubmitting(false);
-            onSubmit({ subject, category, description });
-        }, 1500);
+        }
     };
 
     return (
@@ -79,9 +101,39 @@ const RaiseTicketForm = ({ categories, defaultCategory, onClose, onSubmit }) => 
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 p-3 border border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                        <Paperclip size={18} className="text-gray-400" />
-                        <span className="text-xs text-gray-500 font-medium">Attach screenshot or document (Optional)</span>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept={ACCEPT}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        aria-label="Attach file"
+                    />
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+                        className="flex items-center gap-2 p-3 border border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                        <Paperclip size={18} className="text-gray-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                            {attachment ? (
+                                <span className="text-xs font-medium text-indigo-600 truncate flex items-center gap-1">
+                                    <FileText size={14} />
+                                    {attachment.name}
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveFile}
+                                        className="ml-1 text-red-500 hover:text-red-600 text-[10px] font-bold"
+                                    >
+                                        Remove
+                                    </button>
+                                </span>
+                            ) : (
+                                <span className="text-xs text-gray-500 font-medium">Attach screenshot or document (Optional)</span>
+                            )}
+                        </div>
                     </div>
 
                     <div className="pt-4">
