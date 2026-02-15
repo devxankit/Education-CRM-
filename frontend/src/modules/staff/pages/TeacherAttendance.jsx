@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, User, Search, Filter, Save, ClipboardCheck, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, X } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, User, Search, Filter, Save, ClipboardCheck, Sparkles, ArrowRight, CheckCircle2, ShieldCheck, X, Building2 } from 'lucide-react';
 import { API_URL } from '@/app/api';
 import { useStaffAuth } from '../context/StaffAuthContext';
 
@@ -22,23 +22,78 @@ const TeacherAttendance = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+    const [dayInfo, setDayInfo] = useState(null);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('');
 
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
     const isToday = selectedDate === today;
     const isPastDate = selectedDate < today;
     const isFutureDate = selectedDate > today;
+    const isHoliday = dayInfo?.isHoliday === true;
+    const holidayName = dayInfo?.holidayName || null;
+    const isWorkingDay = dayInfo?.isWorkingDay !== false;
 
     useEffect(() => {
+        fetchBranches();
+    }, []);
+
+    useEffect(() => {
+        fetchDayInfo();
         fetchTeachers();
         fetchAttendance();
-    }, [selectedDate]);
+    }, [selectedDate, selectedBranchId]);
+
+    const fetchBranches = async () => {
+        try {
+            const token = localStorage.getItem('staff_token') || localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff/branches`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success && data.data) {
+                const list = data.data.branches || [];
+                setBranches(list);
+                if (!selectedBranchId && data.data.defaultBranchId) {
+                    setSelectedBranchId(data.data.defaultBranchId);
+                } else if (!selectedBranchId && list.length > 0) {
+                    setSelectedBranchId(list[0]._id);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching branches:', error);
+        }
+    };
+
+    const fetchDayInfo = async () => {
+        try {
+            const token = localStorage.getItem('staff_token') || localStorage.getItem('token');
+            const url = new URL(`${API_URL}/teacher-attendance/day-info`);
+            url.searchParams.set('date', selectedDate);
+            if (selectedBranchId) url.searchParams.set('branchId', selectedBranchId);
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success && data.data) {
+                setDayInfo(data.data);
+            } else {
+                setDayInfo(null);
+            }
+        } catch (error) {
+            console.error('Error fetching day info:', error);
+            setDayInfo(null);
+        }
+    };
 
     const fetchTeachers = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/teacher-attendance/teachers`, {
+            const token = localStorage.getItem('staff_token') || localStorage.getItem('token');
+            const url = new URL(`${API_URL}/teacher-attendance/teachers`);
+            if (selectedBranchId) url.searchParams.set('branchId', selectedBranchId);
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -54,8 +109,11 @@ const TeacherAttendance = () => {
 
     const fetchAttendance = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/teacher-attendance/by-date?date=${selectedDate}`, {
+            const token = localStorage.getItem('staff_token') || localStorage.getItem('token');
+            const url = new URL(`${API_URL}/teacher-attendance/by-date`);
+            url.searchParams.set('date', selectedDate);
+            if (selectedBranchId) url.searchParams.set('branchId', selectedBranchId);
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -108,6 +166,7 @@ const TeacherAttendance = () => {
     };
 
     const handleMarkAllPresent = async () => {
+        if (isHoliday) return;
         if (!isToday) {
             alert('You can only mark all as present for today\'s date.');
             return;
@@ -152,7 +211,10 @@ const TeacherAttendance = () => {
     };
 
     const handleSaveAttendance = async (teacherId, status, remarks, employeeType) => {
-        // Only allow saving for today
+        if (isHoliday) {
+            alert('Cannot mark attendance on a holiday.');
+            return;
+        }
         if (!isToday) {
             alert('You can only mark attendance for today\'s date.');
             return;
@@ -201,7 +263,7 @@ const TeacherAttendance = () => {
     };
 
     const handleBulkSave = async () => {
-        // Only allow saving for today
+        if (isHoliday) return;
         if (!isToday) {
             alert('You can only save attendance for today\'s date.');
             return;
@@ -343,6 +405,20 @@ const TeacherAttendance = () => {
                         />
                     </div>
                     <div className="flex gap-3 flex-wrap">
+                        {branches.length > 0 && (
+                            <div className="flex items-center gap-2 px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl min-w-[140px]">
+                                <Building2 className="text-gray-500 shrink-0" size={18} />
+                                <select
+                                    value={selectedBranchId}
+                                    onChange={(e) => setSelectedBranchId(e.target.value)}
+                                    className="bg-transparent border-none outline-none text-sm font-bold text-gray-700 w-full cursor-pointer"
+                                >
+                                    {branches.map((b) => (
+                                        <option key={b._id} value={b._id}>{b.name || b.code || b._id}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="flex items-center gap-2 px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl">
                             <Calendar className="text-gray-500" size={18} />
                             <input
@@ -353,7 +429,7 @@ const TeacherAttendance = () => {
                                 className="bg-transparent border-none outline-none text-sm font-bold text-gray-700"
                             />
                         </div>
-                        {isToday && (
+                        {isToday && !isHoliday && (
                             <button
                                 onClick={handleMarkAllPresent}
                                 disabled={saving}
@@ -365,7 +441,7 @@ const TeacherAttendance = () => {
                         )}
                         <button
                             onClick={handleBulkSave}
-                            disabled={saving || markedCount === 0 || !isToday}
+                            disabled={saving || markedCount === 0 || !isToday || isHoliday}
                             className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-black text-sm shadow-sm active:scale-95"
                         >
                             <Save size={18} />
@@ -389,9 +465,32 @@ const TeacherAttendance = () => {
                         </p>
                     </div>
                 )}
+
+                {/* Holiday: show only holiday message; no attendance marking */}
+                {dayInfo && isHoliday && (
+                    <div className="mt-6 px-6 py-8 rounded-2xl border-2 bg-blue-50 border-blue-200 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
+                            <Calendar size={40} />
+                        </div>
+                        <h3 className="text-xl font-black text-blue-900">Holiday</h3>
+                        <p className="text-blue-700 font-semibold mt-1">{holidayName}</p>
+                        <p className="text-sm text-blue-600 mt-2">No attendance to mark on this day.</p>
+                    </div>
+                )}
+
+                {/* Non-working day note (timetable rules); not shown when holiday */}
+                {dayInfo && !isHoliday && !isWorkingDay && (
+                    <div className="mt-6 px-4 py-3 rounded-2xl border-2 bg-gray-50 border-gray-200 flex items-center gap-3">
+                        <AlertCircle className="text-gray-500" size={20} />
+                        <p className="text-sm font-bold text-gray-700">
+                            Non-working day ({dayInfo.dayName}) as per Timetable Rules. You can still mark attendance if needed.
+                        </p>
+                    </div>
+                )}
             </div>
 
-            {/* Premium Cards Grid */}
+            {/* Premium Cards Grid - hidden on holiday; timetable rules apply for working days */}
+            {!isHoliday && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
                     <div className="col-span-full py-24 text-center bg-white rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center">
@@ -503,6 +602,7 @@ const TeacherAttendance = () => {
                     })
                 )}
             </div>
+            )}
 
             {/* Attendance Modal */}
             {showAttendanceModal && selectedTeacher && (

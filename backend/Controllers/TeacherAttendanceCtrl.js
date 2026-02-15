@@ -2,7 +2,83 @@ import TeacherAttendance from "../Models/TeacherAttendanceModel.js";
 import StaffAttendance from "../Models/StaffAttendanceModel.js";
 import Teacher from "../Models/TeacherModel.js";
 import Staff from "../Models/StaffModel.js";
+import Holiday from "../Models/HolidayModel.js";
+import TimetableRule from "../Models/TimetableRuleModel.js";
 import mongoose from "mongoose";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// Resolve which branchId to use: optional query.branchId if staff has access, else req.user.branchId
+function resolveBranchId(req) {
+    const userBranchId = req.user.branchId;
+    const queryBranchId = req.query.branchId;
+    if (!queryBranchId) return userBranchId;
+    const canAccessAny = !userBranchId || userBranchId === "all" || String(userBranchId) === "all";
+    const sameBranch = userBranchId && String(userBranchId) === String(queryBranchId);
+    if (canAccessAny || sameBranch) return queryBranchId;
+    return userBranchId;
+}
+
+// Check if date is a holiday for teachers/staff; returns { isHoliday, holidayName }.
+async function getHolidayForDate(instituteId, branchId, dateObj) {
+    const startOfDay = new Date(dateObj);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dateObj);
+    endOfDay.setHours(23, 59, 59, 999);
+    const holiday = await Holiday.findOne({
+        instituteId,
+        $or: [{ branchId: "all" }, { branchId: String(branchId || "") }],
+        startDate: { $lte: endOfDay },
+        endDate: { $gte: startOfDay },
+        applicableTo: { $in: ["teachers", "staff"] }
+    });
+    if (!holiday) return { isHoliday: false, holidayName: null };
+    return { isHoliday: true, holidayName: holiday.name || "Holiday" };
+}
+
+// ================= GET DAY INFO (holiday + working day from timetable rules) =================
+export const getDayInfo = async (req, res) => {
+    try {
+        const { date } = req.query;
+        const instituteId = req.user.instituteId || req.user._id;
+        const branchId = resolveBranchId(req);
+
+        if (!date) {
+            return res.status(400).json({ success: false, message: "Date is required" });
+        }
+
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        const dayName = DAY_NAMES[d.getDay()];
+
+        const { isHoliday, holidayName } = await getHolidayForDate(instituteId, branchId, d);
+
+        let isWorkingDay = true;
+        if (branchId) {
+            const rules = await TimetableRule.findOne({ instituteId, branchId });
+            if (rules && rules.workingDays && Array.isArray(rules.workingDays) && rules.workingDays.length > 0) {
+                isWorkingDay = rules.workingDays.includes(dayName);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                date: date,
+                dayName,
+                isHoliday,
+                holidayName: holidayName || null,
+                isWorkingDay
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching day info:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch day info"
+        });
+    }
+};
 
 // ================= MARK TEACHER ATTENDANCE =================
 export const markTeacherAttendance = async (req, res) => {
@@ -16,6 +92,16 @@ export const markTeacherAttendance = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Employee ID, date, and status are required"
+            });
+        }
+
+        const attendanceDate = new Date(date);
+        attendanceDate.setHours(0, 0, 0, 0);
+        const { isHoliday, holidayName } = await getHolidayForDate(instituteId, branchId, attendanceDate);
+        if (isHoliday) {
+            return res.status(400).json({
+                success: false,
+                message: `This day is a holiday (${holidayName}). Attendance cannot be marked.`
             });
         }
 
@@ -43,10 +129,6 @@ export const markTeacherAttendance = async (req, res) => {
                 message: isStaff ? "Staff member not found" : "Teacher not found"
             });
         }
-
-        // Parse date to start of day
-        const attendanceDate = new Date(date);
-        attendanceDate.setHours(0, 0, 0, 0);
 
         let attendance;
         
@@ -131,7 +213,7 @@ export const getTeacherAttendanceByDate = async (req, res) => {
     try {
         const { date } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
-        const branchId = req.user.branchId;
+        const branchId = resolveBranchId(req);
 
         if (!date) {
             return res.status(400).json({
@@ -236,26 +318,28 @@ export const getTeacherAttendanceHistory = async (req, res) => {
     }
 };
 
-// ================= GET ALL TEACHERS AND STAFF FOR ATTENDANCE =================
+// ================= GET ALL TEACHERS AND STAFF FOR ATTENDANCE (BRANCH-WISE) =================
 export const getTeachersForAttendance = async (req, res) => {
     try {
         const instituteId = req.user.instituteId || req.user._id;
-        const branchId = req.user.branchId;
+        const branchId = resolveBranchId(req);
 
-        // Fetch active teachers
-        const teachers = await Teacher.find({
-            instituteId,
-            branchId,
-            status: 'active'
-        }).select('firstName lastName employeeId department designation phone email')
+        // Fetch active teachers for this branch only
+        const teacherQuery = { instituteId, status: 'active' };
+        if (branchId) teacherQuery.branchId = branchId;
+
+        const teachers = await Teacher.find(teacherQuery)
+          .select('firstName lastName employeeId department designation phone email branchId')
           .sort({ firstName: 1 });
 
-        // Fetch active staff members
-        const staffMembers = await Staff.find({
-            instituteId,
-            status: 'active'
-        }).populate('roleId', 'name')
-          .select('name email phone roleId')
+        // Fetch active staff for this branch: same branchId or institute-level (branchId null)
+        const staffQuery = { instituteId, status: 'active' };
+        if (branchId) {
+            staffQuery.$or = [{ branchId }, { branchId: null }];
+        }
+        const staffMembers = await Staff.find(staffQuery)
+          .populate('roleId', 'name')
+          .select('name email phone roleId branchId')
           .sort({ name: 1 });
 
         // Transform teachers to include type

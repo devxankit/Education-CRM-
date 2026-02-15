@@ -3,7 +3,8 @@ import {
     markTeacherAttendance,
     getTeacherAttendanceByDate,
     getTeacherAttendanceHistory,
-    getTeachersForAttendance
+    getTeachersForAttendance,
+    getDayInfo
 } from "../Controllers/TeacherAttendanceCtrl.js";
 import { AuthMiddleware } from "../Middlewares/AuthMiddleware.js";
 
@@ -11,6 +12,9 @@ const router = express.Router();
 
 // All routes require authentication (staff can access)
 router.use(AuthMiddleware);
+
+// Day info (holiday + working day from timetable rules) for attendance screen
+router.get("/day-info", getDayInfo);
 
 // Get teachers list for attendance marking
 router.get("/teachers", getTeachersForAttendance);

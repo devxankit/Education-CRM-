@@ -582,6 +582,24 @@ export const getStaffPayrollResources = async (req, res) => {
     }
 };
 
+// ================= GET STAFF BRANCHES (for dropdowns e.g. attendance) =================
+export const getStaffBranches = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const staffBranchId = req.user.branchId;
+        const branches = await Branch.find({ instituteId }).select('name code').sort({ name: 1 }).lean();
+        const defaultBranchId = staffBranchId && String(staffBranchId) !== "all"
+            ? branches.find(b => b._id.toString() === String(staffBranchId))?._id
+            : branches[0]?._id;
+        res.status(200).json({
+            success: true,
+            data: { branches, defaultBranchId }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= GET STAFF EXPENSE RESOURCES =================
 export const getStaffExpenseResources = async (req, res) => {
     try {
