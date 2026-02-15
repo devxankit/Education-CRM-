@@ -26,6 +26,8 @@ export const useAdminStore = create(
             departments: [],
             branches: [],
             academicYears: [],
+            dashboardStats: null,
+            dashboardLoading: false,
             teacherMappings: [],
             timetable: null,
             timetableRules: null,
@@ -97,6 +99,29 @@ export const useAdminStore = create(
                     }
                 } catch (error) {
                     console.error('Error deleting department:', error);
+                    throw error;
+                }
+            },
+
+            // Actions: Dashboard
+            fetchDashboardStats: async (branchId) => {
+                set({ dashboardLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const url = branchId && branchId !== 'all'
+                        ? `${API_URL}/dashboard?branchId=${branchId}`
+                        : `${API_URL}/dashboard`;
+                    const response = await axios.get(url, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ dashboardStats: response.data.data, dashboardLoading: false });
+                        return response.data.data;
+                    }
+                    set({ dashboardLoading: false });
+                } catch (error) {
+                    console.error('Error fetching dashboard stats:', error);
+                    set({ dashboardLoading: false });
                     throw error;
                 }
             },
@@ -1374,6 +1399,252 @@ export const useAdminStore = create(
                     console.error('Error toggling document lock:', error);
                     get().addToast(error.response?.data?.message || 'Error toggling document lock', 'error');
                 }
+            },
+
+            // Actions: Compliance Rules (Document Rules Compliance page)
+            fetchComplianceRules: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const url = branchId ? `${API_URL}/compliance-rule?branchId=${branchId}` : `${API_URL}/compliance-rule`;
+                    const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching compliance rules:', error);
+                }
+                return [];
+            },
+            createComplianceRule: async (payload) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/compliance-rule`, payload, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Compliance rule created', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error creating rule', 'error');
+                    throw error;
+                }
+            },
+            updateComplianceRule: async (id, payload) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/compliance-rule/${id}`, payload, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Compliance rule updated', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error updating rule', 'error');
+                    throw error;
+                }
+            },
+            deleteComplianceRule: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/compliance-rule/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Compliance rule deleted', 'success');
+                        return true;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error deleting rule', 'error');
+                    throw error;
+                }
+            },
+            toggleComplianceRuleStatus: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/compliance-rule/${id}/toggle`, {}, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error toggling rule', 'error');
+                    throw error;
+                }
+            },
+
+            // Actions: Verification Policies
+            fetchVerificationPolicies: async (branchId, entity) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    let url = `${API_URL}/verification-policy?branchId=${branchId}`;
+                    if (entity) url += `&entity=${entity}`;
+                    const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching verification policies:', error);
+                }
+                return [];
+            },
+            saveVerificationPolicies: async (branchId, entity, policies) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/verification-policy/save`, { branchId, entity, policies }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Verification policies saved', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error saving policies', 'error');
+                    throw error;
+                }
+            },
+
+            // Actions: Certificate Templates
+            fetchCertificateTemplates: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const url = branchId ? `${API_URL}/certificate-template?branchId=${branchId}` : `${API_URL}/certificate-template`;
+                    const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching certificate templates:', error);
+                }
+                return [];
+            },
+            createCertificateTemplate: async (payload) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/certificate-template`, payload, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Template created', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error creating template', 'error');
+                    throw error;
+                }
+            },
+            updateCertificateTemplate: async (id, payload) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/certificate-template/${id}`, payload, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Template updated', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error updating template', 'error');
+                    throw error;
+                }
+            },
+            deleteCertificateTemplate: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/certificate-template/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Template deleted', 'success');
+                        return true;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error deleting template', 'error');
+                    throw error;
+                }
+            },
+            updateCertificateTemplateStatus: async (id, status) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/certificate-template/${id}/status`, { status }, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error updating status', 'error');
+                    throw error;
+                }
+            },
+
+            // Actions: Checklists
+            fetchChecklists: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const url = branchId ? `${API_URL}/checklist?branchId=${branchId}` : `${API_URL}/checklist`;
+                    const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching checklists:', error);
+                }
+                return [];
+            },
+            saveChecklist: async (payload) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/checklist/save`, payload, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Checklist saved', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error saving checklist', 'error');
+                    throw error;
+                }
+            },
+            deleteChecklist: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/checklist/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) {
+                        get().addToast('Checklist deleted', 'success');
+                        return true;
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error deleting checklist', 'error');
+                    throw error;
+                }
+            },
+            toggleChecklistStatus: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/checklist/${id}/toggle`, {}, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error toggling checklist', 'error');
+                    throw error;
+                }
+            },
+
+            // Actions: Reports & Analytics
+            fetchAcademicReport: async (params) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const qs = new URLSearchParams(params || {}).toString();
+                    const response = await axios.get(`${API_URL}/reports/academic?${qs}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching academic report:', error);
+                }
+                return { reportData: [], chartData: [], pieData: [] };
+            },
+            fetchFinanceReport: async (params) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const qs = new URLSearchParams(params || {}).toString();
+                    const response = await axios.get(`${API_URL}/reports/finance?${qs}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching finance report:', error);
+                }
+                return {};
+            },
+            fetchHRReport: async (params) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const qs = new URLSearchParams(params || {}).toString();
+                    const response = await axios.get(`${API_URL}/reports/hr?${qs}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching HR report:', error);
+                }
+                return {};
+            },
+            fetchOperationsReport: async (params) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const qs = new URLSearchParams(params || {}).toString();
+                    const response = await axios.get(`${API_URL}/reports/operations?${qs}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.data.success) return response.data.data;
+                } catch (error) {
+                    console.error('Error fetching operations report:', error);
+                }
+                return {};
             },
 
             // Actions: Support Rules

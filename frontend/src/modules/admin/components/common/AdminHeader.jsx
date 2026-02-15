@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Bell, Search, User, ChevronDown, LogOut, Settings, UserCircle } from 'lucide-react';
+import { Menu, Bell, Search, User, ChevronDown, LogOut, Settings, UserCircle, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useAppStore } from '../../../../store/index';
 import { useNavigate } from 'react-router-dom';
 
-const AdminHeader = ({ onMenuToggle }) => {
+const AdminHeader = ({ onMenuToggle, onSidebarCollapseToggle, sidebarCollapsed }) => {
     const user = useAppStore(state => state.user);
     const logout = useAppStore(state => state.logout);
     const navigate = useNavigate();
@@ -32,7 +32,7 @@ const AdminHeader = ({ onMenuToggle }) => {
         <header className="bg-white border-b border-gray-200 shadow-sm relative z-50">
             <div className="flex items-center justify-between px-4 md:px-6 py-4">
                 {/* Left Section */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                     {/* Mobile Menu Toggle */}
                     <button
                         onClick={onMenuToggle}
@@ -41,8 +41,19 @@ const AdminHeader = ({ onMenuToggle }) => {
                         <Menu size={24} className="text-gray-700" />
                     </button>
 
+                    {/* Desktop: Sidebar Collapse Toggle */}
+                    {onSidebarCollapseToggle && (
+                        <button
+                            onClick={onSidebarCollapseToggle}
+                            className="hidden md:flex p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        >
+                            {sidebarCollapsed ? <PanelLeft size={22} /> : <PanelLeftClose size={22} />}
+                        </button>
+                    )}
+
                     {/* Search Bar - Hidden on Mobile */}
-                    <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2 w-96">
+                    <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2 w-96 max-w-[24rem]">
                         <Search size={20} className="text-gray-400" />
                         <input
                             type="text"

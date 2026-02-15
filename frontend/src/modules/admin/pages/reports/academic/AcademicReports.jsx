@@ -2,46 +2,47 @@
 import React, { useState, useEffect } from 'react';
 import ReportSidebar from './components/ReportSidebar';
 import ReportFilterPanel from './components/ReportFilterPanel';
-import ReportChart from './components/ReportChart';
 import ReportTable from './components/ReportTable';
 import { FileText } from 'lucide-react';
+import { useAdminStore } from '@/store/adminStore';
+import ReportChart from '@/modules/admin/components/reports/ReportChart';
 
 const AcademicReports = () => {
+    const { branches, fetchBranches, fetchAcademicReport } = useAdminStore();
 
-    // UI State
     const [activeCategory, setActiveCategory] = useState('ATTENDANCE');
     const [activeReport, setActiveReport] = useState('att_summary');
     const [filters, setFilters] = useState({ academicYear: '2025-2026', classSection: 'ALL' });
     const [loading, setLoading] = useState(false);
-
-    // Mock Data State
     const [reportData, setReportData] = useState([]);
+    const [chartData, setChartData] = useState([]);
+    const [pieData, setPieData] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('');
+
+    useEffect(() => { fetchBranches(); }, [fetchBranches]);
+    useEffect(() => {
+        if (branches.length && !selectedBranchId) setSelectedBranchId(branches[0]._id);
+    }, [branches, selectedBranchId]);
 
     useEffect(() => {
-        setLoading(true);
-        // Simulate API Fetch
-        setTimeout(() => {
-            // Mocking different data based on active report
-            if (activeCategory === 'ATTENDANCE') {
-                setReportData([
-                    { class: 'Class 10-A', present: '92%', absent: '8%', late: '5 students' },
-                    { class: 'Class 10-B', present: '88%', absent: '12%', late: '2 students' },
-                    { class: 'Class 11-A', present: '95%', absent: '5%', late: '0 students' },
-                    { class: 'Class 12-A', present: '85%', absent: '15%', late: '8 students' }
-                ]);
-            } else if (activeCategory === 'EXAMS') {
-                setReportData([
-                    { subject: 'Mathematics', avg: '78%', highest: '99%', fail: '2' },
-                    { subject: 'Physics', avg: '65%', highest: '94%', fail: '5' },
-                    { subject: 'English', avg: '82%', highest: '96%', fail: '0' },
-                    { subject: 'Computer Sci', avg: '88%', highest: '100%', fail: '1' }
-                ]);
-            } else {
-                setReportData([]);
+        const report = activeCategory === 'ATTENDANCE' ? 'attendance' : activeCategory === 'EXAMS' ? 'exams' : 'attendance';
+        const load = async () => {
+            setLoading(true);
+            try {
+                const params = { report };
+                if (selectedBranchId) params.branchId = selectedBranchId;
+                if (filters.academicYearId) params.academicYearId = filters.academicYearId;
+                if (filters.classSection && filters.classSection !== 'ALL') params.classSection = filters.classSection;
+                const data = await fetchAcademicReport(params);
+                setReportData(data.reportData || []);
+                setChartData(data.chartData || []);
+                setPieData(data.pieData || []);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
-        }, 600);
-    }, [activeReport, filters]);
+        };
+        load();
+    }, [activeCategory, activeReport, filters, selectedBranchId, fetchAcademicReport]);
 
     // Helpers
     const getColumns = () => {
@@ -95,14 +96,30 @@ const AcademicReports = () => {
             <div className="flex-1 min-w-0">
 
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins'] flex items-center gap-2">
-                        <FileText className="text-indigo-600" />
-                        {getReportTitle()}
-                    </h1>
-                    <p className="text-gray-500 text-sm mt-1">
-                        Analytics dashboard generated for <span className="font-mono bg-gray-100 px-1 rounded text-gray-700">AY {filters.academicYear}</span>
-                    </p>
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 font-['Poppins'] flex items-center gap-2">
+                            <FileText className="text-indigo-600" />
+                            {getReportTitle()}
+                        </h1>
+                        <p className="text-gray-500 text-sm mt-1">
+                            Analytics dashboard for <span className="font-mono bg-gray-100 px-1 rounded text-gray-700">AY {filters.academicYear}</span>
+                            {branches.length > 1 && (
+                                <>
+                                    {' • '}
+                                    <select
+                                        value={selectedBranchId}
+                                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                                        className="text-gray-700 font-medium bg-transparent border-0 cursor-pointer"
+                                    >
+                                        {branches.map((b) => (
+                                            <option key={b._id} value={b._id}>{b.name || b.branchName || 'Branch'}</option>
+                                        ))}
+                                    </select>
+                                </>
+                            )}
+                        </p>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -120,16 +137,26 @@ const AcademicReports = () => {
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {/* Charts Area */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <ReportChart
-                                type="BAR"
-                                title={activeCategory === 'ATTENDANCE' ? "Section Comparison" : "Subject Average Scores"}
-                            />
-                            <ReportChart
-                                type="PIE"
-                                title={activeCategory === 'ATTENDANCE' ? "Overall Distribution" : "Pass / Fail Ratio"}
-                            />
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h4 className="font-bold text-gray-700 mb-4">{activeCategory === 'ATTENDANCE' ? 'Section Comparison' : 'Subject Average Scores'}</h4>
+                                <ReportChart
+                                    type="bar"
+                                    data={chartData}
+                                    dataKey={activeCategory === 'ATTENDANCE' ? ['present', 'absent'] : 'avg'}
+                                    categoryKey="name"
+                                    colors={['#6366f1', '#f59e0b']}
+                                />
+                            </div>
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <h4 className="font-bold text-gray-700 mb-4">{activeCategory === 'ATTENDANCE' ? 'Overall Distribution' : 'Pass / Fail Ratio'}</h4>
+                                <ReportChart
+                                    type="pie"
+                                    data={pieData}
+                                    dataKey="value"
+                                    categoryKey="name"
+                                />
+                            </div>
                         </div>
 
                         {/* Table Area */}

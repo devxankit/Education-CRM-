@@ -1,83 +1,73 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Lock, Play, RotateCcw, ShieldCheck, History, AlertCircle } from 'lucide-react';
+import { Save, Lock, Play, ShieldCheck, History, AlertCircle, Loader2, Building2 } from 'lucide-react';
+import { useAdminStore } from '@/store/adminStore';
 import EntitySelector from './components/EntitySelector';
 import DocumentRulesTable from './components/DocumentRulesTable';
 import GovernancePolicyPanel from './components/GovernancePolicyPanel';
 import RuleImpactPreview from './components/RuleImpactPreview';
 
+const STAGE_DISPLAY = { admission: 'Admission', 'post-admission': 'Post-Admission', joining: 'Joining', exam: 'Exam', interview: 'Interview' };
+const STAGE_BACKEND = { 'Admission': 'admission', 'Post-Admission': 'post-admission', 'Joining': 'joining', 'Exam': 'exam', 'Interview': 'interview', 'Employment Active': 'joining' };
+const ENFORCEMENT_DISPLAY = { hard_block: 'block', soft_warning: 'warning', info_only: 'info' };
+const ENFORCEMENT_BACKEND = { block: 'hard_block', warning: 'soft_warning', info: 'info_only' };
+
 const RequiredDocumentsRules = () => {
-    // UI State
+    const { branches, fetchBranches, fetchDocumentRule, saveDocumentRule } = useAdminStore();
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('rules'); // rules, history
     const [showImpactModal, setShowImpactModal] = useState(false);
-
-    // Filter State
-    const [selectedEntity, setSelectedEntity] = useState('student'); // student, employee, parent
+    const [selectedEntity, setSelectedEntity] = useState('student');
     const [selectedSubType, setSelectedSubType] = useState('School (K-12)');
+    const [selectedBranchId, setSelectedBranchId] = useState('');
 
-    // Rule State (Mock)
     const [rules, setRules] = useState([]);
-    const [ruleStatus, setRuleStatus] = useState('DRAFT'); // DRAFT, ACTIVE, LOCKED
+    const [ruleStatus, setRuleStatus] = useState('DRAFT');
     const [version, setVersion] = useState('1.0');
-
-    // Stats for Impact Preview
-    const [impactStats, setImpactStats] = useState({
-        affectedUsers: 0,
-        blockedAdmissions: 0,
-        pendingVerifications: 0
-    });
-
-    // Governance Policy State
+    const [ruleId, setRuleId] = useState(null);
+    const [impactStats, setImpactStats] = useState({ affectedUsers: 0, blockedAdmissions: 0, pendingVerifications: 0 });
     const [governancePolicies, setGovernancePolicies] = useState({
-        provisionalAllowed: true,
+        provisionalAllowed: false,
         provisionalDays: 45,
         overrideRoles: ['Super Admin']
     });
 
-    // Mock Data Loader
+    useEffect(() => { fetchBranches(); }, [fetchBranches]);
     useEffect(() => {
-        // Simulate API fetch based on entity
-        setLoading(true);
-        setTimeout(() => {
-            const mockRules = getMockRules(selectedEntity);
-            setRules(mockRules);
-            setRuleStatus('DRAFT'); // Reset to draft on switch for demo
-            setVersion((Math.random() * 2 + 1).toFixed(1));
-            setLoading(false);
-        }, 600);
-    }, [selectedEntity, selectedSubType]);
+        if (branches.length && !selectedBranchId) setSelectedBranchId(branches[0]._id);
+    }, [branches, selectedBranchId]);
 
-    // Data Helpers
-    const getMockRules = (entity) => {
-        const common = [
-            { id: 1, name: 'Aadhar Card / ID Proof', category: 'Identity', isRequired: true, stage: 'Admission', condition: 'All', gracePeriodDays: 7, enforcement: 'block' },
-            { id: 2, name: 'Residence Proof', category: 'Address', isRequired: true, stage: 'Admission', condition: 'All', gracePeriodDays: 15, enforcement: 'warning' },
-        ];
-
-        if (entity === 'student') return [
-            ...common,
-            { id: 3, name: 'Transfer Certificate (TC)', category: 'Academic', isRequired: true, stage: 'Admission', condition: 'New Admission', gracePeriodDays: 30, enforcement: 'block' },
-            { id: 4, name: 'Previous Marksheets', category: 'Academic', isRequired: true, stage: 'Admission', condition: 'All', gracePeriodDays: 0, enforcement: 'block' },
-            { id: 5, name: 'Transport Application', category: 'Optional', isRequired: false, stage: 'Post-Admission', condition: 'Transport Users', gracePeriodDays: 5, enforcement: 'info' },
-            { id: 6, name: 'Medical Fitness Certificate', category: 'Health', isRequired: false, stage: 'Joining', condition: 'Sports Quote', gracePeriodDays: 10, enforcement: 'warning' },
-        ];
-
-        if (entity === 'employee') return [
-            ...common,
-            { id: 10, name: 'Police Verification', category: 'Legal', isRequired: true, stage: 'Joining', condition: 'All Staff', gracePeriodDays: 45, enforcement: 'block' },
-            { id: 11, name: 'Experience Certificate', category: 'Professional', isRequired: true, stage: 'Interview', condition: 'Experienced', gracePeriodDays: 0, enforcement: 'warning' },
-            { id: 12, name: 'Bank Passbook Copy', category: 'Financial', isRequired: true, stage: 'Joining', condition: 'Payroll', gracePeriodDays: 7, enforcement: 'block' },
-        ];
-
-        if (entity === 'parent') return [
-            { id: 20, name: 'Father ID Proof', category: 'Identity', isRequired: true, stage: 'Admission', condition: 'All', gracePeriodDays: 10, enforcement: 'block' },
-            { id: 21, name: 'Mother ID Proof', category: 'Identity', isRequired: true, stage: 'Admission', condition: 'All', gracePeriodDays: 10, enforcement: 'block' },
-            { id: 22, name: 'Income Certificate', category: 'Financial', isRequired: false, stage: 'Admission', condition: 'Scholarship Applicants', gracePeriodDays: 30, enforcement: 'warning' },
-        ];
-
-        return [];
-    };
+    useEffect(() => {
+        if (!selectedBranchId) return;
+        const load = async () => {
+            setLoading(true);
+            try {
+                const data = await fetchDocumentRule(selectedBranchId);
+                if (data) {
+                    setRuleId(data._id);
+                    setRuleStatus(data.isLocked ? 'LOCKED' : 'DRAFT');
+                    const list = selectedEntity === 'employee' ? (data.staffRules || []) : (data.studentRules || []);
+                    setRules(list.map((r, i) => ({
+                        id: r._id || `r-${i}`,
+                        name: r.name,
+                        category: r.category || 'General',
+                        isRequired: !!r.mandatory,
+                        stage: STAGE_DISPLAY[r.stage] || r.stage || 'Admission',
+                        condition: r.type || 'All',
+                        gracePeriodDays: r.gracePeriodDays ?? 0,
+                        enforcement: ENFORCEMENT_DISPLAY[r.enforcement] || 'block'
+                    })));
+                    setGovernancePolicies({
+                        provisionalAllowed: !!data.provisionalAdmission?.allowed,
+                        provisionalDays: data.provisionalAdmission?.maxValidityDays ?? 45,
+                        overrideRoles: Array.isArray(data.overrideRoles) ? data.overrideRoles : ['Super Admin']
+                    });
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [selectedBranchId, selectedEntity, fetchDocumentRule]);
 
     // Handlers
     const handleToggleRequired = (id) => {
@@ -95,16 +85,41 @@ const RequiredDocumentsRules = () => {
         setGovernancePolicies(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSaveDraft = () => {
+    const buildBackendRules = () => rules.map(r => ({
+        name: r.name,
+        category: r.category,
+        mandatory: r.isRequired,
+        stage: STAGE_BACKEND[r.stage] || 'admission',
+        gracePeriodDays: Number(r.gracePeriodDays) || 0,
+        enforcement: ENFORCEMENT_BACKEND[r.enforcement] || 'hard_block',
+        ...(selectedEntity === 'employee' ? { type: r.condition === 'All' ? 'all' : 'teaching' } : { verifier: 'admin' })
+    }));
+
+    const handleSaveDraft = async () => {
+        if (!selectedBranchId) return;
         setLoading(true);
-        setTimeout(() => {
+        try {
+            const data = await fetchDocumentRule(selectedBranchId);
+            const payload = {
+                branchId: selectedBranchId,
+                categories: data?.categories,
+                workflow: data?.workflow,
+                provisionalAdmission: {
+                    allowed: governancePolicies.provisionalAllowed,
+                    maxValidityDays: governancePolicies.provisionalDays
+                },
+                overrideRoles: governancePolicies.overrideRoles,
+                studentRules: selectedEntity === 'student' ? buildBackendRules() : (data?.studentRules || []),
+                staffRules: selectedEntity === 'employee' ? buildBackendRules() : (data?.staffRules || [])
+            };
+            await saveDocumentRule(payload);
+            setRuleStatus('ACTIVE');
+        } finally {
             setLoading(false);
-            alert("Draft Saved Successfully!");
-        }, 500);
+        }
     };
 
     const handlePreActivate = () => {
-        // Calculate mock impact
         setImpactStats({
             affectedUsers: Math.floor(Math.random() * 500) + 50,
             blockedAdmissions: Math.floor(Math.random() * 20),
@@ -115,12 +130,7 @@ const RequiredDocumentsRules = () => {
 
     const handleConfirmActivation = () => {
         setShowImpactModal(false);
-        setLoading(true);
-        setTimeout(() => {
-            setRuleStatus('ACTIVE');
-            setLoading(false);
-            // alert("Rules Activated Successfully!");
-        }, 1000);
+        handleSaveDraft();
     };
 
     const handleLock = () => {
@@ -139,7 +149,22 @@ const RequiredDocumentsRules = () => {
                     <p className="text-gray-500 text-sm">Define and enforce mandatory documentation policies across the institution.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    {branches.length > 0 && (
+                        <div className="flex items-center gap-2">
+                            <Building2 size={18} className="text-gray-500" />
+                            <select
+                                value={selectedBranchId}
+                                onChange={(e) => setSelectedBranchId(e.target.value)}
+                                className="text-sm font-semibold border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    {loading && <Loader2 size={18} className="animate-spin text-indigo-600" />}
                     <div className={`px-3 py-1 rounded-full text-xs font-bold border ${ruleStatus === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' :
                         ruleStatus === 'LOCKED' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                             'bg-yellow-100 text-yellow-700 border-yellow-200'
@@ -178,11 +203,17 @@ const RequiredDocumentsRules = () => {
                     </div>
 
                     {/* Table */}
-                    <DocumentRulesTable
-                        rules={rules}
-                        onToggleRequired={handleToggleRequired}
-                        onUpdateRule={handleUpdateRule}
-                    />
+                    {loading && !rules.length ? (
+                        <div className="flex items-center justify-center py-12 text-gray-500">
+                            <Loader2 className="animate-spin mr-2" size={24} /> Loading rules...
+                        </div>
+                    ) : (
+                        <DocumentRulesTable
+                            rules={rules}
+                            onToggleRequired={handleToggleRequired}
+                            onUpdateRule={handleUpdateRule}
+                        />
+                    )}
 
                     {/* Governance & Policy Panel (Section 5) */}
                     <GovernancePolicyPanel

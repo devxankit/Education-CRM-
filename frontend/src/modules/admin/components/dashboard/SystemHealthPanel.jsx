@@ -1,14 +1,16 @@
 
 import React from 'react';
 import { Activity, Database, Server, Wifi } from 'lucide-react';
-import { systemHealth } from '../../data/dashboardData';
 
-const SystemHealthPanel = () => {
+const defaultHealth = { server: 'Stable', database: 'Synced', uptime: '99.98%', lastBackup: '—' };
+
+const SystemHealthPanel = ({ systemHealth = {} }) => {
+    const health = { ...defaultHealth, ...systemHealth };
     const metrics = [
-        { label: 'API Status', value: systemHealth.server, status: 'healthy', icon: Wifi },
-        { label: 'Integrations', value: '4/4 Active', status: 'healthy', icon: Server },
-        { label: 'Last Backup', value: systemHealth.lastBackup, status: 'warning', icon: Database },
-        { label: 'Uptime', value: systemHealth.uptime, status: 'healthy', icon: Activity },
+        { label: 'API Status', value: health.server, status: 'healthy', icon: Wifi },
+        { label: 'Database', value: health.database, status: 'healthy', icon: Server },
+        { label: 'Last Backup', value: health.lastBackup, status: 'warning', icon: Database },
+        { label: 'Uptime', value: health.uptime, status: 'healthy', icon: Activity },
     ];
 
     return (

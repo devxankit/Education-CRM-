@@ -14,6 +14,7 @@ import PayrollRule from "../Models/PayrollRuleModel.js";
 import ExpenseCategory from "../Models/ExpenseCategoryModel.js";
 import Tax from "../Models/TaxModel.js";
 import { generateToken, generateTempOtpToken, verifyTempOtpToken } from "../Helpers/generateToken.js";
+import { logSecurity, logUserActivity } from "../Helpers/logger.js";
 import { calculateTaxFromRules } from "../Helpers/calculateTax.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
 import { sendLoginCredentialsEmail, sendStaffOtpEmail } from "../Helpers/SendMail.js";
@@ -817,6 +818,9 @@ export const verifyOtpStaff = async (req, res) => {
         staff.lastLogin = new Date();
         await staff.save();
 
+        logSecurity(req, { instituteId: staff.instituteId, userId: staff._id, userModel: "Staff", identifier: staff.email, action: "2fa_success", success: true, message: "2FA verified, login successful" });
+        logUserActivity(req, { instituteId: staff.instituteId, branchId: staff.branchId, userId: staff._id, userModel: "Staff", userEmail: staff.email, userName: staff.name, action: "login", description: "Staff login (after 2FA)" });
+
         res.status(200).json({
             success: true,
             message: "Login successful",
@@ -838,6 +842,7 @@ export const loginStaff = async (req, res) => {
 
         const staff = await Staff.findOne({ email }).populate('roleId');
         if (!staff) {
+            logSecurity(req, { identifier: email, action: "login_failed", success: false, message: "Staff user not found" });
             return res.status(404).json({
                 success: false,
                 message: "Staff user not found",
@@ -887,6 +892,7 @@ export const loginStaff = async (req, res) => {
                 });
             }
             await staff.save();
+            logSecurity(req, { instituteId: staff.instituteId, userId: staff._id, userModel: "Staff", identifier: staff.email, action: "wrong_password", success: false, message: `Invalid credentials. ${maxAttempts - staff.loginAttempts} attempts remaining.` });
             return res.status(401).json({
                 success: false,
                 message: `Invalid credentials. ${maxAttempts - staff.loginAttempts} attempts remaining.`,
@@ -977,6 +983,9 @@ export const loginStaff = async (req, res) => {
 
         staff.lastLogin = new Date();
         await staff.save();
+
+        logSecurity(req, { instituteId: staff.instituteId, userId: staff._id, userModel: "Staff", identifier: staff.email, action: "login_success", success: true, message: "Login successful" });
+        logUserActivity(req, { instituteId: staff.instituteId, branchId: staff.branchId, userId: staff._id, userModel: "Staff", userEmail: staff.email, userName: staff.name, action: "login", description: "Staff login" });
 
         res.status(200).json({
             success: true,

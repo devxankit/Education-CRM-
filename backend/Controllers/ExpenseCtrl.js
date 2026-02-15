@@ -1,5 +1,6 @@
 import Expense from "../Models/ExpenseModel.js";
 import mongoose from "mongoose";
+import { logFinancial, logUserActivity } from "../Helpers/logger.js";
 
 // ================= GET EXPENSES =================
 export const getExpenses = async (req, res) => {
@@ -89,6 +90,9 @@ export const createExpense = async (req, res) => {
         await expense.save();
         await expense.populate("categoryId", "name code");
         await expense.populate("branchId", "name");
+
+        logFinancial(req, { branchId, type: "expense", amount: Number(amount), referenceType: "Expense", referenceId: expense._id, description: `Expense: ${title} - ₹${Number(amount)}` });
+        logUserActivity(req, { branchId, action: "expense_added", entityType: "Expense", entityId: expense._id, description: `Expense "${title}" ₹${Number(amount)} added` });
 
         res.status(201).json({
             success: true,

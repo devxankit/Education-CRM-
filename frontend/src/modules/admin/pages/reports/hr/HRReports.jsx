@@ -55,7 +55,7 @@ const HRReports = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-50 border-t border-gray-200 -mt-6 -mx-8">
+        <div className="flex min-h-[calc(100vh-10rem)] overflow-hidden bg-gray-50 border border-gray-200 rounded-xl -mx-4 md:-mx-6">
 
             {/* Left Sidebar */}
             <HRReportSidebar

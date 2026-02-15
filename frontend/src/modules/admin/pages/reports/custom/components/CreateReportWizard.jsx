@@ -75,7 +75,7 @@ const CreateReportWizard = ({ onCancel, onSave, existingReport }) => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 -my-6 -mx-8">
+        <div className="flex flex-col min-h-[calc(100vh-10rem)] bg-gray-50 -mx-4 md:-mx-6 rounded-xl border border-gray-200 overflow-hidden">
 
             {/* Wizard Header */}
             <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">

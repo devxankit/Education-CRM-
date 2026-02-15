@@ -25,8 +25,18 @@ const TemplateEditorDrawer = ({ isOpen, onClose, template, onSave }) => {
         if (template) {
             setFormData({
                 ...template,
-                // Ensure content has default if new
                 content: template.content || 'This is to certify that <b>{{student_name}}</b>, son/daughter of <b>{{father_name}}</b>, is a bonafide student of this institution studying in Class <b>{{class}}</b> Division <b>{{section}}</b> for the academic year <b>{{academic_year}}</b>.<br/><br/>His/Her date of birth as per our records is <b>{{dob}}</b>.<br/><br/>He/She bears a good moral character.'
+            });
+        } else {
+            setFormData({
+                name: '',
+                type: 'STUDENT',
+                category: 'ACADEMIC',
+                purpose: 'Bonafide Certificate',
+                content: 'This is to certify that <b>{{student_name}}</b>, son/daughter of <b>{{father_name}}</b>, is a bonafide student of this institution studying in Class <b>{{class}}</b> Division <b>{{section}}</b> for the academic year <b>{{academic_year}}</b>.<br/><br/>His/Her date of birth as per our records is <b>{{dob}}</b>.<br/><br/>He/She bears a good moral character.',
+                header: true,
+                footer: true,
+                orientation: 'PORTRAIT'
             });
         }
     }, [template]);

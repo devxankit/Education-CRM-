@@ -1,6 +1,7 @@
 import Institute from "../Models/InstituteModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { uploadToCloudinary, uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
+import { logSecurity, logUserActivity } from "../Helpers/logger.js";
 
 // ================= REGISTER INSTITUTE =================
 export const registerInstitute = async (req, res) => {
@@ -53,6 +54,7 @@ export const loginSuperAdmin = async (req, res) => {
 
     const institute = await Institute.findOne({ email });
     if (!institute) {
+      logSecurity(req, { instituteId: null, identifier: email, action: "login_failed", success: false, message: "Institute not found" });
       return res.status(404).json({
         success: false,
         message: "Institute/SuperAdmin not found",
@@ -61,6 +63,7 @@ export const loginSuperAdmin = async (req, res) => {
 
     const isMatch = await institute.comparePassword(password);
     if (!isMatch) {
+      logSecurity(req, { instituteId: institute._id, identifier: email, action: "wrong_password", success: false, message: "Invalid credentials" });
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
@@ -68,6 +71,8 @@ export const loginSuperAdmin = async (req, res) => {
     }
 
     const token = generateToken(institute._id, "institute");
+    logSecurity(req, { instituteId: institute._id, userId: institute._id, userModel: "Institute", identifier: email, action: "login_success", success: true, message: "Login successful" });
+    logUserActivity(req, { instituteId: institute._id, userId: institute._id, userModel: "Institute", userEmail: institute.email, userName: institute.adminName, action: "login", description: "Institute admin login" });
 
     const instituteData = institute.toObject();
     delete instituteData.password;

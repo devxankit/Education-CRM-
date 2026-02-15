@@ -1,21 +1,35 @@
 
-import React, { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Calendar, Download, Filter, Search, Eye } from 'lucide-react';
-import { financialLogs } from '../../../data/auditData';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Calendar, Download, Filter, Search, Eye, Loader2 } from 'lucide-react';
+import { API_URL } from '@/app/api';
 
 const FinancialAudit = () => {
-
-    // Mock Data
-    const [logs, setLogs] = useState(financialLogs);
-
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
 
+    useEffect(() => {
+        const fetchLogs = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/logs/financial?page=1&limit=100`, { headers: { Authorization: `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data)) setLogs(data.data);
+            } catch (e) { console.error('Failed to fetch financial logs', e); }
+            finally { setLoading(false); }
+        };
+        fetchLogs();
+    }, []);
+
+    const creditTypes = ['fee_payment', 'other_income'];
+    const debitTypes = ['expense', 'salary_transfer', 'fee_refund', 'other_expense'];
     const stats = {
-        totalCredits: logs.filter(l => l.type === 'credit').reduce((sum, l) => sum + l.amount, 0),
-        totalDebits: logs.filter(l => l.type === 'debit').reduce((sum, l) => sum + l.amount, 0),
-        pendingCount: logs.filter(l => l.status === 'pending').length,
-        flaggedCount: logs.filter(l => l.status === 'flagged').length,
+        totalCredits: logs.filter(l => creditTypes.includes(l.type)).reduce((sum, l) => sum + (l.amount || 0), 0),
+        totalDebits: logs.filter(l => debitTypes.includes(l.type)).reduce((sum, l) => sum + (l.amount || 0), 0),
+        pendingCount: 0,
+        flaggedCount: 0,
     };
 
     const getStatusBadge = (status) => {
@@ -28,24 +42,32 @@ const FinancialAudit = () => {
     };
 
     const getTypeBadge = (type) => {
-        const styles = {
-            credit: 'text-green-600',
-            debit: 'text-red-600',
-            adjustment: 'text-blue-600',
-        };
+        const styles = { credit: 'text-green-600', debit: 'text-red-600', adjustment: 'text-blue-600' };
         return styles[type] || 'text-gray-600';
     };
 
     const filteredLogs = logs.filter(log => {
-        const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.user.toLowerCase().includes(searchTerm.toLowerCase());
+        const desc = (log.description || '').toLowerCase();
+        const matchesSearch = !searchTerm || desc.includes(searchTerm.toLowerCase()) || (log.type || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = filterType === 'all' || log.type === filterType;
         return matchesSearch && matchesType;
     });
 
+    const mapLog = (log) => ({
+        id: log._id,
+        timestamp: log.createdAt ? new Date(log.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' }) : '-',
+        reference: log.referenceId?.toString().slice(-8) || log.referenceType || '-',
+        action: log.description || log.type || '-',
+        user: '-',
+        amount: log.amount ?? 0,
+        type: creditTypes.includes(log.type) ? 'credit' : 'debit',
+        module: log.referenceType || log.type || '-',
+        status: 'completed'
+    });
+    const tableRows = filteredLogs.map(mapLog);
+
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-gray-50 border-t border-gray-200 -mt-6 -mx-8 relative">
+        <div className="flex flex-col min-h-[calc(100vh-10rem)] overflow-hidden bg-gray-50 border border-gray-200 rounded-xl -mx-4 md:-mx-6 relative">
 
             {/* Header */}
             <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 shadow-sm z-10 sticky top-0">
@@ -131,9 +153,9 @@ const FinancialAudit = () => {
                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
                             >
                                 <option value="all">All Types</option>
-                                <option value="credit">Credits Only</option>
-                                <option value="debit">Debits Only</option>
-                                <option value="adjustment">Adjustments</option>
+                                <option value="fee_payment">Fee Payment</option>
+                                <option value="expense">Expense</option>
+                                <option value="salary_transfer">Salary</option>
                             </select>
                         </div>
                     </div>
@@ -154,7 +176,12 @@ const FinancialAudit = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {filteredLogs.map((log) => (
+                                {loading ? (
+                                    <tr><td colSpan={8} className="px-6 py-12 text-center text-gray-500"><Loader2 className="animate-spin inline" size={24} /> Loading...</td></tr>
+                                ) : tableRows.length === 0 ? (
+                                    <tr><td colSpan={8} className="px-6 py-12 text-center text-gray-500">No financial logs found.</td></tr>
+                                ) : (
+                                tableRows.map((log) => (
                                     <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 text-gray-500 text-xs font-mono">
                                             {log.timestamp}
@@ -172,7 +199,7 @@ const FinancialAudit = () => {
                                         </td>
                                         <td className={`px-6 py-4 font-bold ${getTypeBadge(log.type)}`}>
                                             {log.type === 'credit' ? '+' : log.type === 'debit' ? '-' : ''}
-                                            ₹{log.amount.toLocaleString()}
+                                            ₹{(log.amount || 0).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
@@ -190,7 +217,8 @@ const FinancialAudit = () => {
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
+                                ))
+                                )}
                             </tbody>
                         </table>
                     </div>

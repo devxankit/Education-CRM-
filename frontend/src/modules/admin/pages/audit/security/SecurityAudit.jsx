@@ -1,20 +1,32 @@
 
-import React, { useState } from 'react';
-import { Shield, ShieldAlert, ShieldCheck, Lock, Unlock, AlertTriangle, Search, Filter, Eye, Ban } from 'lucide-react';
-import { securityEvents } from '../../../data/auditData';
+import React, { useState, useEffect } from 'react';
+import { Shield, ShieldAlert, ShieldCheck, Lock, Unlock, AlertTriangle, Search, Filter, Eye, Ban, Loader2 } from 'lucide-react';
+import { API_URL } from '@/app/api';
 
 const SecurityAudit = () => {
-
-    // Mock Data
-    const [events, setEvents] = useState(securityEvents);
-
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterSeverity, setFilterSeverity] = useState('all');
 
+    useEffect(() => {
+        const fetchLogs = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/logs/security?page=1&limit=100`, { headers: { Authorization: `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data)) setEvents(data.data);
+            } catch (e) { console.error('Failed to fetch security logs', e); }
+            finally { setLoading(false); }
+        };
+        fetchLogs();
+    }, []);
+
     const stats = {
-        critical: events.filter(e => e.severity === 'critical').length,
-        blocked: events.filter(e => e.status === 'blocked').length,
-        monitored: events.filter(e => e.status === 'monitored' || e.status === 'investigating').length,
+        critical: events.filter(e => !e.success).length,
+        blocked: events.filter(e => e.action === 'account_locked').length,
+        monitored: events.length,
     };
 
     const getSeverityBadge = (severity) => {
@@ -50,16 +62,29 @@ const SecurityAudit = () => {
         return icons[type] || Shield;
     };
 
-    const filteredEvents = events.filter(event => {
-        const matchesSearch = event.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.ip.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesSeverity = filterSeverity === 'all' || event.severity === filterSeverity;
-        return matchesSearch && matchesSeverity;
+    const mapEvent = (e) => ({
+        id: e._id,
+        severity: e.success ? 'low' : 'critical',
+        status: e.success ? 'reviewed' : 'investigating',
+        details: e.message || e.action || '-',
+        user: e.identifier || '-',
+        ip: e.ipAddress || '-',
+        location: '-',
+        timestamp: e.createdAt ? new Date(e.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' }) : '-',
+        eventType: e.action || 'login_failed'
     });
+    const filteredEvents = events
+        .map(mapEvent)
+        .filter(event => {
+            const matchesSearch = !searchTerm || event.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                event.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (event.ip || '').toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSeverity = filterSeverity === 'all' || event.severity === filterSeverity;
+            return matchesSearch && matchesSeverity;
+        });
 
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-gray-50 border-t border-gray-200 -mt-6 -mx-8 relative">
+        <div className="flex flex-col min-h-[calc(100vh-10rem)] overflow-hidden bg-gray-50 border border-gray-200 rounded-xl -mx-4 md:-mx-6 relative">
 
             {/* Header */}
             <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 shadow-sm z-10 sticky top-0">
@@ -141,6 +166,11 @@ const SecurityAudit = () => {
 
                     {/* Events List */}
                     <div className="flex-1 overflow-auto">
+                        {loading ? (
+                            <div className="px-6 py-12 text-center text-gray-500"><Loader2 className="animate-spin inline" size={24} /> Loading...</div>
+                        ) : filteredEvents.length === 0 ? (
+                            <div className="px-6 py-12 text-center text-gray-500">No security logs found.</div>
+                        ) : (
                         <div className="divide-y divide-gray-100">
                             {filteredEvents.map((event) => {
                                 const EventIcon = getEventTypeIcon(event.eventType);
@@ -191,6 +221,7 @@ const SecurityAudit = () => {
                                 );
                             })}
                         </div>
+                        )}
                     </div>
                 </div>
             </div>
