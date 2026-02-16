@@ -6,16 +6,44 @@ const DocumentsList = ({ documents }) => {
         if (url) window.open(url, '_blank', 'noopener,noreferrer');
     };
 
-    const handleDownload = (url, name) => {
+    const handleDownload = async (url, name) => {
         if (!url) return;
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', (name || 'document').replace(/\s+/g, '_') + (url.includes('.pdf') ? '' : '.pdf'));
-        link.setAttribute('target', '_blank');
-        link.setAttribute('rel', 'noopener noreferrer');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+
+        try {
+            // Strategy 1: Cloudinary Attachment Flag (Works even with cross-origin)
+            if (url.includes('res.cloudinary.com')) {
+                const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', name);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return;
+            }
+
+            // Strategy 2: Fetch and Blob (Forces download for same-origin or CORS-enabled URLs)
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = (name || 'document').replace(/\s+/g, '_') + (url.includes('.pdf') ? '' : '.pdf');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            // Strategy 3: Direct Link (May only open in new tab if cross-origin and no CORS)
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', name);
+            link.setAttribute('target', '_blank');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     };
 
     return (

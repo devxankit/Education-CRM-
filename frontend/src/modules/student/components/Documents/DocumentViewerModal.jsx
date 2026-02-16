@@ -5,6 +5,37 @@ import { X, Download, ShieldCheck, FileText, Calendar } from 'lucide-react';
 const DocumentViewerModal = ({ doc, onClose }) => {
     if (!doc) return null;
 
+    const handleDownload = async () => {
+        if (!doc.url) return;
+
+        try {
+            if (doc.url.includes('res.cloudinary.com')) {
+                const downloadUrl = doc.url.replace('/upload/', '/upload/fl_attachment/');
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', doc.name);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return;
+            }
+
+            const response = await fetch(doc.url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = (doc.name || 'document').replace(/\s+/g, '_') + (doc.url.includes('.pdf') ? '' : '.pdf');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(doc.url, '_blank');
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -42,6 +73,7 @@ const DocumentViewerModal = ({ doc, onClose }) => {
                     <div className="flex items-center gap-2">
                         {doc.permissions.download && (
                             <button
+                                onClick={handleDownload}
                                 className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors hidden sm:block"
                                 title="Download"
                             >
@@ -113,7 +145,10 @@ const DocumentViewerModal = ({ doc, onClose }) => {
                         <span className="flex items-center gap-1.5"><ShieldCheck size={14} /> Digital Signature Valid</span>
                     </div>
                     {doc.permissions.download && (
-                        <button className="flex items-center gap-2 w-full sm:w-auto justify-center px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 active:scale-95 transition-all">
+                        <button
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 w-full sm:w-auto justify-center px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 active:scale-95 transition-all"
+                        >
                             <Download size={16} /> Download Copy
                         </button>
                     )}

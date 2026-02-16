@@ -71,6 +71,40 @@ const DocumentDetail = () => {
     const requiredList = REQUIRED_DOCS[type] || [];
     const canManage = [STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.PRINCIPAL, STAFF_ROLES.FRONT_DESK, STAFF_ROLES.ADMIN].includes(user?.role);
 
+    const handleDownload = async (url, name) => {
+        if (!url) return;
+        const loadingToast = toast.loading(`Preparing download...`);
+        try {
+            if (url.includes('res.cloudinary.com')) {
+                const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', name);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.dismiss(loadingToast);
+                return;
+            }
+
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = name.replace(/\s+/g, '_');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+            toast.dismiss(loadingToast);
+        } catch (error) {
+            console.error(error);
+            toast.error("Download failed, opening in new tab", { id: loadingToast });
+            window.open(url, '_blank');
+        }
+    };
+
     const handleVerifyAction = async (docId, status) => {
         if (!canManage) return toast.error("Unauthorized access");
 
@@ -221,6 +255,13 @@ const DocumentDetail = () => {
                                                     >
                                                         <Eye size={18} />
                                                     </a>
+                                                    <button
+                                                        onClick={() => handleDownload(doc.url, req.name)}
+                                                        className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95"
+                                                        title="Download Document"
+                                                    >
+                                                        <Download size={18} />
+                                                    </button>
                                                     {canManage && doc.status !== 'approved' && doc.status !== 'verified' && (
                                                         <div className="flex items-center gap-2 ml-2 pl-4 border-l border-gray-100">
                                                             <button

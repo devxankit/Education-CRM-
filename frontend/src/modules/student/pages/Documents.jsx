@@ -56,10 +56,37 @@ const DocumentsPage = () => {
         setSelectedDoc(doc);
     };
 
-    const handleDownload = (doc) => {
-        // In real app, trigger download
-        console.log("Downloading", doc);
-        alert(`Downloading ${doc.name}...`);
+    const handleDownload = async (doc) => {
+        if (!doc.url) return;
+
+        try {
+            // Strategy 1: Cloudinary Attachment Flag
+            if (doc.url.includes('res.cloudinary.com')) {
+                const downloadUrl = doc.url.replace('/upload/', '/upload/fl_attachment/');
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', doc.name);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return;
+            }
+
+            // Strategy 2: Fetch and Blob
+            const response = await fetch(doc.url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = (doc.name || 'document').replace(/\s+/g, '_') + (doc.url.includes('.pdf') ? '' : '.pdf');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(doc.url, '_blank');
+        }
     };
 
     return (
