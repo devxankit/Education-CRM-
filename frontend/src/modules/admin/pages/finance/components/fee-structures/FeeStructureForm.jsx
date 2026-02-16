@@ -96,9 +96,15 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
     }, [initialData, user?.branchId]);
 
     useEffect(() => {
-        fetchAcademicYears();
         fetchBranches();
-    }, [fetchAcademicYears, fetchBranches]);
+    }, [fetchBranches]);
+
+    // Fetch academic years when branch changes
+    useEffect(() => {
+        if (basicInfo.branchId && basicInfo.branchId.length === 24) {
+            fetchAcademicYears(basicInfo.branchId);
+        }
+    }, [basicInfo.branchId, fetchAcademicYears]);
 
     // Set default branchId when branches load and branchId is empty (only for create mode)
     useEffect(() => {
@@ -107,12 +113,13 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
         }
     }, [branches, initialData]);
 
+    // Fetch classes & courses when branch + academic year are selected
     useEffect(() => {
-        if (basicInfo.branchId) {
-            fetchClasses(basicInfo.branchId);
-            fetchCourses(basicInfo.branchId);
+        if (basicInfo.branchId && basicInfo.academicYearId && basicInfo.academicYearId.length === 24) {
+            fetchClasses(basicInfo.branchId, false, basicInfo.academicYearId);
+            fetchCourses(basicInfo.branchId, basicInfo.academicYearId);
         }
-    }, [basicInfo.branchId, fetchClasses, fetchCourses]);
+    }, [basicInfo.branchId, basicInfo.academicYearId, fetchClasses, fetchCourses]);
     
     // Computed totalAmount - must be after components state
     const totalAmount = components.reduce((sum, c) => sum + Number(c.amount || 0), 0);
@@ -356,26 +363,11 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Academic Year <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={basicInfo.academicYearId}
-                                    onChange={(e) => setBasicInfo({ ...basicInfo, academicYearId: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm hover:shadow-md"
-                                >
-                                    <option value="">Select Year</option>
-                                    {academicYears.map(year => (
-                                        <option key={year._id} value={year._id}>{year.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                     Branch <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={basicInfo.branchId}
-                                    onChange={(e) => setBasicInfo({ ...basicInfo, branchId: e.target.value })}
+                                    onChange={(e) => setBasicInfo({ ...basicInfo, branchId: e.target.value, academicYearId: '' })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm hover:shadow-md"
                                 >
                                     <option value="">Select Branch</option>
@@ -383,6 +375,23 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                                         <option key={branch._id} value={branch._id}>{branch.name}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Academic Year <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={basicInfo.academicYearId}
+                                    onChange={(e) => setBasicInfo({ ...basicInfo, academicYearId: e.target.value })}
+                                    disabled={!basicInfo.branchId}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">{basicInfo.branchId ? 'Select Year' : 'Select Branch first'}</option>
+                                    {academicYears.map(year => (
+                                        <option key={year._id} value={year._id}>{year.name}</option>
+                                    ))}
+                                </select>
+                                {basicInfo.branchId && <p className="text-[10px] text-gray-400 mt-0.5">For selected branch</p>}
                             </div>
                         </div>
 
@@ -398,7 +407,7 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                                         : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50'
                                 }`}>
                                     {classes.length === 0 ? (
-                                        <p className="text-xs text-gray-400 text-center py-2">No classes available. Select a branch first.</p>
+                                        <p className="text-xs text-gray-400 text-center py-2">No classes available. Select branch and academic year first.</p>
                                     ) : (
                                         classes.map(cls => (
                                             <label 
@@ -443,7 +452,7 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                                         : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50'
                                 }`}>
                                     {courses.length === 0 ? (
-                                        <p className="text-xs text-gray-400 text-center py-2">No programs available. Select a branch first.</p>
+                                        <p className="text-xs text-gray-400 text-center py-2">No programs available. Select branch and academic year first.</p>
                                     ) : (
                                         courses.map(course => (
                                             <label 

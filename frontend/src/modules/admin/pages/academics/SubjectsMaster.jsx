@@ -12,36 +12,54 @@ const SubjectsMaster = () => {
     const classes = useAdminStore(state => state.classes);
     const courses = useAdminStore(state => state.courses);
     const branches = useAdminStore(state => state.branches);
+    const academicYears = useAdminStore(state => state.academicYearsForSelect || []);
     const fetchSubjects = useAdminStore(state => state.fetchSubjects);
     const fetchClasses = useAdminStore(state => state.fetchClasses);
     const fetchCourses = useAdminStore(state => state.fetchCourses);
     const fetchBranches = useAdminStore(state => state.fetchBranches);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
     const addSubject = useAdminStore(state => state.addSubject);
     const updateSubject = useAdminStore(state => state.updateSubject);
     const user = useAppStore(state => state.user);
 
     const [selectedBranchId, setSelectedBranchId] = useState(null);
+    const [selectedYearId, setSelectedYearId] = useState('');
 
     useEffect(() => {
         fetchBranches();
     }, [fetchBranches]);
 
     useEffect(() => {
-        if (!selectedBranchId) {
-            if (user?.branchId?.length === 24) {
-                setSelectedBranchId(user.branchId);
-            } else if (branches.length > 0) {
-                setSelectedBranchId(branches[0]._id);
-            }
+        if (!selectedBranchId && branches.length > 0) {
+            setSelectedBranchId(user?.branchId && user.branchId !== 'all' && user.branchId.length === 24 ? user.branchId : branches[0]._id);
         }
-    }, [user, branches, selectedBranchId]);
+    }, [user?.branchId, branches]);
+
+    useEffect(() => {
+        if (selectedBranchId && selectedBranchId.length === 24) {
+            fetchAcademicYears(selectedBranchId);
+        }
+    }, [selectedBranchId, fetchAcademicYears]);
+
+    useEffect(() => {
+        if (selectedBranchId) setSelectedYearId('');
+    }, [selectedBranchId]);
+
+    useEffect(() => {
+        if (academicYears.length > 0 && selectedBranchId && !selectedYearId) {
+            const active = academicYears.find(y => y.status === 'active');
+            setSelectedYearId(active?._id || academicYears[0]._id);
+        }
+    }, [academicYears, selectedBranchId, selectedYearId]);
 
     useEffect(() => {
         const branchId = selectedBranchId || 'main';
         fetchSubjects(branchId);
-        fetchClasses(branchId);
-        fetchCourses(branchId);
-    }, [selectedBranchId, fetchSubjects, fetchClasses, fetchCourses]);
+        if (selectedYearId && selectedYearId.length === 24) {
+            fetchClasses(branchId, false, selectedYearId);
+            fetchCourses(branchId, selectedYearId);
+        }
+    }, [selectedBranchId, selectedYearId, fetchSubjects, fetchClasses, fetchCourses]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
@@ -84,8 +102,10 @@ const SubjectsMaster = () => {
         setEditingSubject(null);
         const branchId = selectedBranchId || 'main';
         fetchSubjects(branchId);
-        fetchClasses(branchId);
-        fetchCourses(branchId);
+        if (selectedYearId) {
+            fetchClasses(branchId, false, selectedYearId);
+            fetchCourses(branchId, selectedYearId);
+        }
     };
 
     // Filter Logic (level, class, search)
@@ -179,17 +199,29 @@ const SubjectsMaster = () => {
                         ))}
                     </select>
 
-                    {/* Branch Switcher (Only for Super Admin/Multi-branch) */}
+                    {/* Branch & Academic Year (Classes/Courses filtered by both) */}
                     <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
                         <MapPin size={16} className="text-indigo-500" />
                         <select
                             value={selectedBranchId || ''}
                             onChange={(e) => setSelectedBranchId(e.target.value)}
                             disabled={user?.branchId && user.branchId !== 'all'}
-                            className="text-sm font-semibold border-none bg-transparent outline-none focus:ring-0 cursor-pointer text-indigo-700"
+                            className="text-sm font-semibold border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer text-indigo-700"
                         >
+                            <option value="">Select Branch</option>
                             {branches.map(b => (
                                 <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={selectedYearId}
+                            onChange={(e) => setSelectedYearId(e.target.value)}
+                            disabled={!selectedBranchId}
+                            className="text-sm font-semibold border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer text-indigo-700 disabled:opacity-60"
+                        >
+                            <option value="">{selectedBranchId ? 'Select Year' : 'Branch first'}</option>
+                            {academicYears.map(y => (
+                                <option key={y._id} value={y._id}>{y.name}</option>
                             ))}
                         </select>
                     </div>
@@ -244,6 +276,7 @@ const SubjectsMaster = () => {
                 classes={classes}
                 courses={courses}
                 defaultBranchId={selectedBranchId || user?.branchId}
+                defaultAcademicYearId={selectedYearId}
             />
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Calendar, Clock, MapPin, CheckCircle } from 'lucide-react';
 import { useAdminExamStore } from '../../../../../../store/adminExamStore';
 import { useAdminStore, selectAcademicYearsForSelect } from '../../../../../../store/adminStore';
@@ -7,12 +7,13 @@ import { useExamPolicyStore } from '../../../../../../store/examPolicyStore';
 
 const ExamFormModal = ({ isOpen, onClose, exam }) => {
     const { createExam, updateExam, isProcessing } = useAdminExamStore();
-    const { classes, subjects, courses, fetchClasses, fetchSubjects, fetchCourses, fetchAcademicYears } = useAdminStore();
+    const { branches, fetchBranches, classes, subjects, courses, fetchClasses, fetchSubjects, fetchCourses, fetchAcademicYears } = useAdminStore();
     const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const { policy, fetchPolicy } = useExamPolicyStore();
     const { user } = useAppStore();
 
     const [formData, setFormData] = useState({
+        branchId: '',
         examName: '',
         examType: 'Internal',
         academicYearId: '',
@@ -28,34 +29,57 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
     const [selectedCourses, setSelectedCourses] = useState([]);
     const [examSubjects, setExamSubjects] = useState([]);
 
-    const hasFetchedInitial = useRef(false);
-
-    // 1. Initial Data Fetch (Classes, Subjects, Years) - Run once when modal opens
+    // 1. Fetch branches when modal opens
     useEffect(() => {
-        if (isOpen && !hasFetchedInitial.current) {
-            const branchId = user?.branchId || 'main';
-            fetchClasses(branchId);
-            fetchSubjects(branchId);
-            fetchCourses(branchId);
-            fetchAcademicYears();
-            hasFetchedInitial.current = true;
-        }
-        if (!isOpen) {
-            hasFetchedInitial.current = false;
-        }
-    }, [isOpen, user?.branchId, fetchClasses, fetchSubjects, fetchCourses, fetchAcademicYears]);
+        if (isOpen && branches.length === 0) fetchBranches();
+    }, [isOpen, branches.length, fetchBranches]);
 
-    // 2. Fetch Policy only when academicYearId changes
+    // 2. Set default branch when modal opens
+    useEffect(() => {
+        if (isOpen && !formData.branchId && branches.length > 0) {
+            const defaultBranch = (user?.branchId && user.branchId !== 'all' && user.branchId.length === 24)
+                ? user.branchId
+                : branches[0]._id;
+            setFormData(prev => ({ ...prev, branchId: defaultBranch }));
+        }
+    }, [isOpen, branches, user?.branchId]);
+
+    // 3. Fetch academic years when branch changes
+    useEffect(() => {
+        if (isOpen && formData.branchId && formData.branchId.length === 24) {
+            fetchAcademicYears(formData.branchId);
+        }
+    }, [isOpen, formData.branchId, fetchAcademicYears]);
+
+    // 4. Set default academic year when academic years load
+    useEffect(() => {
+        if (isOpen && academicYears.length > 0 && formData.branchId && !formData.academicYearId) {
+            const active = academicYears.find(y => y.status === 'active');
+            setFormData(prev => ({ ...prev, academicYearId: active?._id || academicYears[0]._id }));
+        }
+    }, [isOpen, academicYears, formData.branchId, formData.academicYearId]);
+
+    // 5. Fetch classes, subjects, courses when branch + academic year are selected
+    useEffect(() => {
+        if (isOpen && formData.branchId && formData.academicYearId && formData.academicYearId.length === 24) {
+            fetchClasses(formData.branchId, false, formData.academicYearId);
+            fetchCourses(formData.branchId, formData.academicYearId);
+            fetchSubjects(formData.branchId);
+        }
+    }, [isOpen, formData.branchId, formData.academicYearId, fetchClasses, fetchCourses, fetchSubjects]);
+
+    // 6. Fetch Policy only when academicYearId changes
     useEffect(() => {
         if (isOpen && formData.academicYearId) {
             fetchPolicy(formData.academicYearId);
         }
     }, [isOpen, formData.academicYearId, fetchPolicy]);
 
-    // 3. Handle Exam Data for Editing - Run when exam or modal status changes
+    // 7. Handle Exam Data for Editing - Run when exam or modal status changes
     useEffect(() => {
         if (isOpen && exam) {
             setFormData({
+                branchId: exam.branchId?._id || exam.branchId || '',
                 examName: exam.examName || '',
                 examType: exam.examType || '',
                 academicYearId: exam.academicYearId?.id || exam.academicYearId?._id || exam.academicYearId || '',
@@ -72,13 +96,8 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                 ...s,
                 date: s.date ? new Date(s.date).toISOString().split('T')[0] : ''
             })) || []);
-        } else if (isOpen && !exam && academicYears.length > 0 && !formData.academicYearId) {
-            setFormData(prev => ({
-                ...prev,
-                academicYearId: academicYears[0]?._id || academicYears[0]?.id
-            }));
         }
-    }, [isOpen, exam, academicYears]);
+    }, [isOpen, exam]);
 
     // Update marks when exam type changes
     useEffect(() => {
@@ -148,9 +167,14 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const branchId = (formData.branchId && formData.branchId.length === 24) ? formData.branchId : (user?.branchId && user.branchId !== 'all') ? user.branchId : null;
+        if (!branchId) {
+            alert('Please select a Branch.');
+            return;
+        }
         const finalData = {
             ...formData,
-            branchId: user?.branchId || user?.branch,
+            branchId,
             classes: selectedClasses,
             courses: selectedCourses,
             subjects: examSubjects.filter(s => s.subjectId && s.date)
@@ -199,6 +223,29 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                             <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">General Information</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1 flex items-center gap-1">
+                                    <MapPin size={12} /> Branch
+                                </label>
+                                <select
+                                    required
+                                    value={formData.branchId}
+                                    onChange={(e) => {
+                                        const newBranchId = e.target.value;
+                                        setFormData({ ...formData, branchId: newBranchId, academicYearId: '' });
+                                        setSelectedClasses([]);
+                                        setSelectedCourses([]);
+                                    }}
+                                    disabled={user?.branchId && user.branchId !== 'all'}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">Select Branch</option>
+                                    {branches.map(b => (
+                                        <option key={b._id} value={b._id}>{b.name}</option>
+                                    ))}
+                                </select>
+                                {formData.branchId && <p className="text-[10px] text-gray-400 mt-0.5">Academic years for this branch</p>}
+                            </div>
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1">Exam Name / Title</label>
                                 <input
@@ -236,9 +283,10 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                                     required
                                     value={formData.academicYearId}
                                     onChange={(e) => setFormData({ ...formData, academicYearId: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm"
+                                    disabled={!formData.branchId}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">Select Year</option>
+                                    <option value="">{formData.branchId ? 'Select Year' : 'Select Branch first'}</option>
                                     {academicYears.map(year => (
                                         <option key={year._id} value={year._id}>{year.name}</option>
                                     ))}
