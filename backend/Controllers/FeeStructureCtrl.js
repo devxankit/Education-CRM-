@@ -30,10 +30,10 @@ export const createFeeStructure = async (req, res) => {
             for (const existing of existingStructures) {
                 const existingClassIds = existing.applicableClasses?.map(c => c._id?.toString() || c.toString()) || [];
                 const newClassIds = applicableClasses.map(c => c.toString());
-                
+
                 // Check if any class overlaps
                 const hasOverlap = newClassIds.some(clsId => existingClassIds.includes(clsId));
-                
+
                 if (hasOverlap) {
                     return res.status(400).json({
                         success: false,
@@ -72,9 +72,8 @@ export const createFeeStructure = async (req, res) => {
 export const getFeeStructures = async (req, res) => {
     try {
         const { branchId, academicYearId, status } = req.query;
-        const instituteId = req.user._id;
 
-        let query = { instituteId };
+        let query = { };
 
         if (branchId && mongoose.Types.ObjectId.isValid(branchId)) {
             query.branchId = branchId;
@@ -135,9 +134,9 @@ export const updateFeeStructure = async (req, res) => {
             for (const duplicate of duplicateStructures) {
                 const duplicateClassIds = duplicate.applicableClasses?.map(c => c._id?.toString() || c.toString()) || [];
                 const newClassIds = applicableClasses.map(c => c.toString());
-                
+
                 const hasOverlap = newClassIds.some(clsId => duplicateClassIds.includes(clsId));
-                
+
                 if (hasOverlap) {
                     return res.status(400).json({
                         success: false,

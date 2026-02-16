@@ -4,9 +4,11 @@ import {
     getTeacherAttendanceByDate,
     getTeacherAttendanceHistory,
     getTeachersForAttendance,
-    getDayInfo
+    getDayInfo,
+    getMyAttendanceHistory
 } from "../Controllers/TeacherAttendanceCtrl.js";
-import { AuthMiddleware } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isTeacher } from "../Middlewares/AuthMiddleware.js";
+
 
 const router = express.Router();
 
@@ -24,6 +26,9 @@ router.post("/mark", markTeacherAttendance);
 
 // Get attendance by date
 router.get("/by-date", getTeacherAttendanceByDate);
+
+// Get own attendance (for teacher)
+router.get("/my-attendance", isTeacher, getMyAttendanceHistory);
 
 // Get attendance history
 router.get("/history", getTeacherAttendanceHistory);

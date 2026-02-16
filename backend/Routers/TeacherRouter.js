@@ -34,6 +34,7 @@ import {
     removeEligibleSubject,
     getEligibleSubjects
 } from "../Controllers/TeacherEligibilityCtrl.js";
+import { getMyAttendanceHistory } from "../Controllers/TeacherAttendanceCtrl.js";
 import { AuthMiddleware, isInstitute, isTeacher, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
@@ -58,6 +59,7 @@ router.delete("/homework/:id", isTeacher, deleteHomework);
 router.get("/homework/:homeworkId/submissions", isTeacher, getHomeworkSubmissions);
 router.put("/homework/submissions/:submissionId/grade", isTeacher, gradeSubmission);
 router.post("/attendance", isTeacher, markAttendance);
+router.get("/attendance/my-attendance", isTeacher, getMyAttendanceHistory);
 router.get("/attendance/history", isTeacher, getAttendanceHistory);
 router.get("/attendance/by-date", isTeacher, getAttendanceByDate);
 

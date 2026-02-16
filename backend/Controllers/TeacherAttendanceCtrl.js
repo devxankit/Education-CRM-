@@ -107,7 +107,7 @@ export const markTeacherAttendance = async (req, res) => {
 
         // Determine if it's a teacher or staff
         const isStaff = employeeType === 'staff';
-        
+
         // Validate employee exists (teacher or staff)
         let employee = null;
         if (isStaff) {
@@ -131,7 +131,7 @@ export const markTeacherAttendance = async (req, res) => {
         }
 
         let attendance;
-        
+
         if (isStaff) {
             // Handle staff attendance
             attendance = await StaffAttendance.findOne({
@@ -231,9 +231,9 @@ export const getTeacherAttendanceByDate = async (req, res) => {
             branchId,
             date: attendanceDate
         })
-          .populate('teacherId', 'firstName lastName employeeId department')
-          .populate('markedBy', 'name')
-          .sort({ createdAt: -1 });
+            .populate('teacherId', 'firstName lastName employeeId department')
+            .populate('markedBy', 'name')
+            .sort({ createdAt: -1 });
 
         // Fetch staff attendance (branchId might be null for staff, so we check instituteId only)
         const staffAttendance = await StaffAttendance.find({
@@ -244,9 +244,9 @@ export const getTeacherAttendanceByDate = async (req, res) => {
             ],
             date: attendanceDate
         })
-          .populate('staffId', 'name email')
-          .populate('markedBy', 'name')
-          .sort({ createdAt: -1 });
+            .populate('staffId', 'name email')
+            .populate('markedBy', 'name')
+            .sort({ createdAt: -1 });
 
         // Transform to unified format
         const allAttendance = [
@@ -329,8 +329,8 @@ export const getTeachersForAttendance = async (req, res) => {
         if (branchId) teacherQuery.branchId = branchId;
 
         const teachers = await Teacher.find(teacherQuery)
-          .select('firstName lastName employeeId department designation phone email branchId')
-          .sort({ firstName: 1 });
+            .select('firstName lastName employeeId department designation phone email branchId')
+            .sort({ firstName: 1 });
 
         // Fetch active staff for this branch: same branchId or institute-level (branchId null)
         const staffQuery = { instituteId, status: 'active' };
@@ -338,9 +338,9 @@ export const getTeachersForAttendance = async (req, res) => {
             staffQuery.$or = [{ branchId }, { branchId: null }];
         }
         const staffMembers = await Staff.find(staffQuery)
-          .populate('roleId', 'name')
-          .select('name email phone roleId branchId')
-          .sort({ name: 1 });
+            .populate('roleId', 'name')
+            .select('name email phone roleId branchId')
+            .sort({ name: 1 });
 
         // Transform teachers to include type
         const teachersList = teachers.map(teacher => ({
@@ -363,7 +363,7 @@ export const getTeachersForAttendance = async (req, res) => {
             const nameParts = (staff.name || '').split(' ');
             const firstName = nameParts[0] || staff.name || '';
             const lastName = nameParts.slice(1).join(' ') || '';
-            
+
             return {
                 _id: staff._id,
                 id: staff._id,
@@ -398,3 +398,43 @@ export const getTeachersForAttendance = async (req, res) => {
         });
     }
 };
+
+// ================= GET OWN ATTENDANCE (FOR LOGGED-IN TEACHER) =================
+export const getMyAttendanceHistory = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId;
+        const { startDate, endDate } = req.query;
+
+        const query = {
+            teacherId,
+            instituteId
+        };
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            query.date = { $gte: start, $lte: end };
+        }
+
+        // Fetch attendance specifically for this teacher
+        const attendance = await TeacherAttendance.find(query)
+            .populate('markedBy', 'name')
+            .sort({ date: -1 })
+            .limit(100);
+
+        res.status(200).json({
+            success: true,
+            data: attendance
+        });
+    } catch (error) {
+        console.error("Error fetching my attendance history:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch your attendance history"
+        });
+    }
+};
+

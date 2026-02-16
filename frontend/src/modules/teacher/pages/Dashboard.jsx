@@ -50,6 +50,13 @@ const TeacherDashboard = () => {
             count: dashboardData?.summary?.totalStudents || 0,
             type: "students",
             color: "text-blue-600 bg-blue-50"
+        },
+        {
+            id: "ACT-4",
+            title: "My Attendance",
+            count: "Check History",
+            type: "my-attendance",
+            color: "text-emerald-600 bg-emerald-50"
         }
     ];
 

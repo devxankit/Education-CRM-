@@ -152,8 +152,10 @@ export const useTeacherStore = create(
 
             // Attendance
             attendanceRecords: [],
+            myAttendance: [],
             isSubmittingAttendance: false,
             isFetchingAttendance: false,
+            isFetchingMyAttendance: false,
             submitAttendance: async (record) => {
                 set({ isSubmittingAttendance: true });
                 try {
@@ -194,6 +196,24 @@ export const useTeacherStore = create(
                     return null;
                 } finally {
                     set({ isFetchingAttendance: false });
+                }
+            },
+            fetchMyAttendance: async (params = {}) => {
+                if (get().isFetchingMyAttendance) return;
+                set({ isFetchingMyAttendance: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/teacher/attendance/my-attendance`, {
+                        params,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ myAttendance: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching my attendance:', error);
+                } finally {
+                    set({ isFetchingMyAttendance: false });
                 }
             },
 

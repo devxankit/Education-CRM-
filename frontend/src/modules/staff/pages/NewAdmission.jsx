@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Upload, Save, CheckCircle, FileText, User as UserIcon, Calendar, MapPin, Phone, Mail, Truck, Home } from 'lucide-react';
+import { ArrowLeft, Upload, Save, CheckCircle, FileText, User as UserIcon, Calendar, MapPin, Phone, Mail, Truck, Home, CreditCard, School } from 'lucide-react';
 import { useStaffStore } from '../../../store/staffStore';
+import { useAdminStore } from '../../../store/adminStore';
+import { useAppStore } from '../../../store';
 import { getAllClasses, getSections } from '../services/class.api';
 
 const NewAdmission = () => {
@@ -13,6 +15,16 @@ const NewAdmission = () => {
     const addStudent = useStaffStore(state => state.addStudent);
     const updateStudent = useStaffStore(state => state.updateStudent);
 
+    const user = useAppStore(state => state.user);
+    const branches = useAdminStore(state => state.branches);
+    const fetchBranches = useAdminStore(state => state.fetchBranches);
+    const feeStructures = useAdminStore(state => state.feeStructures);
+    const fetchFeeStructures = useAdminStore(state => state.fetchFeeStructures);
+    const transportRoutes = useAdminStore(state => state.transportRoutes);
+    const fetchTransportRoutes = useAdminStore(state => state.fetchTransportRoutes);
+    const academicYears = useAdminStore(state => state.academicYears);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
+
     const [loading, setLoading] = useState(false);
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
@@ -23,24 +35,26 @@ const NewAdmission = () => {
         middleName: '',
         lastName: '',
         dob: '',
-        gender: 'Male',
+        gender: '',
         bloodGroup: '',
         nationality: 'Indian',
         religion: '',
-        category: 'General',
+        category: '',
 
+        branchId: '',
+        academicYearId: '',
         classId: '',
         sectionId: '',
         admissionDate: new Date().toISOString().split('T')[0],
+        admissionNo: `ADM-${new Date().getFullYear()}-XXXX`,
         rollNo: '',
         prevSchool: '',
         lastClass: '',
 
-        parentName: '',
-        parentMobile: '',
         parentEmail: '',
         address: '',
         city: '',
+        state: '',
         pincode: '',
 
         transportRequired: false,
@@ -50,35 +64,71 @@ const NewAdmission = () => {
         bedType: '',
         roomType: '',
 
-        documents: {
-            photo: { name: 'Student Photograph', base64: null, status: 'in_review' },
-            birthCert: { name: 'Birth Certificate', base64: null, status: 'in_review' },
-            aadhar: { name: 'Aadhar Card', base64: null, status: 'in_review' },
-            transferCert: { name: 'Transfer Certificate (TC)', base64: null, status: 'in_review' },
-            prevMarksheet: { name: 'Previous Year Marksheet', base64: null, status: 'in_review' }
+        documents: {},
+        admissionFee: {
+            collectNow: false,
+            feeStructureId: '',
+            amount: '',
+            paymentMethod: 'Cash',
+            transactionId: '',
+            remarks: ''
         }
     });
 
-    // Fetch Classes
+    // Fetch Initial Data
     useEffect(() => {
-        const fetchClasses = async () => {
-            const data = await getAllClasses();
-            setClasses(data);
-        };
-        fetchClasses();
-    }, []);
+        fetchBranches();
+        fetchAcademicYears();
+        fetchTransportRoutes('main');
+    }, [fetchBranches, fetchAcademicYears, fetchTransportRoutes]);
+
+    // Handle initial branch assignment
+    useEffect(() => {
+        if (!formData.branchId && branches.length > 0) {
+            const defaultBranch = (user?.role === 'Staff' && user?.branchId !== 'all')
+                ? user.branchId
+                : branches[0]._id;
+            if (defaultBranch) {
+                setFormData(prev => ({ ...prev, branchId: defaultBranch }));
+            }
+        }
+    }, [branches, user, formData.branchId]);
+
+    // Fetch Classes based on branch
+    useEffect(() => {
+        if (formData.branchId) {
+            const fetchClassesForBranch = async () => {
+                const data = await getAllClasses(formData.branchId);
+                setClasses(data);
+            };
+            fetchClassesForBranch();
+        }
+    }, [formData.branchId]);
+
+    // Fetch Fee Structures when branch/year changes
+    useEffect(() => {
+        if (formData.branchId) {
+            const activeYear = academicYears.find(y => y.status === 'active') || academicYears[0];
+            if (activeYear) {
+                if (!formData.academicYearId) {
+                    setFormData(prev => ({ ...prev, academicYearId: activeYear._id }));
+                }
+                fetchFeeStructures(formData.branchId, formData.academicYearId || activeYear._id);
+            }
+        }
+    }, [formData.branchId, formData.academicYearId, academicYears, fetchFeeStructures]);
 
     // Fetch Sections when Class changes
     useEffect(() => {
-        const fetchSections = async () => {
-            if (formData.classId) {
+        const fetchSectionsData = async () => {
+            if (formData.classId && formData.classId.length === 24) {
                 const data = await getSections(formData.classId);
                 setSections(data);
             } else {
                 setSections([]);
             }
         };
-        fetchSections();
+        fetchSectionsData();
     }, [formData.classId]);
 
     // Fetch data for edit mode
@@ -92,10 +142,10 @@ const NewAdmission = () => {
                     lastName: student.lastName || '',
                     classId: student.classId?._id || student.classId || '',
                     sectionId: student.sectionId?._id || student.sectionId || '',
-                    parentName: student.parentId?.name || '',
-                    parentMobile: student.parentId?.mobile || student.mobile || '',
                     parentEmail: student.parentEmail || student.email || '',
-                    documents: student.documents || formData.documents
+                    branchId: student.branchId?._id || student.branchId || '',
+                    documents: student.documents || formData.documents,
+                    admissionFee: student.admissionFee || formData.admissionFee
                 });
             }
         }
@@ -121,9 +171,10 @@ const NewAdmission = () => {
                 documents: {
                     ...prev.documents,
                     [docKey]: {
-                        ...prev.documents[docKey],
-                        base64: reader.result,
-                        fileName: file.name
+                        name: file.name,
+                        status: 'in_review',
+                        date: new Date().toLocaleDateString(),
+                        base64: reader.result
                     }
                 }
             }));
@@ -168,7 +219,9 @@ const NewAdmission = () => {
                     </button>
                     <div>
                         <h1 className="text-2xl font-black text-gray-900 tracking-tight">{isEditMode ? 'Update Record' : 'New Admission'}</h1>
-                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Academic Session 2024-25</p>
+                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mt-0.5">
+                            Academic Session {academicYears.find(y => y._id === formData.academicYearId)?.name || 'Loading...'}
+                        </p>
                     </div>
                 </div>
                 {!isEditMode && (
@@ -264,9 +317,10 @@ const NewAdmission = () => {
                                     onChange={handleChange}
                                     className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-indigo-50 focus:bg-white focus:border-indigo-200 outline-none transition-all appearance-none"
                                 >
-                                    <option>Male</option>
-                                    <option>Female</option>
-                                    <option>Other</option>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
@@ -326,6 +380,7 @@ const NewAdmission = () => {
                                     onChange={handleChange}
                                     className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-indigo-50 focus:bg-white focus:border-indigo-200 outline-none transition-all appearance-none"
                                 >
+                                    <option value="">Select</option>
                                     <option value="General">General</option>
                                     <option value="OBC">OBC</option>
                                     <option value="SC">SC</option>
@@ -335,13 +390,67 @@ const NewAdmission = () => {
                         </div>
                     </section>
 
-                    {/* 2. Academic Details */}
+                    {/* 2. Campus Selection */}
+                    <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                <MapPin size={18} />
+                            </div>
+                            <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Campus Selection</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Select Campus <span className="text-red-500">*</span></label>
+                                <select
+                                    required
+                                    name="branchId"
+                                    value={formData.branchId}
+                                    onChange={handleChange}
+                                    disabled={user?.role === 'Staff' && user?.branchId !== 'all'}
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-indigo-50 focus:bg-white focus:border-indigo-200 outline-none transition-all disabled:opacity-50 appearance-none"
+                                >
+                                    <option value="">Select Campus</option>
+                                    {branches.map(b => (
+                                        <option key={b._id} value={b._id}>{b.name} ({b.code})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* 3. Academic Details */}
                     <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
                                 <Calendar size={18} />
                             </div>
                             <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Academic Enrollment</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Academic Year <span className="text-red-500">*</span></label>
+                                <select
+                                    required
+                                    name="academicYearId"
+                                    value={formData.academicYearId}
+                                    onChange={handleChange}
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all appearance-none"
+                                >
+                                    <option value="">Select Year</option>
+                                    {academicYears.map(ay => (
+                                        <option key={ay._id} value={ay._id}>{ay.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Admission Number</label>
+                                <input
+                                    readOnly
+                                    value={formData.admissionNo}
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-100/50 text-sm font-bold text-gray-500 outline-none cursor-not-allowed font-mono"
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -358,7 +467,7 @@ const NewAdmission = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Class <span className="text-red-500">*</span></label>
                                 <select
@@ -389,6 +498,51 @@ const NewAdmission = () => {
                                         <option key={s._id} value={s._id}>{s.name}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Roll Number</label>
+                                <input
+                                    name="rollNo"
+                                    value={formData.rollNo}
+                                    onChange={handleChange}
+                                    type="text"
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all"
+                                    placeholder="Manual or Auto"
+                                />
+                            </div>
+                        </div>
+
+                        {/* 4. Previous History */}
+                        <div className="pt-6 border-t border-gray-100">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                                    <School size={18} />
+                                </div>
+                                <h2 className="text-[11px] font-black text-gray-800 uppercase tracking-[0.2em]">Previous History</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Previous School Name</label>
+                                    <input
+                                        name="prevSchool"
+                                        value={formData.prevSchool}
+                                        onChange={handleChange}
+                                        type="text"
+                                        className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-amber-50 focus:bg-white focus:border-amber-200 outline-none transition-all"
+                                        placeholder="Last Attended School"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Last Class Passed</label>
+                                    <input
+                                        name="lastClass"
+                                        value={formData.lastClass}
+                                        onChange={handleChange}
+                                        type="text"
+                                        className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-amber-50 focus:bg-white focus:border-amber-200 outline-none transition-all"
+                                        placeholder="e.g. Class 5"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -421,15 +575,35 @@ const NewAdmission = () => {
                                 {formData.transportRequired && (
                                     <div className="grid grid-cols-1 gap-4 animate-in slide-in-from-top-2 duration-300">
                                         <div className="space-y-1">
-                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Route / Stop</label>
-                                            <input
+                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Select Route</label>
+                                            <select
                                                 name="routeId"
                                                 value={formData.routeId}
                                                 onChange={handleChange}
-                                                placeholder="Route or Stop Name"
-                                                className="w-full p-3 rounded-xl border border-gray-100 bg-white text-xs font-bold focus:ring-4 focus:ring-pink-50 outline-none transition-all"
-                                            />
+                                                className="w-full p-3 rounded-xl border border-gray-100 bg-white text-xs font-bold focus:ring-4 focus:ring-pink-50 outline-none transition-all appearance-none"
+                                            >
+                                                <option value="">Select Route</option>
+                                                {transportRoutes.map(r => (
+                                                    <option key={r._id} value={r._id}>{r.name} ({r.code})</option>
+                                                ))}
+                                            </select>
                                         </div>
+                                        {formData.routeId && (
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Select Stop</label>
+                                                <select
+                                                    name="stopId"
+                                                    value={formData.stopId}
+                                                    onChange={handleChange}
+                                                    className="w-full p-3 rounded-xl border border-gray-100 bg-white text-xs font-bold focus:ring-4 focus:ring-pink-50 outline-none transition-all appearance-none"
+                                                >
+                                                    <option value="">Select Stop</option>
+                                                    {transportRoutes.find(r => r._id === formData.routeId)?.stops?.map(s => (
+                                                        <option key={s._id} value={s._id}>{s.name} ({s.pickupTime})</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -453,17 +627,16 @@ const NewAdmission = () => {
                                     <div className="grid grid-cols-1 gap-4 animate-in slide-in-from-top-2 duration-300">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
-                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Type</label>
+                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Preference</label>
                                                 <select
                                                     name="roomType"
                                                     value={formData.roomType}
                                                     onChange={handleChange}
                                                     className="w-full p-3 rounded-xl border border-gray-100 bg-white text-xs font-bold focus:ring-4 focus:ring-indigo-50 outline-none transition-all appearance-none"
                                                 >
-                                                    <option value="">Select</option>
-                                                    <option>Single</option>
-                                                    <option>Double</option>
-                                                    <option>Dormitory</option>
+                                                    <option value="">Select Room</option>
+                                                    <option value="AC">AC Room</option>
+                                                    <option value="Non-AC">Non-AC Room</option>
                                                 </select>
                                             </div>
                                             <div className="space-y-1">
@@ -474,9 +647,9 @@ const NewAdmission = () => {
                                                     onChange={handleChange}
                                                     className="w-full p-3 rounded-xl border border-gray-100 bg-white text-xs font-bold focus:ring-4 focus:ring-indigo-50 outline-none transition-all appearance-none"
                                                 >
-                                                    <option value="">Select</option>
-                                                    <option>AC</option>
-                                                    <option>Non-AC</option>
+                                                    <option value="">Select Bed</option>
+                                                    <option value="Single">Single Bed</option>
+                                                    <option value="Bunk">Bunk Bed</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -495,21 +668,9 @@ const NewAdmission = () => {
                             <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Parent & Contact Details</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parent/Guardian Name <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    name="parentName"
-                                    value={formData.parentName}
-                                    onChange={handleChange}
-                                    type="text"
-                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
-                                    placeholder="Parent Full Name"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parent Email <span className="text-red-500">*</span></label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parent/Guardian Email <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input
@@ -520,24 +681,6 @@ const NewAdmission = () => {
                                         type="email"
                                         className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
                                         placeholder="parent@example.com"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number <span className="text-red-500">*</span></label>
-                                <div className="relative">
-                                    <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        required
-                                        name="parentMobile"
-                                        value={formData.parentMobile}
-                                        onChange={handleChange}
-                                        type="tel"
-                                        className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
-                                        placeholder="+91 XXXXX XXXXX"
                                     />
                                 </div>
                             </div>
@@ -555,7 +698,7 @@ const NewAdmission = () => {
                             ></textarea>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">City / District</label>
                                 <input
@@ -565,6 +708,17 @@ const NewAdmission = () => {
                                     type="text"
                                     className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
                                     placeholder="City"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">State / Region</label>
+                                <input
+                                    name="state"
+                                    value={formData.state}
+                                    onChange={handleChange}
+                                    type="text"
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
+                                    placeholder="State"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -580,6 +734,124 @@ const NewAdmission = () => {
                             </div>
                         </div>
                     </section>
+
+                    {/* 5. Admission Fee Collection */}
+                    <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                <CreditCard size={18} />
+                            </div>
+                            <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Admission Fee</h2>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <input
+                                type="checkbox"
+                                checked={formData.admissionFee.collectNow}
+                                onChange={(e) => setFormData({ ...formData, admissionFee: { ...formData.admissionFee, collectNow: e.target.checked } })}
+                                className="w-5 h-5 text-indigo-600 rounded-lg border-gray-200 focus:ring-4 focus:ring-indigo-50"
+                            />
+                            <span className="text-xs font-black text-gray-700 uppercase tracking-widest">Collect admission fee now</span>
+                        </div>
+
+                        {formData.admissionFee.collectNow && (
+                            <div className="grid grid-cols-1 gap-6 animate-in slide-in-from-top-2 duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Select Fee Structure <span className="text-red-500">*</span></label>
+                                    <select
+                                        required
+                                        value={formData.admissionFee.feeStructureId}
+                                        onChange={(e) => {
+                                            const fs = feeStructures.find(f => f._id === e.target.value);
+                                            const amt = fs?.installments?.[0]?.amount ?? fs?.totalAmount ?? '';
+                                            setFormData({ ...formData, admissionFee: { ...formData.admissionFee, feeStructureId: e.target.value, amount: amt } });
+                                        }}
+                                        className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:bg-white focus:border-blue-200 outline-none transition-all appearance-none"
+                                    >
+                                        <option value="">Select Structure</option>
+                                        {feeStructures.filter(fs => {
+                                            if (!fs.applicableClasses?.length) return true;
+                                            if (!formData.classId) return true;
+                                            return fs.applicableClasses.map(c => c._id || c).includes(formData.classId);
+                                        }).map(fs => (
+                                            <option key={fs._id} value={fs._id}>
+                                                {fs.name} {fs.totalAmount ? `– ₹${fs.totalAmount.toLocaleString('en-IN')}` : ''}
+                                            </option>
+                                        ))}
+                                        {feeStructures.filter(fs => {
+                                            if (!fs.applicableClasses?.length) return true;
+                                            if (!formData.classId) return true;
+                                            return fs.applicableClasses.map(c => c._id || c).includes(formData.classId);
+                                        }).length === 0 && (
+                                                <option value="" disabled>No fee structure for this branch/year</option>
+                                            )}
+                                    </select>
+                                    {feeStructures.filter(fs => {
+                                        if (!fs.applicableClasses?.length) return true;
+                                        if (!formData.classId) return true;
+                                        return fs.applicableClasses.map(c => c._id || c).includes(formData.classId);
+                                    }).length === 0 && formData.branchId && (
+                                            <p className="text-[10px] text-amber-600 mt-1 font-bold">Add a fee structure under Finance for this branch and academic year.</p>
+                                        )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Amount (₹) <span className="text-red-500">*</span></label>
+                                        <input
+                                            required
+                                            type="number"
+                                            value={formData.admissionFee.amount}
+                                            onChange={(e) => setFormData({ ...formData, admissionFee: { ...formData.admissionFee, amount: e.target.value } })}
+                                            className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:bg-white focus:border-blue-200 outline-none transition-all"
+                                            placeholder={(() => {
+                                                const fs = feeStructures.find(f => f._id === formData.admissionFee.feeStructureId);
+                                                const suggested = fs?.installments?.[0]?.amount ?? fs?.totalAmount;
+                                                return suggested ? `Suggested: ${suggested}` : 'Enter amount';
+                                            })()}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Payment Method</label>
+                                        <select
+                                            value={formData.admissionFee.paymentMethod}
+                                            onChange={(e) => setFormData({ ...formData, admissionFee: { ...formData.admissionFee, paymentMethod: e.target.value } })}
+                                            className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:bg-white focus:border-blue-200 outline-none transition-all appearance-none"
+                                        >
+                                            <option>Cash</option>
+                                            <option>Cheque</option>
+                                            <option>Bank Transfer</option>
+                                            <option>Online</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Transaction / Reference ID</label>
+                                        <input
+                                            type="text"
+                                            value={formData.admissionFee.transactionId}
+                                            onChange={(e) => setFormData({ ...formData, admissionFee: { ...formData.admissionFee, transactionId: e.target.value } })}
+                                            className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:bg-white focus:border-blue-200 outline-none transition-all"
+                                            placeholder="Optional"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Remarks</label>
+                                        <input
+                                            type="text"
+                                            value={formData.admissionFee.remarks}
+                                            onChange={(e) => setFormData({ ...formData, admissionFee: { ...formData.admissionFee, remarks: e.target.value } })}
+                                            className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:bg-white focus:border-blue-200 outline-none transition-all"
+                                            placeholder="e.g. First installment"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </section>
                 </div>
 
                 <div className="space-y-8">
@@ -593,18 +865,24 @@ const NewAdmission = () => {
                         </div>
 
                         <div className="space-y-4">
-                            {Object.entries(formData.documents).map(([key, doc]) => (
-                                <div key={key} className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{doc.name}</label>
+                            {[
+                                { key: 'photo', name: 'Student Photograph', type: 'Image' },
+                                { key: 'birthCert', name: 'Birth Certificate', type: 'PDF' },
+                                { key: 'transferCert', name: 'Transfer Certificate (TC)', type: 'PDF' },
+                                { key: 'aadhar', name: 'Aadhaar Card Copy', type: 'PDF' },
+                                { key: 'prevMarksheet', name: 'Previous Year Marksheet', type: 'PDF' }
+                            ].map((docType) => (
+                                <div key={docType.key} className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{docType.name}</label>
                                     <div className="relative group overflow-hidden bg-gray-50 border-2 border-dashed border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 rounded-2xl transition-all cursor-pointer">
                                         <input
                                             type="file"
-                                            onChange={(e) => handleFileChange(e, key)}
+                                            onChange={(e) => handleFileChange(e, docType.key)}
                                             className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                            accept="image/*,.pdf"
+                                            accept={docType.type === 'Image' ? "image/*" : ".pdf,.doc,.docx"}
                                         />
                                         <div className="p-4 flex items-center gap-4">
-                                            {doc.base64 ? (
+                                            {formData.documents[docType.key] ? (
                                                 <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shrink-0">
                                                     <CheckCircle size={20} />
                                                 </div>
@@ -614,8 +892,8 @@ const NewAdmission = () => {
                                                 </div>
                                             )}
                                             <div className="min-w-0">
-                                                <p className="text-xs font-black text-gray-700 truncate">{doc.fileName || 'Click to upload'}</p>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase">{doc.base64 ? 'Ready for cloud upload' : 'Max size 2MB'}</p>
+                                                <p className="text-xs font-black text-gray-700 truncate">{formData.documents[docType.key]?.name || 'Click to upload'}</p>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase">{formData.documents[docType.key] ? 'Ready for Cloud' : 'Max size 5MB'}</p>
                                             </div>
                                         </div>
                                     </div>

@@ -4,7 +4,9 @@ import TeacherLayout from './layouts/TeacherLayout';
 import TeacherAuthGuard from './components/auth/TeacherAuthGuard';
 import Login from './pages/auth/Login';
 import TeacherDashboard from './pages/Dashboard';
+import MyAttendance from './pages/MyAttendance';
 import ClassesPage from './pages/Classes';
+
 import AttendancePage from './pages/Attendance';
 import HomeworkPage from './pages/Homework';
 import ExamsPage from './pages/Exams';
@@ -35,23 +37,25 @@ const teacherRoutes = [
                     {
                         element: <TeacherLayout />,
                         children: [
-                    { path: 'dashboard', element: <TeacherDashboard /> },
-                    { path: 'classes', element: <ClassesPage /> },
-                    { path: 'classes/:id', element: <ClassDetailPage /> },
-                    { path: 'attendance', element: <AttendancePage /> },
-                    { path: 'homework', element: <HomeworkPage /> },
-                    { path: 'homework/:id', element: <HomeworkDetailPage /> },
-                    { path: 'homework/:id/submissions', element: <SubmissionsPage /> },
-                    { path: 'homework/submissions', element: <SubmissionsPage /> },
-                    { path: 'exams', element: <ExamsPage /> },
-                    { path: 'exams/:id', element: <ExamDetailPage /> },
-                    { path: 'reports', element: <ReportsPage /> },
-                    { path: 'profile', element: <ProfilePage /> },
-                    { path: 'payroll', element: <TeacherPayroll /> },
-                    { path: 'notices', element: <NoticesPage /> },
-                    { path: 'notices/:id', element: <NoticeDetail /> },
-                    { path: 'support', element: <SupportPage /> },
-                    { path: 'help', element: <TeacherHelpPage /> },
+                            { path: 'dashboard', element: <TeacherDashboard /> },
+                            { path: 'my-attendance', element: <MyAttendance /> },
+                            { path: 'classes', element: <ClassesPage /> },
+
+                            { path: 'classes/:id', element: <ClassDetailPage /> },
+                            { path: 'attendance', element: <AttendancePage /> },
+                            { path: 'homework', element: <HomeworkPage /> },
+                            { path: 'homework/:id', element: <HomeworkDetailPage /> },
+                            { path: 'homework/:id/submissions', element: <SubmissionsPage /> },
+                            { path: 'homework/submissions', element: <SubmissionsPage /> },
+                            { path: 'exams', element: <ExamsPage /> },
+                            { path: 'exams/:id', element: <ExamDetailPage /> },
+                            { path: 'reports', element: <ReportsPage /> },
+                            { path: 'profile', element: <ProfilePage /> },
+                            { path: 'payroll', element: <TeacherPayroll /> },
+                            { path: 'notices', element: <NoticesPage /> },
+                            { path: 'notices/:id', element: <NoticeDetail /> },
+                            { path: 'support', element: <SupportPage /> },
+                            { path: 'help', element: <TeacherHelpPage /> },
                         ]
                     }
                 ]

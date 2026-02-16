@@ -10,7 +10,6 @@ import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 const router = express.Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
 
 router.post("/", createFeeStructure);
 router.get("/", getFeeStructures);
