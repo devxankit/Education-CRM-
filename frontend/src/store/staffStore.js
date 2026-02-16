@@ -8,13 +8,14 @@ import { initialAssets, initialInventory } from '../modules/staff/data/inventory
 import { getAllStudents, admitStudent, updateStudentInfo, confirmAdmission as confirmAdmissionApi } from '../modules/staff/services/student.api';
 import * as supportApi from '../modules/staff/services/support.api';
 import { getMyNotices } from '../modules/staff/services/notices.api';
+import { fetchTeachers as fetchTeachersApi, createTeacher as createTeacherApi, updateTeacher as updateTeacherApi, deleteTeacher as deleteTeacherApi } from '../modules/staff/services/staff.api';
 
 export const useStaffStore = create(
     persist(
         (set, get) => ({
             // State
             students: [],
-            teachers: initialTeachers,
+            teachers: [], // Change from initialTeachers to empty array
             employees: [], // Add if needed
             tickets: [],
             notices: [], // Initial empty array
@@ -164,15 +165,87 @@ export const useStaffStore = create(
             })),
 
             // Actions: Teachers
-            addTeacher: (teacher) => set((state) => ({
-                teachers: [...state.teachers, { ...teacher, id: `TCH-${Date.now()}`, status: 'Active' }]
-            })),
-            updateTeacher: (id, data) => set((state) => ({
-                teachers: state.teachers.map(t => t.id === id ? { ...t, ...data } : t)
-            })),
-            deleteTeacher: (id) => set((state) => ({
-                teachers: state.teachers.filter(t => t.id !== id)
-            })),
+            fetchTeachers: async () => {
+                try {
+                    const data = await fetchTeachersApi();
+                    const mapped = data.map(t => ({
+                        ...t,
+                        id: t._id || t.id,
+                        name: `${t.firstName} ${t.lastName}`,
+                        employeeId: t.employeeId,
+                        subjects: t.eligibleSubjects ? t.eligibleSubjects.map(s => s.name || s) : [],
+                        type: t.designation || 'Permanent',
+                        status: t.teachingStatus || 'Active',
+                        doj: t.joiningDate ? new Date(t.joiningDate).toISOString().split('T')[0] : 'N/A',
+                        contact: {
+                            phone: t.phone || 'N/A',
+                            email: t.email || 'N/A',
+                            address: t.address || 'N/A'
+                        },
+                        academics: {
+                            subjects: t.eligibleSubjects ? t.eligibleSubjects.map(s => s.name || s) : [],
+                            classes: t.assignedClasses || [] // Assuming backend might provide this or keep empty
+                        },
+                        payroll: {
+                            salary: t.salary || 0,
+                            type: t.salaryType || 'Monthly',
+                            deductions: t.deductions || 0,
+                            status: t.lastPayrollStatus || 'N/A'
+                        },
+                        documents: t.documents || []
+                    }));
+                    set({ teachers: mapped });
+                } catch (err) {
+                    console.error("Failed to fetch teachers", err);
+                }
+            },
+
+            addTeacher: async (teacherData) => {
+                try {
+                    const response = await createTeacherApi(teacherData);
+                    if (response.success) {
+                        const newTeacher = { ...response.data, id: response.data._id };
+                        // Re-fetch or update local state
+                        set((state) => ({
+                            teachers: [...state.teachers, newTeacher]
+                        }));
+                        return response;
+                    }
+                    return response;
+                } catch (err) {
+                    console.error("Failed to add teacher", err);
+                    throw err;
+                }
+            },
+
+            updateTeacher: async (id, data) => {
+                try {
+                    const response = await updateTeacherApi(id, data);
+                    if (response.success) {
+                        set((state) => ({
+                            teachers: state.teachers.map(t => (t.id === id || t._id === id) ? { ...t, ...response.data } : t)
+                        }));
+                    }
+                    return response;
+                } catch (err) {
+                    console.error("Failed to update teacher", err);
+                    throw err;
+                }
+            },
+            deleteTeacher: async (id) => {
+                try {
+                    const response = await deleteTeacherApi(id);
+                    if (response.success) {
+                        set((state) => ({
+                            teachers: state.teachers.filter(t => (t.id !== id && t._id !== id))
+                        }));
+                    }
+                    return response;
+                } catch (err) {
+                    console.error("Failed to delete teacher", err);
+                    throw err;
+                }
+            },
 
             // Actions: Finance
             addExpense: (expense) => set((state) => ({

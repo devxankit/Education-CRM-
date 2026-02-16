@@ -109,10 +109,11 @@ export const createTeacher = async (req, res) => {
             firstName, lastName, email,
             phone, branchId, department,
             designation, roleId, experience, joiningDate,
-            academicLevel, teachingStatus, status
+            academicLevel, teachingStatus, status,
+            address, documents
         } = req.body;
         let { employeeId } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.role === 'institute' ? req.user._id : req.user.instituteId;
 
         // Generate Random Employee ID if not provided
         if (!employeeId) {
@@ -151,6 +152,8 @@ export const createTeacher = async (req, res) => {
             joiningDate: joiningDate || new Date(),
             teachingStatus: teachingStatus || 'Active',
             status: status || 'active',
+            address,
+            documents,
             passwordChangedAt: new Date()
         });
 

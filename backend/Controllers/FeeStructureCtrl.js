@@ -73,7 +73,7 @@ export const getFeeStructures = async (req, res) => {
     try {
         const { branchId, academicYearId, status } = req.query;
 
-        let query = { };
+        let query = {};
 
         if (branchId && mongoose.Types.ObjectId.isValid(branchId)) {
             query.branchId = branchId;

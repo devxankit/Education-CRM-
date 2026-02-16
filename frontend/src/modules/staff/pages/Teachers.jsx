@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { useNavigate } from 'react-router-dom';
@@ -9,8 +9,13 @@ const Teachers = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
     const teachers = useStaffStore(state => state.teachers);
+    const fetchTeachers = useStaffStore(state => state.fetchTeachers);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('All'); // All | Permanent | Contract
+
+    useEffect(() => {
+        fetchTeachers();
+    }, [fetchTeachers]);
 
     // Only DATA_ENTRY can add teachers
     const canAddTeacher = user?.role === STAFF_ROLES.DATA_ENTRY;

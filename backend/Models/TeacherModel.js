@@ -55,9 +55,21 @@ const teacherSchema = new mongoose.Schema(
         experience: {
             type: String,
         },
+        address: {
+            type: String,
+        },
         joiningDate: {
             type: Date,
         },
+        documents: [{
+            name: String,
+            url: String,
+            status: {
+                type: String,
+                enum: ["Pending", "Verified", "Rejected"],
+                default: "Pending"
+            }
+        }],
         teachingStatus: {
             type: String,
             enum: ["Active", "On Leave", "Inactive"],

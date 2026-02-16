@@ -101,10 +101,16 @@ export const fetchEmployeeById = async (employeeId) => {
  * @returns {Promise<Array>} List of teachers
  */
 export const fetchTeachers = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_TEACHERS), 300);
-    });
+    try {
+        const response = await axios.get(`${API_URL}/teacher`, getAuthHeaders());
+        if (response.data.success) {
+            return response.data.data;
+        }
+        return [];
+    } catch (error) {
+        console.error("Error fetching teachers:", error);
+        return [];
+    }
 };
 
 /**
@@ -113,13 +119,59 @@ export const fetchTeachers = async () => {
  * @returns {Promise<Object|null>} Teacher object or null
  */
 export const fetchTeacherById = async (teacherId) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const teacher = MOCK_TEACHERS.find(t => t.id === teacherId);
-            resolve(teacher || null);
-        }, 300);
-    });
+    try {
+        const response = await axios.get(`${API_URL}/teacher/${teacherId}`, getAuthHeaders());
+        if (response.data.success) {
+            return response.data.data;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching teacher by ID:", error);
+        return null;
+    }
+};
+
+/**
+ * Create a new teacher
+ * @param {Object} teacherData - Teacher details
+ * @returns {Promise<Object>} Response object
+ */
+export const createTeacher = async (teacherData) => {
+    try {
+        const response = await axios.post(`${API_URL}/teacher`, teacherData, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        return error.response?.data || { success: false, message: "Network error" };
+    }
+};
+
+/**
+ * Update a teacher
+ * @param {string} id - Teacher ID
+ * @param {Object} teacherData - Updated details
+ * @returns {Promise<Object>} Response object
+ */
+export const updateTeacher = async (id, teacherData) => {
+    try {
+        const response = await axios.put(`${API_URL}/teacher/${id}`, teacherData, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        return error.response?.data || { success: false, message: "Network error" };
+    }
+};
+
+/**
+ * Delete a teacher
+ * @param {string} id - Teacher ID
+ * @returns {Promise<Object>} Response object
+ */
+export const deleteTeacher = async (id) => {
+    try {
+        const response = await axios.delete(`${API_URL}/teacher/${id}`, getAuthHeaders());
+        return response.data;
+    } catch (error) {
+        return error.response?.data || { success: false, message: "Network error" };
+    }
 };
 
 export default {

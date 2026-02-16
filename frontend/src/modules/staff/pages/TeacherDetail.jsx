@@ -16,6 +16,7 @@ const TeacherDetail = () => {
     const navigate = useNavigate();
     const { user } = useStaffAuth();
     const teachers = useStaffStore(state => state.teachers);
+    const fetchTeachers = useStaffStore(state => state.fetchTeachers);
 
     const [teacher, setTeacher] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,21 +24,24 @@ const TeacherDetail = () => {
 
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
 
-    // Fetch teacher data from store based on ID
+    // 1. Fetch teachers if list is empty
     useEffect(() => {
-        setLoading(true);
-        setError(null);
+        if (teachers.length === 0) {
+            fetchTeachers();
+        }
+    }, [fetchTeachers, teachers.length]);
 
-        // Simulate small delay for feel
-        setTimeout(() => {
-            const foundTeacher = teachers.find(t => t.id === teacherId);
-            if (foundTeacher) {
-                setTeacher(foundTeacher);
-            } else {
-                setError('Teacher not found');
-            }
+    // 2. Find specific teacher when list updates or ID changes
+    useEffect(() => {
+        const foundTeacher = teachers.find(t => t.id === teacherId);
+        if (foundTeacher) {
+            setTeacher(foundTeacher);
+            setError(null);
             setLoading(false);
-        }, 100);
+        } else if (teachers.length > 0) {
+            setError('Teacher not found');
+            setLoading(false);
+        }
     }, [teacherId, teachers]);
 
     // Loading state
