@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertTriangle, Loader2 } from 'lucide-react';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 
 // Components
 import InstallmentRulesPanel from './components/fee-policies/InstallmentRulesPanel';
@@ -10,7 +10,8 @@ import DiscountRulesPanel from './components/fee-policies/DiscountRulesPanel';
 import RefundRulesPanel from './components/fee-policies/RefundRulesPanel';
 
 const FeePolicies = () => {
-    const { academicYears, fetchAcademicYears, fetchFeePolicy, saveFeePolicy } = useAdminStore();
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
+    const { fetchAcademicYears, fetchFeePolicy, saveFeePolicy } = useAdminStore();
 
     // Global State
     const [academicYearId, setAcademicYearId] = useState('');
@@ -25,10 +26,11 @@ const FeePolicies = () => {
     }, [fetchAcademicYears]);
 
     useEffect(() => {
-        if (academicYears.length > 0 && !academicYearId) {
-            setAcademicYearId(academicYears[0]._id);
+        const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
+        if (academicYears.length > 0 && !academicYearId && active) {
+            setAcademicYearId(active._id);
         }
-    }, [academicYears]);
+    }, [academicYears, academicYearId]);
 
     useEffect(() => {
         const loadPolicy = async () => {

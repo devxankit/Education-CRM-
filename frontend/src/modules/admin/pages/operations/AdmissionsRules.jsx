@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertTriangle, Loader2 } from 'lucide-react';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 
 // Components
 import AdmissionWindowPanel from './components/admissions-rules/AdmissionWindowPanel';
@@ -11,7 +11,8 @@ import SeatCapacityPanel from './components/admissions-rules/SeatCapacityPanel';
 import AdmissionWorkflowPanel from './components/admissions-rules/AdmissionWorkflowPanel';
 
 const AdmissionRules = () => {
-    const { academicYears, fetchAcademicYears, fetchAdmissionRule, saveAdmissionRule } = useAdminStore();
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
+    const { fetchAcademicYears, fetchAdmissionRule, saveAdmissionRule } = useAdminStore();
 
     // Global State
     const [academicYearId, setAcademicYearId] = useState('');
@@ -26,8 +27,9 @@ const AdmissionRules = () => {
     }, [fetchAcademicYears]);
 
     useEffect(() => {
-        if (academicYears.length > 0 && !academicYearId) {
-            setAcademicYearId(academicYears[0]._id);
+        const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
+        if (academicYears.length > 0 && !academicYearId && active) {
+            setAcademicYearId(active._id);
         }
     }, [academicYears, academicYearId]);
 

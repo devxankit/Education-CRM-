@@ -7,7 +7,6 @@ const SystemDefaultsForm = ({ values, onChange }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                {/* Dashboard Landings */}
                 <div>
                     <label className="block text-sm font-bold text-gray-800 mb-2">Default Dashboard Landing Pages</label>
                     <p className="text-xs text-gray-500 mb-4">Set the first page users see upon login based on their role.</p>

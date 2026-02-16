@@ -369,7 +369,7 @@ export const getParentDashboard = async (req, res) => {
                 // Calculate totals across all structures
                 for (const fs of feeStructures) {
                     const baseAmount = fs.totalAmount || 0;
-                    const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fees");
+                    const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fee");
 
                     totalAmount += (baseAmount + totalTax);
 
@@ -662,7 +662,7 @@ export const getChildFees = async (req, res) => {
         let grandPaid = 0;
         const breakdown = feeStructures.map(fs => {
             const baseAmount = fs.totalAmount || 0;
-            const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fees");
+            const { totalTax } = calculateTaxFromRules(baseAmount, taxes, "fee");
             const fsTotal = baseAmount + totalTax;
 
             const structurePayments = payments.filter(

@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Users, User, Edit, Ban } from 'lucide-react';
+import { Users, User, Edit, Ban, ArchiveRestore } from 'lucide-react';
 
-const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => {
+const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate, onReactivate }) => {
 
     if (!sections || sections.length === 0) {
         return (
@@ -23,44 +23,46 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
     }
 
     return (
-        <div className="h-full flex flex-col">
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
-                        <tr>
-                            <th className="px-6 py-3 font-medium border-b border-gray-100">Section</th>
-                            <th className="px-6 py-3 font-medium border-b border-gray-100">Capacity</th>
-                            <th className="px-6 py-3 font-medium border-b border-gray-100">Class Teacher</th>
-                            <th className="px-6 py-3 font-medium border-b border-gray-100">Status</th>
-                            <th className="px-6 py-3 border-b border-gray-100"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 text-sm bg-white">
-                        {sections.map((sec) => (
-                            <tr key={sec._id || sec.id} className="group hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4">
+        <div className="overflow-x-auto">
+            <table className="w-full text-left">
+                <thead className="sticky top-0 z-10 bg-gray-100 border-b-2 border-gray-200 shadow-sm">
+                    <tr>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Section</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Capacity</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Class Teacher</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm bg-white">
+                    {sections.map((sec) => (
+                        <tr key={sec._id || sec.id} className="group hover:bg-indigo-50/50 transition-colors">
+                                <td className="px-6 py-4 align-middle">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                                        <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
                                             {sec.name}
                                         </div>
+                                        <span className="font-semibold text-gray-900">{sec.name}</span>
                                     </div>
                                 </td>
 
-                                <td className="px-6 py-4 text-gray-600">
+                                <td className="px-6 py-4 align-middle">
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-gray-800">{sec.studentCount || 0} / {sec.capacity}</span>
-                                        <div className="w-24 bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${((sec.studentCount || 0) / sec.capacity) > 0.9 ? 'bg-red-500' :
-                                                        ((sec.studentCount || 0) / sec.capacity) > 0.7 ? 'bg-amber-500' : 'bg-green-500'
-                                                    }`}
-                                                style={{ width: `${Math.min(((sec.studentCount || 0) / sec.capacity) * 100, 100)}%` }}
-                                            ></div>
-                                        </div>
+                                        <span className="font-semibold text-gray-800">{sec.studentCount ?? 0} / {sec.capacity ?? 40}</span>
+                                        {sec.capacity > 0 && (
+                                            <div className="w-24 bg-gray-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all ${((sec.studentCount || 0) / sec.capacity) > 0.9 ? 'bg-red-500' :
+                                                            ((sec.studentCount || 0) / sec.capacity) > 0.7 ? 'bg-amber-500' : 'bg-green-500'
+                                                        }`}
+                                                    style={{ width: `${Math.min(((sec.studentCount || 0) / sec.capacity) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </td>
 
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 align-middle">
                                     {(sec.teacherId?.name || sec.teacherName) ? (
                                         <div className="flex items-center gap-2 text-gray-700 text-xs bg-gray-50 px-2 py-1 rounded w-fit border border-gray-200">
                                             <User size={12} /> {sec.teacherId?.name || sec.teacherName}
@@ -70,7 +72,7 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
                                     )}
                                 </td>
 
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 align-middle">
                                     {sec.status === 'active' ? (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700 border border-green-100">
                                             Active
@@ -82,23 +84,35 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
                                     )}
                                 </td>
 
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <td className="px-6 py-4 text-right align-middle">
+                                    <div className="flex items-center justify-end gap-1">
                                         <button
-                                            onClick={() => onEdit(sec)}
-                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                                            onClick={(e) => { e.stopPropagation?.(); onEdit(sec); }}
+                                            className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                             title="Edit Section"
                                         >
-                                            <Edit size={14} />
+                                            <Edit size={16} />
                                         </button>
-                                        {sec.status === 'active' && (
-                                            <button
-                                                onClick={() => onDeactivate(sec)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                                                title="Deactivate Section"
-                                            >
-                                                <Ban size={14} />
-                                            </button>
+                                        {sec.status === 'active' ? (
+                                            onDeactivate && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation?.(); onDeactivate(sec); }}
+                                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Deactivate Section"
+                                                >
+                                                    <Ban size={16} />
+                                                </button>
+                                            )
+                                        ) : (
+                                            onReactivate && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation?.(); onReactivate(sec); }}
+                                                    className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                    title="Reactivate Section"
+                                                >
+                                                    <ArchiveRestore size={16} />
+                                                </button>
+                                            )
                                         )}
                                     </div>
                                 </td>
@@ -106,7 +120,6 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate }) => 
                         ))}
                     </tbody>
                 </table>
-            </div>
         </div>
     );
 };

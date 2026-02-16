@@ -21,6 +21,7 @@ export const getExams = asyncHandler(async (req, res) => {
 
     const exams = await Exam.find(query)
         .populate("classes", "name")
+        .populate("courses", "name code")
         .populate("academicYearId", "name")
         .populate("subjects.subjectId", "name code")
         .sort({ startDate: -1 });
@@ -52,12 +53,18 @@ export const createExam = asyncHandler(async (req, res) => {
         endDate,
         description,
         classes,
+        courses,
         subjects,
         status
     } = req.body;
 
-    if (!academicYearId || !examName || !startDate || !endDate || !classes || classes.length === 0) {
+    const hasClasses = classes && classes.length > 0;
+    const hasCourses = courses && courses.length > 0;
+    if (!academicYearId || !examName || !startDate || !endDate) {
         return res.status(400).json({ success: false, message: "Please provide all required fields" });
+    }
+    if (!hasClasses && !hasCourses) {
+        return res.status(400).json({ success: false, message: "Please select at least one class or course" });
     }
 
     if (!branchId) {
@@ -86,7 +93,8 @@ export const createExam = asyncHandler(async (req, res) => {
         startDate,
         endDate,
         description,
-        classes,
+        classes: classes || [],
+        courses: courses || [],
         subjects,
         status: status || "Published"
     });
@@ -103,6 +111,7 @@ export const createExam = asyncHandler(async (req, res) => {
 export const getExamById = asyncHandler(async (req, res) => {
     const exam = await Exam.findById(req.params.id)
         .populate("classes", "name")
+        .populate("courses", "name code")
         .populate("academicYearId", "name")
         .populate("subjects.subjectId", "name code");
 

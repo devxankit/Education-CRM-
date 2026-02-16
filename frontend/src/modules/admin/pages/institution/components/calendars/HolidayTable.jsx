@@ -4,8 +4,20 @@ import { Calendar, Trash2, Edit } from 'lucide-react';
 
 const HolidayTable = ({ holidays, onEdit, onDeactivate, isSuperAdmin }) => {
 
-    // Sort logic: Date ascending for current view context
-    const sorted = [...holidays].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const formatDate = (d) => {
+        if (!d) return '—';
+        const x = new Date(d);
+        return isNaN(x.getTime()) ? '—' : x.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+    const getDateDisplay = (h) => {
+        const start = formatDate(h.startDate);
+        if (h.isRange && h.endDate && String(h.startDate) !== String(h.endDate)) {
+            const end = formatDate(h.endDate);
+            return `${start} – ${end}`;
+        }
+        return start;
+    };
+    const sorted = [...holidays].sort((a, b) => new Date(a.startDate || a.date) - new Date(b.startDate || b.date));
 
     if (!holidays || holidays.length === 0) {
         return (
@@ -36,7 +48,7 @@ const HolidayTable = ({ holidays, onEdit, onDeactivate, isSuperAdmin }) => {
                         {sorted.map((holiday) => (
                             <tr key={holiday._id || holiday.id} className={`hover:bg-gray-50 transition-colors ${holiday.status === 'inactive' ? 'opacity-50 bg-gray-50' : ''}`}>
                                 <td className="px-6 py-4 font-mono text-gray-600">
-                                    {holiday.date}
+                                    {getDateDisplay(holiday)}
                                 </td>
 
                                 <td className="px-6 py-4 font-medium text-gray-900">
@@ -58,14 +70,14 @@ const HolidayTable = ({ holidays, onEdit, onDeactivate, isSuperAdmin }) => {
 
                                 <td className="px-6 py-4 text-xs text-gray-500">
                                     <div className="flex flex-wrap gap-1">
-                                        {holiday.applicableTo.includes('students') && <span className="bg-gray-100 px-1.5 rounded">Students</span>}
-                                        {holiday.applicableTo.includes('teachers') && <span className="bg-gray-100 px-1.5 rounded">Teachers</span>}
-                                        {holiday.applicableTo.includes('staff') && <span className="bg-gray-100 px-1.5 rounded">Staff</span>}
+                                        {Array.isArray(holiday.applicableTo) && holiday.applicableTo.includes('students') && <span className="bg-gray-100 px-1.5 rounded">Students</span>}
+                                        {Array.isArray(holiday.applicableTo) && holiday.applicableTo.includes('teachers') && <span className="bg-gray-100 px-1.5 rounded">Teachers</span>}
+                                        {Array.isArray(holiday.applicableTo) && holiday.applicableTo.includes('staff') && <span className="bg-gray-100 px-1.5 rounded">Staff</span>}
                                     </div>
                                 </td>
 
                                 <td className="px-6 py-4 text-right">
-                                    {isSuperAdmin && holiday.status === 'active' && (
+                                    {isSuperAdmin && holiday.status !== 'inactive' && (
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => onEdit(holiday)}

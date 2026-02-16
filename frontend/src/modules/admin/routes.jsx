@@ -34,6 +34,7 @@ import Taxes from './pages/finance/Taxes';
 // Academic Management Pages
 import Classes from './pages/academics/Classes';
 import Sections from './pages/academics/Sections';
+import ClassSectionsDetail from './pages/academics/ClassSectionsDetail';
 import SubjectsMaster from './pages/academics/SubjectsMaster';
 import WeeklyTimetable from './pages/academics/WeeklyTimetable';
 import ProgramsMaster from './pages/academics/ProgramsMaster';
@@ -129,6 +130,7 @@ const adminRoutes = [
                     // 4. Academic Management (Changed 'academic' to 'academics')
                     { path: 'academics/classes', element: <Classes /> },
                     { path: 'academics/sections', element: <Sections /> },
+                    { path: 'academics/sections/:classId', element: <ClassSectionsDetail /> },
 
                     { path: 'academics/subjects', element: <SubjectsMaster /> },
                     { path: 'academics/programs', element: <ProgramsMaster /> },

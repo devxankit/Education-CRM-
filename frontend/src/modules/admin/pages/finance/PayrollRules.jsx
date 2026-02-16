@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertTriangle, Loader2 } from 'lucide-react';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 
 // Components
 import SalaryHeadsPanel from './components/payroll-rules/SalaryHeadsPanel';
@@ -9,7 +9,8 @@ import LeaveDeductionPanel from './components/payroll-rules/LeaveDeductionPanel'
 import PayrollSchedulePanel from './components/payroll-rules/PayrollSchedulePanel';
 
 const PayrollRules = () => {
-    const { fetchPayrollRule, savePayrollRule, academicYears, fetchAcademicYears } = useAdminStore();
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
+    const { fetchPayrollRule, savePayrollRule, fetchAcademicYears } = useAdminStore();
 
     // Global State
     const [financialYear, setFinancialYear] = useState('');

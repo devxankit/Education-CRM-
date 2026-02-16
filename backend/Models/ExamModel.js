@@ -43,6 +43,12 @@ const examSchema = new mongoose.Schema(
                 ref: "Class",
             }
         ],
+        courses: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Course",
+            }
+        ],
         subjects: [
             {
                 subjectId: {

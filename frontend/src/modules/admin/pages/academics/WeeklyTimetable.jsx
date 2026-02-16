@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Plus, Trash2, Clock, MapPin, Video, Filter, AlertCircle, School, GraduationCap } from 'lucide-react';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
 const WeeklyTimetable = () => {
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const {
         branches, fetchBranches,
         classes, fetchClasses,
         courses, fetchCourses,
         sections, fetchSections,
-        academicYears, fetchAcademicYears,
+        fetchAcademicYears,
         teachers, fetchTeachers,
         fetchTimetable, saveTimetable,
         timetable,

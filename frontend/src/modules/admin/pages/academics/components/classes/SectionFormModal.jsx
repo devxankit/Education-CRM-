@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, Users, UserCheck } from 'lucide-react';
 
 const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClassId = '', initialData = null }) => {
+    const activeClasses = classes.filter(c => (c.status || 'active') === 'active');
 
     const [formData, setFormData] = useState({
         classId: initialClassId,
@@ -19,7 +20,7 @@ const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClas
                 });
             } else {
                 setFormData({
-                    classId: initialClassId || (classes[0]?._id || classes[0]?.id || ''),
+                    classId: initialClassId || (activeClasses[0]?._id || activeClasses[0]?.id || ''),
                     name: ''
                 });
             }
@@ -62,7 +63,7 @@ const SectionFormModal = ({ isOpen, onClose, onCreate, classes = [], initialClas
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
                         >
                             <option value="" disabled>-- Select Class --</option>
-                            {classes.map(cls => (
+                            {activeClasses.map(cls => (
                                 <option key={cls._id || cls.id} value={cls._id || cls.id}>{cls.name}</option>
                             ))}
                         </select>

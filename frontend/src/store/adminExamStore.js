@@ -33,7 +33,7 @@ export const useAdminExamStore = create((set, get) => ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.data.success) {
-                set(state => ({ exams: [response.data.data, ...state.exams] }));
+                await get().fetchExams();
                 return { success: true };
             }
         } catch (error) {
@@ -52,9 +52,7 @@ export const useAdminExamStore = create((set, get) => ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.data.success) {
-                set(state => ({
-                    exams: state.exams.map(e => e._id === id ? response.data.data : e)
-                }));
+                await get().fetchExams();
                 return { success: true };
             }
         } catch (error) {

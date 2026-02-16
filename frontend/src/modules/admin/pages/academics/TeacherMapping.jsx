@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Filter, Save, HelpCircle, AlertCircle, MapPin, GraduationCap, School } from 'lucide-react';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
 import MappingTable from './components/mapping/MappingTable';
 import AssignTeacherModal from './components/mapping/AssignTeacherModal';
 
 const TeacherMapping = () => {
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const {
         classes, fetchClasses,
         courses, fetchCourses,
         sections, fetchSections,
         teachers, fetchTeachers,
-        academicYears, fetchAcademicYears,
+        fetchAcademicYears,
         teacherMappings, fetchTeacherMappings,
         assignTeacherMapping, removeTeacherMapping,
         branches, fetchBranches

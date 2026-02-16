@@ -24,6 +24,7 @@ const BranchDetailDrawer = ({
             setFormData({
                 name: '',
                 code: '',
+                headName: '',
                 type: 'school',
                 establishedYear: new Date().getFullYear(),
                 address: '',
@@ -94,19 +95,21 @@ const BranchDetailDrawer = ({
                     <div className="grid grid-cols-4 border-b border-gray-100 bg-white">
                         <div className="p-4 border-r border-gray-50 text-center">
                             <h4 className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Students</h4>
-                            <p className="text-xl font-bold text-gray-800">{branch.stats?.students || 0}</p>
+                            <p className="text-xl font-bold text-gray-800">{branch.stats?.students ?? 0}</p>
                         </div>
                         <div className="p-4 border-r border-gray-50 text-center">
                             <h4 className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Staff</h4>
-                            <p className="text-xl font-bold text-gray-800">{branch.stats?.staff || 0}</p>
+                            <p className="text-xl font-bold text-gray-800">{branch.stats?.staff ?? 0}</p>
                         </div>
                         <div className="p-4 border-r border-gray-50 text-center">
-                            <h4 className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Revenue</h4>
-                            <p className="text-xl font-bold text-gray-800">84%</p>
+                            <h4 className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Teachers</h4>
+                            <p className="text-xl font-bold text-gray-800">{branch.stats?.teachers ?? 0}</p>
                         </div>
                         <div className="p-4 text-center">
-                            <h4 className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Health</h4>
-                            <p className="text-xl font-bold text-green-600">Good</p>
+                            <h4 className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Status</h4>
+                            <p className={`text-sm font-bold ${branch.isActive ? 'text-green-600' : 'text-gray-500'}`}>
+                                {branch.isActive ? 'Active' : 'Inactive'}
+                            </p>
                         </div>
                     </div>
                 )}

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Smartphone, Globe, Clock, AlertTriangle, Save, Plus, Trash2 } from 'lucide-react';
+import { Smartphone, Globe, Clock, AlertTriangle, Save, Plus, Trash2, MapPin, Filter } from 'lucide-react';
 import { API_URL } from '@/app/api';
 
 const AccessControl = () => {
@@ -16,14 +16,32 @@ const AccessControl = () => {
     });
     const [fetching, setFetching] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('all');
 
     // -- API Calls --
+
+    const fetchBranches = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/branch?activeOnly=true`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) setBranches(data.data || []);
+        } catch (e) {
+            console.error('Error fetching branches:', e);
+        }
+    }, []);
 
     const fetchPolicies = useCallback(async () => {
         setFetching(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/access-control`, {
+            const url = selectedBranchId && selectedBranchId !== 'all'
+                ? `${API_URL}/access-control?branchId=${selectedBranchId}`
+                : `${API_URL}/access-control`;
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -45,14 +63,14 @@ const AccessControl = () => {
         } finally {
             setFetching(false);
         }
-    }, []);
+    }, [selectedBranchId]);
 
-    const isInitialMount = React.useRef(true);
     useEffect(() => {
-        if (isInitialMount.current) {
-            fetchPolicies();
-            isInitialMount.current = false;
-        }
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        fetchPolicies();
     }, [fetchPolicies]);
 
     const handleSave = async () => {
@@ -61,6 +79,7 @@ const AccessControl = () => {
             const token = localStorage.getItem('token');
             const toSave = {
                 ...policies,
+                branchId: selectedBranchId && selectedBranchId !== 'all' ? selectedBranchId : 'all',
                 ipWhitelist: (policies.ipWhitelist || []).filter(ip => String(ip).trim())
             };
             const response = await fetch(`${API_URL}/access-control`, {
@@ -103,7 +122,21 @@ const AccessControl = () => {
         <div className="max-w-4xl mx-auto pb-10">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Access Control Policies</h1>
-                <p className="text-gray-500 text-sm">Configure global login security and session constraints.</p>
+                <p className="text-gray-500 text-sm">Configure login security and session constraints per branch.</p>
+                <div className="flex items-center gap-2 mt-4">
+                    <Filter size={16} className="text-gray-400" />
+                    <MapPin size={16} className="text-indigo-500" />
+                    <select
+                        value={selectedBranchId}
+                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                        className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-indigo-500 min-w-[200px]"
+                    >
+                        <option value="all">All Branches (Default)</option>
+                        {branches.map(b => (
+                            <option key={b._id} value={b._id}>{b.name}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             <div className="space-y-6">

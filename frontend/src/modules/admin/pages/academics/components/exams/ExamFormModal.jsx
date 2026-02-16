@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Trash2, Calendar, Clock, MapPin, CheckCircle } from 'lucide-react';
 import { useAdminExamStore } from '../../../../../../store/adminExamStore';
-import { useAdminStore } from '../../../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../../../store/adminStore';
 import { useAppStore } from '../../../../../../store/index';
 import { useExamPolicyStore } from '../../../../../../store/examPolicyStore';
 
 const ExamFormModal = ({ isOpen, onClose, exam }) => {
     const { createExam, updateExam, isProcessing } = useAdminExamStore();
-    const { classes, subjects, fetchClasses, fetchSubjects, academicYears, fetchAcademicYears } = useAdminStore();
+    const { classes, subjects, courses, fetchClasses, fetchSubjects, fetchCourses, fetchAcademicYears } = useAdminStore();
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const { policy, fetchPolicy } = useExamPolicyStore();
     const { user } = useAppStore();
 
@@ -24,6 +25,7 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
     });
 
     const [selectedClasses, setSelectedClasses] = useState([]);
+    const [selectedCourses, setSelectedCourses] = useState([]);
     const [examSubjects, setExamSubjects] = useState([]);
 
     const hasFetchedInitial = useRef(false);
@@ -34,13 +36,14 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
             const branchId = user?.branchId || 'main';
             fetchClasses(branchId);
             fetchSubjects(branchId);
+            fetchCourses(branchId);
             fetchAcademicYears();
             hasFetchedInitial.current = true;
         }
         if (!isOpen) {
             hasFetchedInitial.current = false;
         }
-    }, [isOpen, user?.branchId, fetchClasses, fetchSubjects, fetchAcademicYears]);
+    }, [isOpen, user?.branchId, fetchClasses, fetchSubjects, fetchCourses, fetchAcademicYears]);
 
     // 2. Fetch Policy only when academicYearId changes
     useEffect(() => {
@@ -64,6 +67,7 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                 status: exam.status || 'Published'
             });
             setSelectedClasses(exam.classes?.map(c => c.id || c._id || c) || []);
+            setSelectedCourses(exam.courses?.map(c => c.id || c._id || c) || []);
             setExamSubjects(exam.subjects?.map(s => ({
                 ...s,
                 date: s.date ? new Date(s.date).toISOString().split('T')[0] : ''
@@ -112,14 +116,44 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
         setExamSubjects(updated);
     };
 
+    // Filter subjects: only those linked to selected classes OR selected courses
+    const filteredSubjects = (() => {
+        const hasClasses = selectedClasses.length > 0;
+        const hasCourses = selectedCourses.length > 0;
+        if (!hasClasses && !hasCourses) return [];
+        const classSet = new Set(selectedClasses.map(String));
+        const courseSet = new Set(selectedCourses.map(String));
+        return subjects.filter(sub => {
+            const subClassIds = (sub.classIds || []).map(c => String(c?._id || c));
+            const subCourseIds = (sub.courseIds || []).map(c => String(c?._id || c));
+            const matchesClass = hasClasses && subClassIds.some(id => classSet.has(id));
+            const matchesCourse = hasCourses && subCourseIds.some(id => courseSet.has(id));
+            return matchesClass || matchesCourse;
+        });
+    })();
+
+    // Clear invalid subject selections when classes/courses change
+    useEffect(() => {
+        if (filteredSubjects.length === 0) return;
+        const validIds = new Set(filteredSubjects.map(s => String(s._id)));
+        const hasInvalid = examSubjects.some(row => row.subjectId && !validIds.has(String(row.subjectId)));
+        if (hasInvalid) {
+            setExamSubjects(prev => prev.map(row => ({
+                ...row,
+                subjectId: row.subjectId && validIds.has(String(row.subjectId)) ? row.subjectId : ''
+            })));
+        }
+    }, [selectedClasses.join(','), selectedCourses.join(',')]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const finalData = {
             ...formData,
-            branchId: user?.branchId || user?.branch, // Ensure branchId is sent
+            branchId: user?.branchId || user?.branch,
             classes: selectedClasses,
-            subjects: examSubjects.filter(s => s.subjectId && s.date) // Validation for subject submission
+            courses: selectedCourses,
+            subjects: examSubjects.filter(s => s.subjectId && s.date)
         };
 
         let result;
@@ -239,7 +273,7 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                         </div>
                     </div>
 
-                    {/* Classes Selection */}
+                    {/* Classes & Courses Selection */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="h-6 w-1 bg-amber-500 rounded-full"></div>
@@ -273,6 +307,42 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                                 {classes.length === 0 && <p className="text-xs text-gray-400 italic">No classes found.</p>}
                             </div>
                         </div>
+                        {courses.length > 0 && (
+                            <>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="h-6 w-1 bg-amber-500 rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Applicable Courses</h3>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 shadow-inner">
+                                    <div className="flex flex-wrap gap-2">
+                                        {courses.map(crs => (
+                                            <label
+                                                key={crs._id}
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all cursor-pointer text-xs font-bold ${selectedCourses.includes(crs._id)
+                                                    ? 'bg-indigo-600 border-indigo-700 text-white shadow-md'
+                                                    : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
+                                                    }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    className="hidden"
+                                                    checked={selectedCourses.includes(crs._id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedCourses([...selectedCourses, crs._id]);
+                                                        } else {
+                                                            setSelectedCourses(selectedCourses.filter(id => id !== crs._id));
+                                                        }
+                                                    }}
+                                                />
+                                                {crs.name} {crs.code && `(${crs.code})`}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        <p className="text-[11px] text-gray-500 italic">Select classes and/or courses to see relevant subjects below.</p>
                     </div>
 
                     {/* Subject Schedule Section */}
@@ -303,9 +373,13 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                                             className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-xs font-bold text-gray-700"
                                         >
                                             <option value="">Select Subject</option>
-                                            {subjects.map(sub => (
-                                                <option key={sub._id} value={sub._id}>{sub.name} ({sub.code})</option>
-                                            ))}
+                                            {filteredSubjects.length === 0 ? (
+                                                <option value="" disabled>Select classes/courses first</option>
+                                            ) : (
+                                                filteredSubjects.map(sub => (
+                                                    <option key={sub._id} value={sub._id}>{sub.name} ({sub.code})</option>
+                                                ))
+                                            )}
                                         </select>
                                     </div>
                                     <div className="w-full md:w-32">

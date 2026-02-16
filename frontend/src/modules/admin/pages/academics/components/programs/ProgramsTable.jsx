@@ -19,8 +19,8 @@ const ProgramsTable = ({ programs, selectedProgramId, onSelect, onEdit, onDeacti
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Course Catalog</span>
+            <div className="px-4 py-3 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Course Catalog</span>
                 <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">{programs.length} Total</span>
             </div>
 
@@ -79,9 +79,11 @@ const ProgramsTable = ({ programs, selectedProgramId, onSelect, onEdit, onDeacti
                 </table>
             </div>
 
-            <div className="p-3 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-400 flex items-center gap-1 justify-center">
-                <HelpCircle size={12} /> Select a program to edit structure
-            </div>
+            {!selectedProgramId && (
+                <div className="p-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 flex items-center gap-1.5 justify-center">
+                    <HelpCircle size={14} /> Click a program to configure structure
+                </div>
+            )}
         </div>
     );
 };

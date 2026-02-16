@@ -32,7 +32,7 @@ const Teachers = () => {
             const [teachersRes, rolesRes, branchesRes] = await Promise.all([
                 fetch(`${API_URL}/teacher`, { headers }),
                 fetch(`${API_URL}/role`, { headers }),
-                fetch(`${API_URL}/branch`, { headers })
+                fetch(`${API_URL}/branch?activeOnly=true`, { headers })
             ]);
 
             const [teachersData, rolesData, branchesData] = await Promise.all([

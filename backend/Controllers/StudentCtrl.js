@@ -247,6 +247,16 @@ export const admitStudent = async (req, res) => {
             const activeYear = await AcademicYear.findOne({ instituteId, status: "active" }).sort({ startDate: -1 });
             academicYearId = activeYear?._id?.toString();
         }
+        // Block admission if academic year is closed
+        if (academicYearId) {
+            const ay = await AcademicYear.findById(academicYearId);
+            if (ay && ay.status === "closed") {
+                return res.status(403).json({
+                    success: false,
+                    message: "Admissions are closed for this academic year. Please select an active academic year."
+                });
+            }
+        }
         const admissionRule = academicYearId
             ? await AdmissionRule.findOne({ instituteId, academicYearId })
             : null;
@@ -960,7 +970,7 @@ export const getStudentFees = async (req, res) => {
         const baseAmount = feeStructure.totalAmount || 0;
         const branchId = feeStructure.branchId || student.branchId;
         const instituteId = feeStructure.instituteId || student.instituteId;
-        const { totalTax } = await calculateTax(baseAmount, branchId, "fees", instituteId);
+        const { totalTax } = await calculateTax(baseAmount, branchId, "fee", instituteId);
         const totalFee = baseAmount + totalTax;
 
         const totalPaid = payments.reduce((acc, curr) => acc + curr.amountPaid, 0);
@@ -1289,8 +1299,6 @@ export const createSupportTicket = async (req, res) => {
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
-            raisedBy: studentId,
-            raisedByType: "Student",
             category,
             topic,
             details,

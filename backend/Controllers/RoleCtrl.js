@@ -1,9 +1,10 @@
+import mongoose from "mongoose";
 import Role from "../Models/RoleModel.js";
 
 // ================= CREATE ROLE =================
 export const createRole = async (req, res) => {
     try {
-        const { name, code, description, permissions, type } = req.body;
+        const { name, code, description, permissions, type, defaultDashboard, branchId } = req.body;
         const instituteId = req.user._id;
 
         // Check if code exists for this institute
@@ -17,11 +18,13 @@ export const createRole = async (req, res) => {
 
         const role = new Role({
             instituteId,
+            branchId: branchId && branchId !== 'all' ? branchId : null,
             name,
             code: code.toUpperCase(),
             description,
             permissions,
-            type
+            type,
+            defaultDashboard: defaultDashboard || "/admin/dashboard",
         });
 
         await role.save();
@@ -42,8 +45,46 @@ export const createRole = async (req, res) => {
 // ================= GET ALL ROLES =================
 export const getRoles = async (req, res) => {
     try {
+        const { branchId } = req.query;
         const instituteId = req.user._id;
-        const roles = await Role.find({ instituteId });
+        const matchStage = { instituteId };
+        if (branchId && branchId !== 'all' && branchId.length === 24) {
+            matchStage.$or = [
+                { branchId: null },
+                { branchId: new mongoose.Types.ObjectId(branchId) }
+            ];
+        }
+        const data = await Role.aggregate([
+            { $match: matchStage },
+            {
+                $lookup: {
+                    from: "staffs",
+                    localField: "_id",
+                    foreignField: "roleId",
+                    as: "staffList"
+                }
+            },
+            {
+                $lookup: {
+                    from: "branches",
+                    localField: "branchId",
+                    foreignField: "_id",
+                    as: "branchInfo"
+                }
+            },
+            {
+                $addFields: {
+                    userCount: { $size: "$staffList" },
+                    branchName: { $arrayElemAt: ["$branchInfo.name", 0] }
+                }
+            },
+            { $project: { staffList: 0, branchInfo: 0 } }
+        ]);
+        const roles = data.map(r => ({
+            ...r,
+            id: r._id,
+            defaultDashboard: r.defaultDashboard || "/admin/dashboard",
+        }));
 
         res.status(200).json({
             success: true,

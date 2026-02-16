@@ -18,6 +18,10 @@ const branchSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
+        headName: {
+            type: String,
+            trim: true,
+        },
         type: {
             type: String,
             enum: ["school", "college", "training_center"],

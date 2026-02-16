@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Loader2, GraduationCap, Users, Filter, Download, Search, Calendar, DollarSign } from 'lucide-react';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 import { API_URL } from '@/app/api';
 import PayrollFormModal from './components/payroll/PayrollFormModal';
@@ -8,6 +8,7 @@ import PayrollList from './components/payroll/PayrollList';
 import MarkAsPaidModal from './components/payroll/MarkAsPaidModal';
 
 const Payroll = () => {
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const {
         payrolls,
         fetchPayrolls,
@@ -15,7 +16,6 @@ const Payroll = () => {
         fetchBranches,
         teachers,
         fetchTeachers,
-        academicYears,
         fetchAcademicYears
     } = useAdminStore();
     const user = useAppStore(state => state.user);

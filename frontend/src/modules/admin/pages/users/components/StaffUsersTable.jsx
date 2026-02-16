@@ -18,16 +18,16 @@ const StaffUsersTable = ({ users, onRowClick }) => {
     }
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-t-xl border border-gray-200 shadow-sm overflow-visible">
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                <table className="w-full text-left">
+                    <thead className="sticky top-0 z-10 bg-gray-100 border-b-2 border-gray-200 shadow-sm">
                         <tr>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">User Identity</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Assigned Role</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Branch Access</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Status</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100 text-right">Last Login</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">User Identity</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Assigned Role</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Branch Access</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider text-right">Last Login</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
@@ -35,7 +35,7 @@ const StaffUsersTable = ({ users, onRowClick }) => {
                             <tr
                                 key={user.id}
                                 onClick={() => onRowClick(user)}
-                                className="group hover:bg-gray-50/80 transition-colors cursor-pointer"
+                                className="group hover:bg-indigo-50/50 transition-colors cursor-pointer"
                             >
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -76,11 +76,6 @@ const StaffUsersTable = ({ users, onRowClick }) => {
                         ))}
                     </tbody>
                 </table>
-            </div>
-
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex justify-between">
-                <span>Total {users.length} Users</span>
-                <span>Active Directory</span>
             </div>
         </div>
     );

@@ -86,9 +86,8 @@ const RoleDetailDrawer = ({
             return;
         }
 
-        const reason = window.prompt("To Deactivate this role, please provide a reason for the Audit Log:");
-        if (reason) {
-            onStatusChange(role.id, 'inactive', reason);
+        if (window.confirm("Are you sure you want to deactivate this role?")) {
+            onStatusChange(role.id, 'inactive', "Deactivated by admin");
         }
     };
 

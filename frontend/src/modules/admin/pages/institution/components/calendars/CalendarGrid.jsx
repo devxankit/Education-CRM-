@@ -20,9 +20,17 @@ const CalendarGrid = ({ holidays, onDateClick }) => {
             currentDate.getFullYear() === today.getFullYear();
     };
 
-    const getHolidayForDay = (day) => {
-        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        return holidays.find(h => h.date === dateStr && h.status === 'active');
+    const getHolidaysForDay = (day) => {
+        const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        cellDate.setHours(0, 0, 0, 0);
+        return (holidays || []).filter(h => {
+            if (!h.startDate) return false;
+            const start = new Date(h.startDate);
+            const end = h.endDate ? new Date(h.endDate) : start;
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+            return cellDate >= start && cellDate <= end && h.status !== 'inactive';
+        });
     };
 
     const renderCells = () => {
@@ -38,27 +46,38 @@ const CalendarGrid = ({ holidays, onDateClick }) => {
 
         // Days
         for (let day = 1; day <= daysInMonth; day++) {
-            const holiday = getHolidayForDay(day);
-            const holidayColorClass = holiday
-                ? (holiday.type === 'academic' ? 'bg-blue-100 text-blue-700 border-blue-200'
-                    : holiday.type === 'exam' ? 'bg-purple-100 text-purple-700 border-purple-200'
-                        : holiday.type === 'staff' ? 'bg-green-100 text-green-700 border-green-200'
-                            : 'bg-amber-100 text-amber-700 border-amber-200') // restricted
+            const dayHolidays = getHolidaysForDay(day);
+            const firstHoliday = dayHolidays[0];
+            const holidayColorClass = firstHoliday
+                ? (firstHoliday.type === 'academic' ? 'bg-blue-100 text-blue-700 border-blue-200'
+                    : firstHoliday.type === 'exam' ? 'bg-purple-100 text-purple-700 border-purple-200'
+                        : firstHoliday.type === 'staff' ? 'bg-green-100 text-green-700 border-green-200'
+                            : 'bg-amber-100 text-amber-700 border-amber-200')
                 : '';
 
             cells.push(
                 <div
                     key={day}
-                    onClick={() => onDateClick(day, currentDate, holiday)}
+                    onClick={() => onDateClick(day, currentDate, firstHoliday || null)}
                     className={`h-24 border border-t-0 border-l-0 border-gray-100 p-2 relative hover:bg-gray-50 transition-colors cursor-pointer group ${isToday(day) ? 'bg-indigo-50/30' : 'bg-white'}`}
                 >
                     <span className={`text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full ${isToday(day) ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-700 group-hover:bg-gray-200'}`}>
                         {day}
                     </span>
 
-                    {holiday && (
-                        <div className={`mt-2 p-1.5 rounded text-[10px] font-medium border truncate leading-tight ${holidayColorClass}`}>
-                            {holiday.name}
+                    {dayHolidays.length > 0 && (
+                        <div className="mt-1.5 space-y-1 overflow-y-auto max-h-[60px]">
+                            {dayHolidays.map((h) => {
+                                const color = h.type === 'academic' ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                    : h.type === 'exam' ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                        : h.type === 'staff' ? 'bg-green-100 text-green-700 border-green-200'
+                                            : 'bg-amber-100 text-amber-700 border-amber-200';
+                                return (
+                                    <div key={h._id || h.id || h.name} className={`p-1 rounded text-[10px] font-medium border truncate leading-tight ${color}`}>
+                                        {h.name}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

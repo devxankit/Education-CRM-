@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, ChevronRight, CheckCircle, Loader2 } from 'lucide-react';
 import { useExamPolicyStore } from '../../../../store/examPolicyStore';
-import { useAdminStore } from '../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
+import { useAppStore } from '../../../../store/index';
 
 import PolicyLockBanner from './components/policies/PolicyLockBanner';
 import ExamTypesConfig from './components/policies/ExamTypesConfig';
@@ -12,7 +13,10 @@ import VisibilityConfig from './components/policies/VisibilityConfig';
 
 const ExamPolicies = () => {
     const { policy, isFetching, fetchPolicy, unlockPolicy, lockPolicy, savePolicy, isProcessing } = useExamPolicyStore();
-    const { academicYears, fetchAcademicYears } = useAdminStore();
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
+    const { fetchAcademicYears } = useAdminStore();
+    const user = useAppStore((s) => s.user);
+    const isAdmin = ['admin', 'super_admin', 'institute'].includes(user?.role);
 
     const [activeTab, setActiveTab] = useState('types');
     const [selectedYear, setSelectedYear] = useState('');
@@ -24,7 +28,7 @@ const ExamPolicies = () => {
     useEffect(() => {
         if (academicYears.length > 0 && !selectedYear) {
             const currentYear = academicYears.find(y => y.status === 'active') || academicYears[0];
-            setSelectedYear(currentYear._id);
+            if (currentYear) setSelectedYear(currentYear._id);
         }
     }, [academicYears, selectedYear]);
 
@@ -35,11 +39,11 @@ const ExamPolicies = () => {
     }, [selectedYear, fetchPolicy]);
 
     const handleUnlock = async () => {
-        const reason = prompt("Please provide a reason for Unlocking the Policy (Mandatory for Audit):");
+        const reason = isAdmin ? "Admin direct unlock" : prompt("Please provide a reason for Unlocking the Policy (Mandatory for Audit):");
         if (reason && reason.length >= 5) {
             const result = await unlockPolicy(selectedYear, reason);
             if (!result.success) alert(result.message);
-        } else if (reason !== null) {
+        } else if (reason !== null && !isAdmin) {
             alert("Valid reason (min 5 chars) required.");
         }
     };
@@ -118,6 +122,7 @@ const ExamPolicies = () => {
                     isLocked={isLocked}
                     onLock={handleLock}
                     onUnlock={handleUnlock}
+                    isAdmin={isAdmin}
                 />
 
                 <div className="flex flex-1">

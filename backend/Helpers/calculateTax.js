@@ -4,11 +4,11 @@ import Tax from "../Models/TaxModel.js";
  * Calculate tax amount on a base amount based on applicable tax rules.
  * @param {number} baseAmount - The base amount (e.g. fee total) to calculate tax on
  * @param {string} branchId - Branch ID to fetch applicable taxes
- * @param {string} applicableOn - 'fees' | 'transport' | 'admission' | 'hostel' | 'all'
+ * @param {string} applicableOn - 'fee' | 'admission' | 'payroll' | 'expenses'
  * @param {string} [instituteId] - Optional institute ID for query
  * @returns {Promise<{totalTax: number, breakdown: Array<{name: string, code: string, amount: number, rate: number, type: string}>}>}
  */
-export const calculateTax = async (baseAmount, branchId, applicableOn = "fees", instituteId) => {
+export const calculateTax = async (baseAmount, branchId, applicableOn = "fee", instituteId) => {
     if (!baseAmount || baseAmount <= 0) {
         return { totalTax: 0, breakdown: [] };
     }
@@ -16,7 +16,7 @@ export const calculateTax = async (baseAmount, branchId, applicableOn = "fees", 
     const query = {
         branchId,
         isActive: true,
-        $or: [{ applicableOn }, { applicableOn: "all" }],
+        applicableOn,
     };
     if (instituteId) query.instituteId = instituteId;
 
@@ -49,15 +49,13 @@ export const calculateTax = async (baseAmount, branchId, applicableOn = "fees", 
  * Calculate tax from a pre-fetched array of tax rules (no DB call).
  * @param {number} baseAmount - Base amount
  * @param {Array} taxes - Array of tax documents with rate, type, applicableOn
- * @param {string} applicableOn - Filter: 'fees' | 'transport' | etc.
+ * @param {string} applicableOn - Filter: 'fee' | 'admission' | 'payroll' | 'expenses'
  */
-export const calculateTaxFromRules = (baseAmount, taxes, applicableOn = "fees") => {
+export const calculateTaxFromRules = (baseAmount, taxes, applicableOn = "fee") => {
     if (!baseAmount || baseAmount <= 0 || !taxes?.length) {
         return { totalTax: 0, breakdown: [] };
     }
-    const applicable = taxes.filter(
-        (t) => t.isActive && (t.applicableOn === applicableOn || t.applicableOn === "all")
-    );
+    const applicable = taxes.filter((t) => t.isActive && t.applicableOn === applicableOn);
     let totalTax = 0;
     const breakdown = applicable.map((tax) => {
         const amount =

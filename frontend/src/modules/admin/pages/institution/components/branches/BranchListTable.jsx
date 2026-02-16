@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Building2, Users, ChevronRight, MapPin } from 'lucide-react';
+import { Building2, ChevronRight, MapPin, GraduationCap, UserCog, BookOpen } from 'lucide-react';
 import BranchStatusBadge from './BranchStatusBadge';
 
-const BranchListTable = ({ branches, onRowClick }) => {
+const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
     if (!branches || branches.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-gray-300">
@@ -65,17 +65,37 @@ const BranchListTable = ({ branches, onRowClick }) => {
                                 </td>
 
                                 <td className="px-6 py-4">
-                                    <BranchStatusBadge isActive={branch.isActive} />
+                                    {onToggleStatus ? (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onToggleStatus(branch);
+                                            }}
+                                            className="focus:outline-none"
+                                            title={branch.isActive ? 'Click to Deactivate' : 'Click to Activate'}
+                                        >
+                                            <BranchStatusBadge isActive={branch.isActive} />
+                                        </button>
+                                    ) : (
+                                        <BranchStatusBadge isActive={branch.isActive} />
+                                    )}
                                 </td>
 
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-3 text-xs text-gray-500">
-                                        <span title="Total Students">
-                                            <strong className="text-gray-900">{branch.stats?.students || 0}</strong> Students
+                                    <div className="flex items-center justify-end gap-4 text-xs text-gray-500">
+                                        <span title="Total Students" className="flex items-center gap-1">
+                                            <GraduationCap size={14} className="text-gray-400" />
+                                            <strong className="text-gray-900">{branch.stats?.students ?? 0}</strong> Students
                                         </span>
                                         <span className="w-px h-3 bg-gray-300"></span>
-                                        <span title="Total Staff">
-                                            <strong className="text-gray-900">{branch.stats?.staff || 0}</strong> Staff
+                                        <span title="Total Staff" className="flex items-center gap-1">
+                                            <UserCog size={14} className="text-gray-400" />
+                                            <strong className="text-gray-900">{branch.stats?.staff ?? 0}</strong> Staff
+                                        </span>
+                                        <span className="w-px h-3 bg-gray-300"></span>
+                                        <span title="Total Teachers" className="flex items-center gap-1">
+                                            <BookOpen size={14} className="text-gray-400" />
+                                            <strong className="text-gray-900">{branch.stats?.teachers ?? 0}</strong> Teachers
                                         </span>
                                     </div>
                                 </td>

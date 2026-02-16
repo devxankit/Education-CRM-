@@ -2,7 +2,7 @@
 import React from 'react';
 import { Lock, Unlock, AlertTriangle } from 'lucide-react';
 
-const PolicyLockBanner = ({ isLocked, onLock, onUnlock }) => {
+const PolicyLockBanner = ({ isLocked, onLock, onUnlock, isAdmin = false }) => {
 
     if (!isLocked) {
         return (
@@ -37,7 +37,7 @@ const PolicyLockBanner = ({ isLocked, onLock, onUnlock }) => {
                 onClick={onUnlock}
                 className="flex items-center gap-2 px-4 py-1.5 bg-white/10 text-indigo-100 border border-white/20 text-xs font-bold uppercase rounded hover:bg-white/20 transition-colors"
             >
-                <Unlock size={14} /> Request Unlock
+                <Unlock size={14} /> {isAdmin ? 'Unlock' : 'Request Unlock'}
             </button>
         </div>
     );

@@ -36,10 +36,13 @@ export const createClass = async (req, res) => {
 
 export const getClasses = async (req, res) => {
     try {
-        const { branchId } = req.query;
+        const { branchId, includeArchived } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
 
-        const query = { instituteId, status: "active" };
+        const query = { instituteId };
+        if (includeArchived !== 'true') {
+            query.status = 'active';
+        }
         if (branchId && branchId !== 'main') {
             if (branchId.length !== 24) {
                 return res.status(200).json({ success: true, data: [] });
@@ -115,6 +118,7 @@ export const createSection = async (req, res) => {
 export const getSectionsByClass = async (req, res) => {
     try {
         const { classId } = req.params;
+        const { includeInactive } = req.query;
 
         if (classId.length !== 24 && classId !== 'main') {
             return res.status(200).json({ success: true, data: [] });
@@ -124,6 +128,10 @@ export const getSectionsByClass = async (req, res) => {
         const query = { instituteId };
         if (classId !== 'main') {
             query.classId = classId;
+        }
+        // By default return only active sections (for dropdowns); management pages pass includeInactive=true
+        if (includeInactive !== 'true') {
+            query.status = 'active';
         }
 
         const classData = await Class.findById(classId);

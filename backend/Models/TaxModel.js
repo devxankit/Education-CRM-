@@ -38,8 +38,8 @@ const taxSchema = new mongoose.Schema(
         },
         applicableOn: {
             type: String,
-            enum: ["fees", "transport", "admission", "hostel", "all"],
-            default: "fees",
+            enum: ["fee", "admission", "payroll", "expenses"],
+            default: "fee",
         },
         isActive: {
             type: Boolean,

@@ -83,27 +83,16 @@ const ExpenseCategoryForm = ({ category, onSave, onCancel, branches = [], defaul
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-5">
-                        <div className="space-y-1.5 opacity-80">
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">Code (System ID)</label>
-                            <input
-                                type="text"
-                                value={formData.code}
-                                disabled
-                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-400 font-mono text-sm cursor-not-allowed uppercase"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Cost Type</label>
-                            <select
-                                value={formData.type}
-                                onChange={(e) => handleChange('type', e.target.value)}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold text-gray-700 cursor-pointer"
-                            >
-                                <option value="variable">Variable (One-off)</option>
-                                <option value="fixed">Fixed (Recurring)</option>
-                            </select>
-                        </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Cost Type</label>
+                        <select
+                            value={formData.type}
+                            onChange={(e) => handleChange('type', e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold text-gray-700 cursor-pointer"
+                        >
+                            <option value="variable">Variable (One-off)</option>
+                            <option value="fixed">Fixed (Recurring)</option>
+                        </select>
                     </div>
                 </div>
 

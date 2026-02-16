@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdmissionWizard from './components/AdmissionWizard';
 import { CheckCircle, AlertCircle, Lock, Loader2 } from 'lucide-react';
-import { useAdminStore } from '../../../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../../../store/adminStore';
 
 const StudentAdmission = () => {
     const navigate = useNavigate();
     const [isComplete, setIsComplete] = useState(false);
     const [submittedId, setSubmittedId] = useState(null);
     const [submittedWaitlisted, setSubmittedWaitlisted] = useState(false);
-    const { academicYears, fetchAcademicYears, fetchAdmissionRule, admitStudent, recordFeePayment } = useAdminStore();
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
+    const { fetchAcademicYears, fetchAdmissionRule, admitStudent, recordFeePayment } = useAdminStore();
     const [academicYearId, setAcademicYearId] = useState('');
     const [policy, setPolicy] = useState(null);
     const [policyLoading, setPolicyLoading] = useState(true);
@@ -19,9 +20,11 @@ const StudentAdmission = () => {
     }, [fetchAcademicYears]);
 
     useEffect(() => {
-        if (academicYears.length > 0 && !academicYearId) {
+        if (academicYears.length > 0) {
             const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
-            setAcademicYearId(active._id);
+            if (!academicYearId) {
+                setAcademicYearId(active?._id || '');
+            }
         }
     }, [academicYears, academicYearId]);
 
@@ -159,7 +162,7 @@ const StudentAdmission = () => {
                         className="text-sm font-semibold border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                         {academicYears.map(ay => (
-                            <option key={ay._id} value={ay._id}>{ay.name}</option>
+                            <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(Active)' : ''}</option>
                         ))}
                     </select>
                 </div>

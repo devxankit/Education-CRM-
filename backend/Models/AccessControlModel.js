@@ -6,7 +6,11 @@ const accessControlSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institute",
             required: true,
-            unique: true, // One set of policies per institute
+        },
+        branchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Branch",
+            default: null,
         },
         force2FA: {
             type: Boolean,
@@ -39,5 +43,7 @@ const accessControlSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+accessControlSchema.index({ instituteId: 1, branchId: 1 }, { unique: true });
 
 export default mongoose.model("AccessControl", accessControlSchema);

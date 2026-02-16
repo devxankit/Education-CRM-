@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { UserPlus, Search, ChevronLeft, ChevronRight, MapPin, Filter } from 'lucide-react';
 
 import StaffUsersTable from './components/StaffUsersTable';
 import CreateStaffUserModal from './components/CreateStaffUserModal';
@@ -21,6 +21,9 @@ const StaffUsers = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isRoleChangeOpen, setIsRoleChangeOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterBranchId, setFilterBranchId] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 5;
 
     const isSuperAdmin = true;
 
@@ -32,11 +35,13 @@ const StaffUsers = () => {
             const token = localStorage.getItem('token');
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Fetch Staff, Roles and Branches in parallel
+            const staffUrl = filterBranchId && filterBranchId !== 'all'
+                ? `${API_URL}/staff?branchId=${filterBranchId}`
+                : `${API_URL}/staff`;
             const [staffRes, rolesRes, branchesRes] = await Promise.all([
-                fetch(`${API_URL}/staff`, { headers }),
+                fetch(staffUrl, { headers }),
                 fetch(`${API_URL}/role`, { headers }),
-                fetch(`${API_URL}/branch`, { headers })
+                fetch(`${API_URL}/branch?activeOnly=true`, { headers })
             ]);
 
             const staffData = await staffRes.json();
@@ -60,7 +65,9 @@ const StaffUsers = () => {
             }
 
             if (rolesData.success) {
-                const transformedRoles = rolesData.data.map(r => ({ ...r, id: r._id }));
+                const transformedRoles = rolesData.data
+                    .filter(r => r.status === 'active')
+                    .map(r => ({ ...r, id: r._id }));
                 setActiveRoles(transformedRoles);
             }
 
@@ -74,7 +81,7 @@ const StaffUsers = () => {
         } finally {
             setFetching(false);
         }
-    }, []);
+    }, [filterBranchId]);
 
     useEffect(() => {
         fetchAllData();
@@ -170,11 +177,25 @@ const StaffUsers = () => {
         }
     };
 
-    // Filter Logic
-    const filteredUsers = users.filter(u =>
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filter & Pagination
+    const filteredUsers = useMemo(() =>
+        users.filter(u =>
+            u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchTerm.toLowerCase())
+        ),
+        [users, searchTerm]
     );
+    const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
+    const paginatedUsers = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredUsers.slice(start, start + pageSize);
+    }, [filteredUsers, currentPage, pageSize]);
+
+    useEffect(() => setCurrentPage(1), [searchTerm]);
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
+    }, [currentPage, totalPages]);
+    const handlePageChange = (page) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
 
     return (
         <div className="h-full flex flex-col relative pb-10">
@@ -184,46 +205,98 @@ const StaffUsers = () => {
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Staff User Management</h1>
                     <p className="text-gray-500 text-sm">Manage administrative access and security profiles.</p>
                 </div>
-
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <Filter size={16} className="text-gray-400" />
+                        <MapPin size={16} className="text-indigo-500" />
+                        <select
+                            value={filterBranchId}
+                            onChange={(e) => setFilterBranchId(e.target.value)}
+                            className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="all">All Branches</option>
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
                             placeholder="Search users..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64"
+                            className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64"
                         />
                     </div>
+                    <button
+                        onClick={() => setIsCreateOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm shadow-sm"
+                    >
+                        <UserPlus size={18} /> Add New User
+                    </button>
                 </div>
             </div>
 
-            {/* Top Action Bar */}
-            <div className="flex justify-between items-center mb-4 bg-white p-3 rounded-lg border border-gray-200">
-                <div className="flex gap-2">
-                    <div className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-md border border-gray-100 font-medium">
-                        Total Staff: {users.length}
-                    </div>
-                </div>
-                <button
-                    onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm shadow-sm"
-                >
-                    <UserPlus size={18} /> Add New User
-                </button>
-            </div>
-
-            {/* List */}
+            {/* Table + Pagination */}
             {fetching ? (
-                <div className="flex justify-center items-center p-12">
+                <div className="flex justify-center items-center p-12 bg-white rounded-xl border border-gray-200">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
             ) : (
-                <StaffUsersTable
-                    users={filteredUsers}
-                    onRowClick={(u) => setSelectedUser(u)}
-                />
+                <>
+                    <StaffUsersTable
+                        users={paginatedUsers}
+                        onRowClick={(u) => setSelectedUser(u)}
+                    />
+                    {/* Pagination */}
+                    {filteredUsers.length > 0 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border border-gray-200 border-t-0 rounded-b-xl -mt-px shadow-sm">
+                            <p className="text-xs text-gray-500">
+                                Showing <span className="font-semibold text-gray-700">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+                                <span className="font-semibold text-gray-700">{Math.min(currentPage * pageSize, filteredUsers.length)}</span> of{' '}
+                                <span className="font-semibold text-gray-700">{filteredUsers.length}</span> staff
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage <= 1}
+                                    className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <div className="flex items-center gap-1 mx-2">
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        let pageNum;
+                                        if (totalPages <= 5) pageNum = i + 1;
+                                        else if (currentPage <= 3) pageNum = i + 1;
+                                        else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                        else pageNum = currentPage - 2 + i;
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => handlePageChange(pageNum)}
+                                                className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
+                                                    currentPage === pageNum ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage >= totalPages}
+                                    className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Modals */}

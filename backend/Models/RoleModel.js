@@ -7,6 +7,11 @@ const roleSchema = new mongoose.Schema(
             ref: "Institute",
             required: true,
         },
+        branchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Branch",
+            default: null,
+        },
         name: {
             type: String,
             required: true,
@@ -34,6 +39,10 @@ const roleSchema = new mongoose.Schema(
             type: String,
             enum: ["active", "inactive"],
             default: "active",
+        },
+        defaultDashboard: {
+            type: String,
+            default: "/admin/dashboard",
         },
     },
     { timestamps: true }

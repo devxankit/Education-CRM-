@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Save, X, Layers, List, Calendar } from 'lucide-react';
-import { useAdminStore } from '../../../../../../store/adminStore';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../../../store/adminStore';
 import { useAppStore } from '../../../../../../store/index';
 import FeeComponentsEditor from './FeeComponentsEditor';
 import InstallmentScheduler from './InstallmentScheduler';
 
 const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = [] }) => {
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const {
-        academicYears, fetchAcademicYears,
+        fetchAcademicYears,
         branches, fetchBranches,
         classes, fetchClasses,
         courses, fetchCourses

@@ -26,6 +26,7 @@ export const useAdminStore = create(
             departments: [],
             branches: [],
             academicYears: [],
+            academicYearsForSelect: [],
             dashboardStats: null,
             dashboardLoading: false,
             teacherMappings: [],
@@ -126,11 +127,12 @@ export const useAdminStore = create(
                 }
             },
 
-            // Actions: Branches
-            fetchBranches: async () => {
+            // Actions: Branches (activeOnly=true for dropdowns - inactive branches hidden)
+            fetchBranches: async (activeOnly = true) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/branch`, {
+                    const url = activeOnly ? `${API_URL}/branch?activeOnly=true` : `${API_URL}/branch`;
+                    const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -436,10 +438,11 @@ export const useAdminStore = create(
 
             // Actions: Classes
             setClasses: (classes) => set({ classes }),
-            fetchClasses: async (branchId) => {
+            fetchClasses: async (branchId, includeArchived = false) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const url = branchId ? `${API_URL}/class?branchId=${branchId}` : `${API_URL}/class`;
+                    let url = branchId ? `${API_URL}/class?branchId=${branchId}` : `${API_URL}/class`;
+                    if (includeArchived) url += (url.includes('?') ? '&' : '?') + 'includeArchived=true';
                     const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -564,10 +567,12 @@ export const useAdminStore = create(
             setSections: (classId, sections) => set((state) => ({
                 sections: { ...state.sections, [classId]: sections }
             })),
-            fetchSections: async (classId) => {
+            fetchSections: async (classId, includeInactive = false) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/class/section/${classId}`, {
+                    let url = `${API_URL}/class/section/${classId}`;
+                    if (includeInactive) url += '?includeInactive=true';
+                    const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -700,7 +705,11 @@ export const useAdminStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set({ academicYears: response.data.data });
+                        const data = response.data.data || [];
+                        set({
+                            academicYears: data,
+                            academicYearsForSelect: data.filter(ay => ay.status !== 'closed')
+                        });
                     }
                 } catch (error) {
                     console.error('Error fetching academic years:', error);
@@ -1850,8 +1859,22 @@ export const useAdminStore = create(
         }),
         {
             name: 'admin-storage',
+            partialize: (state) => {
+                const { academicYearsForSelect, ...rest } = state;
+                return rest;
+            },
+            merge: (persisted, current) => {
+                const merged = { ...current, ...persisted };
+                const years = merged.academicYears || [];
+                merged.academicYearsForSelect = years.filter(ay => ay.status !== 'closed');
+                return merged;
+            },
         }
     )
 );
+
+/** Selector: academic years excluding closed (for dropdowns) - stable reference */
+export const selectAcademicYearsForSelect = (state) =>
+    state.academicYearsForSelect || [];
 
 export default useAdminStore;

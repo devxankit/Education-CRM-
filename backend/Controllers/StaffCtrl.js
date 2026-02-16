@@ -423,7 +423,7 @@ export const getStaffFeeOverview = async (req, res) => {
             const baseAmount = feeStructure?.totalAmount || 0;
             const branchId = (feeStructure?.branchId || student.branchId)?.toString();
             const taxes = taxesByBranch[branchId] || [];
-            const { totalTax } = calculateTaxFromRules(baseAmount, taxes, 'fees');
+            const { totalTax } = calculateTaxFromRules(baseAmount, taxes, 'fee');
             const totalFee = baseAmount + totalTax;
             const totalPaid = paymentMap.get(student._id.toString()) || 0;
             const pending = Math.max(0, totalFee - totalPaid);
@@ -556,7 +556,7 @@ export const getStaffPayrollResources = async (req, res) => {
         if (financialYear) ruleQuery.financialYear = financialYear;
 
         const [branches, teachers, staffList, academicYears, payrollRule] = await Promise.all([
-            Branch.find({ instituteId }).select('name code').lean(),
+            Branch.find({ instituteId, isActive: true }).select('name code').lean(),
             Teacher.find({ instituteId }).populate('department', 'name').select('firstName lastName name email employeeId').lean(),
             Staff.find({ instituteId, status: 'active' }).populate('roleId', 'name').select('name email').lean(),
             AcademicYear.find({ instituteId }).select('name status').sort({ startDate: -1 }).lean(),
@@ -588,7 +588,7 @@ export const getStaffBranches = async (req, res) => {
     try {
         const instituteId = req.user.instituteId || req.user._id;
         const staffBranchId = req.user.branchId;
-        const branches = await Branch.find({ instituteId }).select('name code').sort({ name: 1 }).lean();
+        const branches = await Branch.find({ instituteId, isActive: true }).select('name code').sort({ name: 1 }).lean();
         const defaultBranchId = staffBranchId && String(staffBranchId) !== "all"
             ? branches.find(b => b._id.toString() === String(staffBranchId))?._id
             : branches[0]?._id;
@@ -608,7 +608,7 @@ export const getStaffExpenseResources = async (req, res) => {
         const staffBranchId = req.user.branchId;
 
         const [branches, categories] = await Promise.all([
-            Branch.find({ instituteId }).select('name code').lean(),
+            Branch.find({ instituteId, isActive: true }).select('name code').lean(),
             ExpenseCategory.find({ instituteId, isActive: true }).select('name code').sort({ name: 1 }).lean()
         ]);
 
@@ -681,8 +681,16 @@ export const createStaff = async (req, res) => {
 // ================= GET ALL STAFF =================
 export const getStaffList = async (req, res) => {
     try {
+        const { branchId } = req.query;
         const instituteId = req.user._id;
-        const staff = await Staff.find({ instituteId })
+        const query = { instituteId };
+        if (branchId && branchId !== 'all' && branchId.length === 24) {
+            query.$or = [
+                { branchId: null },
+                { branchId }
+            ];
+        }
+        const staff = await Staff.find(query)
             .populate('roleId', 'name code')
             .populate('branchId', 'name');
 
@@ -811,7 +819,9 @@ export const verifyOtpStaff = async (req, res) => {
             }
         }
 
-        let policies = await AccessControl.findOne({ instituteId: staff.instituteId }).lean();
+        const branchId = staff.branchId || null;
+        let policies = await AccessControl.findOne({ instituteId: staff.instituteId, branchId }).lean();
+        if (!policies) policies = await AccessControl.findOne({ instituteId: staff.instituteId, branchId: null }).lean();
         const sessionMinutes = policies ? (Number(policies.sessionTimeout) || 30) : 30;
         const token = generateToken(staff._id, "Staff", `${sessionMinutes}m`);
 
@@ -850,14 +860,18 @@ export const loginStaff = async (req, res) => {
         }
 
         if (staff.status !== 'active') {
+            const msg = staff.status === 'suspended'
+                ? 'Your account has been suspended. Please contact administrator.'
+                : `Your account is ${staff.status}. Please contact administrator.`;
             return res.status(403).json({
                 success: false,
-                message: `Your account is ${staff.status}. Please contact administrator.`
+                message: msg
             });
         }
 
-        // Fetch institute Access Control policies
-        let policies = await AccessControl.findOne({ instituteId: staff.instituteId }).lean();
+        const branchId = staff.branchId || null;
+        let policies = await AccessControl.findOne({ instituteId: staff.instituteId, branchId }).lean();
+        if (!policies) policies = await AccessControl.findOne({ instituteId: staff.instituteId, branchId: null }).lean();
         if (!policies) {
             policies = { force2FA: false, sessionTimeout: 30, maxLoginAttempts: 5, lockoutMinutes: 15, ipWhitelistEnabled: false, ipWhitelist: [], passwordExpiryDays: 90 };
         }

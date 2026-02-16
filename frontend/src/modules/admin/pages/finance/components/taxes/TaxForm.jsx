@@ -14,7 +14,7 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
         description: '',
         rate: '',
         type: 'percentage',
-        applicableOn: 'fees',
+        applicableOn: 'fee',
         branchId: user?.branchId || '',
         isActive: true
     });
@@ -28,7 +28,7 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
                 description: tax.description || '',
                 rate: tax.rate || '',
                 type: tax.type || 'percentage',
-                applicableOn: tax.applicableOn || 'fees',
+                applicableOn: tax.applicableOn || 'fee',
                 branchId: tax.branchId?._id || tax.branchId || user?.branchId || '',
                 isActive: tax.isActive !== undefined ? tax.isActive : true
             });
@@ -43,12 +43,24 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
         }));
     };
 
+    const generateTaxCode = () => {
+        const abbr = (formData.name || 'TAX')
+            .split(/\s+/)
+            .map(w => w.replace(/[^A-Za-z0-9]/g, '').slice(0, 2))
+            .join('')
+            .toUpperCase()
+            .slice(0, 6) || 'TAX';
+        return `TAX-${abbr}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Convert rate to number
+        const rate = parseFloat(formData.rate) || 0;
+        const code = tax ? (formData.code || tax.code) : generateTaxCode();
         const dataToSave = {
             ...formData,
-            rate: parseFloat(formData.rate) || 0
+            rate,
+            code
         };
         onSave(dataToSave);
     };
@@ -67,31 +79,17 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
                         <h3 className="font-bold text-gray-900 uppercase tracking-wider text-xs">Tax Details</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Tax Name</label>
-                            <input
-                                required
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                placeholder="e.g. GST (Standard)"
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Tax Code</label>
-                            <input
-                                required
-                                type="text"
-                                name="code"
-                                value={formData.code}
-                                onChange={handleChange}
-                                placeholder="e.g. GST-18"
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium uppercase"
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Tax Name</label>
+                        <input
+                            required
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="e.g. GST (Standard)"
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium"
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -165,11 +163,10 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium appearance-none cursor-pointer"
                             >
-                                <option value="fees">Tuition Fees</option>
-                                <option value="transport">Transport Charges</option>
-                                <option value="admission">Admission Fees</option>
-                                <option value="hostel">Hostel Fees</option>
-                                <option value="all">All Charges</option>
+                                <option value="fee">Fee</option>
+                                <option value="admission">Admission Fee</option>
+                                <option value="payroll">Payroll</option>
+                                <option value="expenses">Expenses</option>
                             </select>
                         </div>
 

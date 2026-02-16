@@ -1,10 +1,13 @@
 import Branch from "../Models/BranchModel.js";
+import Student from "../Models/StudentModel.js";
+import Staff from "../Models/StaffModel.js";
+import Teacher from "../Models/TeacherModel.js";
 
 // ================= CREATE BRANCH =================
 export const createBranch = async (req, res) => {
     try {
         const {
-            code, name, type, establishedYear, address,
+            code, name, headName, type, establishedYear, address,
             city, state, phone, email, allowAdmissions, allowFeeCollection
         } = req.body;
 
@@ -23,6 +26,7 @@ export const createBranch = async (req, res) => {
             instituteId,
             code,
             name,
+            headName,
             type,
             establishedYear,
             address,
@@ -53,11 +57,49 @@ export const createBranch = async (req, res) => {
 export const getBranches = async (req, res) => {
     try {
         const instituteId = req.user.instituteId || req.user._id;
-        const branches = await Branch.find({ instituteId });
+        const { activeOnly } = req.query;
+
+        const query = { instituteId };
+        if (activeOnly === 'true') {
+            query.isActive = true;
+        }
+
+        const branches = await Branch.find(query).lean();
+
+        // Add stats (students, staff, teachers count) per branch
+        const branchIds = branches.map((b) => b._id);
+        const [studentCounts, staffCounts, teacherCounts] = await Promise.all([
+            Student.aggregate([
+                { $match: { branchId: { $in: branchIds }, status: { $ne: 'withdrawn' } } },
+                { $group: { _id: '$branchId', count: { $sum: 1 } } },
+            ]),
+            Staff.aggregate([
+                { $match: { branchId: { $in: branchIds }, status: 'active' } },
+                { $group: { _id: '$branchId', count: { $sum: 1 } } },
+            ]),
+            Teacher.aggregate([
+                { $match: { branchId: { $in: branchIds } } },
+                { $group: { _id: '$branchId', count: { $sum: 1 } } },
+            ]),
+        ]);
+
+        const toMap = (arr) => Object.fromEntries(arr.map((x) => [x._id.toString(), x.count]));
+        const studentMap = toMap(studentCounts);
+        const staffMap = toMap(staffCounts);
+        const teacherMap = toMap(teacherCounts);
+
+        const branchesWithStats = branches.map((b) => ({
+            ...b,
+            stats: {
+                students: studentMap[b._id.toString()] || 0,
+                staff: staffMap[b._id.toString()] || 0,
+                teachers: teacherMap[b._id.toString()] || 0,
+            },
+        }));
 
         res.status(200).json({
             success: true,
-            data: branches,
+            data: branchesWithStats,
         });
     } catch (error) {
         res.status(500).json({

@@ -99,7 +99,6 @@ const Branches = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-
             const response = await fetch(`${API_URL}/branch/${id}`, {
                 method: 'PUT',
                 headers: {
@@ -108,7 +107,6 @@ const Branches = () => {
                 },
                 body: JSON.stringify({ isActive: newIsActive, deactivationReason: reason })
             });
-
             const data = await response.json();
             if (data.success) {
                 alert(`Branch ${newIsActive ? 'Activated' : 'Deactivated'} Successfully`);
@@ -122,6 +120,21 @@ const Branches = () => {
             alert('An error occurred while updating status');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleStatus = async (branch) => {
+        const newIsActive = !branch.isActive;
+        if (!newIsActive) {
+            const reason = window.prompt('Reason for deactivation (for audit):');
+            if (reason === null) return; // Cancelled
+            if (!reason.trim()) {
+                alert('Please provide a reason.');
+                return;
+            }
+            handleDeactivate(branch._id, reason, false);
+        } else {
+            handleDeactivate(branch._id, 'Re-activated', true);
         }
     };
 
@@ -195,6 +208,7 @@ const Branches = () => {
                 <BranchListTable
                     branches={filteredBranches}
                     onRowClick={handleRowClick}
+                    onToggleStatus={handleToggleStatus}
                 />
             )}
 

@@ -81,40 +81,62 @@ const BrandingUploader = ({ data, onUpload, isLocked, fileReading }) => {
                     />
                 </div>
 
-                {/* Live Preview Area */}
+                {/* Live Preview Area - A4 (210×297mm) scaled */}
                 <div className="mt-8 bg-gray-100 p-6 rounded-xl border border-gray-200">
                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Document Live Preview (A4 Scaled)</h4>
-                    <div className="bg-white w-full aspect-[1/1.414] shadow-lg mx-auto max-w-[300px] flex flex-col relative text-[8px] text-gray-400">
-                        {/* Header Image */}
-                        {data.letterheadHeader ? (
-                            <img src={data.letterheadHeader} alt="Header" className="w-full object-cover max-h-[15%]" />
-                        ) : (
-                            <div className="h-[15%] bg-gray-50 border-b border-dashed border-gray-200 flex items-center justify-center">Header Area</div>
-                        )}
+                    <div
+                        className="bg-white shadow-lg mx-auto flex flex-col relative overflow-hidden"
+                        style={{
+                            width: '210px',
+                            height: '297px',
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                        }}
+                    >
+                        {/* Header - Letterhead strip */}
+                        <div className="shrink-0 w-full min-h-[44px] max-h-[80px] flex items-center justify-center overflow-hidden bg-gray-50 border-b border-gray-100">
+                            {data.letterheadHeader ? (
+                                <img
+                                    src={data.letterheadHeader}
+                                    alt="Letterhead Header"
+                                    className="w-full h-full object-contain object-top"
+                                    style={{ maxHeight: '80px' }}
+                                />
+                            ) : (
+                                <span className="text-[10px] text-gray-400 font-medium">Header Area</span>
+                            )}
+                        </div>
 
                         {/* Body Content Placeholder */}
-                        <div className="flex-1 p-4 space-y-2">
-                            <div className="h-2 w-1/3 bg-gray-100 rounded"></div>
-                            <div className="h-2 w-1/2 bg-gray-100 rounded"></div>
-                            <div className="h-20 w-full bg-gray-50 border border-dashed border-gray-100 rounded flex items-center justify-center">
+                        <div className="flex-1 min-h-0 p-3 flex flex-col gap-2 overflow-hidden">
+                            <div className="h-1.5 w-1/3 bg-gray-100 rounded shrink-0" />
+                            <div className="h-1.5 w-2/3 bg-gray-100 rounded shrink-0" />
+                            <div className="flex-1 min-h-[60px] flex items-center justify-center bg-gray-50/80 border border-dashed border-gray-200 rounded text-[10px] text-gray-400">
                                 Content Area
                             </div>
                         </div>
 
-                        {/* Footer Image */}
-                        {data.letterheadFooter ? (
-                            <img src={data.letterheadFooter} alt="Footer" className="w-full object-cover max-h-[10%]" />
-                        ) : (
-                            <div className="h-[10%] bg-gray-50 border-t border-dashed border-gray-200 flex items-center justify-center">Footer Area</div>
-                        )}
+                        {/* Footer - Letterhead strip */}
+                        <div className="shrink-0 w-full min-h-[36px] max-h-[60px] flex items-center justify-center overflow-hidden bg-gray-50 border-t border-gray-100">
+                            {data.letterheadFooter ? (
+                                <img
+                                    src={data.letterheadFooter}
+                                    alt="Letterhead Footer"
+                                    className="w-full h-full object-contain object-bottom"
+                                    style={{ maxHeight: '60px' }}
+                                />
+                            ) : (
+                                <span className="text-[10px] text-gray-400 font-medium">Footer Area</span>
+                            )}
+                        </div>
 
                         {/* Watermark Mockup */}
                         {data.logoLight && (
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-                                <img src={data.logoLight} alt="" className="w-1/2" />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.04]">
+                                <img src={data.logoLight} alt="" className="max-w-[40%] max-h-[40%] object-contain" />
                             </div>
                         )}
                     </div>
+                    <p className="text-[10px] text-gray-400 mt-2 text-center">A4 ratio 1:1.414 • Header & footer scale to fit</p>
                 </div>
             </div>
         </div>

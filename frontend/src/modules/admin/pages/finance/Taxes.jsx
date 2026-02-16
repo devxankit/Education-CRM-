@@ -111,11 +111,10 @@ const Taxes = () => {
 
     const getApplicableLabel = (on) => {
         const labels = {
-            fees: 'Tuition Fees',
-            transport: 'Transport',
-            admission: 'Admission',
-            hostel: 'Hostel',
-            all: 'All Charges'
+            fee: 'Fee',
+            admission: 'Admission Fee',
+            payroll: 'Payroll',
+            expenses: 'Expenses'
         };
         return labels[on] || on;
     };
@@ -141,9 +140,8 @@ const Taxes = () => {
             if (filterStatus === 'inactive' && tax.isActive) return false;
         }
         // Applicable on filter
-        if (filterApplicableOn !== 'all') {
-            const match = filterApplicableOn === 'all_charges' ? tax.applicableOn === 'all' : tax.applicableOn === filterApplicableOn;
-            if (!match) return false;
+        if (filterApplicableOn !== 'all' && tax.applicableOn !== filterApplicableOn) {
+            return false;
         }
         return true;
     });
@@ -216,20 +214,20 @@ const Taxes = () => {
             </div>
 
             {/* Example: Tax applied on sample amount */}
-            {taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).length > 0 && (
+            {taxes.filter(t => t.isActive && t.applicableOn === 'fee').length > 0 && (
                 <div className="mb-6 p-4 rounded-xl bg-indigo-50/80 border border-indigo-100">
                     <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Example (fees applicable)</p>
                     <p className="text-sm text-gray-700">
                         On <span className="font-bold">₹10,000</span> base: {
-                            taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).map(t => {
+                            taxes.filter(t => t.isActive && t.applicableOn === 'fee').map(t => {
                                 const amt = t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0);
                                 return `${t.name} (${t.type === 'percentage' ? t.rate + '%' : '₹' + t.rate}) = ₹${amt.toLocaleString()}`;
                             }).join(', ')
                         }
                         {' → '}
                         <span className="font-bold text-indigo-700">
-                            Total tax ₹{taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).reduce((s, t) => s + (t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0)), 0).toLocaleString()}
-                            {' '}(Grand total ₹{(10000 + taxes.filter(t => t.isActive && (t.applicableOn === 'fees' || t.applicableOn === 'all')).reduce((s, t) => s + (t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0)), 0)).toLocaleString()})
+                            Total tax ₹{taxes.filter(t => t.isActive && t.applicableOn === 'fee').reduce((s, t) => s + (t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0)), 0).toLocaleString()}
+                            {' '}(Grand total ₹{(10000 + taxes.filter(t => t.isActive && t.applicableOn === 'fee').reduce((s, t) => s + (t.type === 'percentage' ? Math.round(10000 * (t.rate || 0) / 100) : (t.rate || 0)), 0)).toLocaleString()})
                         </span>
                     </p>
                 </div>
@@ -262,11 +260,10 @@ const Taxes = () => {
                         className="px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                         <option value="all">All Applicable</option>
-                        <option value="fees">Tuition Fees</option>
-                        <option value="transport">Transport</option>
-                        <option value="admission">Admission</option>
-                        <option value="hostel">Hostel</option>
-                        <option value="all_charges">All Charges</option>
+                        <option value="fee">Annual Fee</option>
+                        <option value="admission">Admission Fee</option>
+                        <option value="payroll">Payroll</option>
+                        <option value="expenses">Expenses</option>
                     </select>
                     <div className="relative flex-1 min-w-[180px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
