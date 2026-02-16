@@ -75,18 +75,26 @@ const GovernancePolicyPanel = ({ policies, onUpdate }) => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        {['Super Admin', 'Principal', 'Registrar', 'Compliance Officer'].map((role) => (
-                            <label key={role} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={policies.overrideRoles?.includes(role)}
-                                    // Mock handler
-                                    onChange={() => { }}
-                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                />
-                                <span className="text-sm text-gray-700">{role}</span>
-                            </label>
-                        ))}
+                        {['Super Admin', 'Principal', 'Registrar', 'Compliance Officer'].map((role) => {
+                            const checked = policies.overrideRoles?.includes(role);
+                            const toggle = () => {
+                                const next = checked
+                                    ? (policies.overrideRoles || []).filter((r) => r !== role)
+                                    : [...(policies.overrideRoles || []), role];
+                                onUpdate('overrideRoles', next);
+                            };
+                            return (
+                                <label key={role} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={toggle}
+                                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                    />
+                                    <span className="text-sm text-gray-700">{role}</span>
+                                </label>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

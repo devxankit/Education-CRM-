@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, GraduationCap, UsersRound, Calendar, FileText } from 'lucide-react';
+import { Users, GraduationCap, UsersRound, FileText } from 'lucide-react';
 import { useAdminStore } from '../../../store/adminStore';
 
 // Components
@@ -12,14 +12,30 @@ import SystemHealthPanel from '../components/dashboard/SystemHealthPanel';
 import RecentActivityLog from '../components/dashboard/RecentActivityLog';
 
 const Dashboard = () => {
-    const students = useAdminStore(state => state.students);
-    const teachers = useAdminStore(state => state.teachers);
-    const employees = useAdminStore(state => state.employees);
+    const branches = useAdminStore(state => state.branches);
+    const dashboardStats = useAdminStore(state => state.dashboardStats);
+    const dashboardLoading = useAdminStore(state => state.dashboardLoading);
+    const fetchBranches = useAdminStore(state => state.fetchBranches);
+    const fetchDashboardStats = useAdminStore(state => state.fetchDashboardStats);
 
-    // Derived counts
-    const totalStudents = students.length || 1245; // Fallback to mock if empty for now
-    const totalTeachers = teachers.length;
-    const totalEmployees = employees.length;
+    const [selectedBranchId, setSelectedBranchId] = useState('all');
+
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        fetchDashboardStats(selectedBranchId);
+    }, [selectedBranchId, fetchDashboardStats]);
+
+    const data = dashboardStats;
+    const totalStudents = data?.totalStudents ?? 0;
+    const totalTeachers = data?.totalTeachers ?? 0;
+    const totalStaff = data?.totalStaff ?? 0;
+    const pendingApprovals = data?.pendingApprovals ?? 0;
+    const academicYearLabel = data?.activeAcademicYear?.name
+        ? `Academic Year ${data.activeAcademicYear.name} (${data.activeAcademicYear.status || 'Active'})`
+        : 'No active academic year';
 
     return (
         <div className="space-y-6 pb-10">
@@ -30,19 +46,33 @@ const Dashboard = () => {
                     <p className="text-gray-500 text-sm">Real-time overview of institution performance and compliance.</p>
                 </div>
 
-                {/* Branch Selector Mock */}
                 <div className="flex items-center gap-3">
-                    <select className="px-4 py-2 border border-blue-200 rounded-lg text-sm bg-white text-gray-700 outline-none focus:border-blue-500 font-medium shadow-sm">
-                        <option>All Branches</option>
-                        <option>Main Campus</option>
-                        <option>North Wing</option>
+                    <select
+                        value={selectedBranchId}
+                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                        className="px-4 py-2 border border-blue-200 rounded-lg text-sm bg-white text-gray-700 outline-none focus:border-blue-500 font-medium shadow-sm"
+                    >
+                        <option value="all">All Branches</option>
+                        {(branches || []).map((b) => (
+                            <option key={b._id || b.id} value={b._id || b.id}>
+                                {b.name || b.branchName || 'Branch'}
+                            </option>
+                        ))}
                     </select>
                     <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-100">
-                        Top KPI: Academic Year 2025-26 (Active)
+                        {dashboardLoading ? 'Loading...' : academicYearLabel}
                     </div>
                 </div>
             </div>
 
+            {dashboardLoading && !data ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+                    ))}
+                </div>
+            ) : (
+                <>
             {/* SECTION 1: KEY METRICS - Blue/Cool Theme */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KpiCard
@@ -61,17 +91,17 @@ const Dashboard = () => {
                 />
                 <KpiCard
                     label="Support Staff"
-                    value={totalEmployees.toLocaleString()}
+                    value={totalStaff.toLocaleString()}
                     icon={Users}
                     color="bg-sky-500"
-                    link="/admin/people/employees"
+                    link="/admin/users/admins"
                 />
                 <KpiCard
                     label="Pending Approvals"
-                    value="12"
+                    value={pendingApprovals.toLocaleString()}
                     icon={FileText}
                     color="bg-cyan-600"
-                    link="/admin/compliance/checklists"
+                    link="/admin/people/students"
                 />
             </div>
 
@@ -113,12 +143,9 @@ const Dashboard = () => {
 
             {/* SECTION 2 & 3: ALERTS & PENDING ACTIONS */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto items-stretch">
-                {/* Critical Alerts - 1/3 width */}
                 <div className="lg:col-span-1">
-                    <AlertsPanel />
+                    <AlertsPanel alerts={data?.alerts ?? []} />
                 </div>
-
-                {/* Pending Actions - 2/3 width */}
                 <div className="lg:col-span-2">
                     <PendingActionsTable />
                 </div>
@@ -126,16 +153,15 @@ const Dashboard = () => {
 
             {/* SECTION 4 & 5: SYSTEM HEALTH & ACTIVITY */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* System Health - 2/3 width */}
                 <div className="lg:col-span-2">
-                    <SystemHealthPanel />
+                    <SystemHealthPanel systemHealth={data?.systemHealth ?? {}} />
                 </div>
-
-                {/* Recent Activity - 1/3 width */}
                 <div className="lg:col-span-1">
-                    <RecentActivityLog />
+                    <RecentActivityLog recentActivity={data?.recentActivity ?? []} />
                 </div>
             </div>
+                </>
+            )}
         </div>
     );
 };

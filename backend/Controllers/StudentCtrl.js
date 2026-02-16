@@ -12,7 +12,6 @@ import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
 import { sendParentCredentialsEmail } from "../Helpers/SendMail.js";
 import Notice from "../Models/NoticeModel.js";
-import Announcement from "../Models/AnnouncementModel.js";
 import Homework from "../Models/HomeworkModel.js";
 import Attendance from "../Models/AttendanceModel.js";
 import Exam from "../Models/ExamModel.js";
@@ -24,7 +23,7 @@ import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
 import LearningMaterial from "../Models/LearningMaterialModel.js";
 import Role from "../Models/RoleModel.js";
-import NoticeAcknowledgment from "../Models/NoticeAcknowledgmentModel.js";
+import { logFinancial, logUserActivity, logDataChange } from "../Helpers/logger.js";
 
 // ================= STUDENT DASHBOARD =================
 export const getStudentDashboard = async (req, res) => {
@@ -539,6 +538,9 @@ export const recordFeePayment = async (req, res) => {
 
         await payment.save();
 
+        logFinancial(req, { branchId: student.branchId, type: "fee_payment", amount: Number(amount), referenceType: "FeePayment", referenceId: payment._id, description: `Fee payment ₹${Number(amount)} - ${payment.receiptNo}` });
+        logUserActivity(req, { branchId: student.branchId, action: "fee_payment_recorded", entityType: "FeePayment", entityId: payment._id, description: `Fee ₹${Number(amount)} recorded for student` });
+
         res.status(201).json({
             success: true,
             message: "Payment recorded successfully",
@@ -676,6 +678,12 @@ export const updateStudent = async (req, res) => {
 
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const changedFields = Object.keys(updateData).filter(k => !['documents', 'base64'].includes(k));
+        if (changedFields.length) {
+            logDataChange(req, { entityType: "Student", entityId: student._id, action: "update", changedFields, newValue: updateData, description: "Student details updated" });
+            logUserActivity(req, { branchId: student.branchId, action: "student_updated", entityType: "Student", entityId: student._id, description: "Student record updated" });
         }
 
         res.status(200).json({
@@ -996,149 +1004,11 @@ export const getMyNotices = async (req, res) => {
             ]
         })
             .populate("branchId", "name")
-            .populate("createdBy", "firstName lastName")
             .sort({ publishDate: -1 });
 
-        // Get acknowledgments for this student
-        const acks = await NoticeAcknowledgment.find({
-            userId: studentId,
-            noticeId: { $in: notices.map(n => n._id) }
-        });
-
-        const ackMap = new Map();
-        acks.forEach(ack => ackMap.set(ack.noticeId.toString(), ack.acknowledgedAt));
-
         res.status(200).json({
             success: true,
-            data: notices.map(n => ({
-                _id: n._id,
-                title: n.title,
-                content: n.content,
-                category: n.category,
-                priority: n.priority,
-                publishDate: n.publishDate,
-                ackRequired: n.ackRequired,
-                attachments: n.attachments || [],
-                issuedBy: n.createdBy ? `${n.createdBy.firstName} ${n.createdBy.lastName}` : "Admin",
-                acknowledged: !!ackMap.get(n._id.toString()),
-                acknowledgedAt: ackMap.get(n._id.toString())
-            }))
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// ================= ACKNOWLEDGE NOTICE =================
-export const acknowledgeNotice = async (req, res) => {
-    try {
-        const studentId = req.user._id;
-        const { noticeId } = req.params;
-
-        const notice = await Notice.findById(noticeId);
-        if (!notice) {
-            return res.status(404).json({ success: false, message: "Notice not found" });
-        }
-
-        // Check if already acknowledged
-        const existingAck = await NoticeAcknowledgment.findOne({
-            noticeId,
-            userId: studentId
-        });
-
-        if (existingAck) {
-            return res.status(200).json({ success: true, message: "Already acknowledged" });
-        }
-
-        const newAck = new NoticeAcknowledgment({
-            noticeId,
-            userId: studentId,
-            userType: "Student",
-            acknowledgedAt: new Date()
-        });
-
-        await newAck.save();
-
-        res.status(200).json({
-            success: true,
-            message: "Notice acknowledged successfully"
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// ================= GET STUDENT NOTIFICATIONS =================
-export const getStudentNotifications = async (req, res) => {
-    try {
-        const studentId = req.user._id;
-        const student = await Student.findById(studentId);
-
-        if (!student) {
-            return res.status(404).json({ success: false, message: "Student not found" });
-        }
-
-        // 1. Get Published Notices
-        const notices = await Notice.find({
-            status: "PUBLISHED",
-            $or: [
-                { audiences: "All Students" },
-                { targetClasses: student.classId },
-                { targetSections: student.sectionId }
-            ]
-        })
-            .sort({ publishDate: -1 })
-            .limit(20);
-
-        // 2. Get Published Announcements
-        const announcements = await Announcement.find({
-            status: "PUBLISHED",
-            instituteId: student.instituteId,
-            branchId: student.branchId
-        })
-            .sort({ publishDate: -1 })
-            .limit(20);
-
-        // 3. Combine and Sort
-        const combined = [
-            ...notices.map(n => ({
-                _id: n._id,
-                title: n.title,
-                content: n.content,
-                publishDate: n.publishDate,
-                priority: n.priority,
-                category: n.category,
-                origin: 'Notice'
-            })),
-            ...announcements.map(a => ({
-                _id: a._id,
-                title: a.title,
-                content: a.content,
-                publishDate: a.publishDate,
-                category: a.category,
-                origin: 'Announcement'
-            }))
-        ].sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
-
-        // 4. Final Mapping for Frontend
-        const finalNotifications = combined.map(item => ({
-            id: item._id,
-            type: item.priority === 'URGENT' ? 'alert' : (item.category === 'EXAM' || item.category === 'EVENT' ? 'info' : 'notice'),
-            title: item.title,
-            message: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
-            time: new Date(item.publishDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }),
-            read: false,
-            originalCategory: item.origin
-        }));
-
-        res.status(200).json({
-            success: true,
-            data: finalNotifications
+            data: notices
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -1409,7 +1279,7 @@ export const getLearningMaterials = async (req, res) => {
 export const createSupportTicket = async (req, res) => {
     try {
         const studentId = req.user._id;
-        const { category, topic, details, priority, attachment } = req.body;
+        const { category, topic, details, priority } = req.body;
         const student = await Student.findById(studentId);
 
         if (!student) {
@@ -1419,13 +1289,10 @@ export const createSupportTicket = async (req, res) => {
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
-            raisedBy: studentId,
-            raisedByType: "Student",
             category,
             topic,
             details,
-            priority: priority || "Normal",
-            ...(attachment && { attachment })
+            priority: priority || "Normal"
         });
 
         await ticket.save();
@@ -1444,11 +1311,7 @@ export const createSupportTicket = async (req, res) => {
 export const getSupportTickets = async (req, res) => {
     try {
         const studentId = req.user._id;
-        // Fetch tickets for this student, but EXCLUDE ones raised by Parent
-        const tickets = await SupportTicket.find({
-            studentId,
-            raisedByType: { $ne: "Parent" }
-        })
+        const tickets = await SupportTicket.find({ studentId })
             .sort({ createdAt: -1 });
 
         res.status(200).json({

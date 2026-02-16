@@ -199,7 +199,7 @@ const InstitutionProfile = () => {
             />
 
             {/* Sticky Top Action Bar */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 mb-6 -mx-6 md:-mx-8 flex items-center justify-between shadow-sm">
+            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 md:px-6 py-4 mb-6 -mx-4 md:-mx-6 flex items-center justify-between shadow-sm rounded-t-xl">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900 font-['Poppins']">Institution Profile</h1>
                     <div className="flex items-center gap-2 text-xs text-gray-500">

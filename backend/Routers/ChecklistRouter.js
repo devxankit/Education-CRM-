@@ -5,13 +5,16 @@ import {
     deleteChecklist,
     toggleChecklistStatus
 } from "../Controllers/ChecklistCtrl.js";
-import { verifyToken } from "../Middlewares/verifyToken.js";
+import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 
 const router = Router();
 
-router.post("/save", verifyToken, saveChecklist);
-router.get("/", verifyToken, getChecklists);
-router.delete("/:id", verifyToken, deleteChecklist);
-router.put("/:id/toggle", verifyToken, toggleChecklistStatus);
+router.use(AuthMiddleware);
+router.use(isInstitute);
+
+router.post("/save", saveChecklist);
+router.get("/", getChecklists);
+router.delete("/:id", deleteChecklist);
+router.put("/:id/toggle", toggleChecklistStatus);
 
 export default router;

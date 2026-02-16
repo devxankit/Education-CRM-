@@ -8,27 +8,46 @@ const documentCategorySchema = new mongoose.Schema({
 
 const studentRequirementSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    category: { type: String, default: "General" },
     stage: {
         type: String,
-        enum: ["admission", "post-admission", "exam"],
+        enum: ["admission", "post-admission", "joining", "exam"],
         default: "admission"
     },
     mandatory: { type: Boolean, default: false },
+    gracePeriodDays: { type: Number, default: 0 },
+    enforcement: {
+        type: String,
+        enum: ["hard_block", "soft_warning", "info_only"],
+        default: "hard_block"
+    },
     verifier: {
         type: String,
-        enum: ["admin", "registrar", "class-teacher"],
+        enum: ["admin", "registrar", "class-teacher", "compliance"],
         default: "admin"
     }
 });
 
 const staffRequirementSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    category: { type: String, default: "General" },
     type: {
         type: String,
         enum: ["all", "teaching", "non-teaching", "contractual"],
         default: "all"
     },
-    mandatory: { type: Boolean, default: false }
+    stage: {
+        type: String,
+        enum: ["admission", "post-admission", "joining", "interview"],
+        default: "joining"
+    },
+    mandatory: { type: Boolean, default: false },
+    gracePeriodDays: { type: Number, default: 0 },
+    enforcement: {
+        type: String,
+        enum: ["hard_block", "soft_warning", "info_only"],
+        default: "hard_block"
+    }
 });
 
 const documentRuleSchema = new mongoose.Schema(
@@ -57,6 +76,17 @@ const documentRuleSchema = new mongoose.Schema(
             retentionYears: { type: Number, default: 5 },
             autoArchive: { type: Boolean, default: true },
             expiryAction: { type: String, enum: ["Archive", "Delete"], default: "Archive" }
+        },
+        // Provisional admission: allow student without docs for limited days
+        provisionalAdmission: {
+            allowed: { type: Boolean, default: false },
+            maxValidityDays: { type: Number, default: 45 }
+        },
+        // Roles that can bypass Hard Block (override authority)
+        overrideRoles: {
+            type: [String],
+            enum: ["Super Admin", "Principal", "Registrar", "Compliance Officer"],
+            default: ["Super Admin"]
         },
         studentRules: [studentRequirementSchema],
         staffRules: [staffRequirementSchema],

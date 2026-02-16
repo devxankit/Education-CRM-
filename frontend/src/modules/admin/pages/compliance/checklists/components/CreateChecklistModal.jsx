@@ -12,7 +12,7 @@ const CreateChecklistModal = ({ onClose, onSave }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({ ...formData, id: Date.now(), items: [] });
+        onSave({ ...formData, items: [] });
     };
 
     return (

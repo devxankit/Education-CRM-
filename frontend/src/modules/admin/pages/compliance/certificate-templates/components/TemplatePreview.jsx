@@ -73,7 +73,7 @@ const TemplatePreview = ({ template, variables }) => {
                 {/* Footer / Signatures */}
                 <div className="absolute bottom-24 left-24 right-24 flex justify-between items-end">
                     <div className="text-center">
-                        <p className="text-sm font-bold text-gray-900 mb-8">{{ issue_date }}</p>
+                        <p className="text-sm font-bold text-gray-900 mb-8">{mockData['{{issue_date}}']}</p>
                         <div className="border-t border-gray-400 w-32 mx-auto pt-2 text-xs text-gray-500 font-semibold uppercase tracking-wider">
                             Date of Issue
                         </div>

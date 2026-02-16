@@ -4,7 +4,7 @@ import Checklist from "../Models/ChecklistModel.js";
 export const saveChecklist = async (req, res) => {
     try {
         const { id, branchId, title, targetRole, description, isActive, items } = req.body;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
@@ -44,7 +44,7 @@ export const saveChecklist = async (req, res) => {
 export const getChecklists = async (req, res) => {
     try {
         const { branchId, targetRole } = req.query;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
         if (branchId) query.branchId = branchId;
@@ -65,7 +65,7 @@ export const getChecklists = async (req, res) => {
 export const deleteChecklist = async (req, res) => {
     try {
         const { id } = req.params;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         const checklist = await Checklist.findOneAndDelete({ _id: id, instituteId });
 
@@ -86,7 +86,7 @@ export const deleteChecklist = async (req, res) => {
 export const toggleChecklistStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const instituteId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
         const checklist = await Checklist.findOne({ _id: id, instituteId });
         if (!checklist) {

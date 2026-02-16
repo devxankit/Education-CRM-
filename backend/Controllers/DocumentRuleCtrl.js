@@ -11,6 +11,25 @@ export const getDocumentRule = async (req, res) => {
         }
 
         // Handle 'main' or invalid ID to avoid CastError
+        const defaultGovernance = {
+            provisionalAdmission: { allowed: false, maxValidityDays: 45 },
+            overrideRoles: ['Super Admin']
+        };
+        const defaultStudentRules = [
+            { name: 'Aadhaar Card', category: 'Identity', stage: 'admission', mandatory: true, gracePeriodDays: 7, enforcement: 'hard_block', verifier: 'admin' },
+            { name: 'Birth Certificate', category: 'Identity', stage: 'admission', mandatory: true, gracePeriodDays: 7, enforcement: 'hard_block', verifier: 'admin' },
+            { name: 'Transfer Certificate', category: 'Academic', stage: 'admission', mandatory: true, gracePeriodDays: 30, enforcement: 'hard_block', verifier: 'registrar' },
+            { name: 'Previous Marksheet', category: 'Academic', stage: 'admission', mandatory: true, gracePeriodDays: 0, enforcement: 'hard_block', verifier: 'admin' },
+            { name: 'Residence Proof', category: 'Address', stage: 'admission', mandatory: true, gracePeriodDays: 15, enforcement: 'soft_warning', verifier: 'admin' },
+            { name: 'Transport Application', category: 'Optional', stage: 'post-admission', mandatory: false, gracePeriodDays: 5, enforcement: 'info_only', verifier: 'admin' },
+            { name: 'Medical Fitness Certificate', category: 'Health', stage: 'joining', mandatory: false, gracePeriodDays: 10, enforcement: 'soft_warning', verifier: 'admin' }
+        ];
+        const defaultStaffRules = [
+            { name: 'Identity Proof (PAN/Aadhaar)', category: 'Identity', type: 'all', stage: 'joining', mandatory: true, gracePeriodDays: 7, enforcement: 'hard_block' },
+            { name: 'Qualification Degrees', category: 'Academic', type: 'teaching', stage: 'joining', mandatory: true, gracePeriodDays: 0, enforcement: 'hard_block' },
+            { name: 'Experience Letters', category: 'Professional', type: 'teaching', stage: 'interview', mandatory: true, gracePeriodDays: 0, enforcement: 'soft_warning' },
+            { name: 'Police Verification', category: 'Legal', type: 'all', stage: 'joining', mandatory: true, gracePeriodDays: 45, enforcement: 'hard_block' }
+        ];
         if (branchId === 'main' || branchId.length !== 24) {
             return res.status(200).json({
                 success: true,
@@ -25,18 +44,10 @@ export const getDocumentRule = async (req, res) => {
                         { name: 'Transfer Certificates', active: true, mandatory: true },
                     ],
                     workflow: { verificationLevel: 'single', autoReject: false, retentionYears: 5, autoArchive: true, expiryAction: 'Archive' },
-                    studentRules: [
-                        { name: 'Aadhaar Card', stage: 'admission', mandatory: true, verifier: 'admin' },
-                        { name: 'Birth Certificate', stage: 'admission', mandatory: true, verifier: 'admin' },
-                        { name: 'Transfer Certificate', stage: 'post-admission', mandatory: true, verifier: 'registrar' },
-                        { name: 'Previous Marksheet', stage: 'admission', mandatory: false, verifier: 'class-teacher' }
-                    ],
-                    staffRules: [
-                        { name: 'Identity Proof (PAN/Aadhaar)', type: 'all', mandatory: true },
-                        { name: 'Qualification Degrees', type: 'teaching', mandatory: true },
-                        { name: 'Experience Letters', type: 'teaching', mandatory: true },
-                        { name: 'Police Verification', type: 'all', mandatory: false }
-                    ]
+                    provisionalAdmission: defaultGovernance.provisionalAdmission,
+                    overrideRoles: defaultGovernance.overrideRoles,
+                    studentRules: defaultStudentRules,
+                    staffRules: defaultStaffRules
                 }
             });
         }
@@ -44,7 +55,6 @@ export const getDocumentRule = async (req, res) => {
         let rule = await DocumentRule.findOne({ instituteId, branchId });
 
         if (!rule) {
-            // Return defaults
             return res.status(200).json({
                 success: true,
                 message: "No configuration found, providing defaults",
@@ -58,18 +68,10 @@ export const getDocumentRule = async (req, res) => {
                         { name: 'Transfer Certificates', active: true, mandatory: true },
                     ],
                     workflow: { verificationLevel: 'single', autoReject: false, retentionYears: 5, autoArchive: true, expiryAction: 'Archive' },
-                    studentRules: [
-                        { name: 'Aadhaar Card', stage: 'admission', mandatory: true, verifier: 'admin' },
-                        { name: 'Birth Certificate', stage: 'admission', mandatory: true, verifier: 'admin' },
-                        { name: 'Transfer Certificate', stage: 'post-admission', mandatory: true, verifier: 'registrar' },
-                        { name: 'Previous Marksheet', stage: 'admission', mandatory: false, verifier: 'class-teacher' }
-                    ],
-                    staffRules: [
-                        { name: 'Identity Proof (PAN/Aadhaar)', type: 'all', mandatory: true },
-                        { name: 'Qualification Degrees', type: 'teaching', mandatory: true },
-                        { name: 'Experience Letters', type: 'teaching', mandatory: true },
-                        { name: 'Police Verification', type: 'all', mandatory: false }
-                    ]
+                    provisionalAdmission: defaultGovernance.provisionalAdmission,
+                    overrideRoles: defaultGovernance.overrideRoles,
+                    studentRules: defaultStudentRules,
+                    staffRules: defaultStaffRules
                 }
             });
         }

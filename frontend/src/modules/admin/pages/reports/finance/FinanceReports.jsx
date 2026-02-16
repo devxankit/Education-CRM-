@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, Share2, Printer, Info } from 'lucide-react';
-
-// Shared Components
+import { useAdminStore } from '@/store/adminStore';
 import ReportFilterPanel from '../hr/components/ReportFilterPanel';
-
-// Local Components
 import FinanceReportSidebar from './components/FinanceReportSidebar';
 import FeeCollectionReports from './components/FeeCollectionReports';
 import OutstandingDuesReports from './components/OutstandingDuesReports';
@@ -13,8 +10,7 @@ import DiscountReports from './components/DiscountReports';
 import DailyCollectionReport from './components/DailyCollectionReport';
 
 const FinanceReports = () => {
-
-    // State
+    const { fetchFinanceReport } = useAdminStore();
     const [activeCategory, setActiveCategory] = useState('collection');
     const [filters, setFilters] = useState({
         dateRange: 'this_month',
@@ -22,16 +18,36 @@ const FinanceReports = () => {
         department: 'all',
         search: ''
     });
+    const [reportData, setReportData] = useState({});
+    const [loading, setLoading] = useState(false);
 
-    // Content Map
+    useEffect(() => {
+        const report = activeCategory === 'dcr' ? 'dcr' : activeCategory;
+        const load = async () => {
+            setLoading(true);
+            try {
+                const data = await fetchFinanceReport({
+                    branchId: filters.branch,
+                    dateRange: filters.dateRange,
+                    report
+                });
+                setReportData(data || {});
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [activeCategory, filters.branch, filters.dateRange, fetchFinanceReport]);
+
     const renderContent = () => {
+        const common = { filters, data: reportData, loading };
         switch (activeCategory) {
-            case 'collection': return <FeeCollectionReports filters={filters} />;
-            case 'dues': return <OutstandingDuesReports filters={filters} />;
-            case 'expenses': return <ExpenseReports filters={filters} />;
-            case 'discounts': return <DiscountReports filters={filters} />;
-            case 'dcr': return <DailyCollectionReport filters={filters} />;
-            default: return <FeeCollectionReports filters={filters} />;
+            case 'collection': return <FeeCollectionReports {...common} />;
+            case 'dues': return <OutstandingDuesReports {...common} />;
+            case 'expenses': return <ExpenseReports {...common} />;
+            case 'discounts': return <DiscountReports {...common} />;
+            case 'dcr': return <DailyCollectionReport {...common} />;
+            default: return <FeeCollectionReports {...common} />;
         }
     };
 
@@ -47,7 +63,7 @@ const FinanceReports = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-50 border-t border-gray-200 -mt-6 -mx-8">
+        <div className="flex min-h-[calc(100vh-10rem)] overflow-hidden bg-gray-50 border border-gray-200 rounded-xl -mx-4 md:-mx-6">
 
             {/* Sidebar */}
             <FinanceReportSidebar

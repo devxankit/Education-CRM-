@@ -1,27 +1,41 @@
 
-import React, { useState } from 'react';
-import { Database, History, GitBranch, ArrowRight, Search, Filter, RotateCcw, Eye } from 'lucide-react';
-import { dataChanges } from '../../../data/auditData';
+import React, { useState, useEffect } from 'react';
+import { Database, History, GitBranch, ArrowRight, Search, Filter, RotateCcw, Eye, Loader2 } from 'lucide-react';
+import { API_URL } from '@/app/api';
 
 const DataHistory = () => {
-
-    // Mock Data
-    const [changes, setChanges] = useState(dataChanges);
-
+    const [changes, setChanges] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterModule, setFilterModule] = useState('all');
 
+    useEffect(() => {
+        const fetchLogs = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/logs/data-change?page=1&limit=100`, { headers: { Authorization: `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data)) setChanges(data.data);
+            } catch (e) { console.error('Failed to fetch data change logs', e); }
+            finally { setLoading(false); }
+        };
+        fetchLogs();
+    }, []);
+
     const stats = {
         totalChanges: changes.length,
-        todayChanges: changes.length,
+        todayChanges: changes.filter(c => c.createdAt && new Date(c.createdAt).toDateString() === new Date().toDateString()).length,
         restorable: changes.filter(c => c.action === 'update').length,
     };
 
     const filteredChanges = changes.filter(change => {
-        const matchesSearch = change.entityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            change.field.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            change.user.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesModule = filterModule === 'all' || change.module.toLowerCase() === filterModule.toLowerCase();
+        const entityName = (change.entityType || '').toLowerCase();
+        const field = (change.changedFields?.join(' ') || change.description || '').toLowerCase();
+        const user = (change.changedByEmail || '').toLowerCase();
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = !searchTerm || entityName.includes(term) || field.includes(term) || user.includes(term);
+        const matchesModule = filterModule === 'all' || (change.entityType || '').toLowerCase() === filterModule.toLowerCase();
         return matchesSearch && matchesModule;
     });
 
@@ -35,7 +49,7 @@ const DataHistory = () => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-gray-50 border-t border-gray-200 -mt-6 -mx-8 relative">
+        <div className="flex flex-col min-h-[calc(100vh-10rem)] overflow-hidden bg-gray-50 border border-gray-200 rounded-xl -mx-4 md:-mx-6 relative">
 
             {/* Header */}
             <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 shadow-sm z-10 sticky top-0">
@@ -107,19 +121,30 @@ const DataHistory = () => {
                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
                             >
                                 <option value="all">All Modules</option>
-                                <option value="students">Students</option>
-                                <option value="employees">Employees</option>
-                                <option value="finance">Finance</option>
-                                <option value="academics">Academics</option>
+                                <option value="Student">Student</option>
+                                <option value="Teacher">Teacher</option>
+                                <option value="FeeStructure">Fee</option>
+                                <option value="Expense">Expense</option>
                             </select>
                         </div>
                     </div>
 
                     {/* Changes List */}
                     <div className="flex-1 overflow-auto">
+                        {loading ? (
+                            <div className="px-6 py-12 text-center text-gray-500"><Loader2 className="animate-spin inline" size={24} /> Loading...</div>
+                        ) : filteredChanges.length === 0 ? (
+                            <div className="px-6 py-12 text-center text-gray-500">No data change logs found.</div>
+                        ) : (
                         <div className="divide-y divide-gray-100">
-                            {filteredChanges.map((change) => (
-                                <div key={change.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                            {filteredChanges.map((change) => {
+                                const entityIdStr = change.entityId?.toString?.() ?? change.entityId;
+                                const fieldStr = Array.isArray(change.changedFields) ? change.changedFields.join(', ') : (change.changedFields || '-');
+                                const oldVal = change.oldValue != null ? (typeof change.oldValue === 'object' ? JSON.stringify(change.oldValue).slice(0, 80) : String(change.oldValue)) : '-';
+                                const newVal = change.newValue != null ? (typeof change.newValue === 'object' ? JSON.stringify(change.newValue).slice(0, 80) : String(change.newValue)) : '-';
+                                const timestamp = change.createdAt ? new Date(change.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' }) : '-';
+                                return (
+                                <div key={change._id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
@@ -127,34 +152,34 @@ const DataHistory = () => {
                                                     {change.action}
                                                 </span>
                                                 <span className="text-sm font-semibold text-gray-900">
-                                                    {change.entity}: {change.entityName}
+                                                    {change.entityType}: {entityIdStr?.slice(-8)}
                                                 </span>
                                                 <span className="text-xs text-gray-400 font-mono">
-                                                    {change.entityId}
+                                                    {entityIdStr}
                                                 </span>
                                             </div>
 
                                             <div className="flex items-center gap-2 text-sm mb-2">
-                                                <span className="text-gray-500">Field:</span>
-                                                <span className="font-medium text-gray-700">{change.field}</span>
+                                                <span className="text-gray-500">Fields:</span>
+                                                <span className="font-medium text-gray-700">{fieldStr}</span>
                                             </div>
 
                                             <div className="flex items-center gap-3 text-sm">
-                                                <span className="px-2 py-1 bg-red-50 text-red-700 rounded line-through">
-                                                    {change.oldValue}
+                                                <span className="px-2 py-1 bg-red-50 text-red-700 rounded line-through max-w-xs truncate">
+                                                    {oldVal}
                                                 </span>
-                                                <ArrowRight size={14} className="text-gray-400" />
-                                                <span className="px-2 py-1 bg-green-50 text-green-700 rounded">
-                                                    {change.newValue}
+                                                <ArrowRight size={14} className="text-gray-400 shrink-0" />
+                                                <span className="px-2 py-1 bg-green-50 text-green-700 rounded max-w-xs truncate">
+                                                    {newVal}
                                                 </span>
                                             </div>
 
                                             <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                                                <span>By: {change.user}</span>
+                                                <span>By: {change.changedByEmail || '-'}</span>
                                                 <span>•</span>
-                                                <span>{change.timestamp}</span>
+                                                <span>{timestamp}</span>
                                                 <span>•</span>
-                                                <span className="px-2 py-0.5 bg-gray-100 rounded">{change.module}</span>
+                                                <span className="px-2 py-0.5 bg-gray-100 rounded">{change.entityType}</span>
                                             </div>
                                         </div>
 
@@ -170,8 +195,10 @@ const DataHistory = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
+                        )}
                     </div>
                 </div>
             </div>
