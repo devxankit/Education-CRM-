@@ -135,7 +135,7 @@ export const createTeacher = async (req, res) => {
         // const generatedPassword = generateRandomPassword();
         const generatedPassword = "123456"
 
-        const teacher = new Teacher({
+        const teacherData = {
             instituteId,
             branchId,
             employeeId,
@@ -146,7 +146,6 @@ export const createTeacher = async (req, res) => {
             phone,
             department,
             designation,
-            academicLevel,
             roleId,
             experience,
             joiningDate: joiningDate || new Date(),
@@ -155,7 +154,10 @@ export const createTeacher = async (req, res) => {
             address,
             documents,
             passwordChangedAt: new Date()
-        });
+        };
+        if (academicLevel && academicLevel.trim()) teacherData.academicLevel = academicLevel;
+
+        const teacher = new Teacher(teacherData);
 
         await teacher.save();
 
@@ -226,6 +228,11 @@ export const updateTeacher = async (req, res) => {
 
         // Prevent password update via this route
         delete updateData.password;
+
+        // Remove empty enum values to avoid validation errors
+        if (updateData.academicLevel === '' || updateData.academicLevel === undefined) {
+            delete updateData.academicLevel;
+        }
 
         const teacher = await Teacher.findByIdAndUpdate(
             id,

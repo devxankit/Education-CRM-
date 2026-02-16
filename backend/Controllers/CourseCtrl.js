@@ -37,7 +37,7 @@ export const createCourse = async (req, res) => {
 // ================= GET ALL COURSES =================
 export const getCourses = async (req, res) => {
     try {
-        const { branchId, type } = req.query;
+        const { branchId, academicYearId, type } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
@@ -45,6 +45,14 @@ export const getCourses = async (req, res) => {
         query.status = "active";
         if (type && type !== 'all') {
             query.type = type;
+        }
+        // Filter by academic year: include courses for this year OR courses with no year set
+        if (academicYearId && academicYearId.length === 24) {
+            query.$or = [
+                { academicYearId },
+                { academicYearId: null },
+                { academicYearId: { $exists: false } }
+            ];
         }
 
         const courses = await Course.find(query).sort({ name: 1 });

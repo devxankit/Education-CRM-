@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Loader2, GraduationCap } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, MapPin, FileText, Plus, Trash2 } from 'lucide-react';
 import { API_URL } from '@/app/api';
 
 const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, branches = [] }) => {
@@ -9,6 +9,7 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
         lastName: '',
         email: '',
         phone: '',
+        address: '',
         branchId: '',
         department: '',
         designation: '',
@@ -16,10 +17,12 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
         experience: '',
         joiningDate: '',
         teachingStatus: 'Active',
-        status: 'active'
+        status: 'active',
+        documents: []
     });
 
     const [departmentsForBranch, setDepartmentsForBranch] = useState([]);
+    const [docUploading, setDocUploading] = useState(false);
 
     useEffect(() => {
         if (teacher) {
@@ -28,6 +31,7 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
                 lastName: teacher.lastName || '',
                 email: teacher.email || '',
                 phone: teacher.phone || '',
+                address: teacher.address || '',
                 branchId: teacher.branchId?._id || teacher.branchId || '',
                 department: teacher.department || '',
                 designation: teacher.designation || '',
@@ -35,7 +39,8 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
                 experience: teacher.experience || '',
                 joiningDate: teacher.joiningDate ? new Date(teacher.joiningDate).toISOString().split('T')[0] : '',
                 teachingStatus: teacher.teachingStatus || 'Active',
-                status: teacher.status || 'active'
+                status: teacher.status || 'active',
+                documents: Array.isArray(teacher.documents) ? teacher.documents : []
             });
         }
     }, [teacher]);
@@ -72,6 +77,44 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
 
     const selectedDept = departmentsForBranch.find((d) => d.name === formData.department);
     const designationsForDept = selectedDept?.designations?.filter((d) => d.status === 'Active') || [];
+
+    const handleDocumentUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setDocUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('folder', 'teachers/documents');
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/upload/single`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: fd
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+                setFormData(prev => ({
+                    ...prev,
+                    documents: [...(prev.documents || []), { name: file.name, url: data.url, status: 'Pending' }]
+                }));
+            } else {
+                alert(data.message || 'Upload failed');
+            }
+        } catch (err) {
+            alert('Document upload failed');
+        } finally {
+            setDocUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const removeDocument = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            documents: (prev.documents || []).filter((_, i) => i !== index)
+        }));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -134,6 +177,20 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
                                 type="tel" name="phone"
                                 value={formData.phone} onChange={handleChange}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                <MapPin size={14} className="text-gray-400" /> Address
+                            </label>
+                            <textarea
+                                name="address"
+                                rows={3}
+                                value={formData.address || ''}
+                                onChange={handleChange}
+                                placeholder="Full residential address"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"
                             />
                         </div>
 
@@ -258,6 +315,32 @@ const EditTeacherModal = ({ isOpen, onClose, teacher, onSave, loading = false, b
                                 <option value="inactive" className="text-gray-500">Inactive</option>
                                 <option value="suspended" className="text-red-600">Suspended</option>
                             </select>
+                        </div>
+
+                        {/* Section 3: Documents */}
+                        <div className="md:col-span-2 border-b border-gray-100 pb-2 pt-2">
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                <FileText size={14} /> Documents
+                            </h4>
+                        </div>
+                        <div className="md:col-span-2 space-y-2">
+                            {(formData.documents || []).map((doc, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <FileText size={16} className="text-indigo-500 shrink-0" />
+                                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 truncate hover:underline">{doc.name}</a>
+                                        <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">{doc.status || 'Pending'}</span>
+                                    </div>
+                                    <button type="button" onClick={() => removeDocument(idx)} className="p-1 text-red-500 hover:bg-red-50 rounded">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                            <label className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors ${docUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                                <Plus size={18} className="text-indigo-500" />
+                                <span className="text-sm font-medium text-gray-600">{docUploading ? 'Uploading...' : 'Add Document'}</span>
+                                <input type="file" className="hidden" accept=".pdf,.doc,.docx,image/*" onChange={handleDocumentUpload} />
+                            </label>
                         </div>
 
                     </div>

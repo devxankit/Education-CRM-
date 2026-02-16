@@ -45,31 +45,53 @@ const WeeklyTimetable = () => {
     // Initial Fetch
     useEffect(() => {
         fetchBranches();
-        fetchAcademicYears();
         fetchTeachers();
-        fetchTeacherMappings(); // Fetch all mappings initially or we can fetch by branch
     }, []);
 
     // Branch selection
     useEffect(() => {
-        if (!selectedBranchId) {
-            if (user?.branchId) setSelectedBranchId(user.branchId);
-            else if (branches.length > 0) setSelectedBranchId(branches[0]._id);
+        if (!selectedBranchId && branches.length > 0) {
+            setSelectedBranchId(user?.branchId && user.branchId !== 'all' ? user.branchId : branches[0]._id);
         }
-    }, [user, branches]);
+    }, [user?.branchId, branches]);
 
-    // Fetch classes, courses and mappings when branch changes
+    // Fetch academic years when branch changes
+    useEffect(() => {
+        if (selectedBranchId && selectedBranchId.length === 24) {
+            fetchAcademicYears(selectedBranchId);
+        }
+    }, [selectedBranchId, fetchAcademicYears]);
+
+    // Reset year/class/course/section when branch changes
     useEffect(() => {
         if (selectedBranchId) {
-            fetchClasses(selectedBranchId);
-            fetchCourses(selectedBranchId);
+            setSelectedYearId('');
+            setSelectedClassId('');
+            setSelectedCourseId('');
+            setSelectedSectionId('');
+        }
+    }, [selectedBranchId]);
+
+    // Set default active year when academic years load
+    useEffect(() => {
+        if (academicYears.length > 0 && selectedBranchId && !selectedYearId) {
+            const active = academicYears.find(y => y.status === 'active');
+            setSelectedYearId(active?._id || academicYears[0]._id);
+        }
+    }, [academicYears, selectedBranchId, selectedYearId]);
+
+    // Fetch classes and courses when branch + academic year are selected
+    useEffect(() => {
+        if (selectedBranchId && selectedYearId && selectedYearId.length === 24) {
+            fetchClasses(selectedBranchId, false, selectedYearId);
+            fetchCourses(selectedBranchId, selectedYearId);
             fetchSubjects(selectedBranchId);
             fetchTeacherMappings({ branchId: selectedBranchId });
             fetchTimetableRules(selectedBranchId);
         }
-    }, [selectedBranchId]);
+    }, [selectedBranchId, selectedYearId]);
 
-    // Reset selections when mode changes
+    // Reset class/section or course when mode changes
     useEffect(() => {
         if (timetableMode === 'school') {
             setSelectedCourseId('');
@@ -80,14 +102,6 @@ const WeeklyTimetable = () => {
             setSelectedSectionId('');
         }
     }, [timetableMode]);
-
-    // Set Active Year
-    useEffect(() => {
-        if (academicYears.length > 0 && !selectedYearId) {
-            const active = academicYears.find(y => y.status === 'active');
-            setSelectedYearId(active?._id || academicYears[0]._id);
-        }
-    }, [academicYears]);
 
     // Fetch sections when class changes
     useEffect(() => {
@@ -620,6 +634,7 @@ const WeeklyTimetable = () => {
                             onChange={(e) => setSelectedBranchId(e.target.value)}
                             className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
                         >
+                            <option value="">Select Branch</option>
                             {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                         </select>
                     </div>
@@ -628,11 +643,13 @@ const WeeklyTimetable = () => {
                         <select
                             value={selectedYearId}
                             onChange={(e) => setSelectedYearId(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                            disabled={!selectedBranchId}
+                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            <option value="">Select Academic Year</option>
+                            <option value="">{selectedBranchId ? 'Select Academic Year' : 'Select Branch first'}</option>
                             {academicYears.map(y => <option key={y._id} value={y._id}>{y.name}</option>)}
                         </select>
+                        {selectedBranchId && <p className="text-[10px] text-gray-400 mt-0.5 ml-1">Academic years for selected branch</p>}
                     </div>
 
                     {/* School Mode: Class & Section */}
@@ -646,9 +663,10 @@ const WeeklyTimetable = () => {
                                 <select
                                     value={selectedClassId}
                                     onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    disabled={!selectedYearId}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">Select Class</option>
+                                    <option value="">{selectedYearId ? 'Select Class' : 'Select Academic Year first'}</option>
                                     {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                                 </select>
                             </div>
@@ -657,10 +675,10 @@ const WeeklyTimetable = () => {
                                 <select
                                     value={selectedSectionId}
                                     onChange={(e) => setSelectedSectionId(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
                                     disabled={!selectedClassId}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">Select Section</option>
+                                    <option value="">{selectedClassId ? 'Select Section' : 'Select Class first'}</option>
                                     {(sections[selectedClassId] || []).map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                                 </select>
                             </div>
@@ -677,9 +695,10 @@ const WeeklyTimetable = () => {
                             <select
                                 value={selectedCourseId}
                                 onChange={(e) => setSelectedCourseId(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                                disabled={!selectedYearId}
+                                className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                <option value="">Select Course</option>
+                                <option value="">{selectedYearId ? 'Select Course' : 'Select Academic Year first'}</option>
                                 {courses.map(c => <option key={c._id} value={c._id}>{c.name} ({c.code})</option>)}
                             </select>
                         </div>

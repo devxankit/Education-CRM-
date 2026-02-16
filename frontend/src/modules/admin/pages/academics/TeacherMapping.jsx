@@ -35,37 +35,46 @@ const TeacherMapping = () => {
     // Initial Fetch
     useEffect(() => {
         fetchBranches();
-        fetchAcademicYears();
         fetchTeachers();
-    }, [fetchBranches, fetchAcademicYears, fetchTeachers]);
+    }, [fetchBranches, fetchTeachers]);
 
-    // Set selected branch
+    // Set selected branch initially
     useEffect(() => {
-        if (!selectedBranchId) {
-            if (user?.branchId?.length === 24) {
-                setSelectedBranchId(user.branchId);
-            } else if (branches.length > 0) {
-                setSelectedBranchId(branches[0]._id);
-            }
+        if (!selectedBranchId && branches.length > 0) {
+            setSelectedBranchId(user?.branchId && user.branchId !== 'all' && user.branchId.length === 24 ? user.branchId : branches[0]._id);
         }
-    }, [user, branches, selectedBranchId]);
+    }, [user?.branchId, branches]);
 
-    // Fetch classes and courses when branch is selected
+    // Fetch academic years when branch changes
     useEffect(() => {
-        if (selectedBranchId) {
-            fetchClasses(selectedBranchId);
-            fetchCourses(selectedBranchId);
+        if (selectedBranchId && selectedBranchId.length === 24) {
+            fetchAcademicYears(selectedBranchId);
         }
-    }, [selectedBranchId, fetchClasses, fetchCourses]);
+    }, [selectedBranchId, fetchAcademicYears]);
 
-    // Set Active Year initially
+    // Reset year/class/course/section when branch changes
     useEffect(() => {
-        if (academicYears.length > 0 && !selectedYearId) {
+        setSelectedYearId('');
+        setSelectedClassId('');
+        setSelectedCourseId('');
+        setSelectedSectionId('');
+    }, [selectedBranchId]);
+
+    // Set default active year when academic years load
+    useEffect(() => {
+        if (academicYears.length > 0 && selectedBranchId && !selectedYearId) {
             const active = academicYears.find(y => y.status === 'active');
-            if (active) setSelectedYearId(active._id);
-            else setSelectedYearId(academicYears[0]._id);
+            setSelectedYearId(active?._id || academicYears[0]._id);
         }
-    }, [academicYears, selectedYearId]);
+    }, [academicYears, selectedBranchId, selectedYearId]);
+
+    // Fetch classes and courses when branch + academic year are selected
+    useEffect(() => {
+        if (selectedBranchId && selectedYearId && selectedYearId.length === 24) {
+            fetchClasses(selectedBranchId, false, selectedYearId);
+            fetchCourses(selectedBranchId, selectedYearId);
+        }
+    }, [selectedBranchId, selectedYearId, fetchClasses, fetchCourses]);
 
     // Fetch Sections when Class changes
     useEffect(() => {
@@ -227,19 +236,43 @@ const TeacherMapping = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-4 items-end">
+                    {/* Branch - First */}
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <MapPin size={12} />
+                            Branch
+                        </label>
                         <select
-                            value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)}
-                            className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
+                            value={selectedBranchId || ''}
+                            onChange={(e) => setSelectedBranchId(e.target.value)}
+                            disabled={user?.branchId && user.branchId !== 'all'}
+                            className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {academicYears.map(year => (
-                                <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(Active)' : ''}</option>
+                            <option value="">Select Branch</option>
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
                             ))}
                         </select>
                     </div>
 
-                    {/* School Mode: Class Selection */}
+                    {/* Academic Year - filtered by branch */}
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
+                        <select
+                            value={selectedYearId}
+                            onChange={(e) => setSelectedYearId(e.target.value)}
+                            disabled={!selectedBranchId}
+                            className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            <option value="">{selectedBranchId ? 'Select Academic Year' : 'Select Branch first'}</option>
+                            {academicYears.map(year => (
+                                <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(Active)' : ''}</option>
+                            ))}
+                        </select>
+                        {selectedBranchId && <p className="text-[10px] text-gray-400 mt-0.5">For selected branch</p>}
+                    </div>
+
+                    {/* School Mode: Class & Section */}
                     {mappingMode === 'school' && (
                         <>
                             <div>
@@ -248,10 +281,12 @@ const TeacherMapping = () => {
                                     Class
                                 </label>
                                 <select
-                                    value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    disabled={!selectedYearId}
+                                    className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[150px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">-- Select Class --</option>
+                                    <option value="">{selectedYearId ? '-- Select Class --' : 'Select Academic Year first'}</option>
                                     {classes.map(cls => (
                                         <option key={cls._id} value={cls._id}>{cls.name}</option>
                                     ))}
@@ -261,11 +296,12 @@ const TeacherMapping = () => {
                             <div>
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Section</label>
                                 <select
-                                    value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)}
+                                    value={selectedSectionId}
+                                    onChange={(e) => setSelectedSectionId(e.target.value)}
                                     disabled={!selectedClassId}
-                                    className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                                    className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">-- Select Section --</option>
+                                    <option value="">{selectedClassId ? '-- Select Section --' : 'Select Class first'}</option>
                                     {currentSections.map(sec => (
                                         <option key={sec._id} value={sec._id}>{sec.name}</option>
                                     ))}
@@ -274,7 +310,7 @@ const TeacherMapping = () => {
                         </>
                     )}
 
-                    {/* College Mode: Course Selection (No Section) */}
+                    {/* College Mode: Course Selection */}
                     {mappingMode === 'college' && (
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
@@ -282,10 +318,12 @@ const TeacherMapping = () => {
                                 Course/Program
                             </label>
                             <select
-                                value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)}
-                                className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[200px] outline-none focus:ring-2 focus:ring-indigo-500"
+                                value={selectedCourseId}
+                                onChange={(e) => setSelectedCourseId(e.target.value)}
+                                disabled={!selectedYearId}
+                                className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm min-w-[200px] outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                <option value="">-- Select Course --</option>
+                                <option value="">{selectedYearId ? '-- Select Course --' : 'Select Academic Year first'}</option>
                                 {courses.map(course => (
                                     <option key={course._id} value={course._id}>
                                         {course.name} ({course.code})
@@ -294,21 +332,6 @@ const TeacherMapping = () => {
                             </select>
                         </div>
                     )}
-
-                    {/* Branch Selector */}
-                    <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
-                        <MapPin size={16} className="text-indigo-500" />
-                        <select
-                            value={selectedBranchId || ''}
-                            onChange={(e) => setSelectedBranchId(e.target.value)}
-                            disabled={user?.branchId && user.branchId !== 'all'}
-                            className="text-sm font-semibold border-none bg-transparent outline-none focus:ring-0 cursor-pointer text-indigo-700"
-                        >
-                            {branches.map(b => (
-                                <option key={b._id} value={b._id}>{b.name}</option>
-                            ))}
-                        </select>
-                    </div>
 
                     {activeYear && (
                         <div className="ml-auto flex items-center gap-2 text-sm text-gray-500 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">

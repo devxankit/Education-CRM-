@@ -821,10 +821,13 @@ export const useAdminStore = create(
             },
 
             // Actions: Courses
-            fetchCourses: async (branchId) => {
+            fetchCourses: async (branchId, academicYearId = null) => {
                 try {
                     const token = localStorage.getItem('token');
-                    const url = branchId ? `${API_URL}/course?branchId=${branchId}` : `${API_URL}/course`;
+                    const params = new URLSearchParams();
+                    if (branchId) params.set('branchId', branchId);
+                    if (academicYearId) params.set('academicYearId', academicYearId);
+                    const url = params.toString() ? `${API_URL}/course?${params.toString()}` : `${API_URL}/course`;
                     const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, BookOpen, AlertCircle, GraduationCap, School, MapPin, Calendar } from 'lucide-react';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
-const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = [], courses = [], defaultBranchId = '' }) => {
+const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = [], courses = [], defaultBranchId = '', defaultAcademicYearId = '' }) => {
     const branches = useAdminStore(state => state.branches);
     const academicYears = useAdminStore(state => state.academicYearsForSelect || []);
     const fetchBranches = useAdminStore(state => state.fetchBranches);
@@ -39,7 +39,7 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
             const bid = defaultBranchId || branches[0]?._id || '';
             setFormData({
                 branchId: bid,
-                academicYearId: '',
+                academicYearId: defaultAcademicYearId || '',
                 name: '',
                 code: '',
                 type: 'theory',
@@ -49,7 +49,7 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
             });
         }
         prevOpenRef.current = isOpen;
-    }, [initialData, isOpen, defaultBranchId, branches]);
+    }, [initialData, isOpen, defaultBranchId, defaultAcademicYearId, branches]);
 
     // Fetch academic years when branch changes
     useEffect(() => {
@@ -58,11 +58,11 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
         }
     }, [isOpen, formData.branchId, fetchAcademicYears]);
 
-    // Fetch classes & courses when branch/academic year changes (for Assignment)
+    // Fetch classes & courses when branch + academic year change (for Assignment)
     useEffect(() => {
         if (isOpen && formData.branchId && formData.branchId.length === 24) {
             fetchClasses(formData.branchId, true, formData.academicYearId || undefined);
-            fetchCourses(formData.branchId);
+            fetchCourses(formData.branchId, formData.academicYearId || undefined);
         }
     }, [isOpen, formData.branchId, formData.academicYearId, fetchClasses, fetchCourses]);
 
