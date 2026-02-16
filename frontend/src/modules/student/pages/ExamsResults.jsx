@@ -35,7 +35,7 @@ const ExamsResultsPage = () => {
     }, [fetchExams, fetchResults]);
 
     // Transform Data
-    const formattedData = {
+    const formattedData = React.useMemo(() => ({
         upcoming: (exams || []).map(e => ({
             id: e._id,
             name: e.examName,
@@ -79,7 +79,7 @@ const ExamsResultsPage = () => {
                 { subject: 'English', avg: 90 }
             ]
         }
-    };
+    }), [exams, results]);
 
     // Update selected result if ID changes
     useEffect(() => {
