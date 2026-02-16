@@ -1332,3 +1332,58 @@ export const getSupportTickets = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// ================= UPDATE STUDENT PROFILE (BY STUDENT) =================
+export const updateStudentProfile = async (req, res) => {
+    try {
+        const id = req.user._id;
+        const {
+            firstName, middleName, lastName,
+            dob, gender, bloodGroup,
+            nationality, religion, category,
+            address, city, state, pincode,
+            photo // Base64 if uploading new
+        } = req.body;
+
+        const updateData = {
+            firstName, middleName, lastName,
+            dob, gender, bloodGroup,
+            nationality, religion, category,
+            address, city, state, pincode
+        };
+
+        // Handle Photo Upload
+        if (photo && photo.base64) {
+            const instituteId = req.user.instituteId;
+            try {
+                const cloudinaryUrl = await uploadBase64ToCloudinary(photo.base64, `students/photos/${instituteId}`);
+                updateData["documents.photo"] = {
+                    name: photo.name || "profile-photo",
+                    url: cloudinaryUrl,
+                    status: "verified",
+                    date: new Date().toISOString()
+                };
+            } catch (uploadError) {
+                console.error("Error uploading photo to Cloudinary:", uploadError);
+            }
+        }
+
+        const student = await Student.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: student,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

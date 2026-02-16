@@ -2,14 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Book, Users, Shield, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
+import { Settings, Book, Users, User, Shield, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
 
 // Components
 import ProfileSummaryCard from '../components/Profile/ProfileSummaryCard';
 import InfoSectionCard from '../components/Profile/InfoSectionCard';
 import DocumentsList from '../components/Profile/DocumentsList';
-import EmptyState from '../components/Attendance/EmptyState'; // Reuse or create new
-
+import EmptyState from '../components/Attendance/EmptyState';
+import toast from 'react-hot-toast';
 import { useStudentStore } from '../../../store/studentStore';
 
 // Helper for Academic Card
@@ -104,17 +104,21 @@ const ProfilePage = () => {
             touchMultiplier: 2,
         });
 
+        let rfId;
         function raf(time) {
             lenis.raf(time);
-            requestAnimationFrame(raf);
+            rfId = requestAnimationFrame(raf);
         }
-        requestAnimationFrame(raf);
+        rfId = requestAnimationFrame(raf);
 
         // ALWAYS fetch the full populated profile on mount
         setLoading(true);
         fetchProfile().finally(() => setLoading(false));
 
-        return () => lenis.destroy();
+        return () => {
+            lenis.destroy();
+            cancelAnimationFrame(rfId);
+        };
     }, [fetchProfile]);
 
     if (loading) {
@@ -130,7 +134,7 @@ const ProfilePage = () => {
 
     if (!student) return <EmptyState />;
 
-    // Use only real photo for avatar (not certificates saved under photo by mistake)
+    // Use only real photo for avatar
     const getProfileAvatar = () => {
         const photo = student.documents?.photo;
         if (!photo?.url) return "https://api.dicebear.com/7.x/avataaars/svg?seed=" + student.admissionNo;
@@ -154,7 +158,7 @@ const ProfilePage = () => {
         dob: student.dob,
         gender: student.gender,
         bloodGroup: student.bloodGroup,
-        contact: student.parentId?.mobile || student.parentMobile || "N/A",
+        contact: student.parentId?.mobile || student.phone || "N/A",
         email: student.parentEmail || "N/A",
         address: student.address ? `${student.address}, ${student.city}, ${student.state} - ${student.pincode}` : "N/A"
     };
@@ -173,7 +177,6 @@ const ProfilePage = () => {
         linkedAccount: !!student.parentId
     };
 
-    // Transform documents object to array for list component (exclude photo – it's for profile only)
     const docsArray = student.documents ? Object.keys(student.documents)
         .filter(key => key !== 'photo' && student.documents[key]?.url)
         .map(key => ({
@@ -204,12 +207,20 @@ const ProfilePage = () => {
 
                     <h1 className="text-lg font-bold text-gray-900">My Profile</h1>
 
-                    <button
-                        onClick={() => navigate('/student/settings')}
-                        className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors"
-                    >
-                        <Settings size={20} />
-                    </button>
+                    <div className="flex items-center">
+                        <button
+                            onClick={() => navigate('/student/profile/edit')}
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors mr-1"
+                        >
+                            <User size={20} />
+                        </button>
+                        <button
+                            onClick={() => navigate('/student/settings')}
+                            className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors"
+                        >
+                            <Settings size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -289,7 +300,6 @@ const ProfilePage = () => {
                         </button>
                     </motion.div>
 
-                    {/* 8. Account Footer */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <div className="text-center text-[10px] text-gray-400 pb-10">
                             {student.lastLogin && (

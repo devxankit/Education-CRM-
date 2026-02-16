@@ -1,3 +1,4 @@
+import { API_URL } from '@/app/api';
 import { homeworkData, homeworkStats } from '../data/homeworkData';
 import { notices } from '../data/noticesData';
 import { attendanceData } from '../data/attendanceData';
@@ -63,6 +64,24 @@ class StudentService {
         });
     }
 
+    async updateProfile(formData) {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/student/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            return { success: false, message: "Network error" };
+        }
+    }
+
     // Exams
     async getExams() {
         return new Promise((resolve) => {
@@ -120,12 +139,6 @@ class StudentService {
     }
 
     // Form Submissions (Mocking real logic)
-    async submitProfileCorrection(data) {
-        return new Promise((resolve) => {
-            console.log('Submitting Profile Correction:', data);
-            setTimeout(() => resolve({ success: true, message: 'Correction request submitted successfully' }), 1500);
-        });
-    }
 
     async submitSupportTicket(data) {
         return new Promise((resolve) => {

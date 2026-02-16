@@ -10,9 +10,9 @@ export const useTeacherStore = create(
     persist(
         (set, get) => ({
             // Auth State
-            user: null,
-            token: null,
-            isAuthenticated: false,
+            user: JSON.parse(localStorage.getItem('user')) || null,
+            token: localStorage.getItem('token') || null,
+            isAuthenticated: !!localStorage.getItem('token'),
 
             login: async (email, password) => {
                 try {

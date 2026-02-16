@@ -33,14 +33,6 @@ const InfoSectionCard = ({ title, data }) => {
                 <InfoRow icon={MapPin} label="Permanent Address" value={data.address} isAddress />
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-                <button
-                    onClick={() => window.location.href = '/student/profile/correction'}
-                    className="text-xs font-semibold text-primary hover:text-primaryDark transition-colors"
-                >
-                    Request Correction
-                </button>
-            </div>
         </div>
     );
 };

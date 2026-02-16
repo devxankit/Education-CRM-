@@ -18,9 +18,9 @@ import FeesPage from './pages/Fees';
 import DocumentsPage from './pages/Documents';
 import HelpSupportPage from './pages/HelpSupport';
 import SettingsPage from './pages/Settings';
-import ProfileCorrection from './pages/ProfileCorrection';
 import NotesPage from './pages/Notes';
 import NotificationsPage from './pages/Notifications';
+import EditProfilePage from './pages/EditProfile';
 
 const StudentAttendance = AttendancePage;
 const StudentAcademics = Academics;
@@ -52,70 +52,73 @@ const studentRoutes = [
                     {
                         element: <StudentLayout />,
                         children: [
-                    {
-                        path: 'dashboard',
-                        element: <StudentDashboard />,
-                    },
-                    {
-                        path: 'attendance',
-                        element: <StudentAttendance />,
-                    },
-                    {
-                        path: 'academics',
-                        element: <StudentAcademics />,
-                    },
-                    {
-                        path: 'homework',
-                        element: <StudentHomework />,
-                    },
-                    {
-                        path: 'homework/:id',
-                        element: <StudentHomework />,
-                    },
-                    {
-                        path: 'notices',
-                        element: <StudentNotices />,
-                    },
-                    {
-                        path: 'notices/:id',
-                        element: <StudentNotices />,
-                    },
-                    {
-                        path: 'exams',
-                        element: <StudentExams />,
-                    },
-                    {
-                        path: 'exams/:id',
-                        element: <StudentExams />,
-                    },
-                    {
-                        path: 'fees',
-                        element: <StudentFees />,
-                    },
-                    {
-                        path: 'documents',
-                        element: <StudentDocuments />,
-                    },
-                    {
-                        path: 'notes',
-                        element: <StudentNotes />,
-                    },
-                    {
-                        path: 'notifications',
-                        element: <StudentNotifications />,
-                    },
-                    {
-                        path: 'profile',
-                        element: <ProfilePage />,
-                    },
-                    {
-                        path: 'help',
-                        element: <StudentHelp />,
-                    },
+                            {
+                                path: 'dashboard',
+                                element: <StudentDashboard />,
+                            },
+                            {
+                                path: 'attendance',
+                                element: <StudentAttendance />,
+                            },
+                            {
+                                path: 'academics',
+                                element: <StudentAcademics />,
+                            },
+                            {
+                                path: 'homework',
+                                element: <StudentHomework />,
+                            },
+                            {
+                                path: 'homework/:id',
+                                element: <StudentHomework />,
+                            },
+                            {
+                                path: 'notices',
+                                element: <StudentNotices />,
+                            },
+                            {
+                                path: 'notices/:id',
+                                element: <StudentNotices />,
+                            },
+                            {
+                                path: 'exams',
+                                element: <StudentExams />,
+                            },
+                            {
+                                path: 'exams/:id',
+                                element: <StudentExams />,
+                            },
+                            {
+                                path: 'fees',
+                                element: <StudentFees />,
+                            },
+                            {
+                                path: 'documents',
+                                element: <StudentDocuments />,
+                            },
+                            {
+                                path: 'notes',
+                                element: <StudentNotes />,
+                            },
+                            {
+                                path: 'notifications',
+                                element: <StudentNotifications />,
+                            },
+                            {
+                                path: 'profile',
+                                element: <ProfilePage />,
+                            },
+                            {
+                                path: 'profile/edit',
+                                element: <EditProfilePage />,
+                            },
+                            {
+                                path: 'help',
+                                element: <StudentHelp />,
+                            },
                         ],
                     },
                     { path: 'settings', element: <StudentSettings /> },
-                    { path: 'profile/correction', element: <ProfileCorrection /> },
                 ]
             },
         ],

@@ -21,7 +21,8 @@ import {
     submitHomework,
     getLearningMaterials,
     createSupportTicket,
-    getSupportTickets
+    getSupportTickets,
+    updateStudentProfile
 } from "../Controllers/StudentCtrl.js";
 import { AuthMiddleware, isAdmin, isStudent } from "../Middlewares/AuthMiddleware.js";
 
@@ -43,6 +44,7 @@ router.get("/notices", isStudent, getMyNotices);
 // router.get("/notifications", isStudent, getStudentNotifications);
 // router.put("/notices/:noticeId/acknowledge", isStudent, acknowledgeNotice);
 router.get("/profile", isStudent, getStudentProfile);
+router.put("/profile", isStudent, updateStudentProfile);
 router.get("/academics", isStudent, getStudentAcademics);
 router.get("/homework", isStudent, getStudentHomework);
 router.post("/homework/submit", isStudent, submitHomework);

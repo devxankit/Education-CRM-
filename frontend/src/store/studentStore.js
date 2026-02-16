@@ -7,9 +7,9 @@ export const useStudentStore = create(
     persist(
         (set, get) => ({
             // State
-            token: null,
-            isAuthenticated: false,
-            profile: null,
+            token: localStorage.getItem('token') || null,
+            isAuthenticated: !!localStorage.getItem('token'),
+            profile: JSON.parse(localStorage.getItem('user')) || null,
             dashboard: null,
             attendance: [],
             fees: null,
@@ -384,9 +384,25 @@ export const useStudentStore = create(
                 }
             },
 
-            updateProfile: (data) => set((state) => ({
-                profile: { ...state.profile, ...data }
-            })),
+            updateProfile: async (formData) => {
+                set({ isLoading: true });
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/student/profile`, formData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ profile: response.data.data, isLoading: false });
+                        return true;
+                    }
+                    set({ isLoading: false });
+                    return false;
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    set({ isLoading: false });
+                    return false;
+                }
+            },
 
             markAsRead: (id) => set((state) => ({
                 notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)

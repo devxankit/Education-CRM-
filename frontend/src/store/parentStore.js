@@ -7,11 +7,11 @@ export const useParentStore = create(
     persist(
         (set, get) => ({
             // State
-            user: null,
-            token: null,
+            user: JSON.parse(localStorage.getItem('user')) || null,
+            token: localStorage.getItem('token') || null,
             children: [],
             selectedChildId: null,
-            isAuthenticated: false,
+            isAuthenticated: !!localStorage.getItem('token'),
             isLoading: false,
 
             // Data
