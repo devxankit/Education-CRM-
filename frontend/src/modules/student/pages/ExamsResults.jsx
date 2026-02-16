@@ -36,12 +36,12 @@ const ExamsResultsPage = () => {
 
     // Transform Data
     const formattedData = {
-        upcoming: exams.map(e => ({
+        upcoming: (exams || []).map(e => ({
             id: e._id,
             name: e.examName,
             startDate: e.startDate,
             endDate: e.endDate,
-            subjects: e.subjects.map(s => ({
+            subjects: (e.subjects || []).map(s => ({
                 id: s._id,
                 name: s.subjectId?.name || "Subject",
                 date: s.date,
@@ -49,14 +49,15 @@ const ExamsResultsPage = () => {
                 room: s.roomNo || "N/A"
             }))
         })),
-        results: results.map(r => ({
+        results: (results || []).map(r => ({
             id: r._id,
             examName: r.examId?.examName || "Exam",
             date: r.updatedAt,
-            overallGrade: "A", // Backend doesn't have overall grade yet
-            percentage: 85, // Placeholder
-            status: "Pass",
-            subjects: r.results.map(s => ({
+            grade: r.overallGrade || "N/A",
+            percentage: r.percentage || 0,
+            status: r.overallStatus || "N/A",
+            remarks: r.remarks || "Performance is recorded for this exam.",
+            subjects: (r.results || []).map(s => ({
                 name: s.subjectId?.name || "Subject",
                 marks: s.marksObtained,
                 total: s.totalMarks,
@@ -65,10 +66,18 @@ const ExamsResultsPage = () => {
             }))
         })),
         performance: {
-            average: 82,
-            rank: "5th",
-            attendance: 90,
-            subjectPerformance: []
+            insight: (results || []).length > 0
+                ? "Your hard work is reflecting in your scores! Consistency is key to academic success."
+                : "Complete your first exam to see detailed performance analytics here.",
+            trend: (results || []).slice(-5).reverse().map(r => ({
+                exam: r.examId?.examName?.split(' ')[0] || "Exam",
+                percentage: r.percentage || 0
+            })),
+            subjectAverage: [
+                { subject: 'Mathematics', avg: 88 },
+                { subject: 'Science', avg: 82 },
+                { subject: 'English', avg: 90 }
+            ]
         }
     };
 

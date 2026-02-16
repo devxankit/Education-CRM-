@@ -1,7 +1,23 @@
 import React from 'react';
-import { FileText, Download, ShieldCheck } from 'lucide-react';
+import { FileText, Download, ShieldCheck, Eye } from 'lucide-react';
 
 const DocumentsList = ({ documents }) => {
+    const handleView = (url) => {
+        if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleDownload = (url, name) => {
+        if (!url) return;
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', (name || 'document').replace(/\s+/g, '_') + (url.includes('.pdf') ? '' : '.pdf'));
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
             <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -23,7 +39,7 @@ const DocumentsList = ({ documents }) => {
                                     <p className="text-sm font-semibold text-gray-800 truncate">{doc.name}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <p className="text-[10px] text-gray-400 font-medium uppercase">{doc.type} • {doc.size}</p>
-                                        {doc.status === 'Verified' && (
+                                        {(doc.status === 'Verified' || doc.status === 'approved') && (
                                             <span className="flex items-center gap-0.5 text-[10px] text-green-600 font-bold bg-green-50 px-1.5 rounded">
                                                 <ShieldCheck size={10} /> Verified
                                             </span>
@@ -32,9 +48,24 @@ const DocumentsList = ({ documents }) => {
                                 </div>
                             </div>
 
-                            <button className="p-2 text-gray-400 hover:text-primary transition-colors">
-                                <Download size={18} />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => handleView(doc.url)}
+                                    className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+                                    title="View"
+                                >
+                                    <Eye size={18} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDownload(doc.url, doc.name)}
+                                    className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+                                    title="Download"
+                                >
+                                    <Download size={18} />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

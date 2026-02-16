@@ -6,6 +6,15 @@ const ProfileHeader = ({ student, onEdit, onConfirmAdmission }) => {
     // Robust name handling
     const fullName = student.name || `${student.firstName || ''} ${student.middleName || ''} ${student.lastName || ''}`.trim() || 'No Name';
 
+    // Use only real photo for avatar; avoid showing certificates mistakenly saved as photo
+    const getAvatarUrl = () => {
+        const photo = student.documents?.photo;
+        if (!photo?.url) return `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff&size=128`;
+        const n = (photo.name || '').toLowerCase();
+        if (n.includes('certificate') || n.includes('aadhar') || n.includes('transfer') || n.includes('birth') || n.endsWith('.pdf')) return `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff&size=128`;
+        return photo.url;
+    };
+
     // Calculate age from dob
     const dobDate = student.dob ? new Date(student.dob) : null;
     const age = dobDate && !isNaN(dobDate.getTime()) ? new Date().getFullYear() - dobDate.getFullYear() : 'N/A';
@@ -17,7 +26,7 @@ const ProfileHeader = ({ student, onEdit, onConfirmAdmission }) => {
                 {/* Avatar */}
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl bg-gray-200 flex-shrink-0 overflow-hidden shadow-inner border border-gray-100">
                     <img
-                        src={student.documents?.photo?.url || `https://ui-avatars.com/api/?name=${fullName}&background=6366f1&color=fff&size=128`}
+                        src={getAvatarUrl()}
                         alt={fullName}
                         className="w-full h-full object-cover"
                     />

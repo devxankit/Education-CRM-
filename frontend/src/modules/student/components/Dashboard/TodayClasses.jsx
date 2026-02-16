@@ -1,29 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Video, MapPin, Clock } from 'lucide-react';
-
-const classes = [
-    { id: 1, subject: 'Mathematics', teacher: 'Mrs. Sharma', time: '09:00 AM', mode: 'offline', room: '101' },
-    { id: 2, subject: 'Physics', teacher: 'Mr. Verma', time: '10:30 AM', mode: 'online', link: '#' },
-    { id: 3, subject: 'English', teacher: 'Ms. Das', time: '12:00 PM', mode: 'offline', room: '102' },
-];
+import { Video, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TodayClasses = ({ classes = [] }) => {
+    const list = Array.isArray(classes) ? classes : [];
     return (
         <div className="px-4 py-4 max-w-md mx-auto">
             <div className="flex justify-between items-end mb-3">
                 <h2 className="text-lg font-bold text-gray-800">Today's Classes</h2>
-                <span className="text-xs font-semibold text-primary cursor-pointer hover:underline">View Timetable</span>
+                <Link to="/student/academics" className="text-xs font-semibold text-primary cursor-pointer hover:underline">View Timetable</Link>
             </div>
 
             <div className="space-y-3 relative">
                 {/* Timeline Line */}
                 <div className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-indigo-50"></div>
 
-                {classes.length > 0 ? (
-                    classes.map((cls, index) => (
+                {list.length > 0 ? (
+                    list.map((cls, index) => (
                         <motion.div
-                            key={cls.id}
+                            key={cls.id || index}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 + 0.2 }}
@@ -35,22 +31,22 @@ const TodayClasses = ({ classes = [] }) => {
                             <div className="flex-1">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h3 className="font-bold text-gray-900 text-sm">{cls.subject}</h3>
-                                        <p className="text-xs text-gray-500">{cls.teacher}</p>
+                                        <h3 className="font-bold text-gray-900 text-sm">{cls.subject || 'Class'}</h3>
+                                        <p className="text-xs text-gray-500">{cls.teacher || '—'}</p>
                                     </div>
                                     <span className="text-xs font-bold text-primary bg-purple-50 px-2 py-0.5 rounded text-nowrap">
-                                        {cls.time}
+                                        {cls.time || '—'}
                                     </span>
                                 </div>
 
                                 <div className="mt-2 flex items-center gap-3">
-                                    {cls.mode === 'online' ? (
+                                    {(cls.mode || cls.type) === 'online' ? (
                                         <div className="flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">
                                             <Video size={12} /> Live Class
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-1 text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-medium">
-                                            <MapPin size={12} /> Room {cls.room}
+                                            <MapPin size={12} /> {cls.room ? `Room ${cls.room}` : 'Room —'}
                                         </div>
                                     )}
                                 </div>

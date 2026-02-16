@@ -9,15 +9,17 @@ const PerformanceOverview = ({ data }) => {
     useEffect(() => {
         const ctx = gsap.context(() => {
             // Animate Bars
-            gsap.fromTo(barsRef.current,
-                { height: '0%' },
-                {
-                    height: (i) => `${data.trend[i].percentage}%`,
-                    duration: 1.5,
-                    ease: 'power3.out',
-                    stagger: 0.2
-                }
-            );
+            if (data?.trend?.length > 0) {
+                gsap.fromTo(barsRef.current,
+                    { height: '0%' },
+                    {
+                        height: (i) => `${data.trend[i]?.percentage || 0}%`,
+                        duration: 1.5,
+                        ease: 'power3.out',
+                        stagger: 0.2
+                    }
+                );
+            }
 
             // Animate Card Entry
             gsap.from(".perf-item", {
@@ -32,10 +34,11 @@ const PerformanceOverview = ({ data }) => {
     }, [data]);
 
     // Calculate overall improvement
-    const firstScore = data.trend[0]?.percentage || 0;
-    const lastScore = data.trend[data.trend.length - 1]?.percentage || 0;
+    const trend = data?.trend || [];
+    const firstScore = trend[0]?.percentage || 0;
+    const lastScore = trend[trend.length - 1]?.percentage || 0;
     const difference = lastScore - firstScore;
-    const isImproved = difference > 0;
+    const isImproved = difference >= 0;
 
     return (
         <div ref={containerRef} className="space-y-6 pb-20">
@@ -69,7 +72,7 @@ const PerformanceOverview = ({ data }) => {
                 </h3>
 
                 <div className="h-48 flex items-end justify-between px-2 gap-4">
-                    {data.trend.map((item, index) => (
+                    {(data?.trend || []).length > 0 ? (data.trend.map((item, index) => (
                         <div key={index} className="flex-1 flex flex-col items-center group">
                             <div className="relative w-full max-w-[40px] h-full bg-gray-50 rounded-t-lg overflow-hidden flex items-end">
                                 {/* Bar */}
@@ -86,7 +89,11 @@ const PerformanceOverview = ({ data }) => {
                             </div>
                             <span className="text-xs text-gray-500 font-medium mt-3 text-center">{item.exam}</span>
                         </div>
-                    ))}
+                    ))) : (
+                        <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
+                            No trend data available
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -98,7 +105,7 @@ const PerformanceOverview = ({ data }) => {
                 </h3>
 
                 <div className="space-y-4">
-                    {data.subjectAverage.map((sub, index) => (
+                    {(data?.subjectAverage || []).length > 0 ? data.subjectAverage.map((sub, index) => (
                         <div key={index}>
                             <div className="flex justify-between items-center mb-1.5">
                                 <span className="text-sm font-semibold text-gray-700">{sub.subject}</span>
@@ -111,7 +118,11 @@ const PerformanceOverview = ({ data }) => {
                                 ></div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="text-gray-400 text-sm italic py-2">
+                            No subject averages available
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -55,7 +55,7 @@ const ResultDetailModal = ({ result, onClose }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {result.subjects.map((sub, i) => (
+                                {(result.subjects || []).map((sub, i) => (
                                     <tr key={i}>
                                         <td className="px-4 py-3 font-medium text-gray-800">{sub.name}</td>
                                         <td className="px-4 py-3 text-center text-gray-600">{sub.marks} <span className="text-[10px] text-gray-400">/ {sub.total}</span></td>

@@ -130,10 +130,19 @@ const ProfilePage = () => {
 
     if (!student) return <EmptyState />;
 
+    // Use only real photo for avatar (not certificates saved under photo by mistake)
+    const getProfileAvatar = () => {
+        const photo = student.documents?.photo;
+        if (!photo?.url) return "https://api.dicebear.com/7.x/avataaars/svg?seed=" + student.admissionNo;
+        const n = (photo.name || '').toLowerCase();
+        if (n.includes('certificate') || n.includes('aadhar') || n.includes('transfer') || n.includes('birth') || n.endsWith('.pdf')) return "https://api.dicebear.com/7.x/avataaars/svg?seed=" + student.admissionNo;
+        return photo.url;
+    };
+
     // Prepare data for sub-components
     const summaryData = {
         name: `${student.firstName} ${student.lastName}`,
-        avatar: student.documents?.photo?.url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + student.admissionNo,
+        avatar: getProfileAvatar(),
         class: student.classId?.name || "N/A",
         section: student.sectionId?.name || "N/A",
         rollNumber: student.rollNo || "N/A",
@@ -164,9 +173,9 @@ const ProfilePage = () => {
         linkedAccount: !!student.parentId
     };
 
-    // Transform documents object to array for list component
+    // Transform documents object to array for list component (exclude photo – it's for profile only)
     const docsArray = student.documents ? Object.keys(student.documents)
-        .filter(key => student.documents[key]?.url)
+        .filter(key => key !== 'photo' && student.documents[key]?.url)
         .map(key => ({
             id: key,
             name: key === 'birthCert' ? 'Birth Certificate' :

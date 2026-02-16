@@ -104,15 +104,57 @@ export const getStudentDashboard = async (req, res) => {
         const attendancePercentage = attendanceStats.total > 0
             ? ((attendanceStats.present + attendanceStats.late + attendanceStats.halfDay * 0.5) / attendanceStats.total) * 100
             : 0;
+        const attendanceStatus = attendancePercentage >= 75 ? "Good" : attendancePercentage >= 50 ? "Track" : "Low";
 
-        // 6. Mock Today's Classes (Real one would query Timetable)
-        const todayClasses = [
-            { id: 1, subject: 'Mathematics', time: '09:00 AM', teacher: 'Dr. Sharma', room: 'Room 302', status: 'upcoming' },
-            { id: 2, subject: 'Physics', time: '10:30 AM', teacher: 'Prof. Verma', room: 'Lab 1', status: 'upcoming' },
-            { id: 3, subject: 'History', time: '01:00 PM', teacher: 'Ms. Iyer', room: 'Room 105', status: 'upcoming' }
-        ];
+        // 6. Today's Classes from Timetable (real data)
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const todayKey = days[new Date().getDay()];
+        let todayClasses = [];
+        const timetableDoc = await Timetable.findOne({ sectionId, status: "active" })
+            .populate(`schedule.${todayKey}.subjectId`, "name")
+            .populate(`schedule.${todayKey}.teacherId`, "firstName lastName");
+        if (timetableDoc && timetableDoc.schedule && timetableDoc.schedule[todayKey] && timetableDoc.schedule[todayKey].length > 0) {
+            const daySlots = timetableDoc.schedule[todayKey]
+                .map((item, i) => ({
+                    id: item._id ? item._id.toString() : `${timetableDoc._id}_${i}`,
+                    subject: item.subjectId?.name || "N/A",
+                    teacher: item.teacherId ? `${(item.teacherId.firstName || "").trim()} ${(item.teacherId.lastName || "").trim()}`.trim() || "N/A" : "N/A",
+                    time: item.startTime || "--",
+                    room: item.room || "N/A",
+                    mode: item.type === "online" ? "online" : "offline",
+                    link: item.link || null
+                }))
+                .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+            todayClasses = daySlots;
+        }
 
-        // 7. Performance Mock (Real one from Exams)
+        // 7. Next exam (nearest upcoming) – Exam uses startDate and classes array
+        const now = new Date();
+        const upcomingExams = await Exam.find({
+            instituteId,
+            status: "Published",
+            startDate: { $gte: now },
+            $or: [{ classes: classId }, { classes: { $size: 0 } }]
+        })
+            .sort({ startDate: 1 })
+            .limit(1)
+            .populate("subjects.subjectId", "name");
+        const nextExam = upcomingExams[0];
+        const nextExamStart = nextExam?.startDate ? new Date(nextExam.startDate) : null;
+        const nextExamDaysLeft = nextExamStart ? Math.ceil((nextExamStart - now) / (1000 * 60 * 60 * 24)) : null;
+        const nextExamLabel = nextExam ? (nextExam.examName || (nextExam.subjects?.[0]?.subjectId?.name) || "Exam") + " – " + (nextExamStart ? nextExamStart.toLocaleDateString() : "") : null;
+
+        // 8. New notes/materials count (this week) – LearningMaterial has classId
+        const weekAgo = new Date(now);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const newMaterialsCount = await LearningMaterial.countDocuments({
+            instituteId,
+            classId,
+            status: "Published",
+            createdAt: { $gte: weekAgo }
+        });
+
+        // 9. Performance (optional mock if no results yet)
         const performance = {
             currentGPA: "8.4",
             previousGPA: "8.2",
@@ -135,10 +177,24 @@ export const getStudentDashboard = async (req, res) => {
                     photo: student.documents?.photo?.url
                 },
                 stats: {
-                    attendance: Math.round(attendancePercentage),
-                    homework: homework.length,
-                    notices: notices.length,
-                    exams: 2 // Mock
+                    attendance: {
+                        percentage: Math.round(attendancePercentage),
+                        status: attendanceStatus
+                    },
+                    homework: {
+                        pending: homework.length,
+                        nextDue: homework[0]?.dueDate ? new Date(homework[0].dueDate).toLocaleDateString() : null,
+                        link: "/student/homework"
+                    },
+                    exams: {
+                        daysLeft: nextExamDaysLeft,
+                        nextExam: nextExamLabel,
+                        link: "/student/exams"
+                    },
+                    materials: {
+                        newCount: newMaterialsCount,
+                        link: "/student/notes"
+                    }
                 },
                 alerts: notices.map(n => ({
                     id: n._id,

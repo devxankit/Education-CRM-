@@ -6,6 +6,15 @@ import { motion } from 'framer-motion';
 
 const Header = ({ user }) => {
     const navigate = useNavigate();
+    const displayName = user?.name
+        || (user?.firstName || user?.lastName
+            ? [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ').trim()
+            : null)
+        || 'Student';
+    const avatarUrl = user?.avatar
+        || user?.photo
+        || user?.documents?.photo?.url
+        || (user?.admissionNo ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.admissionNo}` : "https://api.dicebear.com/7.x/avataaars/svg?seed=Student");
     return (
         <motion.header
             initial={{ y: -50, opacity: 0 }}
@@ -16,15 +25,15 @@ const Header = ({ user }) => {
                 <div className="flex items-center gap-3">
                     <div className="border border-indigo-100 p-0.5 rounded-full">
                         <img
-                            src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Student"}
+                            src={avatarUrl}
                             alt="Profile"
-                            className="w-10 h-10 rounded-full bg-indigo-50"
+                            className="w-10 h-10 rounded-full bg-indigo-50 object-cover"
                         />
                     </div>
                     <div>
                         <p className="text-xs text-gray-500 font-medium">Good Morning,</p>
                         <h1 className="text-lg font-bold text-gray-900 leading-tight">
-                            {user?.name || 'Student'}
+                            {displayName}
                         </h1>
                     </div>
                 </div>

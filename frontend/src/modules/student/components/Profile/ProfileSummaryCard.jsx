@@ -2,9 +2,20 @@ import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { colors } from '../../../../theme/colors';
 
+const PLACEHOLDER_AVATAR = "https://api.dicebear.com/7.x/avataaars/svg?seed=avatar";
+
 const ProfileSummaryCard = ({ student }) => {
     const cardRef = useRef(null);
     const avatarRef = useRef(null);
+    const [avatarSrc, setAvatarSrc] = React.useState(student?.avatar || PLACEHOLDER_AVATAR);
+
+    useEffect(() => {
+        setAvatarSrc(student?.avatar || PLACEHOLDER_AVATAR);
+    }, [student?.avatar]);
+
+    const handleAvatarError = () => {
+        setAvatarSrc(student?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.id}` : PLACEHOLDER_AVATAR);
+    };
 
     useEffect(() => {
         const ctx = gsap.context(() => {
@@ -34,9 +45,10 @@ const ProfileSummaryCard = ({ student }) => {
             <div className="relative mb-4 inline-block">
                 <div ref={avatarRef} className="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 mx-auto relative z-10">
                     <img
-                        src={student.avatar}
+                        src={avatarSrc}
                         alt={student.name}
                         className="w-full h-full object-cover"
+                        onError={handleAvatarError}
                     />
                 </div>
                 {/* Active Status Dot */}

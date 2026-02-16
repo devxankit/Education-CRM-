@@ -59,7 +59,7 @@ const ParentExamsPage = () => {
     };
 
     // Filter Logic
-    const filteredExams = exams.filter(exam => {
+    const filteredExams = (exams || []).filter(exam => {
         if (activeTab === 'All') return true;
         return exam.type === activeTab;
     });

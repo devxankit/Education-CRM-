@@ -14,6 +14,7 @@ export const useStudentStore = create(
             attendance: [],
             fees: null,
             exams: [],
+            results: [],
             homeworkList: [],
             support: {
                 tickets: [],
@@ -73,6 +74,7 @@ export const useStudentStore = create(
                     attendance: [],
                     fees: null,
                     exams: [],
+                    results: [],
                     homeworkList: [],
                     support: {
                         tickets: [],
