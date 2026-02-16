@@ -74,16 +74,17 @@ export const useStaffStore = create(
 
             respondToTicketAction: async (id, responseText, status) => {
                 try {
-                    await supportApi.respondToTicket(id, responseText, status);
-                    set((state) => ({
-                        tickets: state.tickets.map(t => (t._id === id || t.id === id) ? {
-                            ...t,
-                            response: responseText,
-                            status: status || "Resolved"
-                        } : t)
-                    }));
+                    const response = await supportApi.respondToTicket(id, responseText, status);
+                    if (response.success) {
+                        const updatedTicket = { ...response.data, id: response.data._id || response.data.id };
+                        set((state) => ({
+                            tickets: state.tickets.map(t => (t._id === id || t.id === id) ? updatedTicket : t)
+                        }));
+                        return response.data;
+                    }
                 } catch (err) {
                     console.error("Failed to respond to ticket", err);
+                    throw err;
                 }
             },
 

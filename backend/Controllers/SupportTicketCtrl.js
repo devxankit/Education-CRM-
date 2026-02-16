@@ -9,6 +9,8 @@ export const createTicket = async (req, res) => {
         const ticket = new SupportTicket({
             instituteId,
             studentId,
+            raisedBy: req.user._id,
+            raisedByType: "Staff",
             category,
             topic,
             details,
@@ -33,6 +35,8 @@ export const getAllTickets = async (req, res) => {
         const instituteId = req.user.instituteId || req.user._id;
         const tickets = await SupportTicket.find({ instituteId })
             .populate("studentId", "firstName lastName admissionNo classId sectionId")
+            .populate("raisedBy", "firstName lastName name")
+            .populate("respondedBy", "firstName lastName name role")
             .sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -50,7 +54,8 @@ export const getTicketById = async (req, res) => {
         const { id } = req.params;
         const ticket = await SupportTicket.findById(id)
             .populate("studentId", "firstName lastName admissionNo classId sectionId")
-            .populate("respondedBy", "firstName lastName role");
+            .populate("raisedBy", "firstName lastName name mobile email")
+            .populate("respondedBy", "firstName lastName name role email");
 
         if (!ticket) {
             return res.status(404).json({ success: false, message: "Ticket not found" });
@@ -109,7 +114,7 @@ export const respondToTicket = async (req, res) => {
                 respondedAt: new Date()
             },
             { new: true }
-        );
+        ).populate("respondedBy", "firstName lastName name role email").populate("studentId", "firstName lastName admissionNo");
 
         if (!ticket) {
             return res.status(404).json({ success: false, message: "Ticket not found" });

@@ -38,7 +38,7 @@ const TicketDetail = () => {
                 // Original request
                 msgs.push({
                     id: 'orig',
-                    sender: found.studentId ? `${found.studentId.firstName} (Student)` : 'Student',
+                    sender: found.raisedBy ? (found.raisedBy.firstName ? `${found.raisedBy.firstName} (${found.raisedByType || 'Student'})` : `${found.raisedBy.name} (${found.raisedByType || 'Parent'})`) : (found.studentId ? `${found.studentId.firstName} (Student)` : 'Requester'),
                     type: 'customer',
                     message: found.details,
                     time: new Date(found.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -48,7 +48,7 @@ const TicketDetail = () => {
                 if (found.response) {
                     msgs.push({
                         id: 'resp',
-                        sender: found.respondedBy ? `Staff (${found.respondedBy.firstName || 'You'})` : 'Staff',
+                        sender: found.respondedBy ? `${found.respondedBy.firstName || found.respondedBy.name || 'Staff'} (${found.onModel || found.respondedBy.role || 'Staff'})` : 'Official Support',
                         type: 'staff',
                         message: found.response,
                         time: found.respondedAt ? new Date(found.respondedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'
@@ -185,7 +185,7 @@ const TicketDetail = () => {
                         <div className="px-8 py-5 bg-indigo-50/30 border-b border-gray-50 flex items-center justify-between">
                             <div className="flex items-center gap-2 text-indigo-600">
                                 <MessageSquare size={16} />
-                                <h2 className="text-xs font-black uppercase tracking-widest">Initial Student Request</h2>
+                                <h2 className="text-xs font-black uppercase tracking-widest leading-none">Initial {ticket.raisedByType || 'Student'} Request</h2>
                             </div>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{new Date(ticket.createdAt).toLocaleTimeString()}</span>
                         </div>
@@ -195,10 +195,13 @@ const TicketDetail = () => {
                                     <User size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-black text-gray-900">
-                                        {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'Anonymous Student'}
+                                    <p className="text-sm font-black text-gray-900 leading-none">
+                                        {ticket.raisedBy ? (ticket.raisedBy.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : ticket.raisedBy.name) : (ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'Anonymous')}
+                                        <span className="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded">{ticket.raisedByType || 'Student'}</span>
                                     </p>
-                                    <p className="text-[11px] font-bold text-indigo-500 mt-0.5">Sender Identity Verified</p>
+                                    <p className="text-[11px] font-bold text-gray-400 mt-1">
+                                        {ticket.raisedByType === 'Parent' && ticket.studentId ? `Parent of ${ticket.studentId.firstName}` : 'Sender Identity Verified'}
+                                    </p>
                                 </div>
                             </div>
                             <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 italic">
@@ -226,12 +229,12 @@ const TicketDetail = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-black text-gray-900">
-                                            {ticket.respondedBy ? `${ticket.respondedBy.firstName || 'System Staff'}` : 'Authorized Personnel'}
+                                            {ticket.respondedBy ? (ticket.respondedBy.firstName ? `${ticket.respondedBy.firstName} ${ticket.respondedBy.lastName || ''}` : ticket.respondedBy.name) : 'Authorized Personnel'}
                                         </p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="text-[10px] font-black text-emerald-600 uppercase">Responded</span>
+                                            <span className="text-[10px] font-black text-emerald-600 uppercase">{ticket.onModel || 'Staff'} Response</span>
                                             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                            <span className="text-[10px] font-bold text-gray-400">Via Support Dashboard</span>
+                                            <span className="text-[10px] font-bold text-gray-400">Verified Personnel</span>
                                         </div>
                                     </div>
                                 </div>

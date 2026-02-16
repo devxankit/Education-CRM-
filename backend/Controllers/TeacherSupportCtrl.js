@@ -31,6 +31,8 @@ export const getTeacherSupportTickets = async (req, res) => {
                     { path: 'parentId', select: 'name mobile email relationship' }
                 ]
             })
+            .populate("raisedBy", "firstName lastName name")
+            .populate("respondedBy", "firstName lastName name role")
             .sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -86,6 +88,7 @@ export const resolveSupportTicket = async (req, res) => {
         ticket.respondedAt = new Date();
 
         await ticket.save();
+        await ticket.populate("respondedBy", "firstName lastName name role email");
 
         res.status(200).json({
             success: true,

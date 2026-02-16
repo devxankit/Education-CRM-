@@ -122,13 +122,25 @@ const Support = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600">
-                                                {ticket.studentId?.firstName?.charAt(0)}
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${ticket.raisedByType === 'Parent' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                                                    {(ticket.raisedBy?.firstName || ticket.raisedBy?.name || 'U').charAt(0)}
+                                                </div>
+                                                <span className="text-sm text-gray-900 font-bold">
+                                                    {ticket.raisedBy ? (ticket.raisedBy.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : ticket.raisedBy.name) : (ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A')}
+                                                </span>
                                             </div>
-                                            <span className="text-sm text-gray-600 font-medium">
-                                                {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${ticket.raisedByType === 'Parent' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                    {ticket.raisedByType || 'Student'}
+                                                </span>
+                                                {ticket.raisedByType === 'Parent' && ticket.studentId && (
+                                                    <span className="text-[10px] text-gray-400 font-medium">
+                                                        for {ticket.studentId.firstName}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">

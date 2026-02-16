@@ -1289,6 +1289,8 @@ export const createSupportTicket = async (req, res) => {
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
+            raisedBy: studentId,
+            raisedByType: "Student",
             category,
             topic,
             details,
