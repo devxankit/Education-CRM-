@@ -6,10 +6,10 @@ import { API_URL } from '@/app/api';
 export const useStudentStore = create(
     persist(
         (set, get) => ({
-            // State
-            token: localStorage.getItem('token') || null,
-            isAuthenticated: !!localStorage.getItem('token'),
-            profile: JSON.parse(localStorage.getItem('user')) || null,
+            // State (Initialize from localStorage to prevent flash of unauthenticated)
+            token: JSON.parse(localStorage.getItem('student-storage'))?.state?.token || null,
+            isAuthenticated: !!JSON.parse(localStorage.getItem('student-storage'))?.state?.token,
+            profile: JSON.parse(localStorage.getItem('student-storage'))?.state?.profile || null,
             dashboard: null,
             attendance: [],
             fees: null,
@@ -96,7 +96,7 @@ export const useStudentStore = create(
                 if (get().isLoading) return;
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/dashboard`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -112,7 +112,7 @@ export const useStudentStore = create(
             fetchProfile: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -128,7 +128,7 @@ export const useStudentStore = create(
             fetchAcademics: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/academics`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -144,7 +144,7 @@ export const useStudentStore = create(
             fetchHomework: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/homework`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -160,7 +160,7 @@ export const useStudentStore = create(
             submitHomework: async (homeworkData) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/student/homework/submit`, homeworkData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -179,7 +179,7 @@ export const useStudentStore = create(
             fetchAttendance: async (startDate, endDate) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/attendance`, {
                         params: { startDate, endDate },
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -245,7 +245,7 @@ export const useStudentStore = create(
             fetchFees: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/fees`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -261,7 +261,7 @@ export const useStudentStore = create(
             fetchExams: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/exams`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -277,7 +277,7 @@ export const useStudentStore = create(
             fetchResults: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/results`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -293,7 +293,7 @@ export const useStudentStore = create(
             fetchNotices: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/notices`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -308,7 +308,7 @@ export const useStudentStore = create(
 
             fetchNotifications: async () => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/notifications`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -326,7 +326,7 @@ export const useStudentStore = create(
             fetchLearningMaterials: async (filters = {}) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/learning-materials`, {
                         params: filters,
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -343,7 +343,7 @@ export const useStudentStore = create(
             fetchTickets: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/student/tickets`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -359,7 +359,7 @@ export const useStudentStore = create(
             addTicket: async (ticketData) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const headers = { 'Authorization': `Bearer ${token}` };
                     let attachmentUrl = null;
                     if (ticketData.file && typeof File !== 'undefined' && ticketData.file instanceof File) {
@@ -387,7 +387,7 @@ export const useStudentStore = create(
             updateProfile: async (formData) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.put(`${API_URL}/student/profile`, formData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -410,7 +410,7 @@ export const useStudentStore = create(
 
             acknowledgeNotice: async (id) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.put(`${API_URL}/student/notices/${id}/acknowledge`, {}, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

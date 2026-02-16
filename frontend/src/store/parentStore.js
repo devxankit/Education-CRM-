@@ -6,12 +6,12 @@ import { API_URL } from '../app/api';
 export const useParentStore = create(
     persist(
         (set, get) => ({
-            // State
-            user: JSON.parse(localStorage.getItem('user')) || null,
-            token: localStorage.getItem('token') || null,
+            // State (Initialize from localStorage to prevent flash of unauthenticated)
+            user: JSON.parse(localStorage.getItem('parent-storage'))?.state?.user || null,
+            token: JSON.parse(localStorage.getItem('parent-storage'))?.state?.token || null,
             children: [],
-            selectedChildId: null,
-            isAuthenticated: !!localStorage.getItem('token'),
+            selectedChildId: JSON.parse(localStorage.getItem('parent-storage'))?.state?.selectedChildId || null,
+            isAuthenticated: !!JSON.parse(localStorage.getItem('parent-storage'))?.state?.token,
             isLoading: false,
 
             // Data
@@ -64,7 +64,7 @@ export const useParentStore = create(
                 const { user } = get();
                 if (!user) return;
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/${user._id}/linked-students`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -84,7 +84,7 @@ export const useParentStore = create(
                 const { user } = get();
                 if (!user) return;
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/dashboard`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -105,7 +105,7 @@ export const useParentStore = create(
             fetchAttendance: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/attendance`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -145,7 +145,7 @@ export const useParentStore = create(
             fetchHomework: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/homework`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -161,7 +161,7 @@ export const useParentStore = create(
             fetchFees: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/fees`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -211,7 +211,7 @@ export const useParentStore = create(
             fetchExams: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/exams`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -244,7 +244,7 @@ export const useParentStore = create(
             fetchTeachers: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/teachers`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -260,7 +260,7 @@ export const useParentStore = create(
             fetchDocuments: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/documents`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -276,7 +276,7 @@ export const useParentStore = create(
             fetchNotices: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/notices`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -291,7 +291,7 @@ export const useParentStore = create(
 
             acknowledgeNotice: async (noticeId) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     await axios.post(`${API_URL}/parent/portal/notices/${noticeId}/acknowledge`, {}, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -307,7 +307,7 @@ export const useParentStore = create(
             fetchProfile: async () => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -322,7 +322,7 @@ export const useParentStore = create(
 
             updateProfile: async (data) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.put(`${API_URL}/parent/portal/profile`, data, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -338,7 +338,7 @@ export const useParentStore = create(
 
             changePassword: async (data) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/parent/portal/change-password`, data, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -351,7 +351,7 @@ export const useParentStore = create(
 
             payFee: async (studentId, paymentData) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/parent/portal/child/${studentId}/pay-fee`, paymentData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -369,7 +369,7 @@ export const useParentStore = create(
             fetchTickets: async (studentId) => {
                 set({ isLoading: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/parent/portal/child/${studentId}/tickets`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -395,7 +395,7 @@ export const useParentStore = create(
 
             addTicket: async (studentId, ticketData) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/parent/portal/child/${studentId}/tickets`, ticketData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

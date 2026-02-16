@@ -9,10 +9,10 @@ import { submissionsData } from '../modules/teacher/data/submissionsData';
 export const useTeacherStore = create(
     persist(
         (set, get) => ({
-            // Auth State
-            user: JSON.parse(localStorage.getItem('user')) || null,
-            token: localStorage.getItem('token') || null,
-            isAuthenticated: !!localStorage.getItem('token'),
+            // Auth State (Initialize from localStorage to prevent flash of unauthenticated)
+            user: JSON.parse(localStorage.getItem('teacher-storage'))?.state?.user || null,
+            token: JSON.parse(localStorage.getItem('teacher-storage'))?.state?.token || null,
+            isAuthenticated: !!JSON.parse(localStorage.getItem('teacher-storage'))?.state?.token,
 
             login: async (email, password) => {
                 try {
@@ -56,7 +56,7 @@ export const useTeacherStore = create(
                 if (get().isFetchingDashboard) return;
                 set({ isFetchingDashboard: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/dashboard`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -89,7 +89,7 @@ export const useTeacherStore = create(
 
                 set({ isFetchingClasses: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/classes`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -111,7 +111,7 @@ export const useTeacherStore = create(
 
                 set({ isFetchingStudents: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/students`, {
                         params: { classId, sectionId },
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -133,7 +133,7 @@ export const useTeacherStore = create(
 
                 set({ isFetchingProfile: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -159,7 +159,7 @@ export const useTeacherStore = create(
             submitAttendance: async (record) => {
                 set({ isSubmittingAttendance: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/teacher/attendance`, record, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -182,7 +182,7 @@ export const useTeacherStore = create(
             fetchAttendanceByDate: async (params) => {
                 set({ isFetchingAttendance: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/attendance/by-date`, {
                         params,
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -202,7 +202,7 @@ export const useTeacherStore = create(
                 if (get().isFetchingMyAttendance) return;
                 set({ isFetchingMyAttendance: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/attendance/my-attendance`, {
                         params,
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -225,7 +225,7 @@ export const useTeacherStore = create(
                 if (get().isFetchingHomework) return;
                 set({ isFetchingHomework: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/homework`, {
                         params: filters,
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -241,7 +241,7 @@ export const useTeacherStore = create(
             },
             getHomeworkById: async (id) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/homework/${id}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -257,7 +257,7 @@ export const useTeacherStore = create(
             addHomework: async (homeworkData) => {
                 set({ isCreatingHomework: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/teacher/homework`, homeworkData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -276,7 +276,7 @@ export const useTeacherStore = create(
             },
             updateHomework: async (id, updateData) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.put(`${API_URL}/teacher/homework/${id}`, updateData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -295,7 +295,7 @@ export const useTeacherStore = create(
             },
             deleteHomework: async (id) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.delete(`${API_URL}/teacher/homework/${id}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -338,7 +338,7 @@ export const useTeacherStore = create(
                 if (get().isFetchingQueries) return;
                 set({ isFetchingQueries: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/support/tickets`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -354,7 +354,7 @@ export const useTeacherStore = create(
             resolveQuery: async (queryId, responseText = '') => {
                 set({ isResolvingQuery: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.put(
                         `${API_URL}/teacher/support/tickets/${queryId}/resolve`,
                         { response: responseText },
@@ -384,7 +384,7 @@ export const useTeacherStore = create(
                 if (get().isFetchingExams) return;
                 set({ isFetchingExams: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/exams`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -403,7 +403,7 @@ export const useTeacherStore = create(
             fetchExamStudents: async (examId, classId, subjectId) => {
                 set({ isFetchingExamStudents: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/exams/students`, {
                         params: { examId, classId, subjectId },
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -431,7 +431,7 @@ export const useTeacherStore = create(
             submitMarks: async (marksPayload) => {
                 set({ isSubmittingMarks: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.post(`${API_URL}/teacher/exams/submit-marks`, marksPayload, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -461,7 +461,7 @@ export const useTeacherStore = create(
             fetchHomeworkSubmissions: async (homeworkId) => {
                 set({ isFetchingSubmissions: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/homework/${homeworkId}/submissions`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -476,7 +476,7 @@ export const useTeacherStore = create(
             },
             gradeSubmission: async (submissionId, gradeData) => {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.put(`${API_URL}/teacher/homework/submissions/${submissionId}/grade`, gradeData, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -503,7 +503,7 @@ export const useTeacherStore = create(
                 if (get().isFetchingPayroll) return;
                 set({ isFetchingPayroll: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/payroll`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -523,7 +523,7 @@ export const useTeacherStore = create(
             fetchAnalytics: async () => {
                 set({ isFetchingAnalytics: true });
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = get().token;
                     const response = await axios.get(`${API_URL}/teacher/analytics`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

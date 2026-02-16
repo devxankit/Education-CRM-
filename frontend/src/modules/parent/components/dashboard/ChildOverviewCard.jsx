@@ -4,8 +4,8 @@ import { AlertCircle, CheckCircle, Info } from 'lucide-react';
 
 const ChildOverviewCard = ({ child }) => {
     // Determine status color/icon
-    const isGood = child.status === 'On Track';
-    const isWarn = child.status === 'Attention Needed';
+    const isGood = child?.status === 'On Track';
+    const isWarn = child?.status === 'Attention Needed';
 
     return (
         <div className="px-4 mb-2">
@@ -15,7 +15,7 @@ const ChildOverviewCard = ({ child }) => {
                         <span className="inline-block px-2 py-1 rounded-lg bg-white/20 text-xs font-bold backdrop-blur-sm mb-2 text-indigo-50">
                             Current Status
                         </span>
-                        <h2 className="text-2xl font-bold">{child.status}</h2>
+                        <h2 className="text-2xl font-bold">{child?.status || 'Loading...'}</h2>
                     </div>
                     <div className={`p-2 rounded-full ${isGood ? 'bg-green-400/20' : isWarn ? 'bg-yellow-400/20' : 'bg-red-400/20'}`}>
                         {isGood ? <CheckCircle size={24} className="text-green-300" /> : <AlertCircle size={24} className="text-yellow-300" />}
@@ -24,8 +24,8 @@ const ChildOverviewCard = ({ child }) => {
 
                 <p className="text-sm text-indigo-100 font-medium leading-relaxed opacity-90">
                     {isGood
-                        ? `${child.name} is performing well. Keep it up!`
-                        : `${child.name} needs your attention in specific areas.`}
+                        ? `${child?.name || 'Student'} is performing well. Keep it up!`
+                        : `${child?.name || 'Student'} needs your attention in specific areas.`}
                 </p>
             </div>
         </div>

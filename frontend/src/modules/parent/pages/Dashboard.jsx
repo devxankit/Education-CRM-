@@ -125,7 +125,7 @@ const ParentDashboard = () => {
 
             <main className="pt-4 max-w-md mx-auto">
                 <div className="dashboard-item cursor-pointer active:scale-[0.98] transition-transform" onClick={handleOverviewClick}>
-                    <ChildOverviewCard child={activeChild} />
+                    {activeChild && <ChildOverviewCard child={activeChild} />}
                 </div>
 
                 <div className="dashboard-item">

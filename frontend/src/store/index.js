@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export const useAppStore = create((set) => ({
     user: JSON.parse(localStorage.getItem('user')) || null,
+    token: localStorage.getItem('token') || null,
     isAuthenticated: !!localStorage.getItem('token'),
     themeMode: 'light', // 'light' or 'dark'
     login: (user) => {

@@ -3,8 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAppStore } from '../../../../store';
 
 const AdminAuthGuard = () => {
-    const { isAuthenticated, user } = useAppStore();
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const { isAuthenticated, user, token } = useAppStore();
 
     if (!token || !isAuthenticated) {
         return <Navigate to="/admin/login" replace />;
