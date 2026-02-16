@@ -12,6 +12,11 @@ const subjectSchema = new mongoose.Schema(
             ref: "Branch",
             required: true,
         },
+        academicYearId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AcademicYear",
+            default: null,
+        },
         name: {
             type: String,
             required: true,

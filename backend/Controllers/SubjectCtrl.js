@@ -3,7 +3,7 @@ import Subject from "../Models/SubjectModel.js";
 // ================= CREATE SUBJECT =================
 export const createSubject = async (req, res) => {
     try {
-        const { name, code, type, category, level, branchId, classIds, courseIds } = req.body;
+        const { name, code, type, category, level, branchId, academicYearId, classIds, courseIds } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
@@ -13,6 +13,7 @@ export const createSubject = async (req, res) => {
         const subject = new Subject({
             instituteId,
             branchId,
+            academicYearId: academicYearId || null,
             name,
             code: code ? code.toUpperCase() : `SUB_${name.substring(0, 3).toUpperCase()}_${Date.now().toString().slice(-4)}`,
             type,

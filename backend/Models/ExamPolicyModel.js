@@ -12,6 +12,11 @@ const examPolicySchema = new mongoose.Schema(
             ref: "AcademicYear",
             required: true,
         },
+        branchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Branch",
+            default: null, // null = applies to all branches (legacy)
+        },
         // Exam Types & Weightage
         examTypes: [
             {
@@ -65,7 +70,7 @@ const examPolicySchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Ensure only one policy per institute per academic year
-examPolicySchema.index({ instituteId: 1, academicYearId: 1 }, { unique: true });
+// Unique: one policy per institute + academic year + branch (branchId null = institute-wide)
+examPolicySchema.index({ instituteId: 1, academicYearId: 1, branchId: 1 }, { unique: true });
 
 export default mongoose.model("ExamPolicy", examPolicySchema);

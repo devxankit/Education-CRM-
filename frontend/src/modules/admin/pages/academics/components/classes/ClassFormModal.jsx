@@ -1,38 +1,73 @@
-
-import React, { useState } from 'react';
-import { X, GraduationCap, Archive } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, GraduationCap, Calendar, MapPin } from 'lucide-react';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
-const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
-
+const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defaultAcademicYearId = '', academicYears = [] }) => {
     const [formData, setFormData] = useState({
-        branchId: 'main',
+        branchId: '',
+        academicYearId: '',
         name: '',
         level: 'primary',
         board: 'CBSE',
         capacity: 40
     });
-
     const branches = useAdminStore(state => state.branches);
     const fetchBranches = useAdminStore(state => state.fetchBranches);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
 
-    React.useEffect(() => {
-        if (isOpen && branches.length === 0) {
-            fetchBranches();
-        }
+    useEffect(() => {
+        if (isOpen && branches.length === 0) fetchBranches();
     }, [isOpen, branches, fetchBranches]);
+
+    useEffect(() => {
+        if (isOpen) {
+            const bid = defaultBranchId || branches[0]?._id || '';
+            setFormData(prev => ({
+                ...prev,
+                branchId: bid,
+                academicYearId: defaultAcademicYearId || ''
+            }));
+        }
+    }, [isOpen, defaultBranchId, defaultAcademicYearId, branches]);
+
+    // Fetch academic years when branch changes - only show years for selected branch
+    useEffect(() => {
+        if (isOpen && formData.branchId && formData.branchId.length === 24) {
+            fetchAcademicYears(formData.branchId);
+        }
+    }, [isOpen, formData.branchId, fetchAcademicYears]);
+
+    useEffect(() => {
+        if (isOpen && formData.branchId && academicYears.length > 0 && !formData.academicYearId) {
+            const active = academicYears.find(y => y.status === 'active') || academicYears[0];
+            setFormData(prev => ({ ...prev, academicYearId: active?._id || '' }));
+        }
+    }, [isOpen, formData.branchId, academicYears]);
+
+    const yearsToShow = formData.branchId ? academicYears : [];
 
     if (!isOpen) return null;
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        const next = { ...formData, [name]: value };
+        if (name === 'branchId') next.academicYearId = '';
+        setFormData(next);
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!formData.academicYearId) {
+            alert('Please select an Academic Year.');
+            return;
+        }
+        if (!formData.branchId || formData.branchId === 'main') {
+            alert('Please select a Branch.');
+            return;
+        }
         onCreate(formData);
         onClose();
-        setFormData({ branchId: 'main', name: '', level: 'primary', board: 'CBSE', capacity: 40 });
+        setFormData({ branchId: '', academicYearId: '', name: '', level: 'primary', board: 'CBSE', capacity: 40 });
     };
 
     return (
@@ -50,17 +85,37 @@ const ClassFormModal = ({ isOpen, onClose, onCreate }) => {
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Branch</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <MapPin size={14} className="inline mr-1 align-middle" /> Branch
+                        </label>
                         <select
                             name="branchId" required
                             value={formData.branchId} onChange={handleChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
                         >
-                            <option value="main">Main Branch</option>
+                            <option value="">Select Branch</option>
                             {branches.map(branch => (
                                 <option key={branch._id || branch.id} value={branch._id || branch.id}>{branch.name}</option>
                             ))}
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <Calendar size={14} className="inline mr-1 align-middle" /> Academic Year <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="academicYearId" required
+                            value={formData.academicYearId} onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
+                            disabled={!formData.branchId}
+                        >
+                            <option value="">{formData.branchId ? 'Select Academic Year' : 'Select Branch first'}</option>
+                            {yearsToShow.map(y => (
+                                <option key={y._id} value={y._id}>{y.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-400 mt-0.5">Academic years for selected branch only.</p>
                     </div>
 
                     <div>

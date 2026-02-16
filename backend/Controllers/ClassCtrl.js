@@ -6,16 +6,20 @@ import Student from "../Models/StudentModel.js";
 
 export const createClass = async (req, res) => {
     try {
-        const { name, level, board, branchId, capacity } = req.body;
+        const { name, level, board, branchId, academicYearId, capacity } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
             return res.status(400).json({ success: false, message: "Branch ID is required" });
         }
+        if (!academicYearId) {
+            return res.status(400).json({ success: false, message: "Academic Year is required" });
+        }
 
         const newClass = new Class({
             instituteId,
             branchId,
+            academicYearId: academicYearId || null,
             name,
             level,
             board,
@@ -36,7 +40,7 @@ export const createClass = async (req, res) => {
 
 export const getClasses = async (req, res) => {
     try {
-        const { branchId, includeArchived } = req.query;
+        const { branchId, academicYearId, includeArchived } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
 
         const query = { instituteId };
@@ -48,11 +52,17 @@ export const getClasses = async (req, res) => {
                 return res.status(200).json({ success: true, data: [] });
             }
             query.branchId = branchId;
-        } else if (branchId === 'main') {
-            // Keep 'main' as special - no branchId filter for institute-wide
+        }
+        if (academicYearId && academicYearId.length === 24) {
+            query.$or = [
+                { academicYearId },
+                { academicYearId: null },
+                { academicYearId: { $exists: false } }
+            ];
         }
 
-        const classes = await Class.find(query);
+        const classes = await Class.find(query)
+            .populate('academicYearId', 'name');
 
         res.status(200).json({
             success: true,

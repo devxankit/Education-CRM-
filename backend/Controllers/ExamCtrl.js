@@ -71,8 +71,11 @@ export const createExam = asyncHandler(async (req, res) => {
         return res.status(400).json({ success: false, message: "Branch ID is required to create an exam." });
     }
 
-    // Check if the exam type is valid as per policy
-    const policy = await ExamPolicy.findOne({ instituteId, academicYearId });
+    // Check if the exam type is valid as per policy (branch-specific or institute-wide fallback)
+    let policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId });
+    if (!policy) {
+        policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: null });
+    }
     if (policy) {
         const policyExamType = policy.examTypes.find(t => t.isIncluded && (t.name === examType || t.name === examName));
 

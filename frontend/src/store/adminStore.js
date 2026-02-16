@@ -438,11 +438,14 @@ export const useAdminStore = create(
 
             // Actions: Classes
             setClasses: (classes) => set({ classes }),
-            fetchClasses: async (branchId, includeArchived = false) => {
+            fetchClasses: async (branchId, includeArchived = false, academicYearId = null) => {
                 try {
                     const token = localStorage.getItem('token');
-                    let url = branchId ? `${API_URL}/class?branchId=${branchId}` : `${API_URL}/class`;
-                    if (includeArchived) url += (url.includes('?') ? '&' : '?') + 'includeArchived=true';
+                    const params = new URLSearchParams();
+                    if (branchId) params.set('branchId', branchId);
+                    if (includeArchived) params.set('includeArchived', 'true');
+                    if (academicYearId) params.set('academicYearId', academicYearId);
+                    const url = `${API_URL}/class?${params.toString()}`;
                     const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -698,10 +701,12 @@ export const useAdminStore = create(
             },
 
             // Actions: Academic Years
-            fetchAcademicYears: async () => {
+            fetchAcademicYears: async (branchId) => {
                 try {
                     const token = localStorage.getItem('token');
+                    const params = branchId && branchId !== 'main' ? { branchId } : {};
                     const response = await axios.get(`${API_URL}/academic-year`, {
+                        params,
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {

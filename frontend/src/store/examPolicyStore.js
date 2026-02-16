@@ -7,13 +7,15 @@ export const useExamPolicyStore = create((set, get) => ({
     isFetching: false,
     isProcessing: false,
 
-    fetchPolicy: async (academicYearId) => {
+    fetchPolicy: async (academicYearId, branchId) => {
         if (!academicYearId) return;
         set({ isFetching: true });
         try {
             const token = localStorage.getItem('token');
+            const params = { academicYearId };
+            if (branchId) params.branchId = branchId;
             const response = await axios.get(`${API_URL}/exam-policy`, {
-                params: { academicYearId },
+                params,
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.data.success) {
@@ -45,11 +47,13 @@ export const useExamPolicyStore = create((set, get) => ({
         }
     },
 
-    unlockPolicy: async (academicYearId, reason) => {
+    unlockPolicy: async (academicYearId, reason, branchId) => {
         set({ isProcessing: true });
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/exam-policy/unlock`, { academicYearId, reason }, {
+            const payload = { academicYearId, reason };
+            if (branchId) payload.branchId = branchId;
+            const response = await axios.post(`${API_URL}/exam-policy/unlock`, payload, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.data.success) {
@@ -64,11 +68,13 @@ export const useExamPolicyStore = create((set, get) => ({
         }
     },
 
-    lockPolicy: async (academicYearId) => {
+    lockPolicy: async (academicYearId, branchId) => {
         set({ isProcessing: true });
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/exam-policy/lock`, { academicYearId }, {
+            const payload = { academicYearId };
+            if (branchId) payload.branchId = branchId;
+            const response = await axios.post(`${API_URL}/exam-policy/lock`, payload, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.data.success) {

@@ -48,6 +48,7 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, o
                         <tr>
                             <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Class Name</th>
                             <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Branch</th>
+                            <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Academic Year</th>
                             <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Academic Level</th>
                             <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Board</th>
                             <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center">Capacity</th>
@@ -77,6 +78,11 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, o
                                         <span className="inline-flex items-center gap-1.5 text-xs text-gray-600">
                                             <Building2 size={14} className="text-gray-400" />
                                             {getBranchName(cls.branchId)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <span className="text-xs text-gray-600">
+                                            {cls.academicYearId?.name || '—'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-4">

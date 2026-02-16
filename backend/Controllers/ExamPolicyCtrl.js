@@ -8,13 +8,17 @@ import asyncHandler from "express-async-handler";
  */
 export const getExamPolicy = asyncHandler(async (req, res) => {
     const instituteId = req.user.instituteId || req.user._id;
-    const { academicYearId } = req.query;
+    const { academicYearId, branchId } = req.query;
 
     if (!academicYearId) {
         return res.status(400).json({ success: false, message: "Academic Year ID is required" });
     }
 
-    let policy = await ExamPolicy.findOne({ instituteId, academicYearId });
+    const branchFilter = branchId ? branchId : null;
+    let policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: branchFilter });
+    if (!policy && branchFilter) {
+        policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: null });
+    }
 
     if (!policy) {
         // Return a template or default if none exists
@@ -24,6 +28,7 @@ export const getExamPolicy = asyncHandler(async (req, res) => {
             data: {
                 instituteId,
                 academicYearId,
+                branchId: branchFilter,
                 examTypes: [],
                 gradingScale: [],
                 promotionCriteria: {
@@ -54,13 +59,14 @@ export const getExamPolicy = asyncHandler(async (req, res) => {
  */
 export const saveExamPolicy = asyncHandler(async (req, res) => {
     const instituteId = req.user.instituteId || req.user._id;
-    const { academicYearId, examTypes, gradingScale, promotionCriteria, visibilityRules } = req.body;
+    const { academicYearId, branchId, examTypes, gradingScale, promotionCriteria, visibilityRules } = req.body;
 
     if (!academicYearId) {
         return res.status(400).json({ success: false, message: "Academic Year ID is required" });
     }
 
-    let policy = await ExamPolicy.findOne({ instituteId, academicYearId });
+    const branchFilter = branchId || null;
+    let policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: branchFilter });
 
     if (policy && policy.isLocked) {
         return res.status(403).json({ success: false, message: "Policy is locked. Please unlock it with a reason to make changes." });
@@ -94,6 +100,7 @@ export const saveExamPolicy = asyncHandler(async (req, res) => {
         policy = new ExamPolicy({
             instituteId,
             academicYearId,
+            branchId: branchFilter,
             examTypes,
             gradingScale,
             promotionCriteria,
@@ -113,13 +120,17 @@ export const saveExamPolicy = asyncHandler(async (req, res) => {
  */
 export const unlockExamPolicy = asyncHandler(async (req, res) => {
     const instituteId = req.user.instituteId || req.user._id;
-    const { academicYearId, reason } = req.body;
+    const { academicYearId, branchId, reason } = req.body;
 
     if (!reason || reason.length < 5) {
         return res.status(400).json({ success: false, message: "Valid reason (minimum 5 characters) required for audit trail" });
     }
 
-    const policy = await ExamPolicy.findOne({ instituteId, academicYearId });
+    const branchFilter = branchId || null;
+    let policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: branchFilter });
+    if (!policy && branchFilter) {
+        policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: null });
+    }
 
     if (!policy) {
         return res.status(404).json({ success: false, message: "No policy found to unlock" });
@@ -140,9 +151,13 @@ export const unlockExamPolicy = asyncHandler(async (req, res) => {
  */
 export const lockExamPolicy = asyncHandler(async (req, res) => {
     const instituteId = req.user.instituteId || req.user._id;
-    const { academicYearId } = req.body;
+    const { academicYearId, branchId } = req.body;
 
-    const policy = await ExamPolicy.findOne({ instituteId, academicYearId });
+    const branchFilter = branchId || null;
+    let policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: branchFilter });
+    if (!policy && branchFilter) {
+        policy = await ExamPolicy.findOne({ instituteId, academicYearId, branchId: null });
+    }
 
     if (!policy) {
         return res.status(404).json({ success: false, message: "No policy found to lock" });

@@ -3,11 +3,12 @@ import AcademicYear from "../Models/AcademicYearModel.js";
 // ================= CREATE ACADEMIC YEAR =================
 export const createAcademicYear = async (req, res) => {
     try {
-        const { name, startDate, endDate } = req.body;
+        const { name, startDate, endDate, branchId } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         const academicYear = new AcademicYear({
             instituteId,
+            branchId: branchId || null,
             name,
             startDate,
             endDate,
@@ -33,7 +34,17 @@ export const createAcademicYear = async (req, res) => {
 export const getAcademicYears = async (req, res) => {
     try {
         const instituteId = req.user.instituteId || req.user._id;
-        const academicYears = await AcademicYear.find({ instituteId }).sort({ startDate: -1 });
+        const { branchId } = req.query;
+        const query = { instituteId };
+        if (branchId && branchId.length === 24) {
+            query.$or = [
+                { branchId },
+                { branchId: null }
+            ];
+        }
+        const academicYears = await AcademicYear.find(query)
+            .populate('branchId', 'name')
+            .sort({ startDate: -1 });
 
         res.status(200).json({
             success: true,

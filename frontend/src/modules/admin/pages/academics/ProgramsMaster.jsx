@@ -8,7 +8,7 @@ import ProgramFormModal from './components/programs/ProgramFormModal';
 import SemesterStructureEditor from './components/programs/SemesterStructureEditor';
 
 const ProgramsMaster = () => {
-    const { courses, fetchCourses, addCourse, deleteCourse, updateCourse, branches, fetchBranches } = useAdminStore();
+    const { courses, fetchCourses, addCourse, deleteCourse, updateCourse, branches, fetchBranches, academicYears, fetchAcademicYears } = useAdminStore();
     const user = useAppStore(state => state.user);
     const [loading, setLoading] = useState(true);
     const [selectedBranchId, setSelectedBranchId] = useState('main');
@@ -33,16 +33,14 @@ const ProgramsMaster = () => {
     // Fetch courses when branch is selected
     useEffect(() => {
         const loadCourses = async () => {
+            setLoading(true);
             const branchId = (selectedBranchId && selectedBranchId !== 'main') ? selectedBranchId : null;
-            if (branchId) {
-                setLoading(true);
-                try {
-                    await fetchCourses(branchId);
-                } catch (error) {
-                    console.error('Error loading courses:', error);
-                } finally {
-                    setLoading(false);
-                }
+            try {
+                await fetchCourses(branchId);
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            } finally {
+                setLoading(false);
             }
         };
         loadCourses();
@@ -54,9 +52,15 @@ const ProgramsMaster = () => {
     // Handlers
     const handleCreate = async (data) => {
         try {
+            const branchId = (data.branchId && data.branchId !== 'main') ? data.branchId : (user?.branchId && user.branchId !== 'all') ? user.branchId : null;
+            if (!branchId) {
+                console.error('Branch is required');
+                return;
+            }
             const result = await addCourse({
                 ...data,
-                branchId: user?.branchId || 'main'
+                branchId,
+                academicYearId: data.academicYearId || undefined
             });
             if (result) {
                 setSelectedProgramId(result._id || result.id);
@@ -184,6 +188,7 @@ const ProgramsMaster = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onCreate={handleCreate}
+                academicYears={academicYears}
             />
 
         </div>

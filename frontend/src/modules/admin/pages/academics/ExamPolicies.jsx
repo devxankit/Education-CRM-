@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, ChevronRight, CheckCircle, Loader2 } from 'lucide-react';
+import { Settings, Save, ChevronRight, Loader2, MapPin, Calendar } from 'lucide-react';
 import { useExamPolicyStore } from '../../../../store/examPolicyStore';
 import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
@@ -14,16 +13,29 @@ import VisibilityConfig from './components/policies/VisibilityConfig';
 const ExamPolicies = () => {
     const { policy, isFetching, fetchPolicy, unlockPolicy, lockPolicy, savePolicy, isProcessing } = useExamPolicyStore();
     const academicYears = useAdminStore(selectAcademicYearsForSelect);
-    const { fetchAcademicYears } = useAdminStore();
+    const { fetchAcademicYears, branches, fetchBranches } = useAdminStore();
     const user = useAppStore((s) => s.user);
     const isAdmin = ['admin', 'super_admin', 'institute'].includes(user?.role);
 
     const [activeTab, setActiveTab] = useState('types');
     const [selectedYear, setSelectedYear] = useState('');
+    const [selectedBranchId, setSelectedBranchId] = useState('');
+
+    const selectedBranch = branches.find(b => b._id === selectedBranchId);
+    const selectedYearName = academicYears.find(y => y._id === selectedYear)?.name || '...';
 
     useEffect(() => {
         fetchAcademicYears();
-    }, [fetchAcademicYears]);
+        fetchBranches();
+    }, [fetchAcademicYears, fetchBranches]);
+
+    useEffect(() => {
+        if (branches.length > 0 && !selectedBranchId) {
+            const defaultBranch = (user?.branchId && /^[0-9a-fA-F]{24}$/.test(user.branchId))
+                ? user.branchId : (branches[0]?._id || '');
+            setSelectedBranchId(defaultBranch);
+        }
+    }, [branches, selectedBranchId, user?.branchId]);
 
     useEffect(() => {
         if (academicYears.length > 0 && !selectedYear) {
@@ -34,14 +46,14 @@ const ExamPolicies = () => {
 
     useEffect(() => {
         if (selectedYear) {
-            fetchPolicy(selectedYear);
+            fetchPolicy(selectedYear, selectedBranchId || undefined);
         }
-    }, [selectedYear, fetchPolicy]);
+    }, [selectedYear, selectedBranchId, fetchPolicy]);
 
     const handleUnlock = async () => {
         const reason = isAdmin ? "Admin direct unlock" : prompt("Please provide a reason for Unlocking the Policy (Mandatory for Audit):");
         if (reason && reason.length >= 5) {
-            const result = await unlockPolicy(selectedYear, reason);
+            const result = await unlockPolicy(selectedYear, reason, selectedBranchId || undefined);
             if (!result.success) alert(result.message);
         } else if (reason !== null && !isAdmin) {
             alert("Valid reason (min 5 chars) required.");
@@ -50,13 +62,14 @@ const ExamPolicies = () => {
 
     const handleLock = async () => {
         if (window.confirm("Lock this policy? Changes will apply immediately.")) {
-            const result = await lockPolicy(selectedYear);
+            const result = await lockPolicy(selectedYear, selectedBranchId || undefined);
             if (!result.success) alert(result.message);
         }
     };
 
     const handleSave = async () => {
-        const result = await savePolicy(policy);
+        const policyWithBranch = { ...policy, academicYearId: selectedYear, branchId: selectedBranchId || null };
+        const result = await savePolicy(policyWithBranch);
         if (result.success) {
             alert("Policy saved successfully!");
         } else {
@@ -81,9 +94,34 @@ const ExamPolicies = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Exam Rules & Policies</h1>
                     <p className="text-gray-500 text-sm">Configure the academic evaluation framework.</p>
+                    {/* Context: Branch & Academic Year */}
+                    <div className="mt-2 flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1.5 text-gray-600">
+                            <MapPin size={14} className="text-indigo-500" />
+                            <strong>Branch:</strong> {selectedBranch?.name || 'All Branches'}
+                        </span>
+                        <span className="flex items-center gap-1.5 text-gray-600">
+                            <Calendar size={14} className="text-indigo-500" />
+                            <strong>Academic Year:</strong> {selectedYearName}
+                        </span>
+                    </div>
                 </div>
                 
                 <div className="flex items-center gap-4">
+                    {branches.length > 0 && (
+                        <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Branch</label>
+                            <select 
+                                value={selectedBranchId}
+                                onChange={(e) => setSelectedBranchId(e.target.value)}
+                                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[140px]"
+                            >
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Academic Year</label>
                         <select 
@@ -152,7 +190,10 @@ const ExamPolicies = () => {
                         <div className="mt-8 p-4 bg-indigo-900 rounded-lg text-indigo-100 text-xs shadow-inner">
                             <strong className="block mb-1 text-white">Active Policy</strong>
                             <div className="flex justify-between mt-2">
-                                <span>Year:</span> <span className="font-mono text-white">{academicYears.find(y => y._id === selectedYear)?.name || '...'}</span>
+                                <span>Branch:</span> <span className="font-mono text-white">{selectedBranch?.name || 'All'}</span>
+                            </div>
+                            <div className="flex justify-between mt-1">
+                                <span>Year:</span> <span className="font-mono text-white">{selectedYearName}</span>
                             </div>
                             <div className="flex justify-between mt-1">
                                 <span>Version:</span> <span className="font-mono text-white">v{policy?.version || '1.0'}</span>

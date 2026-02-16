@@ -59,18 +59,7 @@ const SubjectsMaster = () => {
         if (editingSubject) {
             updateSubject(editingSubject._id, data);
         } else {
-            // Use selected branch if user doesn't have one
-            const targetId = user?.branchId?.length === 24 ? user.branchId : selectedBranchId;
-
-            if (!targetId) {
-                alert("Error: No Branch found. Please create a branch first in Institution Setup.");
-                return;
-            }
-
-            addSubject({
-                ...data,
-                branchId: targetId
-            });
+            addSubject(data);
         }
         setEditingSubject(null);
     };
@@ -93,6 +82,10 @@ const SubjectsMaster = () => {
     const handleClose = () => {
         setIsModalOpen(false);
         setEditingSubject(null);
+        const branchId = selectedBranchId || 'main';
+        fetchSubjects(branchId);
+        fetchClasses(branchId);
+        fetchCourses(branchId);
     };
 
     // Filter Logic (level, class, search)
@@ -250,6 +243,7 @@ const SubjectsMaster = () => {
                 initialData={editingSubject}
                 classes={classes}
                 courses={courses}
+                defaultBranchId={selectedBranchId || user?.branchId}
             />
         </div>
     );

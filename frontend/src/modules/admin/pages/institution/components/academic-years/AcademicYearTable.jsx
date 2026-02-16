@@ -3,7 +3,7 @@ import React from 'react';
 import { Calendar, PlayCircle, Lock, Eye, ChevronRight } from 'lucide-react';
 import YearStatusBadge from './YearStatusBadge';
 
-const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmin }) => {
+const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmin, branches = [] }) => {
 
     // Sort logic: Active first, then Upcoming, then Closed (newest first)
     const sortedYears = [...years].sort((a, b) => {
@@ -33,6 +33,7 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                     <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
                         <tr>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Academic Session</th>
+                            <th className="px-6 py-4 font-medium border-b border-gray-100">Branch</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100 w-32">Start Date</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100 w-32">End Date</th>
                             <th className="px-6 py-4 font-medium border-b border-gray-100">Status</th>
@@ -50,6 +51,10 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                                         </div>
                                         <span className="font-semibold text-gray-900 text-md">{year.name}</span>
                                     </div>
+                                </td>
+
+                                <td className="px-6 py-4 text-gray-600 text-sm">
+                                    {year.branchName || (branches.find(b => b._id === year.branchId)?.name) || 'All Branches'}
                                 </td>
 
                                 <td className="px-6 py-4 text-gray-600 font-mono text-xs">

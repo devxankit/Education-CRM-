@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, HelpCircle, MapPin, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAdminStore } from '../../../../store/adminStore';
+import { Plus, HelpCircle, MapPin, Filter, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
 import ClassesTable from './components/classes/ClassesTable';
@@ -9,14 +9,17 @@ import ClassFormModal from './components/classes/ClassFormModal';
 const Classes = () => {
     const classes = useAdminStore(state => state.classes);
     const branches = useAdminStore(state => state.branches);
+    const academicYears = useAdminStore(selectAcademicYearsForSelect);
     const fetchClasses = useAdminStore(state => state.fetchClasses);
     const fetchBranches = useAdminStore(state => state.fetchBranches);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
     const addClass = useAdminStore(state => state.addClass);
     const updateClass = useAdminStore(state => state.updateClass);
     const user = useAppStore(state => state.user);
 
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
     const [selectedBranchId, setSelectedBranchId] = useState('main');
+    const [selectedAcademicYearId, setSelectedAcademicYearId] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 5;
 
@@ -27,7 +30,10 @@ const Classes = () => {
         return list.slice(start, start + pageSize);
     }, [classes, currentPage, pageSize]);
 
-    useEffect(() => setCurrentPage(1), [selectedBranchId]);
+    useEffect(() => {
+        setCurrentPage(1);
+        setSelectedAcademicYearId('');
+    }, [selectedBranchId]);
     useEffect(() => {
         if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
     }, [currentPage, totalPages]);
@@ -37,19 +43,32 @@ const Classes = () => {
     }, [fetchBranches]);
 
     useEffect(() => {
+        const branchId = selectedBranchId === 'main' ? null : selectedBranchId;
+        fetchAcademicYears(branchId);
+    }, [selectedBranchId, fetchAcademicYears]);
+
+    useEffect(() => {
         if (user?.branchId && user.branchId !== 'all' && user.branchId.length === 24) {
             setSelectedBranchId(user.branchId);
         }
     }, [user?.branchId]);
 
     useEffect(() => {
+        if (academicYears.length > 0 && !selectedAcademicYearId) {
+            const active = academicYears.find(y => y.status === 'active') || academicYears[0];
+            setSelectedAcademicYearId(active?._id || '');
+        }
+    }, [academicYears, selectedAcademicYearId]);
+
+    useEffect(() => {
         const branchId = selectedBranchId || 'main';
-        fetchClasses(branchId, true); // includeArchived to show both active and archived
-    }, [selectedBranchId, fetchClasses]);
+        fetchClasses(branchId, true, selectedAcademicYearId || undefined);
+    }, [selectedBranchId, selectedAcademicYearId, fetchClasses]);
 
     // Handlers
-    const handleAddClass = (data) => {
-        addClass(data);
+    const handleAddClass = async (data) => {
+        await addClass(data);
+        fetchClasses(selectedBranchId || 'main', true, selectedAcademicYearId || undefined);
     };
 
     const handleArchiveClass = (cls) => {
@@ -71,20 +90,35 @@ const Classes = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Academic Classes</h1>
                     <p className="text-gray-500 text-sm">Manage your institution's grade levels and classes.</p>
-                    <div className="flex items-center gap-2 mt-3">
-                        <Filter size={16} className="text-gray-400" />
-                        <MapPin size={16} className="text-indigo-500" />
-                        <select
-                            value={selectedBranchId || 'main'}
-                            onChange={(e) => setSelectedBranchId(e.target.value)}
-                            disabled={user?.branchId && user.branchId !== 'all'}
-                            className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-indigo-500 min-w-[180px]"
-                        >
-                            <option value="main">All Branches</option>
-                            {branches.map(b => (
-                                <option key={b._id} value={b._id}>{b.name}</option>
-                            ))}
-                        </select>
+                    <div className="flex items-center gap-3 mt-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                            <Filter size={16} className="text-gray-400" />
+                            <MapPin size={16} className="text-indigo-500" />
+                            <select
+                                value={selectedBranchId || 'main'}
+                                onChange={(e) => setSelectedBranchId(e.target.value)}
+                                disabled={user?.branchId && user.branchId !== 'all'}
+                                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-indigo-500 min-w-[160px]"
+                            >
+                                <option value="main">All Branches</option>
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-indigo-500" />
+                            <select
+                                value={selectedAcademicYearId || ''}
+                                onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
+                            >
+                                <option value="">All Years</option>
+                                {academicYears.map(y => (
+                                    <option key={y._id} value={y._id}>{y.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -145,6 +179,9 @@ const Classes = () => {
                 isOpen={isClassModalOpen}
                 onClose={() => setIsClassModalOpen(false)}
                 onCreate={handleAddClass}
+                defaultBranchId={selectedBranchId === 'main' ? (branches[0]?._id || '') : selectedBranchId}
+                defaultAcademicYearId={selectedAcademicYearId}
+                academicYears={academicYears}
             />
         </div>
     );

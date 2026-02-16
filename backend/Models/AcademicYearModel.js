@@ -7,6 +7,11 @@ const academicYearSchema = new mongoose.Schema(
             ref: "Institute",
             required: true,
         },
+        branchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Branch",
+            default: null,
+        },
         name: {
             type: String,
             required: true,

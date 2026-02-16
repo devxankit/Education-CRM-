@@ -3,7 +3,7 @@ import Course from "../Models/CourseModel.js";
 // ================= CREATE COURSE =================
 export const createCourse = async (req, res) => {
     try {
-        const { name, code, type, duration, totalSemesters, creditSystem, branchId } = req.body;
+        const { name, code, type, duration, totalSemesters, creditSystem, branchId, academicYearId } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!branchId) {
@@ -13,6 +13,7 @@ export const createCourse = async (req, res) => {
         const course = new Course({
             instituteId,
             branchId,
+            academicYearId: academicYearId || null,
             name,
             code: code ? code.toUpperCase() : name.split(' ').map(w => w[0]).join('').toUpperCase() + '_' + Date.now().toString().slice(-4),
             type,

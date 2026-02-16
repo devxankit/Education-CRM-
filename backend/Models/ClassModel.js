@@ -12,6 +12,11 @@ const classSchema = new mongoose.Schema(
             ref: "Branch",
             required: true,
         },
+        academicYearId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AcademicYear",
+            default: null,
+        },
         name: {
             type: String,
             required: true,
@@ -40,7 +45,7 @@ const classSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Compound index for unique class name per branch
-classSchema.index({ branchId: 1, name: 1 }, { unique: true });
+// Unique class name per branch per academic year (or branch-only for legacy)
+classSchema.index({ branchId: 1, academicYearId: 1, name: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("Class", classSchema);

@@ -1,13 +1,22 @@
+import React, { useState, useEffect } from 'react';
+import { X, CalendarPlus, AlertCircle, MapPin } from 'lucide-react';
 
-import React, { useState } from 'react';
-import { X, CalendarPlus, AlertCircle } from 'lucide-react';
-
-const CreateYearModal = ({ isOpen, onClose, onCreate }) => {
+const CreateYearModal = ({ isOpen, onClose, onCreate, branches = [] }) => {
     const [formData, setFormData] = useState({
         name: '',
         startDate: '',
-        endDate: ''
+        endDate: '',
+        branchId: ''
     });
+
+    const getDefaultBranchId = () =>
+        branches.find(b => (b.name || '').toLowerCase().includes('svm 1 indore'))?._id || branches[0]?._id || '';
+
+    useEffect(() => {
+        if (isOpen && branches.length > 0 && !formData.branchId) {
+            setFormData(prev => ({ ...prev, branchId: getDefaultBranchId() }));
+        }
+    }, [isOpen, branches]);
     const [error, setError] = useState('');
 
     if (!isOpen) return null;
@@ -35,7 +44,7 @@ const CreateYearModal = ({ isOpen, onClose, onCreate }) => {
         onCreate(formData);
 
         // Reset
-        setFormData({ name: '', startDate: '', endDate: '' });
+        setFormData({ name: '', startDate: '', endDate: '', branchId: getDefaultBranchId() });
         onClose();
     };
 
@@ -54,6 +63,26 @@ const CreateYearModal = ({ isOpen, onClose, onCreate }) => {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
+
+                    {branches.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <MapPin size={14} className="inline mr-1 align-middle" />
+                                Branch
+                            </label>
+                            <select
+                                name="branchId"
+                                value={formData.branchId}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                            >
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-400 mt-1">Academic year will be associated with this branch.</p>
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Session Name / Label</label>

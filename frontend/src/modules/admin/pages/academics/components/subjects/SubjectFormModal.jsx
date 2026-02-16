@@ -1,12 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, AlertCircle, GraduationCap, School } from 'lucide-react';
+import { X, BookOpen, AlertCircle, GraduationCap, School, MapPin, Calendar } from 'lucide-react';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
-const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = [], courses = [] }) => {
+const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = [], courses = [], defaultBranchId = '' }) => {
+    const branches = useAdminStore(state => state.branches);
+    const academicYears = useAdminStore(state => state.academicYearsForSelect || []);
+    const fetchBranches = useAdminStore(state => state.fetchBranches);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
+    const fetchClasses = useAdminStore(state => state.fetchClasses);
+    const fetchCourses = useAdminStore(state => state.fetchCourses);
 
     const [formData, setFormData] = useState({
+        branchId: '',
+        academicYearId: '',
         name: '',
-        code: '', // auto-generated if empty
+        code: '',
         type: 'theory',
         level: '',
         classIds: [],
@@ -14,14 +22,24 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
     });
 
     useEffect(() => {
+        if (isOpen && branches.length === 0) fetchBranches();
+    }, [isOpen, branches, fetchBranches]);
+
+    const prevOpenRef = React.useRef(false);
+    useEffect(() => {
         if (initialData) {
             setFormData({
                 ...initialData,
+                branchId: initialData.branchId?._id || initialData.branchId || '',
+                academicYearId: initialData.academicYearId?._id || initialData.academicYearId || '',
                 classIds: initialData.classIds ? (initialData.classIds.map(c => c._id || c)) : [],
                 courseIds: initialData.courseIds ? (initialData.courseIds.map(c => c._id || c)) : []
             });
-        } else {
+        } else if (isOpen && !prevOpenRef.current) {
+            const bid = defaultBranchId || branches[0]?._id || '';
             setFormData({
+                branchId: bid,
+                academicYearId: '',
                 name: '',
                 code: '',
                 type: 'theory',
@@ -30,9 +48,34 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
                 courseIds: []
             });
         }
-    }, [initialData, isOpen]);
+        prevOpenRef.current = isOpen;
+    }, [initialData, isOpen, defaultBranchId, branches]);
+
+    // Fetch academic years when branch changes
+    useEffect(() => {
+        if (isOpen && formData.branchId && formData.branchId.length === 24) {
+            fetchAcademicYears(formData.branchId);
+        }
+    }, [isOpen, formData.branchId, fetchAcademicYears]);
+
+    // Fetch classes & courses when branch/academic year changes (for Assignment)
+    useEffect(() => {
+        if (isOpen && formData.branchId && formData.branchId.length === 24) {
+            fetchClasses(formData.branchId, true, formData.academicYearId || undefined);
+            fetchCourses(formData.branchId);
+        }
+    }, [isOpen, formData.branchId, formData.academicYearId, fetchClasses, fetchCourses]);
+
+    useEffect(() => {
+        if (isOpen && formData.branchId && academicYears.length > 0 && !formData.academicYearId) {
+            const active = academicYears.find(y => y.status === 'active') || academicYears[0];
+            setFormData(prev => ({ ...prev, academicYearId: active?._id || '' }));
+        }
+    }, [isOpen, formData.branchId, academicYears]);
 
     if (!isOpen) return null;
+
+    const yearsToShow = formData.branchId ? academicYears : [];
 
     // Filter classes based on Academic Level (for School level)
     const getFilteredClasses = () => {
@@ -88,7 +131,15 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
         const { name, value } = e.target;
         const updatedData = { ...formData, [name]: value };
         
-        // If Academic Level changes, clear selected classes and courses
+        if (name === 'branchId') {
+            updatedData.academicYearId = '';
+            updatedData.classIds = [];
+            updatedData.courseIds = [];
+        }
+        if (name === 'academicYearId') {
+            updatedData.classIds = [];
+            updatedData.courseIds = [];
+        }
         if (name === 'level') {
             updatedData.classIds = [];
             updatedData.courseIds = [];
@@ -100,20 +151,31 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Validation: At least one class or course must be selected
+        if (!formData.branchId || formData.branchId.length !== 24) {
+            alert('Please select a Branch.');
+            return;
+        }
+        if (!formData.academicYearId) {
+            alert('Please select an Academic Year.');
+            return;
+        }
+        if (!formData.level) {
+            alert('Please select Academic Level.');
+            return;
+        }
         if (isSchoolLevel && formData.classIds.length === 0) {
             alert('Please select at least one class for School level subjects.');
             return;
         }
-        
         if (isCollegeLevel && formData.courseIds.length === 0) {
             alert('Please select at least one course/program for College level subjects.');
             return;
         }
         
-        // Clean up: Remove empty arrays if not needed
         const submitData = {
             ...formData,
+            branchId: formData.branchId,
+            academicYearId: formData.academicYearId,
             classIds: isSchoolLevel ? formData.classIds : [],
             courseIds: isCollegeLevel ? formData.courseIds : []
         };
@@ -128,49 +190,53 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
 
-            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in">
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
 
                 {/* Header */}
-                <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+                <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
                     <h3 className="text-lg font-bold flex items-center gap-2">
                         <BookOpen size={20} /> {isEdit ? 'Edit Subject' : 'New Subject Definition'}
                     </h3>
                     <button onClick={onClose} className="hover:bg-indigo-700 p-1 rounded transition-colors"><X size={20} /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 min-h-0">
 
                     {/* Basic Info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
-                            <input
-                                type="text" name="name" required
-                                placeholder="e.g. Mathematics, Physics Lab"
-                                value={formData.name} onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            />
-                        </div>
-
-                        {/* Code is Immutable if Edit */}
-                        {isEdit && (
-                            <div className="col-span-2 bg-gray-50 p-3 rounded border border-gray-200 flex items-center gap-3">
-                                <div className="text-xs text-gray-500 font-mono">CODE: <span className="text-gray-900 font-bold">{formData.code}</span></div>
-                                <span className="text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-200">Immutable</span>
-                            </div>
-                        )}
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <MapPin size={14} className="inline mr-1 align-middle" /> Branch
+                            </label>
                             <select
-                                name="type" required
-                                value={formData.type} onChange={handleChange}
+                                name="branchId" required
+                                value={formData.branchId} onChange={handleChange}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
                             >
-                                <option value="theory">Theory Only</option>
-                                <option value="practical">Practical Only</option>
-                                <option value="theory_practical">Theory + Practical</option>
+                                <option value="">Select Branch</option>
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
                             </select>
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <Calendar size={14} className="inline mr-1 align-middle" /> Academic Year <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="academicYearId" required
+                                value={formData.academicYearId} onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
+                                disabled={!formData.branchId}
+                            >
+                                <option value="">{formData.branchId ? 'Select Academic Year' : 'Select Branch first'}</option>
+                                {yearsToShow.map(y => (
+                                    <option key={y._id} value={y._id}>{y.name}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-400 mt-0.5">Academic years for selected branch only.</p>
                         </div>
 
                         <div className="col-span-2">
@@ -189,7 +255,7 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
                             </select>
                         </div>
 
-                        {/* School Level: Assign to Classes */}
+                        {/* School: Assign to Classes */}
                         {isSchoolLevel && (
                             <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -281,15 +347,47 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
                             <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Assignment
-                                    <span className="text-xs text-gray-400 ml-2">(Select Academic Level first)</span>
+                                    <span className="text-xs text-gray-400 ml-2">(Select Academic Level)</span>
                                 </label>
                                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/30 text-center">
-                                    <p className="text-gray-400 italic text-sm">
-                                        Please select Academic Level to assign this subject to classes or courses.
+                                    <p className="text-gray-400 text-sm">
+                                        {formData.branchId && formData.academicYearId
+                                            ? 'Select Academic Level to assign this subject to classes or courses.'
+                                            : 'Select Branch and Academic Year first, then Academic Level.'}
                                     </p>
                                 </div>
                             </div>
                         )}
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
+                            <input
+                                type="text" name="name" required
+                                placeholder="e.g. Mathematics, Physics Lab"
+                                value={formData.name} onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            />
+                        </div>
+
+                        {isEdit && (
+                            <div className="col-span-2 bg-gray-50 p-3 rounded border border-gray-200 flex items-center gap-3">
+                                <div className="text-xs text-gray-500 font-mono">CODE: <span className="text-gray-900 font-bold">{formData.code}</span></div>
+                                <span className="text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-200">Immutable</span>
+                            </div>
+                        )}
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <select
+                                name="type" required
+                                value={formData.type} onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white"
+                            >
+                                <option value="theory">Theory Only</option>
+                                <option value="practical">Practical Only</option>
+                                <option value="theory_practical">Theory + Practical</option>
+                            </select>
+                        </div>
                     </div>
 
                     {isEdit && (
@@ -298,8 +396,9 @@ const SubjectFormModal = ({ isOpen, onClose, onCreate, initialData, classes = []
                             <p>Updates to Subject Name will reflect across all historic records. Ensure consistency.</p>
                         </div>
                     )}
+                </div>
 
-                    <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
+                    <div className="p-6 pt-4 flex justify-end gap-3 border-t border-gray-100 bg-white shrink-0">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
                         <button type="submit" className="px-6 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm">
                             {isEdit ? 'Update Subject' : 'Create Subject'}

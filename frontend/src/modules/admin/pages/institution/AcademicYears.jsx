@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, History } from 'lucide-react';
 import AcademicYearTable from './components/academic-years/AcademicYearTable';
@@ -6,12 +5,12 @@ import CreateYearModal from './components/academic-years/CreateYearModal';
 import ActivateYearModal from './components/academic-years/ActivateYearModal';
 import CloseYearModal from './components/academic-years/CloseYearModal';
 import { API_URL } from '@/app/api';
+import { useAdminStore } from '../../../../store/adminStore';
 
 const AcademicYears = () => {
-    // Role (Admin Context)
+    const { branches, fetchBranches } = useAdminStore();
     const isSuperAdmin = true;
 
-    // Data State
     const [years, setYears] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
@@ -23,6 +22,10 @@ const AcademicYears = () => {
 
     // Fetch academic years on component mount
     const isInitialMount = React.useRef(true);
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
     useEffect(() => {
         if (isInitialMount.current) {
             fetchAcademicYears();
@@ -46,11 +49,13 @@ const AcademicYears = () => {
                     id: year._id,
                     _id: year._id,
                     name: year.name,
+                    branchId: year.branchId?._id || year.branchId,
+                    branchName: year.branchId?.name || (year.branchId ? '—' : 'All Branches'),
                     startDate: year.startDate?.split('T')[0] || year.startDate,
                     endDate: year.endDate?.split('T')[0] || year.endDate,
                     status: year.status,
                     createdOn: year.createdAt?.split('T')[0] || new Date(year.createdAt).toISOString().split('T')[0],
-                    createdBy: 'System Admin' // Can be populated from backend if needed
+                    createdBy: 'System Admin'
                 }));
                 setYears(transformedYears);
             }
@@ -188,6 +193,7 @@ const AcademicYears = () => {
             ) : (
                 <AcademicYearTable
                     years={years}
+                    branches={branches}
                     onActivate={(year) => setActivationTarget(year)}
                     onCloseYear={(year) => setClosureTarget(year)}
                     onView={handleViewDetails}
@@ -205,6 +211,7 @@ const AcademicYears = () => {
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 onCreate={handleCreate}
+                branches={branches}
             />
 
             <ActivateYearModal

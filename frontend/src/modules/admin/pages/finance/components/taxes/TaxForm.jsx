@@ -163,7 +163,7 @@ const TaxForm = ({ tax, onSave, onCancel }) => {
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium appearance-none cursor-pointer"
                             >
-                                <option value="fee">Fee</option>
+                                <option value="fee">Annual Fee</option>
                                 <option value="admission">Admission Fee</option>
                                 <option value="payroll">Payroll</option>
                                 <option value="expenses">Expenses</option>
