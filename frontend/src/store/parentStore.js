@@ -7,11 +7,40 @@ export const useParentStore = create(
     persist(
         (set, get) => ({
             // State (Initialize from localStorage to prevent flash of unauthenticated)
-            user: JSON.parse(localStorage.getItem('parent-storage'))?.state?.user || null,
-            token: JSON.parse(localStorage.getItem('parent-storage'))?.state?.token || null,
+            user: (() => {
+                try {
+                    const stored = localStorage.getItem('parent-storage');
+                    if (stored) return JSON.parse(stored)?.state?.user || null;
+                    const user = localStorage.getItem('user');
+                    return user ? JSON.parse(user) : null;
+                } catch (e) {
+                    try {
+                        const user = localStorage.getItem('user');
+                        return user ? JSON.parse(user) : null;
+                    } catch { return null; }
+                }
+            })(),
+            token: (() => {
+                try {
+                    const stored = localStorage.getItem('parent-storage');
+                    if (stored) return JSON.parse(stored)?.state?.token || null;
+                    return localStorage.getItem('token') || null;
+                } catch (e) { return localStorage.getItem('token') || null; }
+            })(),
             children: [],
-            selectedChildId: JSON.parse(localStorage.getItem('parent-storage'))?.state?.selectedChildId || null,
-            isAuthenticated: !!JSON.parse(localStorage.getItem('parent-storage'))?.state?.token,
+            selectedChildId: (() => {
+                try {
+                    const stored = localStorage.getItem('parent-storage');
+                    return stored ? JSON.parse(stored)?.state?.selectedChildId || null : null;
+                } catch (e) { return null; }
+            })(),
+            isAuthenticated: (() => {
+                try {
+                    const stored = localStorage.getItem('parent-storage');
+                    const hasPersistedToken = stored ? !!JSON.parse(stored)?.state?.token : false;
+                    return hasPersistedToken || !!localStorage.getItem('token');
+                } catch (e) { return !!localStorage.getItem('token'); }
+            })(),
             isLoading: false,
 
             // Data

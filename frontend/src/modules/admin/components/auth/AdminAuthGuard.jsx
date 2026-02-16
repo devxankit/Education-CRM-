@@ -5,7 +5,11 @@ import { useAppStore } from '../../../../store';
 const AdminAuthGuard = () => {
     const { isAuthenticated, user, token } = useAppStore();
 
-    if (!token || !isAuthenticated) {
+    // Robust check for refresh
+    const hasToken = token || !!localStorage.getItem('token');
+    const isAuth = isAuthenticated || hasToken;
+
+    if (!isAuth) {
         return <Navigate to="/admin/login" replace />;
     }
 

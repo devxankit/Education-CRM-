@@ -5,7 +5,11 @@ import { useTeacherStore } from '../../../../store/teacherStore';
 const TeacherAuthGuard = () => {
     const { isAuthenticated, token } = useTeacherStore();
 
-    if (!token || !isAuthenticated) {
+    // Robust check for refresh: check both store and multiple localStorage locations
+    const hasToken = token || !!localStorage.getItem('token') || !!JSON.parse(localStorage.getItem('teacher-storage') || '{}')?.state?.token;
+    const isAuth = isAuthenticated || hasToken;
+
+    if (!isAuth) {
         return <Navigate to="/teacher/login" replace />;
     }
 

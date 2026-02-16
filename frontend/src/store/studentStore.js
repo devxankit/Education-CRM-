@@ -7,9 +7,33 @@ export const useStudentStore = create(
     persist(
         (set, get) => ({
             // State (Initialize from localStorage to prevent flash of unauthenticated)
-            token: JSON.parse(localStorage.getItem('student-storage'))?.state?.token || null,
-            isAuthenticated: !!JSON.parse(localStorage.getItem('student-storage'))?.state?.token,
-            profile: JSON.parse(localStorage.getItem('student-storage'))?.state?.profile || null,
+            token: (() => {
+                try {
+                    const stored = localStorage.getItem('student-storage');
+                    if (stored) return JSON.parse(stored)?.state?.token || null;
+                    return localStorage.getItem('token') || null;
+                } catch (e) { return localStorage.getItem('token') || null; }
+            })(),
+            isAuthenticated: (() => {
+                try {
+                    const stored = localStorage.getItem('student-storage');
+                    const hasPersistedToken = stored ? !!JSON.parse(stored)?.state?.token : false;
+                    return hasPersistedToken || !!localStorage.getItem('token');
+                } catch (e) { return !!localStorage.getItem('token'); }
+            })(),
+            profile: (() => {
+                try {
+                    const stored = localStorage.getItem('student-storage');
+                    if (stored) return JSON.parse(stored)?.state?.profile || null;
+                    const user = localStorage.getItem('user');
+                    return user ? JSON.parse(user) : null;
+                } catch (e) {
+                    try {
+                        const user = localStorage.getItem('user');
+                        return user ? JSON.parse(user) : null;
+                    } catch { return null; }
+                }
+            })(),
             dashboard: null,
             attendance: [],
             fees: null,

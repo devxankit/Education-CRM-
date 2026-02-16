@@ -6,7 +6,11 @@ import { useParentStore } from '../../store/parentStore';
 const ParentAuthGuard = () => {
     const { isAuthenticated, token } = useParentStore();
 
-    if (!isAuthenticated || !token) {
+    // Robust check for refresh: check both store and multiple localStorage locations
+    const hasToken = token || !!localStorage.getItem('token') || !!JSON.parse(localStorage.getItem('parent-storage') || '{}')?.state?.token;
+    const isAuth = isAuthenticated || hasToken;
+
+    if (!isAuth) {
         return <Navigate to="/parent/login" replace />;
     }
 

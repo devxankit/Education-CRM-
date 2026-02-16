@@ -12,7 +12,8 @@ export const StaffAuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
         try {
             const stored = localStorage.getItem('staff_user');
-            return stored ? JSON.parse(stored) : null;
+            if (!stored || stored === 'undefined') return null;
+            return JSON.parse(stored);
         } catch (e) {
             console.error("Failed to parse staff user", e);
             return null;

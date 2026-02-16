@@ -10,9 +10,33 @@ export const useTeacherStore = create(
     persist(
         (set, get) => ({
             // Auth State (Initialize from localStorage to prevent flash of unauthenticated)
-            user: JSON.parse(localStorage.getItem('teacher-storage'))?.state?.user || null,
-            token: JSON.parse(localStorage.getItem('teacher-storage'))?.state?.token || null,
-            isAuthenticated: !!JSON.parse(localStorage.getItem('teacher-storage'))?.state?.token,
+            user: (() => {
+                try {
+                    const stored = localStorage.getItem('teacher-storage');
+                    if (stored) return JSON.parse(stored)?.state?.user || null;
+                    const user = localStorage.getItem('user');
+                    return user ? JSON.parse(user) : null;
+                } catch (e) {
+                    try {
+                        const user = localStorage.getItem('user');
+                        return user ? JSON.parse(user) : null;
+                    } catch { return null; }
+                }
+            })(),
+            token: (() => {
+                try {
+                    const stored = localStorage.getItem('teacher-storage');
+                    if (stored) return JSON.parse(stored)?.state?.token || null;
+                    return localStorage.getItem('token') || null;
+                } catch (e) { return localStorage.getItem('token') || null; }
+            })(),
+            isAuthenticated: (() => {
+                try {
+                    const stored = localStorage.getItem('teacher-storage');
+                    const hasPersistedToken = stored ? !!JSON.parse(stored)?.state?.token : false;
+                    return hasPersistedToken || !!localStorage.getItem('token');
+                } catch (e) { return !!localStorage.getItem('token'); }
+            })(),
 
             login: async (email, password) => {
                 try {
