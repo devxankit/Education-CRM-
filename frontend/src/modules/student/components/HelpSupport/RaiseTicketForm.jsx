@@ -26,9 +26,23 @@ const RaiseTicketForm = ({ categories, defaultCategory, onClose, onSubmit }) => 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        const trimmedSubject = (subject || '').trim();
+        const trimmedDescription = (description || '').trim();
+        
+        if (!trimmedSubject || !trimmedDescription) {
+            alert('Please fill in both subject and description fields.');
+            return;
+        }
+        
         setIsSubmitting(true);
         try {
-            const result = onSubmit({ subject, category, description, file: attachment });
+            const result = onSubmit({ 
+                subject: trimmedSubject, 
+                category, 
+                description: trimmedDescription, 
+                file: attachment 
+            });
             if (result && typeof result.then === 'function') {
                 await result;
             }

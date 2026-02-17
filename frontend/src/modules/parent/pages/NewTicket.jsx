@@ -26,7 +26,7 @@ const NewTicketPage = () => {
 
     const fileInputRef = useRef(null);
 
-    const categories = ['General', 'Attendance', 'Fees', 'Homework', 'Transport', 'Other'];
+    const categories = ['General', 'Attendance', 'Fees', 'Homework', 'Transport', 'Other', 'Documents'];
 
     const handleFileSelect = async (e) => {
         const file = e.target.files[0];

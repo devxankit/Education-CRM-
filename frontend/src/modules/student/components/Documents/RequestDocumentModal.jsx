@@ -3,6 +3,28 @@ import { motion } from 'framer-motion';
 import { X, FileText, Download, ShieldCheck, AlertCircle } from 'lucide-react';
 
 const RequestDocumentModal = ({ onClose, onSubmit }) => {
+    const [docType, setDocType] = React.useState('Bonafide Certificate');
+    const [reason, setReason] = React.useState('');
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+    const handleFormSubmit = async () => {
+        if (!reason.trim()) return alert("Please provide a reason for the request.");
+
+        setIsSubmitting(true);
+        try {
+            await onSubmit({
+                category: 'Documents',
+                topic: `Document Request: ${docType}`,
+                details: reason
+            });
+            onClose();
+        } catch (error) {
+            alert("Failed to submit request");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -30,13 +52,17 @@ const RequestDocumentModal = ({ onClose, onSubmit }) => {
                     <div className="bg-indigo-50 p-4 rounded-xl flex gap-3 border border-indigo-100">
                         <Info size={20} className="text-indigo-600 mt-0.5" />
                         <p className="text-xs text-indigo-800 leading-relaxed font-medium">
-                            Requests are forwarded to the Admin Office. Standard processing time is 2-3 working days.
+                            Requests are forwarded to the Admin Office ONLY. Standard processing time is 2-3 working days.
                         </p>
                     </div>
 
                     <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">Document Type</label>
-                        <select className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select
+                            value={docType}
+                            onChange={(e) => setDocType(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        >
                             <option>Bonafide Certificate</option>
                             <option>Character Certificate</option>
                             <option>Transfer Certificate (TC)</option>
@@ -48,19 +74,19 @@ const RequestDocumentModal = ({ onClose, onSubmit }) => {
                     <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">Reason for Request</label>
                         <textarea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
                             className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl py-3 px-4 h-24 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="e.g., Applying for passport, Scholarship application..."
                         ></textarea>
                     </div>
 
                     <button
-                        onClick={() => {
-                            onSubmit();
-                            onClose();
-                        }}
-                        className="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all"
+                        onClick={handleFormSubmit}
+                        disabled={isSubmitting}
+                        className="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50"
                     >
-                        Submit Request
+                        {isSubmitting ? 'Submitting...' : 'Submit Request'}
                     </button>
                 </div>
             </motion.div>

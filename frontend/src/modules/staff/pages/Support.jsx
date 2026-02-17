@@ -101,6 +101,7 @@ const Support = () => {
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                 <th className="px-6 py-4">Ticket Detail</th>
+                                <th className="px-6 py-4">Category</th>
                                 <th className="px-6 py-4">Raised By</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Priority</th>
@@ -120,6 +121,11 @@ const Support = () => {
                                                 <p className="text-[10px] text-gray-500 font-mono">{(ticket.id || ticket._id || '').toString().slice(-8)} • {new Date(ticket.createdAt).toLocaleDateString()}</p>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
+                                            {ticket.category || 'General'}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col gap-1">

@@ -80,10 +80,10 @@ export const useStaffStore = create(
                 }
             },
 
-            respondToTicketAction: async (id, responseText, status, isTeacherTicket = false) => {
+            respondToTicketAction: async (id, responseText, status, isTeacherTicket = false, attachment = null) => {
                 try {
                     const api = isTeacherTicket ? supportApi.respondToTeacherTicket : supportApi.respondToTicket;
-                    const response = await api(id, responseText, status);
+                    const response = await api(id, responseText, status, attachment);
                     if (response.success) {
                         const updatedTicket = { ...response.data, id: response.data._id || response.data.id };
                         set((state) => ({

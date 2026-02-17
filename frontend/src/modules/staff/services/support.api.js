@@ -77,11 +77,15 @@ export const updateTicketStatus = async (id, status) => {
     }
 };
 
-export const respondToTeacherTicket = async (id, responseText, status) => {
+export const respondToTeacherTicket = async (id, responseText, status, attachment) => {
     try {
         const response = await axios.put(
             `${API_URL}/support-ticket/teacher/${id}/respond`,
-            { response: responseText, status },
+            {
+                response: responseText,
+                status,
+                attachment // { base64, name }
+            },
             getAuthHeaders()
         );
         return response.data;
@@ -91,11 +95,12 @@ export const respondToTeacherTicket = async (id, responseText, status) => {
     }
 };
 
-export const respondToTicket = async (id, responseText, status) => {
+export const respondToTicket = async (id, responseText, status, attachment) => {
     try {
         const response = await axios.put(`${API_URL}/support-ticket/${id}/respond`, {
             response: responseText,
-            status
+            status,
+            attachment // { base64, name }
         }, getAuthHeaders());
         return response.data;
     } catch (error) {

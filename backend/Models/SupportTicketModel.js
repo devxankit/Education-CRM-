@@ -37,7 +37,7 @@ const supportTicketSchema = new mongoose.Schema(
         category: {
             type: String,
             required: true,
-            enum: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance", "Fees", "Transport", "Other"],
+            enum: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance", "Fees", "Transport", "Other", "Documents"],
         },
         status: {
             type: String,
@@ -62,6 +62,12 @@ const supportTicketSchema = new mongoose.Schema(
         },
         respondedAt: {
             type: Date,
+        },
+        responseAttachment: {
+            type: String,
+        },
+        responseAttachmentName: {
+            type: String,
         },
     },
     { timestamps: true }

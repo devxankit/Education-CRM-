@@ -35,6 +35,91 @@ const FAQItem = ({ question, answer }) => {
     );
 };
 
+const TicketItem = ({ ticket }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div
+            className={`bg-white border rounded-xl overflow-hidden transition-all ${isOpen ? 'border-indigo-200 ring-2 ring-indigo-50' : 'border-gray-100 shadow-sm'}`}
+        >
+            <div
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-4 cursor-pointer"
+            >
+                <div className="flex justify-between items-start mb-2">
+                    <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded uppercase tracking-wide">
+                        {ticket.category}
+                    </span>
+                    <span className={`flex items-center gap-1 text-[10px] font-bold uppercase ${ticket.status === 'Open' ? 'text-orange-600' : 'text-green-600'}`}>
+                        {ticket.status === 'Open' ? <Clock size={12} /> : <CheckCircle size={12} />}
+                        {ticket.status}
+                    </span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{ticket.topic}</h3>
+                    <ChevronRight size={16} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                </div>
+
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="mt-4 pt-4 border-t border-gray-50 space-y-4"
+                        >
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Description:</p>
+                                <p className="text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
+                                    "{ticket.details}"
+                                </p>
+                            </div>
+
+                            {ticket.response && (
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Office Response:</p>
+                                    <p className="text-xs text-indigo-900 leading-relaxed bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
+                                        {ticket.response}
+                                    </p>
+                                </div>
+                            )}
+
+                            {ticket.responseAttachment && (
+                                <div className="mt-4 p-3 bg-white border border-dashed border-emerald-200 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                            <FileText size={16} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">{ticket.responseAttachmentName || 'Document.pdf'}</p>
+                                            <p className="text-[9px] font-bold text-gray-400">Verified PDF Document</p>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={ticket.responseAttachment}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="p-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
+                    <span className="text-[10px] font-mono text-gray-400">#{ticket.id?.slice(-8).toUpperCase()}</span>
+                    <span className="text-[10px] text-gray-400 font-medium">{new Date(ticket.date).toLocaleDateString()}</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ParentSupportPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -135,30 +220,7 @@ const ParentSupportPage = () => {
                     <div className="space-y-3">
                         {tickets.length > 0 ? (
                             tickets.map(ticket => (
-                                <div
-                                    key={ticket.id}
-                                    className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:border-indigo-100 transition-all cursor-pointer"
-                                    onClick={() => navigate(`/parent/support/${ticket.id}`)}
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded uppercase tracking-wide">
-                                            {ticket.category}
-                                        </span>
-                                        <span className={`flex items-center gap-1 text-[10px] font-bold uppercase ${ticket.status === 'Open' ? 'text-orange-600' : 'text-green-600'
-                                            }`}>
-                                            {ticket.status === 'Open' ? <Clock size={12} /> : <CheckCircle size={12} />}
-                                            {ticket.status}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.topic}</h3>
-                                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
-                                        <span className="text-xs font-mono text-gray-400">#{ticket.id}</span>
-                                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                                            <span className="font-medium">{new Date(ticket.date).toLocaleDateString()}</span>
-                                            <ChevronRight size={14} />
-                                        </div>
-                                    </div>
-                                </div>
+                                <TicketItem key={ticket.id} ticket={ticket} />
                             ))
                         ) : (
                             <div className="text-center py-10 opacity-60">

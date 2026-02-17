@@ -20,6 +20,9 @@ const TicketDetail = () => {
     const [newMessage, setNewMessage] = useState('');
     const [showResolveModal, setShowResolveModal] = useState(false);
     const [resolutionNote, setResolutionNote] = useState('');
+    const [fileAttachment, setFileAttachment] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
@@ -69,28 +72,62 @@ const TicketDetail = () => {
         if (messages.length > 0) scrollToBottom();
     }, [messages]);
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFileAttachment({
+                base64: reader.result,
+                name: file.name
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !ticket) return;
 
         try {
-            await respondToTicketAction(ticket._id || ticket.id, newMessage, 'Resolved', ticket._ticketType === 'teacher');
+            setUploading(true);
+            await respondToTicketAction(
+                ticket._id || ticket.id,
+                newMessage,
+                'Resolved',
+                ticket._ticketType === 'teacher',
+                fileAttachment
+            );
             setNewMessage('');
+            setFileAttachment(null);
             await fetchTickets(); // Refresh
         } catch (err) {
             alert("Failed to send response");
+        } finally {
+            setUploading(false);
         }
     };
 
     const confirmResolve = async () => {
         if (!resolutionNote.trim() || !ticket) return;
         try {
-            await respondToTicketAction(ticket._id || ticket.id, resolutionNote, 'Closed', ticket._ticketType === 'teacher');
+            setUploading(true);
+            await respondToTicketAction(
+                ticket._id || ticket.id,
+                resolutionNote,
+                'Closed',
+                ticket._ticketType === 'teacher',
+                fileAttachment
+            );
             setShowResolveModal(false);
             setResolutionNote('');
+            setFileAttachment(null);
             await fetchTickets();
         } catch (err) {
             alert("Failed to resolve ticket");
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -148,6 +185,9 @@ const TicketDetail = () => {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-lg font-black text-gray-900 tracking-tight">{ticket.topic}</h1>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
+                                {ticket.category || 'General'}
+                            </span>
                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(ticket.status)}`}>
                                 {ticket.status}
                             </span>
@@ -240,6 +280,27 @@ const TicketDetail = () => {
                                 </div>
                                 <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-inner">
                                     <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{ticket.response}</p>
+                                    {ticket.responseAttachment && (
+                                        <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-between group">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded-lg border border-gray-100 flex items-center justify-center text-red-500 shadow-sm">
+                                                    <Paperclip size={18} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{ticket.responseAttachmentName || 'Attached Document'}</p>
+                                                    <p className="text-[9px] font-bold text-gray-400">PDF Document • Official</p>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={ticket.responseAttachment}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-4 py-2 bg-white hover:bg-gray-900 hover:text-white border border-gray-100 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                                            >
+                                                View Document
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -260,16 +321,49 @@ const TicketDetail = () => {
                                     value={newMessage}
                                     onChange={e => setNewMessage(e.target.value)}
                                 />
+                                <div className="mt-4">
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    />
+                                    {fileAttachment ? (
+                                        <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-xl mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <Paperclip size={16} className="text-indigo-600" />
+                                                <span className="text-xs font-bold text-indigo-900">{fileAttachment.name}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFileAttachment(null)}
+                                                className="text-[10px] font-black text-indigo-400 uppercase hover:text-indigo-600"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-indigo-200 hover:text-indigo-600 transition-all mb-4"
+                                        >
+                                            <Paperclip size={16} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Attach Generated Document (PDF)</span>
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
                                     <p className="text-[10px] text-gray-400 font-bold max-w-[70%]">
                                         Note: This response will be visible to the student immediately. Ensure language is professional and accurate.
                                     </p>
                                     <button
                                         type="submit"
-                                        disabled={!newMessage.trim()}
+                                        disabled={!newMessage.trim() || uploading}
                                         className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 transition-all active:scale-95 disabled:shadow-none"
                                     >
-                                        Post Response
+                                        {uploading ? 'Processing...' : 'Post Response'}
                                     </button>
                                 </div>
                             </form>

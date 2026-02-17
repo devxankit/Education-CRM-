@@ -66,12 +66,14 @@ const HelpSupportPage = () => {
         lastUpdate: t.respondedAt || t.updatedAt || t.createdAt,
         details: t.details,
         response: t.response,
+        responseAttachment: t.responseAttachment,
+        responseAttachmentName: t.responseAttachmentName,
         updates: t.response ? [t.response] : []
     }));
 
     const supportData = {
         faq: faqData,
-        categories: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance Issue", "Homework Submission Issue", "Fees / Payment Issue", "Profile Correction"]
+        categories: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance Issue", "Homework Submission Issue", "Fees / Payment Issue", "Profile Correction", "Documents"]
     };
 
     // Initial Load & Smooth Scroll
@@ -111,10 +113,17 @@ const HelpSupportPage = () => {
     };
 
     const handleTicketSubmit = async (ticketDetails) => {
+        const topic = (ticketDetails.subject || '').trim();
+        const details = (ticketDetails.description || '').trim();
+        
+        if (!topic || !details) {
+            throw new Error('Subject and description are required fields.');
+        }
+        
         const formattedTicket = {
             category: mapCategoryToBackend(ticketDetails.category),
-            topic: ticketDetails.subject,
-            details: ticketDetails.description,
+            topic,
+            details,
             priority: 'Normal',
             ...(ticketDetails.file && { file: ticketDetails.file })
         };

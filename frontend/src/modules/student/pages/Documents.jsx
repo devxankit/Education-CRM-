@@ -20,6 +20,7 @@ const DocumentsPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const data = useStudentStore(state => state.documents);
+    const addTicket = useStudentStore(state => state.addTicket);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('All');
     const [showRequestModal, setShowRequestModal] = useState(false);
@@ -180,7 +181,13 @@ const DocumentsPage = () => {
                 {showRequestModal && (
                     <RequestDocumentModal
                         onClose={() => setShowRequestModal(false)}
-                        onSubmit={() => alert("Request Submitted Successfully (Mock)")}
+                        onSubmit={async (ticketData) => {
+                            const success = await addTicket(ticketData);
+                            if (success) {
+                                alert("Document Request Submitted! You can track it in Help & Support.");
+                                navigate('/student/help'); // Navigate to help page (StudentHelp)
+                            }
+                        }}
                     />
                 )}
             </AnimatePresence>

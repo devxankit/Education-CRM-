@@ -412,6 +412,8 @@ export const useParentStore = create(
                             priority: t.priority,
                             date: new Date(t.createdAt).toLocaleDateString(),
                             response: t.response,
+                            responseAttachment: t.responseAttachment,
+                            responseAttachmentName: t.responseAttachmentName,
                             respondedAt: t.respondedAt ? new Date(t.respondedAt).toLocaleDateString() : null
                         }));
                         set({ tickets: transformed, isLoading: false });

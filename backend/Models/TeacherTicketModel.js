@@ -51,6 +51,8 @@ const teacherTicketSchema = new mongoose.Schema(
         respondedBy: { type: mongoose.Schema.Types.ObjectId, refPath: "respondedByModel" },
         respondedByModel: { type: String, enum: ["Staff", "Institute"], default: "Staff" },
         respondedAt: { type: Date },
+        responseAttachment: { type: String },
+        responseAttachmentName: { type: String },
     },
     { timestamps: true }
 );

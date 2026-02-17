@@ -3,6 +3,7 @@ import TeacherTicket from "../Models/TeacherTicketModel.js";
 import Student from "../Models/StudentModel.js";
 import Class from "../Models/ClassModel.js";
 import AcademicYear from "../Models/AcademicYearModel.js";
+import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 
 // Create a new ticket (Staff side)
 export const createTicket = async (req, res) => {
@@ -50,6 +51,12 @@ export const getAllTickets = async (req, res) => {
         const { branchId, academicYearId } = req.query;
 
         const query = { instituteId };
+
+        // Filter: Documents are only for Staff/Admin, not for Teachers
+        if (req.role === "teacher") {
+            query.category = { $ne: "Documents" };
+        }
+
         const branchFilter = branchId || staffBranchId;
         const ayFilter = academicYearId && academicYearId !== "all" ? academicYearId : null;
         const andParts = [];
@@ -128,19 +135,33 @@ export const updateTicketStatus = async (req, res) => {
 export const respondToTicket = async (req, res) => {
     try {
         const { id } = req.params;
-        const { response, status } = req.body;
+        const { response, status, attachment } = req.body; // attachment: { base64, name }
         const staffId = req.user._id;
         const role = req.role; // Lowercase from AuthMiddleware
 
+        const updateData = {
+            response,
+            status: status || "Resolved",
+            respondedBy: staffId,
+            onModel: role === "teacher" ? "Teacher" : (role === "institute" ? "Institute" : "Staff"),
+            respondedAt: new Date()
+        };
+
+        // Handle Response Attachment Upload
+        if (attachment && attachment.base64) {
+            try {
+                const instituteId = req.user.instituteId || req.user._id;
+                const cloudinaryUrl = await uploadBase64ToCloudinary(attachment.base64, `support/responses/${instituteId}`);
+                updateData.responseAttachment = cloudinaryUrl;
+                updateData.responseAttachmentName = attachment.name || "response-document";
+            } catch (uploadError) {
+                console.error("Error uploading response attachment:", uploadError);
+            }
+        }
+
         const ticket = await SupportTicket.findByIdAndUpdate(
             id,
-            {
-                response,
-                status: status || "Resolved",
-                respondedBy: staffId,
-                onModel: role === "teacher" ? "Teacher" : (role === "institute" ? "Institute" : "Staff"),
-                respondedAt: new Date()
-            },
+            { $set: updateData },
             { new: true }
         ).populate("respondedBy", "firstName lastName name role email").populate("studentId", "firstName lastName admissionNo");
 
@@ -201,17 +222,30 @@ export const getTeacherTickets = async (req, res) => {
 export const respondToTeacherTicket = async (req, res) => {
     try {
         const { id } = req.params;
-        const { response, status } = req.body;
+        const { response, status, attachment } = req.body;
+
+        const updateData = {
+            response,
+            status: status || "Resolved",
+            respondedBy: req.user._id,
+            respondedByModel: req.role === "institute" ? "Institute" : "Staff",
+            respondedAt: new Date()
+        };
+
+        if (attachment && attachment.base64) {
+            try {
+                const instituteId = req.user.instituteId || req.user._id;
+                const cloudinaryUrl = await uploadBase64ToCloudinary(attachment.base64, `support/responses/${instituteId}`);
+                updateData.responseAttachment = cloudinaryUrl;
+                updateData.responseAttachmentName = attachment.name || "response-document";
+            } catch (uploadError) {
+                console.error("Error uploading response attachment:", uploadError);
+            }
+        }
 
         const ticket = await TeacherTicket.findByIdAndUpdate(
             id,
-            {
-                response,
-                status: status || "Resolved",
-                respondedBy: req.user._id,
-                respondedByModel: req.role === "institute" ? "Institute" : "Staff",
-                respondedAt: new Date()
-            },
+            { $set: updateData },
             { new: true }
         )
             .populate("respondedBy", "firstName lastName name")
