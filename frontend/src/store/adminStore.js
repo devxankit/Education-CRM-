@@ -838,6 +838,7 @@ export const useAdminStore = create(
             },
 
             // Actions: Courses
+            setCourses: (courses) => set({ courses }),
             fetchCourses: async (branchId, academicYearId = null) => {
                 try {
                     const token = localStorage.getItem('token');
@@ -889,7 +890,10 @@ export const useAdminStore = create(
                     }
                 } catch (error) {
                     console.error('Error updating course:', error);
-                    get().addToast(error.response?.data?.message || 'Error updating course', 'error');
+                    const msg = error?.response?.status === 404
+                        ? 'Course not found. It may have been deleted.'
+                        : (error.response?.data?.message || 'Error updating course');
+                    get().addToast(msg, 'error');
                     throw error;
                 }
             },

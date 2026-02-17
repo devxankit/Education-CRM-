@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Settings, Printer, Lock, Download, Loader2, Copy, Trash2, Archive, TrendingUp, FileText, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Settings, Printer, Lock, Download, Loader2, Copy, Trash2, Archive, TrendingUp, FileText, Calendar, Percent } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
 
@@ -12,7 +12,8 @@ import FeeStructureStatusBadge from './components/fee-structures/FeeStructureSta
 const FeeStructures = () => {
     const {
         feeStructures, fetchFeeStructures, addFeeStructure, updateFeeStructure, deleteFeeStructure,
-        academicYears, fetchAcademicYears, branches, fetchBranches
+        academicYears, fetchAcademicYears, branches, fetchBranches,
+        taxes, fetchTaxes
     } = useAdminStore();
     const user = useAppStore(state => state.user);
 
@@ -73,6 +74,29 @@ const FeeStructures = () => {
 
     // Derived
     const selectedStructure = feeStructures.find(s => (s._id || s.id) === selectedId);
+
+    useEffect(() => {
+        const branchId = selectedStructure?.branchId?._id || selectedStructure?.branchId || filter.branchId;
+        if (branchId && branchId.length === 24) fetchTaxes(branchId);
+    }, [selectedStructure?.branchId, filter.branchId, fetchTaxes]);
+
+    const applicableTaxes = useMemo(() =>
+        (taxes || []).filter(t => t.isActive !== false && (t.applicableOn === 'fee' || t.applicableOn === 'admission')),
+        [taxes]
+    );
+
+    const selectedTaxCalc = useMemo(() => {
+        const base = selectedStructure?.totalAmount || 0;
+        if (base <= 0) return { taxAmount: 0, details: [], totalWithTax: base };
+        let taxAmount = 0;
+        const details = [];
+        applicableTaxes.forEach(t => {
+            const amt = t.type === 'percentage' ? (base * (Number(t.rate) || 0)) / 100 : Number(t.rate) || 0;
+            taxAmount += amt;
+            details.push({ name: t.name, rate: t.rate, type: t.type, amount: amt });
+        });
+        return { taxAmount, details, totalWithTax: base + taxAmount };
+    }, [selectedStructure?.totalAmount, applicableTaxes]);
 
     const filteredStructures = feeStructures.filter(s => {
         if (filter.year && (s.academicYearId?._id || s.academicYearId) !== filter.year) return false;
@@ -305,6 +329,20 @@ const FeeStructures = () => {
                                 <TrendingUp size={16} className="text-indigo-400" />
                             </div>
                             <span className="block text-2xl font-bold text-indigo-900">₹{(selectedStructure.totalAmount || 0).toLocaleString()}</span>
+                            {selectedTaxCalc.details.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-indigo-200 space-y-0.5 text-xs">
+                                    {selectedTaxCalc.details.map((d, i) => (
+                                        <div key={i} className="flex justify-between text-indigo-700">
+                                            <span>{d.name} {d.type === 'percentage' ? `(${d.rate}%)` : ''}</span>
+                                            <span>+ ₹{d.amount.toLocaleString()}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between font-bold text-indigo-900 pt-1">
+                                        <span className="flex items-center gap-1"><Percent size={10} /> Incl. tax</span>
+                                        <span>₹{selectedTaxCalc.totalWithTax.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                             <div className="flex items-center justify-between mb-2">
@@ -404,6 +442,7 @@ const FeeStructures = () => {
                             branches={branches}
                             searchValue={filter.search}
                             selectedBranchId={filter.branchId}
+                            applicableTaxes={applicableTaxes}
                         />
                     )}
                 </div>

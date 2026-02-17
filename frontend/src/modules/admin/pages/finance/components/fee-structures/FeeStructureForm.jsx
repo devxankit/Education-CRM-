@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, Save, X, Layers, List, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronRight, Save, X, Layers, List, Calendar, Percent } from 'lucide-react';
 import { useAdminStore, selectAcademicYearsForSelect } from '../../../../../../store/adminStore';
 import { useAppStore } from '../../../../../../store/index';
 import FeeComponentsEditor from './FeeComponentsEditor';
@@ -10,8 +10,9 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
     const {
         fetchAcademicYears,
         branches, fetchBranches,
-        classes, fetchClasses,
-        courses, fetchCourses
+        classes, fetchClasses, setClasses,
+        courses, fetchCourses, setCourses,
+        taxes, fetchTaxes
     } = useAdminStore();
     const user = useAppStore(state => state.user);
 
@@ -74,11 +75,7 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                     dueDate: inst.dueDate ? (typeof inst.dueDate === 'string' ? inst.dueDate.split('T')[0] : new Date(inst.dueDate).toISOString().split('T')[0]) : ''
                 })));
             } else {
-                const initialTotal = initialData.totalAmount || 
-                    (initialData.components?.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) || 0);
-                setInstallments([
-                    { id: 1, name: 'Full Payment', dueDate: '', amount: initialTotal }
-                ]);
+                setInstallments([]);
             }
         } else {
             // Create mode - reset to empty
@@ -113,16 +110,42 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
         }
     }, [branches, initialData]);
 
-    // Fetch classes & courses when branch + academic year are selected
+    // Clear classes & courses when branch or academic year is missing; fetch when both are set
     useEffect(() => {
-        if (basicInfo.branchId && basicInfo.academicYearId && basicInfo.academicYearId.length === 24) {
-            fetchClasses(basicInfo.branchId, false, basicInfo.academicYearId);
-            fetchCourses(basicInfo.branchId, basicInfo.academicYearId);
+        if (!basicInfo.branchId || !basicInfo.academicYearId || basicInfo.academicYearId.length !== 24) {
+            setClasses([]);
+            setCourses([]);
+            return;
         }
-    }, [basicInfo.branchId, basicInfo.academicYearId, fetchClasses, fetchCourses]);
-    
+        fetchClasses(basicInfo.branchId, false, basicInfo.academicYearId);
+        fetchCourses(basicInfo.branchId, basicInfo.academicYearId);
+    }, [basicInfo.branchId, basicInfo.academicYearId, fetchClasses, fetchCourses, setClasses, setCourses]);
+
+    useEffect(() => {
+        if (basicInfo.branchId && basicInfo.branchId.length === 24) fetchTaxes(basicInfo.branchId);
+    }, [basicInfo.branchId, fetchTaxes]);
+
+    const applicableTaxes = useMemo(() =>
+        (taxes || []).filter(t => t.isActive !== false && (t.applicableOn === 'fee' || t.applicableOn === 'admission')),
+        [taxes]
+    );
+
     // Computed totalAmount - must be after components state
     const totalAmount = components.reduce((sum, c) => sum + Number(c.amount || 0), 0);
+
+    const taxCalc = useMemo(() => {
+        if (totalAmount <= 0) return { taxAmount: 0, details: [], totalWithTax: 0 };
+        let taxAmount = 0;
+        const details = [];
+        applicableTaxes.forEach(t => {
+            const amt = t.type === 'percentage'
+                ? (totalAmount * (Number(t.rate) || 0)) / 100
+                : Number(t.rate) || 0;
+            taxAmount += amt;
+            details.push({ name: t.name, rate: t.rate, type: t.type, amount: amt });
+        });
+        return { taxAmount, details, totalWithTax: totalAmount + taxAmount };
+    }, [totalAmount, applicableTaxes]);
 
     const handleNext = () => setStep(prev => prev + 1);
     const handleBack = () => setStep(prev => prev - 1);
@@ -232,14 +255,15 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
             return;
         }
 
-        // Validate installment amounts sum equals total
+        // Validate installment amounts sum equals total (use totalWithTax when tax applies)
+        const amountToSplit = applicableTaxes.length > 0 ? taxCalc.totalWithTax : totalAmount;
         const installmentSum = installments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
-        if (Math.abs(installmentSum - totalAmount) > 1) { // Allow 1 rupee difference for rounding
+        if (Math.abs(installmentSum - amountToSplit) > 1) { // Allow 1 rupee difference for rounding
             if (!window.confirm(
                 `⚠️ Installment Amount Mismatch!\n\n` +
-                `Total Fee: ₹${totalAmount.toLocaleString()}\n` +
+                `Total (incl. tax): ₹${amountToSplit.toLocaleString()}\n` +
                 `Installments Sum: ₹${installmentSum.toLocaleString()}\n` +
-                `Difference: ₹${Math.abs(installmentSum - totalAmount).toLocaleString()}\n\n` +
+                `Difference: ₹${Math.abs(installmentSum - amountToSplit).toLocaleString()}\n\n` +
                 `Do you want to continue anyway?`
             )) {
                 setStep(3);
@@ -270,7 +294,7 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
             ...basicInfo,
             components: formattedComponents,
             installments: formattedInstallments,
-            totalAmount
+            totalAmount: amountToSplit
         });
     };
 
@@ -367,7 +391,13 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                                 </label>
                                 <select
                                     value={basicInfo.branchId}
-                                    onChange={(e) => setBasicInfo({ ...basicInfo, branchId: e.target.value, academicYearId: '' })}
+                                    onChange={(e) => setBasicInfo({
+                                        ...basicInfo,
+                                        branchId: e.target.value,
+                                        academicYearId: '',
+                                        applicableClasses: [],
+                                        applicableCourses: []
+                                    })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm hover:shadow-md"
                                 >
                                     <option value="">Select Branch</option>
@@ -382,7 +412,12 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
                                 </label>
                                 <select
                                     value={basicInfo.academicYearId}
-                                    onChange={(e) => setBasicInfo({ ...basicInfo, academicYearId: e.target.value })}
+                                    onChange={(e) => setBasicInfo({
+                                        ...basicInfo,
+                                        academicYearId: e.target.value,
+                                        applicableClasses: [],
+                                        applicableCourses: []
+                                    })}
                                     disabled={!basicInfo.branchId}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
@@ -495,14 +530,32 @@ const FeeStructureForm = ({ onSave, onCancel, initialData, existingStructures = 
 
                 {step === 3 && (
                     <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="mb-6 bg-gradient-to-r from-indigo-50 to-indigo-100 p-5 rounded-xl flex justify-between items-center text-indigo-900 border border-indigo-200 shadow-md">
-                            <span className="font-medium text-sm lg:text-base flex items-center gap-2">
-                                <Layers size={18} /> Total Fee to Split:
-                            </span>
-                            <span className="font-bold text-xl lg:text-2xl">₹{totalAmount.toLocaleString()}</span>
+                        <div className="mb-6 space-y-4">
+                            <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 p-5 rounded-xl border border-indigo-200 shadow-md">
+                                <div className="flex justify-between items-center text-indigo-900 mb-2">
+                                    <span className="font-medium text-sm lg:text-base flex items-center gap-2">
+                                        <Layers size={18} /> Base Fee (to split into installments):
+                                    </span>
+                                    <span className="font-bold text-xl">₹{totalAmount.toLocaleString()}</span>
+                                </div>
+                                {applicableTaxes.length > 0 && totalAmount > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-indigo-200 space-y-1 text-sm">
+                                        {taxCalc.details.map((d, i) => (
+                                            <div key={i} className="flex justify-between text-indigo-800">
+                                                <span>{d.name} {d.type === 'percentage' ? `(${d.rate}%)` : '(flat)'}</span>
+                                                <span>+ ₹{d.amount.toLocaleString()}</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between font-bold text-indigo-900 pt-2">
+                                            <span className="flex items-center gap-1"><Percent size={14} /> Total (incl. tax):</span>
+                                            <span>₹{taxCalc.totalWithTax.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <InstallmentScheduler
-                            totalAmount={totalAmount}
+                            totalAmount={applicableTaxes.length > 0 ? taxCalc.totalWithTax : totalAmount}
                             installments={installments}
                             onChange={setInstallments}
                             readOnly={false}

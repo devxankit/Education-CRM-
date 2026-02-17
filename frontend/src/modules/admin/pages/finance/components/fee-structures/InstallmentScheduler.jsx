@@ -59,7 +59,7 @@ const InstallmentScheduler = ({ totalAmount, installments, onChange, readOnly })
                         <select
                             onChange={(e) => handleCountChange(Number(e.target.value))}
                             className="bg-white border border-gray-200 rounded-lg text-sm px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                            value={installments.length > 0 ? installments.length : ''}
+                            value={[1, 2, 4, 10].includes(installments.length) ? installments.length : ''}
                         >
                             <option value="">Select Strategy</option>
                             <option value="1">Full Payment (1)</option>

@@ -3,7 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Archive, ChevronRight, DollarSign, FileText } from 'lucide-react';
 import FeeStructureStatusBadge from './FeeStructureStatusBadge';
 
-const FeeStructureList = ({ structures, selectedId, onSelect, onFilterChange, academicYears = [], branches = [], searchValue = '', selectedBranchId = '' }) => {
+const computeTotalWithTax = (baseAmount, applicableTaxes) => {
+    if (!baseAmount || !applicableTaxes?.length) return baseAmount;
+    let tax = 0;
+    applicableTaxes.forEach(t => {
+        tax += t.type === 'percentage' ? (baseAmount * (Number(t.rate) || 0)) / 100 : Number(t.rate) || 0;
+    });
+    return baseAmount + tax;
+};
+
+const FeeStructureList = ({ structures, selectedId, onSelect, onFilterChange, academicYears = [], branches = [], searchValue = '', selectedBranchId = '', applicableTaxes = [] }) => {
     const [localSearch, setLocalSearch] = useState(searchValue);
 
     useEffect(() => {
@@ -64,6 +73,11 @@ const FeeStructureList = ({ structures, selectedId, onSelect, onFilterChange, ac
                         {structures.map((item) => {
                             const id = item._id || item.id;
                             const isSelected = selectedId === id;
+                            const itemBranchId = item.branchId?._id || item.branchId;
+                            const baseAmount = item.totalAmount || 0;
+                            const totalWithTax = (applicableTaxes.length > 0 && itemBranchId === selectedBranchId)
+                                ? computeTotalWithTax(baseAmount, applicableTaxes) : baseAmount;
+                            const showTax = applicableTaxes.length > 0 && itemBranchId === selectedBranchId && totalWithTax !== baseAmount;
                             return (
                                 <div
                                     key={id}
@@ -96,7 +110,8 @@ const FeeStructureList = ({ structures, selectedId, onSelect, onFilterChange, ac
                                             </p>
                                             <p className="flex items-center gap-1 font-mono text-gray-700 font-semibold">
                                                 <DollarSign size={12} className="text-indigo-500" /> 
-                                                ₹{(item.totalAmount || 0).toLocaleString()}
+                                                ₹{totalWithTax.toLocaleString()}
+                                                {showTax && <span className="text-[10px] font-normal text-gray-500">(incl. tax)</span>}
                                             </p>
                                         </div>
                                         <ChevronRight size={16} className={`text-gray-300 transition-transform group-hover:translate-x-1 ${isSelected ? 'text-indigo-500' : ''}`} />

@@ -70,15 +70,21 @@ export const getCourses = async (req, res) => {
 export const updateCourse = async (req, res) => {
     try {
         const { id } = req.params;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const existing = await Course.findById(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: "Course not found" });
+        }
+        if (existing.instituteId?.toString() !== instituteId?.toString()) {
+            return res.status(403).json({ success: false, message: "Access denied to this course" });
+        }
+
         const course = await Course.findByIdAndUpdate(
             id,
             { $set: req.body },
             { new: true, runValidators: true }
         ).populate("teacherId", "firstName lastName employeeId email");
-
-        if (!course) {
-            return res.status(404).json({ success: false, message: "Course not found" });
-        }
 
         res.status(200).json({
             success: true,

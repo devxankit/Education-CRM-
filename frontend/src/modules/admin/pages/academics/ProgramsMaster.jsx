@@ -73,10 +73,13 @@ const ProgramsMaster = () => {
     const handleDeactivate = async (prog) => {
         if (window.confirm(`Archive '${prog.name}'?`)) {
             try {
-                // The backend uses 'archived' status in the model
                 await updateCourse(prog._id || prog.id, { status: 'archived' });
             } catch (error) {
-                console.error("Failed to archive course", error);
+                if (error?.response?.status === 404) {
+                    // Course not found (deleted/stale) – refresh list
+                    const branchId = (selectedBranchId && selectedBranchId !== 'main') ? selectedBranchId : null;
+                    await fetchCourses(branchId);
+                }
             }
         }
     };

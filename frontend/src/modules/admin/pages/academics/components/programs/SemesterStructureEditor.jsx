@@ -62,7 +62,7 @@ const SemesterStructureEditor = ({ program }) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Max Subjects Allowed</label>
                             <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" defaultValue={8} />
                         </div>
-
+{/* 
                         {program.creditSystem && (
                             <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                                 <label className="block text-xs font-bold text-indigo-800 uppercase mb-2 flex items-center gap-1">
@@ -79,7 +79,7 @@ const SemesterStructureEditor = ({ program }) => {
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        )} */}
                     </div>
 
                     <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 min-h-[200px] flex flex-col justify-center items-center text-center min-w-0">
