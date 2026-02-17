@@ -392,9 +392,9 @@ export const admitStudent = async (req, res) => {
 
         // 3. Handle Cloudinary Document Uploads + Workflow Policy
         const workflow = admissionRule?.workflow;
-        const needsWorkflow = workflow && (workflow.requireDocs || workflow.requireFee);
-        const defaultDocStatus = (needsWorkflow || req.role !== 'institute') ? 'in_review' : 'approved';
-        const defaultStudentStatus = (needsWorkflow || req.role !== 'institute') ? 'in_review' : 'active';
+        const isAdminOrInstitute = ['institute', 'staff', 'admin'].includes((req.role || '').toLowerCase());
+        const defaultDocStatus = isAdminOrInstitute ? 'approved' : 'in_review';
+        const defaultStudentStatus = isAdminOrInstitute ? 'active' : 'in_review';
 
         if (admissionData.documents) {
             const keys = Object.keys(admissionData.documents);
@@ -497,12 +497,13 @@ export const admitStudent = async (req, res) => {
 
         const msgWaitlist = studentStatus === 'waitlisted' ? " (Waitlisted - section is full)" : "";
         const msgLate = isLate ? " (Late application)" : "";
+        const studentObj = student.toObject ? student.toObject() : student;
         res.status(201).json({
             success: true,
             message: (parentCreated
                 ? "Student admitted successfully. Login credentials sent to parent email."
                 : "Student admitted successfully") + msgWaitlist + msgLate,
-            data: student,
+            data: { ...studentObj, academicYearId: academicYearId || classData?.academicYearId?.toString?.() || null },
             parentLinked: !!parentId,
             emailSent: parentCreated && !!admissionData.parentEmail,
             waitlisted: studentStatus === 'waitlisted',

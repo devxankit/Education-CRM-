@@ -33,6 +33,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
         // 1
         firstName: '', middleName: '', lastName: '',
         dob: '', gender: '', bloodGroup: '', nationality: 'Indian',
+        category: 'General',
         parentEmail: '',
         address: '', city: '', pincode: '',
 
