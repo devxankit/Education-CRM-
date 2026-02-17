@@ -463,11 +463,14 @@ export const admitStudent = async (req, res) => {
 
         const studentStatus = forceStatus || defaultStudentStatus;
 
+        const resolvedAcademicYearId = academicYearId || classData?.academicYearId;
+
         const student = new Student({
             ...admissionData,
             admissionNo,
             instituteId,
             branchId, // Use the resolved branchId
+            academicYearId: resolvedAcademicYearId || undefined,
             parentId: admissionData.parentId || parentId,
             password: admissionData.password || '12345678',
             status: studentStatus,
@@ -503,7 +506,7 @@ export const admitStudent = async (req, res) => {
             message: (parentCreated
                 ? "Student admitted successfully. Login credentials sent to parent email."
                 : "Student admitted successfully") + msgWaitlist + msgLate,
-            data: { ...studentObj, academicYearId: academicYearId || classData?.academicYearId?.toString?.() || null },
+            data: studentObj,
             parentLinked: !!parentId,
             emailSent: parentCreated && !!admissionData.parentEmail,
             waitlisted: studentStatus === 'waitlisted',

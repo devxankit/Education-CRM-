@@ -630,12 +630,20 @@ export const createStaff = async (req, res) => {
     try {
         const { name, email, roleId, branchId, phone } = req.body;
         const instituteId = req.user._id;
+        const emailNormalized = (email || '').toString().toLowerCase().trim();
 
-        const existingStaff = await Staff.findOne({ email });
+        if (!emailNormalized) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required",
+            });
+        }
+
+        const existingStaff = await Staff.findOne({ email: emailNormalized });
         if (existingStaff) {
             return res.status(400).json({
                 success: false,
-                message: "Staff user with this email already exists",
+                message: "A staff member with this email already exists. Please use a different email.",
             });
         }
 
@@ -646,7 +654,7 @@ export const createStaff = async (req, res) => {
         const staff = new Staff({
             instituteId,
             name,
-            email,
+            email: emailNormalized,
             password: generatedPassword,
             roleId,
             branchId: branchId === 'all' ? null : branchId,
@@ -658,7 +666,7 @@ export const createStaff = async (req, res) => {
         // Send Email with credentials
         // Use a background process or don't await if you don't want to block the response
         // but for now we'll just fire and forget or simple await
-        sendLoginCredentialsEmail(email, generatedPassword, name, "Staff");
+        sendLoginCredentialsEmail(emailNormalized, generatedPassword, name, "Staff");
 
         res.status(201).json({
             success: true,
@@ -671,6 +679,12 @@ export const createStaff = async (req, res) => {
             },
         });
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "A staff member with this email already exists. Please use a different email.",
+            });
+        }
         res.status(500).json({
             success: false,
             message: error.message,
@@ -715,6 +729,18 @@ export const updateStaff = async (req, res) => {
         // Prevent direct password update through this route
         delete updateData.password;
 
+        if (updateData.email) {
+            const emailNormalized = (updateData.email || '').toString().toLowerCase().trim();
+            const existingStaff = await Staff.findOne({ email: emailNormalized, _id: { $ne: id } });
+            if (existingStaff) {
+                return res.status(400).json({
+                    success: false,
+                    message: "A staff member with this email already exists. Please use a different email.",
+                });
+            }
+            updateData.email = emailNormalized;
+        }
+
         const staff = await Staff.findByIdAndUpdate(
             id,
             { $set: updateData },
@@ -734,6 +760,12 @@ export const updateStaff = async (req, res) => {
             data: staff,
         });
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "A staff member with this email already exists. Please use a different email.",
+            });
+        }
         res.status(500).json({
             success: false,
             message: error.message,

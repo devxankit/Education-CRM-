@@ -67,6 +67,10 @@ const studentSchema = new mongoose.Schema(
             type: String,
             default: "General",
         },
+        academicYearId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AcademicYear",
+        },
         classId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Class",
