@@ -34,9 +34,10 @@ const SubmissionsPage = () => {
 
     const stats = {
         total: submissions.length,
-        submitted: submissions.filter(s => s.status === 'Submitted' || s.status === 'Graded').length,
+        submitted: submissions.filter(s => s.status === 'Submitted' || s.status === 'Graded' || s.status === 'Late').length,
         pending: submissions.filter(s => s.status === 'Pending').length,
-        graded: submissions.filter(s => s.status === 'Graded').length
+        graded: submissions.filter(s => s.status === 'Graded').length,
+        late: submissions.filter(s => s.status === 'Late').length
     };
 
     const handleGrade = async () => {
@@ -152,6 +153,12 @@ const SubmissionsPage = () => {
                                             <Calendar size={14} />
                                             {sub.submissionDate ? new Date(sub.submissionDate).toLocaleDateString() : 'N/A'}
                                         </div>
+                                        {sub.status === 'Late' && homework?.dueDate && (
+                                            <div className="flex items-center gap-1.5 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
+                                                <Clock size={12} />
+                                                <span>Submitted after due date</span>
+                                            </div>
+                                        )}
                                         {sub.attachments?.length > 0 && (
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 {sub.attachments.map((file, idx) => (

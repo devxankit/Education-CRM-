@@ -43,16 +43,31 @@ export const getStudentDashboard = async (req, res) => {
 
         const { classId, sectionId } = student;
 
-        // 2. Get Homework for this student's class/section
-        const homework = await Homework.find({
-            classId,
-            sectionId,
-            status: "published"
-        })
-            .populate("subjectId", "name code")
-            .populate("teacherId", "firstName lastName")
-            .sort({ createdAt: -1 })
-            .limit(5);
+        // 2. Get Homework for this student's class/section (only if student is active)
+        let homework = [];
+        if (student.status === 'active') {
+            const homeworkQuery = {
+                classId,
+                sectionId,
+                status: "published"
+            };
+
+            // Filter by academic year if student has one assigned
+            if (student.academicYearId) {
+                homeworkQuery.academicYearId = student.academicYearId;
+            }
+
+            // Only show homework assigned AFTER student's admission date
+            if (student.admissionDate) {
+                homeworkQuery.createdAt = { $gte: student.admissionDate };
+            }
+
+            homework = await Homework.find(homeworkQuery)
+                .populate("subjectId", "name code")
+                .populate("teacherId", "firstName lastName")
+                .sort({ createdAt: -1 })
+                .limit(5);
+        }
 
         // 3. Get Recent Notices
         const notices = await Notice.find({
@@ -1174,11 +1189,33 @@ export const getStudentHomework = async (req, res) => {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
 
-        const homework = await Homework.find({
+        // Only active students should see homework
+        if (student.status !== 'active') {
+            return res.status(403).json({
+                success: false,
+                message: `Your admission status is ${student.status}. Please contact admin for activation.`
+            });
+        }
+
+        // Build homework query with proper filters
+        const homeworkQuery = {
             classId: student.classId,
             sectionId: student.sectionId,
             status: "published"
-        })
+        };
+
+        // Filter by academic year if student has one assigned
+        if (student.academicYearId) {
+            homeworkQuery.academicYearId = student.academicYearId;
+        }
+
+        // Only show homework assigned AFTER student's admission date
+        // This prevents showing old homework from before student joined
+        if (student.admissionDate) {
+            homeworkQuery.createdAt = { $gte: student.admissionDate };
+        }
+
+        const homework = await Homework.find(homeworkQuery)
             .populate("subjectId", "name code")
             .populate("teacherId", "firstName lastName")
             .sort({ dueDate: 1 });
@@ -1243,6 +1280,9 @@ export const submitHomework = async (req, res) => {
             uploadedAttachments = await Promise.all(uploadPromises);
         }
 
+        const isLate = new Date() > homework.dueDate;
+        const submissionStatus = isLate ? "Late" : "Submitted";
+        
         const submission = await HomeworkSubmission.findOneAndUpdate(
             { homeworkId, studentId },
             {
@@ -1253,14 +1293,16 @@ export const submitHomework = async (req, res) => {
                 content,
                 attachments: uploadedAttachments,
                 submissionDate: new Date(),
-                status: new Date() > homework.dueDate ? "Late" : "Submitted"
+                status: submissionStatus
             },
             { upsert: true, new: true }
         );
 
         res.status(200).json({
             success: true,
-            message: "Homework submitted successfully",
+            message: isLate 
+                ? "Homework submitted successfully (marked as Late - submitted after due date)" 
+                : "Homework submitted successfully",
             data: submission
         });
     } catch (error) {

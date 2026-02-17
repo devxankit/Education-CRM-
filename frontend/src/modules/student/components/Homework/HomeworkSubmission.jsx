@@ -52,10 +52,12 @@ const HomeworkSubmission = ({ homework, onSubmissionComplete }) => {
 
             const result = await submitHomework(submissionData);
             if (result) {
+                // Check if homework was overdue
+                const isOverdue = homework.dueDate && new Date() > new Date(homework.dueDate);
                 setSuccess(true);
                 setTimeout(() => {
                     onSubmissionComplete();
-                }, 1000);
+                }, 1500);
             } else {
                 setError('Failed to submit homework. Please try again.');
             }
@@ -68,17 +70,22 @@ const HomeworkSubmission = ({ homework, onSubmissionComplete }) => {
     };
 
     if (success) {
+        const isOverdue = homework.dueDate && new Date() > new Date(homework.dueDate);
         return (
             <div className="py-8 flex flex-col items-center justify-center text-center">
                 <motion.div
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4"
+                    className={`w-16 h-16 ${isOverdue ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'} rounded-full flex items-center justify-center mb-4`}
                 >
                     <CheckCircle size={32} />
                 </motion.div>
                 <h3 className="text-lg font-bold text-gray-900">Submitted Successfully!</h3>
-                <p className="text-sm text-gray-500 mt-1">Your promptness is appreciated.</p>
+                <p className={`text-sm mt-1 ${isOverdue ? 'text-yellow-600 font-medium' : 'text-gray-500'}`}>
+                    {isOverdue 
+                        ? 'Submitted (marked as Late - your teacher will be notified)' 
+                        : 'Your promptness is appreciated.'}
+                </p>
             </div>
         );
     }

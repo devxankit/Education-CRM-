@@ -106,25 +106,29 @@ const HomeworkDetail = ({ homework, onClose, onRefresh }) => {
                                 </div>
                             )}
                         </div>
-                    ) : isOverdue ? (
-                        <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-                            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Lock size={24} />
-                            </div>
-                            <h3 className="text-base font-bold text-gray-900">Submission Closed</h3>
-                            <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
-                                The due date for this assignment has passed. Please contact your teacher for assistance.
-                            </p>
-                        </div>
                     ) : (
-                        <HomeworkSubmission
-                            homework={homework}
-                            onSubmissionComplete={() => {
-                                // In a real app, this would refresh data
-                                onRefresh && onRefresh();
-                                onClose();
-                            }}
-                        />
+                        <div>
+                            {/* Overdue Warning - Show but allow submission */}
+                            {isOverdue && (
+                                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-2">
+                                    <Clock size={16} className="text-yellow-600 shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold text-yellow-800 mb-1">Late Submission</p>
+                                        <p className="text-xs text-yellow-700">
+                                            The due date has passed. You can still submit, but it will be marked as "Late" for your teacher.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                            <HomeworkSubmission
+                                homework={homework}
+                                onSubmissionComplete={() => {
+                                    // In a real app, this would refresh data
+                                    onRefresh && onRefresh();
+                                    onClose();
+                                }}
+                            />
+                        </div>
                     )}
 
                 </div>

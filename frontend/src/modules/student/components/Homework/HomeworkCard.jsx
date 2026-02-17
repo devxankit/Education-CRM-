@@ -60,9 +60,9 @@ const HomeworkCard = ({ homework, index, onClick }) => {
 
             {/* Overdue Warning or Feedback Preview */}
             {isOverdue && (
-                <div className="flex items-center gap-2 text-xs font-medium text-red-600 bg-red-50 p-2 rounded-lg mt-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-yellow-600 bg-yellow-50 p-2 rounded-lg mt-2">
                     <AlertCircle size={14} />
-                    <span>Submission deadline passed. Contact teacher.</span>
+                    <span>Deadline passed. You can still submit (will be marked as Late).</span>
                 </div>
             )}
 
@@ -82,7 +82,7 @@ const HomeworkCard = ({ homework, index, onClick }) => {
                     className="text-primary font-semibold flex items-center group-hover:translate-x-1 transition-transform"
                     onClick={(e) => { e.stopPropagation(); onClick(homework); }}
                 >
-                    {homework.status === 'Pending' ? 'Submit Now' : 'View Details'} →
+                    {(homework.status === 'Pending' || homework.status === 'Overdue') ? 'Submit Now' : 'View Details'} →
                 </span>
             </div>
         </div>
