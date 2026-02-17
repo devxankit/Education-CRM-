@@ -5,15 +5,16 @@ import { useAdminStore } from '../../../../../../../store/adminStore';
 const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, showFee = true }) => {
     const { personal = 1, academic = 2, logistics = 3, docs = 4, fee = 5 } = stepNumbers;
     const classes = useAdminStore(state => state.classes);
+    const academicYears = useAdminStore(state => state.academicYears) || [];
     const feeStructures = useAdminStore(state => state.feeStructures);
     const sectionsObj = useAdminStore(state => state.sections);
     const transportRoutes = useAdminStore(state => state.transportRoutes);
     const branches = useAdminStore(state => state.branches);
 
-    // Resolution Logic
     const classObj = classes.find(c => c._id === data.classId);
     const sectionObj = (sectionsObj[data.classId] || []).find(s => s._id === data.sectionId);
     const branchObj = branches.find(b => b._id === data.branchId);
+    const academicYearObj = academicYears.find(ay => ay._id === data.academicYearId);
 
     const routeObj = transportRoutes.find(r => r._id === data.routeId);
     const stopObj = routeObj?.stops?.find(s => s._id === data.stopId);
@@ -70,6 +71,7 @@ const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, sho
 
                 <Section title="2. Academic Details" step={academic}>
                     <Row label="Campus" value={branchObj?.name} />
+                    <Row label="Academic Year" value={academicYearObj?.name} />
                     <Row label="Admission No" value={data.admissionNo} />
                     <Row label="Date" value={data.admissionDate} />
                     <Row label="Class Assigned" value={`${classObj?.name || 'N/A'} - ${sectionObj?.name || 'N/A'}`} />

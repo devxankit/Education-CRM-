@@ -19,15 +19,40 @@ const getAuthHeaders = () => {
     };
 };
 
-export const getAllTickets = async () => {
+export const getAllTickets = async (branchId, academicYearId) => {
     try {
-        const response = await axios.get(`${API_URL}/support-ticket`, getAuthHeaders());
+        const params = {};
+        if (branchId) params.branchId = branchId;
+        if (academicYearId) params.academicYearId = academicYearId;
+        const response = await axios.get(`${API_URL}/support-ticket`, {
+            ...getAuthHeaders(),
+            params
+        });
         if (response.data.success) {
-            return response.data.data;
+            return (response.data.data || []).map(t => ({ ...t, _ticketType: 'student' }));
         }
         return [];
     } catch (error) {
         console.error("Error fetching support tickets:", error);
+        return [];
+    }
+};
+
+export const getTeacherTickets = async (branchId, academicYearId) => {
+    try {
+        const params = {};
+        if (branchId) params.branchId = branchId;
+        if (academicYearId) params.academicYearId = academicYearId;
+        const response = await axios.get(`${API_URL}/support-ticket/teacher-tickets`, {
+            ...getAuthHeaders(),
+            params
+        });
+        if (response.data.success) {
+            return (response.data.data || []).map(t => ({ ...t, _ticketType: 'teacher', id: t._id }));
+        }
+        return [];
+    } catch (error) {
+        console.error("Error fetching teacher tickets:", error);
         return [];
     }
 };
@@ -48,6 +73,20 @@ export const updateTicketStatus = async (id, status) => {
         return response.data;
     } catch (error) {
         console.error("Error updating ticket status:", error);
+        throw error;
+    }
+};
+
+export const respondToTeacherTicket = async (id, responseText, status) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/support-ticket/teacher/${id}/respond`,
+            { response: responseText, status },
+            getAuthHeaders()
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error responding to teacher ticket:", error);
         throw error;
     }
 };

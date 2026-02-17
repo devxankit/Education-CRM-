@@ -2,31 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdmissionWizard from './components/AdmissionWizard';
 import { CheckCircle, AlertCircle, Lock, Loader2 } from 'lucide-react';
-import { useAdminStore, selectAcademicYearsForSelect } from '../../../../../../store/adminStore';
+import { useAdminStore } from '../../../../../../store/adminStore';
+import { useAppStore } from '../../../../../../store';
 
 const StudentAdmission = () => {
     const navigate = useNavigate();
+    const user = useAppStore(state => state.user);
     const [isComplete, setIsComplete] = useState(false);
     const [submittedId, setSubmittedId] = useState(null);
     const [submittedWaitlisted, setSubmittedWaitlisted] = useState(false);
-    const academicYears = useAdminStore(selectAcademicYearsForSelect);
-    const { fetchAcademicYears, fetchAdmissionRule, admitStudent, recordFeePayment } = useAdminStore();
+    const branches = useAdminStore(state => state.branches);
+    const { fetchBranches, fetchAcademicYears, fetchAdmissionRule, admitStudent, recordFeePayment } = useAdminStore();
+    const [branchId, setBranchId] = useState('');
     const [academicYearId, setAcademicYearId] = useState('');
     const [policy, setPolicy] = useState(null);
     const [policyLoading, setPolicyLoading] = useState(true);
 
     useEffect(() => {
-        fetchAcademicYears();
-    }, [fetchAcademicYears]);
+        fetchBranches();
+    }, [fetchBranches]);
 
     useEffect(() => {
-        if (academicYears.length > 0) {
-            const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
-            if (!academicYearId) {
-                setAcademicYearId(active?._id || '');
-            }
+        if (branches.length > 0 && !branchId) {
+            const defaultBranch = (user?.role === 'Staff' && user?.branchId && user?.branchId !== 'all')
+                ? user.branchId
+                : branches[0]._id;
+            setBranchId(defaultBranch || '');
         }
-    }, [academicYears, academicYearId]);
+    }, [branches, user, branchId]);
+
+    useEffect(() => {
+        if (branchId) {
+            fetchAcademicYears(branchId);
+            setAcademicYearId('');
+        }
+    }, [branchId, fetchAcademicYears]);
 
     useEffect(() => {
         const load = async () => {
@@ -152,20 +162,8 @@ const StudentAdmission = () => {
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-10">
+            <div className="bg-white border-b border-gray-200 px-6 py-3 shadow-sm z-10">
                 <h1 className="text-lg font-bold text-gray-800 font-['Poppins']">New Student Admission</h1>
-                <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-500">Academic Year</label>
-                    <select
-                        value={academicYearId}
-                        onChange={(e) => setAcademicYearId(e.target.value)}
-                        className="text-sm font-semibold border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    >
-                        {academicYears.map(ay => (
-                            <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(Active)' : ''}</option>
-                        ))}
-                    </select>
-                </div>
             </div>
 
             {/* Policy block banner */}
@@ -180,9 +178,9 @@ const StudentAdmission = () => {
                 </div>
             )}
 
-            {/* Content */}
+            {/* Content - Never unmount wizard once shown; loader only on initial load when no branch yet */}
             <div className="flex-1 overflow-hidden">
-                {policyLoading ? (
+                {(policyLoading && !policy && !branchId) ? (
                     <div className="h-full flex flex-col items-center justify-center">
                         <Loader2 className="animate-spin text-indigo-500 mb-2" size={32} />
                         <p className="text-gray-500 text-sm">Loading admission policy...</p>
@@ -197,7 +195,10 @@ const StudentAdmission = () => {
                     <AdmissionWizard
                         onComplete={handleComplete}
                         onCancel={handleCancel}
+                        branchId={branchId}
                         academicYearId={academicYearId}
+                        onBranchChange={setBranchId}
+                        onAcademicYearChange={setAcademicYearId}
                         workflow={{
                             requireFee: policy?.workflow?.requireFee ?? false,
                             requireDocs: policy?.workflow?.requireDocs ?? false

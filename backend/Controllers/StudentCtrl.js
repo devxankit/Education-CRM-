@@ -1313,9 +1313,12 @@ export const createSupportTicket = async (req, res) => {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
 
+        const classDoc = student.classId ? await Class.findById(student.classId).select("academicYearId").lean() : null;
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
+            branchId: student.branchId,
+            academicYearId: classDoc?.academicYearId || null,
             category,
             topic,
             details,

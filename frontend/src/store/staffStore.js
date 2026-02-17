@@ -35,12 +35,19 @@ export const useStaffStore = create(
                 }
             },
 
-            // Actions: Tickets
+            // Actions: Tickets (student + teacher tickets, filtered by staff's branch & academic year on backend)
             fetchTickets: async () => {
                 try {
-                    const data = await supportApi.getAllTickets();
-                    const mapped = data.map(t => ({ ...t, id: t._id || t.id }));
-                    set({ tickets: mapped });
+                    const [studentTickets, teacherTickets] = await Promise.all([
+                        supportApi.getAllTickets(),
+                        supportApi.getTeacherTickets()
+                    ]);
+                    const studentMapped = (studentTickets || []).map(t => ({ ...t, id: t._id || t.id }));
+                    const teacherMapped = (teacherTickets || []).map(t => ({ ...t, id: t._id || t.id, _ticketType: 'teacher' }));
+                    const merged = [...teacherMapped, ...studentMapped].sort(
+                        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+                    );
+                    set({ tickets: merged });
                 } catch (err) {
                     console.error("Failed to fetch tickets", err);
                 }
@@ -73,9 +80,10 @@ export const useStaffStore = create(
                 }
             },
 
-            respondToTicketAction: async (id, responseText, status) => {
+            respondToTicketAction: async (id, responseText, status, isTeacherTicket = false) => {
                 try {
-                    const response = await supportApi.respondToTicket(id, responseText, status);
+                    const api = isTeacherTicket ? supportApi.respondToTeacherTicket : supportApi.respondToTicket;
+                    const response = await api(id, responseText, status);
                     if (response.success) {
                         const updatedTicket = { ...response.data, id: response.data._id || response.data.id };
                         set((state) => ({

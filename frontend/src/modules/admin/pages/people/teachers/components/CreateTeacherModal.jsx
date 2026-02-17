@@ -11,6 +11,7 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
         phone: '',
         address: '',
         branchId: '',
+        academicYearId: '',
         department: '',
         designation: '',
         academicLevel: '',
@@ -21,20 +22,32 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
         documents: []
     });
     const [departmentsForBranch, setDepartmentsForBranch] = useState([]);
+    const [academicYearsForBranch, setAcademicYearsForBranch] = useState([]);
     const [docUploading, setDocUploading] = useState(false);
 
     useEffect(() => {
         if (!formData.branchId) {
             setDepartmentsForBranch([]);
+            setAcademicYearsForBranch([]);
             return;
         }
         const token = localStorage.getItem('token');
-        fetch(`${API_URL}/department?branchId=${formData.branchId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then((r) => r.json())
-            .then((data) => setDepartmentsForBranch(data.success ? data.data : []))
-            .catch(() => setDepartmentsForBranch([]));
+        Promise.all([
+            fetch(`${API_URL}/department?branchId=${formData.branchId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then((r) => r.json()),
+            fetch(`${API_URL}/academic-year?branchId=${formData.branchId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then((r) => r.json())
+        ])
+            .then(([deptData, ayData]) => {
+                setDepartmentsForBranch(deptData.success ? deptData.data : []);
+                setAcademicYearsForBranch(ayData.success ? ayData.data : []);
+            })
+            .catch(() => {
+                setDepartmentsForBranch([]);
+                setAcademicYearsForBranch([]);
+            });
     }, [formData.branchId]);
 
     if (!isOpen) return null;
@@ -44,6 +57,7 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
         setFormData((prev) => {
             const next = { ...prev, [name]: value };
             if (name === 'branchId') {
+                next.academicYearId = '';
                 next.department = '';
                 next.designation = '';
             } else if (name === 'department') {
@@ -193,6 +207,24 @@ const CreateTeacherModal = ({ isOpen, onClose, onCreate, roles = [], branches = 
                                 <option value="">Select Branch</option>
                                 {branches.map(b => (
                                     <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                <Calendar size={14} className="text-gray-400" /> Academic Year
+                            </label>
+                            <select
+                                name="academicYearId"
+                                value={formData.academicYearId}
+                                onChange={handleChange}
+                                disabled={!formData.branchId}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium disabled:bg-gray-50 disabled:text-gray-400"
+                            >
+                                <option value="">{formData.branchId ? 'Select Academic Year' : 'Select Branch first'}</option>
+                                {academicYearsForBranch.map(ay => (
+                                    <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(Active)' : ''}</option>
                                 ))}
                             </select>
                         </div>
