@@ -8,6 +8,14 @@ const isImageUrl = (url) => {
     return /\.(jpg|jpeg|png|gif|webp|bmp)(\?|$)/i.test(path) || /\/image\/upload\/.*\/f_(jpg|png|gif|webp)/i.test(url);
 };
 
+/** Mobile WebViews don't display PDF in iframe - they trigger download. Use Cloudinary f_png to serve first page as image. */
+const getMobilePdfImageUrl = (url) => {
+    if (!url || !url.includes('res.cloudinary.com')) return url;
+    return url.replace('/upload/', '/upload/f_png/');
+};
+
+const isMobile = () => typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window);
+
 const DocumentViewerModal = ({ doc, onClose }) => {
     const [loadError, setLoadError] = useState(false);
     useEffect(() => { setLoadError(false); }, [doc?.url]);
@@ -106,6 +114,14 @@ const DocumentViewerModal = ({ doc, onClose }) => {
                     isImageUrl(viewUrl) ? (
                         <img
                             src={viewUrl}
+                            alt={doc.name}
+                            className="relative max-w-full max-h-full object-contain rounded-lg shadow-lg z-10"
+                            onError={() => setLoadError(true)}
+                        />
+                    ) : isMobile() && viewUrl.includes('res.cloudinary.com') ? (
+                        /* Mobile WebViews don't display PDF in iframe - they trigger download. Cloudinary f_png serves first page as image. */
+                        <img
+                            src={getMobilePdfImageUrl(viewUrl)}
                             alt={doc.name}
                             className="relative max-w-full max-h-full object-contain rounded-lg shadow-lg z-10"
                             onError={() => setLoadError(true)}

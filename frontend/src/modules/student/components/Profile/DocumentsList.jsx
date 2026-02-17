@@ -111,12 +111,6 @@ const DocumentsList = ({ documents }) => {
                 </div>
             )}
 
-            <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-                <a href="/student/documents" className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center justify-center gap-1">
-                    View Full Document Vault →
-                </a>
-            </div>
-
             <AnimatePresence>
                 {selectedDoc && (
                     <DocumentViewerModal
