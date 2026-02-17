@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Upload, Save, CheckCircle, FileText, User as UserIcon, Calendar, MapPin, Phone, Mail, Truck, Home, CreditCard, School } from 'lucide-react';
+import { ArrowLeft, Upload, Save, CheckCircle, FileText, User as UserIcon, Calendar, MapPin, Mail, Truck, Home, CreditCard, School } from 'lucide-react';
 import { useStaffStore } from '../../../store/staffStore';
 import { useAdminStore } from '../../../store/adminStore';
 import { useAppStore } from '../../../store';
@@ -24,6 +24,8 @@ const NewAdmission = () => {
     const fetchTransportRoutes = useAdminStore(state => state.fetchTransportRoutes);
     const academicYears = useAdminStore(state => state.academicYears);
     const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
+    const courses = useAdminStore(state => state.courses);
+    const fetchCourses = useAdminStore(state => state.fetchCourses);
 
     const [loading, setLoading] = useState(false);
     const [classes, setClasses] = useState([]);
@@ -45,6 +47,7 @@ const NewAdmission = () => {
         academicYearId: '',
         classId: '',
         sectionId: '',
+        courseId: '',
         admissionDate: new Date().toISOString().split('T')[0],
         admissionNo: `ADM-${new Date().getFullYear()}-XXXX`,
         rollNo: '',
@@ -54,7 +57,6 @@ const NewAdmission = () => {
         parentEmail: '',
         address: '',
         city: '',
-        state: '',
         pincode: '',
 
         transportRequired: false,
@@ -105,7 +107,7 @@ const NewAdmission = () => {
         }
     }, [formData.branchId]);
 
-    // Fetch Fee Structures when branch/year changes
+    // Fetch Fee Structures and Courses when branch/year changes
     useEffect(() => {
         if (formData.branchId) {
             const activeYear = academicYears.find(y => y.status === 'active') || academicYears[0];
@@ -114,9 +116,10 @@ const NewAdmission = () => {
                     setFormData(prev => ({ ...prev, academicYearId: activeYear._id }));
                 }
                 fetchFeeStructures(formData.branchId, formData.academicYearId || activeYear._id);
+                fetchCourses(formData.branchId, formData.academicYearId || activeYear._id);
             }
         }
-    }, [formData.branchId, formData.academicYearId, academicYears, fetchFeeStructures]);
+    }, [formData.branchId, formData.academicYearId, academicYears, fetchFeeStructures, fetchCourses]);
 
     // Fetch Sections when Class changes
     useEffect(() => {
@@ -142,6 +145,7 @@ const NewAdmission = () => {
                     lastName: student.lastName || '',
                     classId: student.classId?._id || student.classId || '',
                     sectionId: student.sectionId?._id || student.sectionId || '',
+                    courseId: student.courseId?._id || student.courseId || '',
                     parentEmail: student.parentEmail || student.email || '',
                     branchId: student.branchId?._id || student.branchId || '',
                     documents: student.documents || formData.documents,
@@ -152,7 +156,18 @@ const NewAdmission = () => {
     }, [isEditMode, studentId, students]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        
+        // Mutual exclusion: Class and Course cannot be selected together
+        if (name === 'classId') {
+            // If class is selected, clear course
+            setFormData({ ...formData, classId: value, sectionId: value ? formData.sectionId : '', courseId: '' });
+        } else if (name === 'courseId') {
+            // If course is selected, clear class and section
+            setFormData({ ...formData, courseId: value, classId: '', sectionId: '' });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const handleFileChange = (e, docKey) => {
@@ -184,13 +199,28 @@ const NewAdmission = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validation: Either Class OR Course must be selected (mutual exclusion)
+        if (!formData.classId && !formData.courseId) {
+            alert("Please select either Class or Course/Program before submitting.");
+            return;
+        }
+        
+        // Ensure both are not selected (should not happen due to UI, but double-check)
+        if (formData.classId && formData.courseId) {
+            alert("Cannot select both Class and Course/Program. Please select only one.");
+            return;
+        }
+        
         setLoading(true);
 
         try {
             // Default branchId if not in formData (usually provided by backend from req.user but good to be safe)
             const submissionData = {
                 ...formData,
-                status: 'in_review' // Explicitly set as requested
+                status: 'in_review', // Explicitly set as requested
+                // Remove empty courseId if not selected
+                ...(formData.courseId === '' && { courseId: undefined })
             };
 
             if (isEditMode) {
@@ -467,7 +497,7 @@ const NewAdmission = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Class <span className="text-red-500">*</span></label>
                                 <select
@@ -475,9 +505,10 @@ const NewAdmission = () => {
                                     name="classId"
                                     value={formData.classId}
                                     onChange={handleChange}
-                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all appearance-none"
+                                    disabled={!!formData.courseId}
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all appearance-none disabled:opacity-50"
                                 >
-                                    <option value="">Select Class</option>
+                                    <option value="">{formData.courseId ? 'Cannot select - Course selected' : 'Select Class'}</option>
                                     {classes.map(c => (
                                         <option key={c._id} value={c._id}>{c.name}</option>
                                     ))}
@@ -490,14 +521,32 @@ const NewAdmission = () => {
                                     name="sectionId"
                                     value={formData.sectionId}
                                     onChange={handleChange}
-                                    disabled={!formData.classId}
+                                    disabled={!formData.classId || !!formData.courseId}
                                     className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all appearance-none disabled:opacity-50"
                                 >
-                                    <option value="">Select Section</option>
+                                    <option value="">{formData.classId ? (formData.courseId ? 'Cannot select - Course selected' : 'Select Section') : 'Select Class First'}</option>
                                     {sections.map(s => (
                                         <option key={s._id} value={s._id}>{s.name}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                                    <School size={12} /> Course / Program
+                                </label>
+                                <select
+                                    name="courseId"
+                                    value={formData.courseId}
+                                    onChange={handleChange}
+                                    disabled={!formData.branchId || !formData.academicYearId || !!formData.classId}
+                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all appearance-none disabled:opacity-50"
+                                >
+                                    <option value="">{formData.branchId && formData.academicYearId ? (formData.classId ? 'Cannot select - Class selected' : 'Select Course (Optional)') : 'Select Branch & Academic Year First'}</option>
+                                    {(courses || []).map(c => (
+                                        <option key={c._id} value={c._id}>{c.name} {c.code ? `(${c.code})` : ''}</option>
+                                    ))}
+                                </select>
+                                <p className="text-[10px] text-gray-400 mt-1">Optional: Cannot select if Class is selected.</p>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Roll Number</label>
@@ -663,7 +712,7 @@ const NewAdmission = () => {
                     <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                                <MapPin size={18} />
+                                <UserIcon size={18} />
                             </div>
                             <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Parent & Contact Details</h2>
                         </div>
@@ -698,7 +747,7 @@ const NewAdmission = () => {
                             ></textarea>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">City / District</label>
                                 <input
@@ -708,17 +757,6 @@ const NewAdmission = () => {
                                     type="text"
                                     className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
                                     placeholder="City"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">State / Region</label>
-                                <input
-                                    name="state"
-                                    value={formData.state}
-                                    onChange={handleChange}
-                                    type="text"
-                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
-                                    placeholder="State"
                                 />
                             </div>
                             <div className="space-y-2">

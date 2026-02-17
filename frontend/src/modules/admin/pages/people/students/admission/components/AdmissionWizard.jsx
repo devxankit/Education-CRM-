@@ -58,8 +58,14 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
     const handleNext = () => {
         if (currentStepKey === 'academic') {
             const hasBranch = branchId || formData.branchId;
-            if (!hasBranch || !academicYearId || !formData.classId) {
-                alert("Please select Branch, Academic Year, and Class before proceeding.");
+            // Either Class OR Course must be selected (mutual exclusion)
+            if (!hasBranch || !academicYearId || (!formData.classId && !formData.courseId)) {
+                alert("Please select Branch, Academic Year, and either Class or Course/Program before proceeding.");
+                return;
+            }
+            // Ensure both are not selected (should not happen due to UI, but double-check)
+            if (formData.classId && formData.courseId) {
+                alert("Cannot select both Class and Course/Program. Please select only one.");
                 return;
             }
         }

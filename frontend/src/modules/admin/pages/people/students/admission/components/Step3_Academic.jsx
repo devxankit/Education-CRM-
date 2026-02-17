@@ -58,11 +58,17 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
     }, [propBranchId, academicYearId, data, onChange]);
 
     const handleChange = (field, value) => {
-        onChange({ ...data, [field]: value });
+        if (field === 'courseId') {
+            // If course is selected, clear class and section
+            onChange({ ...data, courseId: value, classId: '', sectionId: '' });
+        } else {
+            onChange({ ...data, [field]: value });
+        }
     };
 
     const handleClassChange = (classId) => {
-        onChange({ ...data, classId, sectionId: '' }); // Reset section when class changes
+        // If class is selected, clear course
+        onChange({ ...data, classId, sectionId: '', courseId: '' }); // Reset section and course when class changes
     };
 
     return (
@@ -146,10 +152,10 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
                         <select
                             value={data.classId || ''}
                             onChange={(e) => handleClassChange(e.target.value)}
-                            disabled={!selectedBranchId || !academicYearId}
+                            disabled={!selectedBranchId || !academicYearId || !!data.courseId}
                             className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                         >
-                            <option value="">{selectedBranchId && academicYearId ? 'Select Class' : 'Select Branch & Academic Year First'}</option>
+                            <option value="">{selectedBranchId && academicYearId ? (data.courseId ? 'Cannot select - Course selected' : 'Select Class') : 'Select Branch & Academic Year First'}</option>
                             {classes && classes.map(c => (
                                 <option key={c._id} value={c._id}>{c.name}</option>
                             ))}
@@ -160,10 +166,10 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
                         <select
                             value={data.sectionId || ''}
                             onChange={(e) => handleChange('sectionId', e.target.value)}
-                            disabled={!data.classId}
+                            disabled={!data.classId || !!data.courseId}
                             className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                         >
-                            <option value="">{data.classId ? 'Select Section' : 'Select Class First'}</option>
+                            <option value="">{data.classId ? (data.courseId ? 'Cannot select - Course selected' : 'Select Section') : 'Select Class First'}</option>
                             {currentSections.map(s => (
                                 <option key={s._id} value={s._id}>{s.name}</option>
                             ))}
@@ -176,15 +182,15 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
                         <select
                             value={data.courseId || ''}
                             onChange={(e) => handleChange('courseId', e.target.value)}
-                            disabled={!selectedBranchId || !academicYearId}
+                            disabled={!selectedBranchId || !academicYearId || !!data.classId}
                             className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                         >
-                            <option value="">{selectedBranchId && academicYearId ? 'Select Course (optional)' : 'Select Branch & Academic Year First'}</option>
+                            <option value="">{selectedBranchId && academicYearId ? (data.classId ? 'Cannot select - Class selected' : 'Select Course (optional)') : 'Select Branch & Academic Year First'}</option>
                             {(courses || []).map(c => (
                                 <option key={c._id} value={c._id}>{c.name} {c.code ? `(${c.code})` : ''}</option>
                             ))}
                         </select>
-                        <p className="text-[10px] text-gray-400 mt-1">Optional: For program/course-based enrollment</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Optional: For program/course-based enrollment. Cannot select if Class is selected.</p>
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Roll Number</label>

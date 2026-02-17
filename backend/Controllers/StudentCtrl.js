@@ -407,7 +407,8 @@ export const admitStudent = async (req, res) => {
 
         // 3. Handle Cloudinary Document Uploads + Workflow Policy
         const workflow = admissionRule?.workflow;
-        const isAdminOrInstitute = ['institute', 'staff', 'admin'].includes((req.role || '').toLowerCase());
+        // Only admin/institute get active status and approved docs; staff remains in_review
+        const isAdminOrInstitute = ['institute', 'admin'].includes((req.role || '').toLowerCase());
         const defaultDocStatus = isAdminOrInstitute ? 'approved' : 'in_review';
         const defaultStudentStatus = isAdminOrInstitute ? 'active' : 'in_review';
 
@@ -470,6 +471,14 @@ export const admitStudent = async (req, res) => {
         sanitizeFields.forEach(field => {
             if (admissionData[field] === "") delete admissionData[field];
         });
+
+        // Validation: Class and Course cannot be selected together
+        if (admissionData.classId && admissionData.courseId) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot select both Class and Course/Program. Please select either Class or Course, not both."
+            });
+        }
 
         const forceStatus = admissionData._forceStatus;
         const isLate = admissionData._isLateApplication;
