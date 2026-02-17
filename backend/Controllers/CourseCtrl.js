@@ -74,7 +74,7 @@ export const updateCourse = async (req, res) => {
             id,
             { $set: req.body },
             { new: true, runValidators: true }
-        );
+        ).populate("teacherId", "firstName lastName employeeId email");
 
         if (!course) {
             return res.status(404).json({ success: false, message: "Course not found" });

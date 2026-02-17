@@ -627,10 +627,27 @@ export const useAdminStore = create(
                             };
                         });
                         get().addToast('Section updated successfully', 'success');
+                        return response.data.data;
                     }
                 } catch (error) {
                     console.error('Error updating section:', error);
                     get().addToast(error.response?.data?.message || 'Error updating section', 'error');
+                    throw error;
+                }
+            },
+            fetchSectionsForClassTeacher: async (branchId, academicYearId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams({ branchId, academicYearId });
+                    const response = await axios.get(`${API_URL}/class/class-teachers?${params}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching sections for class teacher:', error);
+                    throw error;
                 }
             },
 

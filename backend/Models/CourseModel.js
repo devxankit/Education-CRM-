@@ -49,6 +49,11 @@ const courseSchema = new mongoose.Schema(
             enum: ["active", "archived"],
             default: "active",
         },
+        teacherId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Teacher",
+            default: null,
+        },
     },
     { timestamps: true }
 );

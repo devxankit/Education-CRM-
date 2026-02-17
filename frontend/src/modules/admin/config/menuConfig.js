@@ -65,6 +65,7 @@ export const adminMenuConfig = [
             { id: 'programs', label: 'Programs / Courses', path: '/admin/academics/programs' },
             { id: 'timetable', label: 'Weekly Timetable', path: '/admin/academics/timetable' },
             { id: 'teacher-mapping', label: 'Teacher–Subject Mapping', path: '/admin/academics/teacher-mapping' },
+            { id: 'class-teacher', label: 'Class Teacher Assignment', path: '/admin/academics/class-teacher' },
             { id: 'exam-policies', label: 'Exam Policies', path: '/admin/academics/exam-policies' },
             { id: 'exams', label: 'Exams & Scheduling', path: '/admin/academics/exams' }
         ]

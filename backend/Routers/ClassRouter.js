@@ -5,7 +5,8 @@ import {
     updateClass,
     createSection,
     getSectionsByClass,
-    updateSection
+    updateSection,
+    getSectionsForClassTeacherAssignment
 } from "../Controllers/ClassCtrl.js";
 import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
@@ -17,6 +18,7 @@ router.use(isAdmin);
 // Classes
 router.post("/", createClass);
 router.get("/", getClasses);
+router.get("/class-teachers", getSectionsForClassTeacherAssignment);
 router.put("/:id", updateClass);
 
 // Sections
