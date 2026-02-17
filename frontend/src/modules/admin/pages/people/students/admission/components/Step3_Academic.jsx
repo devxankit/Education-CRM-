@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { GraduationCap, School, Calendar, MapPin } from 'lucide-react';
+import { GraduationCap, School, Calendar, MapPin, BookOpen } from 'lucide-react';
 import { useAdminStore } from '../../../../../../../store/adminStore';
 import { useAppStore } from '../../../../../../../store';
 
@@ -8,7 +8,9 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
     const branches = useAdminStore(state => state.branches);
     const academicYears = useAdminStore(state => state.academicYears) || [];
     const classes = useAdminStore(state => state.classes);
+    const courses = useAdminStore(state => state.courses);
     const fetchClasses = useAdminStore(state => state.fetchClasses);
+    const fetchCourses = useAdminStore(state => state.fetchCourses);
     const sectionsObj = useAdminStore(state => state.sections);
     const fetchSections = useAdminStore(state => state.fetchSections);
 
@@ -18,12 +20,12 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
 
     const handleBranchChange = (newBranchId) => {
         onBranchChange?.(newBranchId);
-        onChange({ ...data, branchId: newBranchId, classId: '', sectionId: '' });
+        onChange({ ...data, branchId: newBranchId, classId: '', sectionId: '', courseId: '' });
     };
 
     const handleAcademicYearChange = (newAyId) => {
         onAcademicYearChange?.(newAyId);
-        onChange({ ...data, classId: '', sectionId: '' });
+        onChange({ ...data, classId: '', sectionId: '', courseId: '' });
     };
 
     useEffect(() => {
@@ -38,12 +40,18 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
         }
     }, [selectedClassId, fetchSections]);
 
+    useEffect(() => {
+        if (selectedBranchId && academicYearId) {
+            fetchCourses(selectedBranchId, academicYearId);
+        }
+    }, [selectedBranchId, academicYearId, fetchCourses]);
+
     const prevBranchYear = useRef({ branchId: propBranchId, academicYearId });
     useEffect(() => {
         const changed = prevBranchYear.current.branchId !== propBranchId || prevBranchYear.current.academicYearId !== academicYearId;
-        if (changed && (data.classId || data.sectionId)) {
+        if (changed && (data.classId || data.sectionId || data.courseId)) {
             prevBranchYear.current = { branchId: propBranchId, academicYearId };
-            onChange({ ...data, classId: '', sectionId: '' });
+            onChange({ ...data, classId: '', sectionId: '', courseId: '' });
         } else if (changed) {
             prevBranchYear.current = { branchId: propBranchId, academicYearId };
         }
@@ -132,7 +140,7 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
                 <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <School size={16} className="text-gray-400" /> Class Assignment
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Class <span className="text-red-500">*</span></label>
                         <select
@@ -160,6 +168,23 @@ const Step3_Academic = ({ data, onChange, branchId: propBranchId, academicYearId
                                 <option key={s._id} value={s._id}>{s.name}</option>
                             ))}
                         </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <BookOpen size={12} /> Course / Program
+                        </label>
+                        <select
+                            value={data.courseId || ''}
+                            onChange={(e) => handleChange('courseId', e.target.value)}
+                            disabled={!selectedBranchId || !academicYearId}
+                            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                        >
+                            <option value="">{selectedBranchId && academicYearId ? 'Select Course (optional)' : 'Select Branch & Academic Year First'}</option>
+                            {(courses || []).map(c => (
+                                <option key={c._id} value={c._id}>{c.name} {c.code ? `(${c.code})` : ''}</option>
+                            ))}
+                        </select>
+                        <p className="text-[10px] text-gray-400 mt-1">Optional: For program/course-based enrollment</p>
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Roll Number</label>

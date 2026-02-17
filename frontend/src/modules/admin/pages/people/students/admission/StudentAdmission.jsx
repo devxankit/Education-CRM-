@@ -61,9 +61,10 @@ const StudentAdmission = () => {
                 const studentId = result._id || result.id;
                 if (studentId && admissionFee?.collectNow && admissionFee?.feeStructureId && admissionFee?.amount > 0) {
                     try {
+                        const amountToRecord = Number(admissionFee.totalWithTax) || (Number(admissionFee.amount) + Number(admissionFee.taxAmount || 0)) || Number(admissionFee.amount);
                         await recordFeePayment(studentId, {
                             feeStructureId: admissionFee.feeStructureId,
-                            amount: Number(admissionFee.amount),
+                            amount: amountToRecord,
                             paymentMethod: admissionFee.paymentMethod || 'Cash',
                             remarks: admissionFee.remarks || ''
                         });

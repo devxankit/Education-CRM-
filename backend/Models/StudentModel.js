@@ -79,6 +79,10 @@ const studentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Section",
         },
+        courseId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Course",
+        },
         parentId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Parent",

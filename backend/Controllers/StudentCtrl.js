@@ -451,7 +451,7 @@ export const admitStudent = async (req, res) => {
         }
 
         // 5. Create Student
-        const sanitizeFields = ['parentId', 'classId', 'sectionId', 'branchId'];
+        const sanitizeFields = ['parentId', 'classId', 'sectionId', 'courseId', 'branchId'];
         sanitizeFields.forEach(field => {
             if (admissionData[field] === "") delete admissionData[field];
         });
@@ -682,7 +682,7 @@ export const updateStudent = async (req, res) => {
         }
 
         // Sanitize empty IDs to prevent CastError
-        const sanitizeFields = ['parentId', 'classId', 'sectionId', 'branchId'];
+        const sanitizeFields = ['parentId', 'classId', 'sectionId', 'courseId', 'branchId'];
         sanitizeFields.forEach(field => {
             if (updateData[field] === "") delete updateData[field];
         });
