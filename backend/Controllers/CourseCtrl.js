@@ -55,7 +55,9 @@ export const getCourses = async (req, res) => {
             ];
         }
 
-        const courses = await Course.find(query).sort({ name: 1 });
+        const courses = await Course.find(query)
+            .populate("teacherId", "firstName lastName employeeId email")
+            .sort({ name: 1 });
 
         res.status(200).json({
             success: true,

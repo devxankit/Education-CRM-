@@ -332,7 +332,7 @@ export const getTeacherClasses = async (req, res) => {
     try {
         const teacherId = req.user._id;
 
-        // Fetch all mappings for this teacher
+        // Fetch only mappings for this teacher (assigned sections)
         const mappings = await TeacherMapping.find({ teacherId, status: "active" })
             .populate("classId", "name")
             .populate("sectionId", "name")
@@ -340,7 +340,10 @@ export const getTeacherClasses = async (req, res) => {
             .populate("courseId", "name")
             .populate("academicYearId", "name");
 
-        if (!mappings || mappings.length === 0) {
+        // Filter: only include mappings with sectionId (for attendance we need class+section)
+        const validMappings = mappings.filter(m => m.sectionId && (m.classId || m.courseId));
+
+        if (!validMappings || validMappings.length === 0) {
             return res.status(200).json({
                 success: true,
                 message: "No classes or subjects assigned yet.",
@@ -355,7 +358,7 @@ export const getTeacherClasses = async (req, res) => {
         // Group by Subject
         const subjectGroups = {};
 
-        for (const m of mappings) {
+        for (const m of validMappings) {
             const subjectId = m.subjectId?._id?.toString() || "unknown";
 
             if (!subjectGroups[subjectId]) {
@@ -399,7 +402,7 @@ export const getTeacherClasses = async (req, res) => {
             data: {
                 subjects: subjectsArray,
                 totalSubjects: subjectsArray.length,
-                totalClasses: mappings.length
+                totalClasses: validMappings.length
             }
         });
     } catch (error) {
@@ -411,10 +414,21 @@ export const getTeacherClasses = async (req, res) => {
 export const getClassStudents = async (req, res) => {
     try {
         const { classId, sectionId } = req.query;
+        const teacherId = req.user._id;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!classId || !sectionId) {
             return res.status(400).json({ success: false, message: "Class ID and Section ID are required" });
+        }
+
+        // Ensure teacher is assigned to this section
+        const assigned = await TeacherMapping.findOne({
+            teacherId,
+            sectionId,
+            status: "active"
+        });
+        if (!assigned) {
+            return res.status(403).json({ success: false, message: "You are not assigned to this section." });
         }
 
         const students = await Student.find({

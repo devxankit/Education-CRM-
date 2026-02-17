@@ -32,10 +32,10 @@ const AttendancePage = () => {
     const fetchAttendanceByDate = useTeacherStore(state => state.fetchAttendanceByDate);
     const isFetchingAttendance = useTeacherStore(state => state.isFetchingAttendance);
 
-    // Fetch Initial Data on Mount
+    // Fetch Initial Data on Mount – force refresh to show only assigned sections
     useEffect(() => {
         fetchProfile();
-        fetchAssignedClasses();
+        fetchAssignedClasses(true);
     }, [fetchProfile, fetchAssignedClasses]); // Add fetchProfile and fetchAssignedClasses to dependencies for completeness, though Zustand functions are stable
 
     // Flatten mappings for the selector
