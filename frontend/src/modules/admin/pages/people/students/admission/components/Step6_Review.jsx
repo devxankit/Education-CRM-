@@ -5,14 +5,16 @@ import { useAdminStore } from '../../../../../../../store/adminStore';
 const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, showFee = true }) => {
     const { personal = 1, academic = 2, logistics = 3, docs = 4, fee = 5 } = stepNumbers;
     const classes = useAdminStore(state => state.classes);
+    const courses = useAdminStore(state => state.courses);
     const academicYears = useAdminStore(state => state.academicYears) || [];
     const feeStructures = useAdminStore(state => state.feeStructures);
     const sectionsObj = useAdminStore(state => state.sections);
     const transportRoutes = useAdminStore(state => state.transportRoutes);
     const branches = useAdminStore(state => state.branches);
 
-    const classObj = classes.find(c => c._id === data.classId);
+    const classObj = classes?.find(c => c._id === data.classId);
     const sectionObj = (sectionsObj[data.classId] || []).find(s => s._id === data.sectionId);
+    const courseObj = courses?.find(c => c._id === data.courseId);
     const branchObj = branches.find(b => b._id === data.branchId);
     const academicYearObj = academicYears.find(ay => ay._id === data.academicYearId);
 
@@ -75,6 +77,7 @@ const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, sho
                     <Row label="Admission No" value={data.admissionNo} />
                     <Row label="Date" value={data.admissionDate} />
                     <Row label="Class Assigned" value={`${classObj?.name || 'N/A'} - ${sectionObj?.name || 'N/A'}`} />
+                    {courseObj && <Row label="Course / Program" value={`${courseObj.name} ${courseObj.code ? `(${courseObj.code})` : ''}`} />}
                 </Section>
 
                 <Section title="3. Facilities" step={logistics}>
@@ -103,7 +106,11 @@ const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, sho
                         {data.admissionFee?.collectNow ? (
                             <>
                                 <Row label="Fee Structure" value={feeStructures.find(f => f._id === data.admissionFee?.feeStructureId)?.name || '-'} />
-                                <Row label="Amount" value={`₹${Number(data.admissionFee?.amount || 0).toLocaleString('en-IN')}`} />
+                                <Row label="Base Amount" value={`₹${Number(data.admissionFee?.amount || 0).toLocaleString('en-IN')}`} />
+                                {Number(data.admissionFee?.taxAmount || 0) > 0 && (
+                                    <Row label="Tax" value={`₹${Number(data.admissionFee.taxAmount).toLocaleString('en-IN')}`} />
+                                )}
+                                <Row label="Total Payable" value={`₹${Number(data.admissionFee?.totalWithTax || data.admissionFee?.amount || 0).toLocaleString('en-IN')}`} />
                                 <Row label="Payment Method" value={data.admissionFee?.paymentMethod || 'Cash'} />
                                 {data.admissionFee?.transactionId && <Row label="Transaction ID" value={data.admissionFee.transactionId} />}
                                 {data.admissionFee?.remarks && <Row label="Remarks" value={data.admissionFee.remarks} />}

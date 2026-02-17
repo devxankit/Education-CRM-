@@ -63,13 +63,17 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate, onRea
                                 </td>
 
                                 <td className="px-6 py-4 align-middle">
-                                    {(sec.teacherId?.name || sec.teacherName) ? (
-                                        <div className="flex items-center gap-2 text-gray-700 text-xs bg-gray-50 px-2 py-1 rounded w-fit border border-gray-200">
-                                            <User size={12} /> {sec.teacherId?.name || sec.teacherName}
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-gray-400 italic">Unassigned</span>
-                                    )}
+                                    {(() => {
+                                        const t = sec.teacherId;
+                                        const name = t?.name || sec.teacherName || (t?.firstName || t?.lastName ? [t.firstName, t.lastName].filter(Boolean).join(' ') : null);
+                                        return name ? (
+                                            <div className="flex items-center gap-2 text-gray-700 text-xs bg-gray-50 px-2 py-1 rounded w-fit border border-gray-200">
+                                                <User size={12} /> {name}{t?.employeeId ? ` (${t.employeeId})` : ''}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-400 italic">Unassigned</span>
+                                        );
+                                    })()}
                                 </td>
 
                                 <td className="px-6 py-4 align-middle">

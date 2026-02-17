@@ -40,7 +40,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
         // 3 (Now 2)
         branchId: '',
         admissionDate: new Date().toISOString().split('T')[0],
-        classId: '', sectionId: '', rollNo: '',
+        classId: '', sectionId: '', courseId: '', rollNo: '',
         prevSchool: '',
         lastClass: '',
 
@@ -102,7 +102,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
             case 'academic': return <Step3_Academic data={formData} onChange={setFormData} branchId={branchId} academicYearId={academicYearId} onBranchChange={onBranchChange} onAcademicYearChange={onAcademicYearChange} />;
             case 'logistics': return <Step4_Rules data={formData} onChange={setFormData} />;
             case 'docs': return <Step5_Documents data={formData} onChange={setFormData} />;
-            case 'fee': return <Step5_AdmissionFee data={formData} onChange={setFormData} academicYearId={academicYearId} />;
+            case 'fee': return <Step5_AdmissionFee data={formData} onChange={setFormData} academicYearId={academicYearId} branchId={branchId} />;
             case 'review': return (
                 <Step6_Review
                     data={{ ...formData, branchId: branchId || formData.branchId, academicYearId }}

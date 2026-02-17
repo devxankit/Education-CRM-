@@ -39,6 +39,7 @@ import SubjectsMaster from './pages/academics/SubjectsMaster';
 import WeeklyTimetable from './pages/academics/WeeklyTimetable';
 import ProgramsMaster from './pages/academics/ProgramsMaster';
 import TeacherMapping from './pages/academics/TeacherMapping';
+import ClassTeacherAssignment from './pages/academics/ClassTeacherAssignment';
 import ExamPolicies from './pages/academics/ExamPolicies';
 import Exams from './pages/academics/Exams';
 
@@ -138,6 +139,7 @@ const adminRoutes = [
                     { path: 'academics/timetable', element: <WeeklyTimetable /> },
 
                     { path: 'academics/teacher-mapping', element: <TeacherMapping /> },
+                    { path: 'academics/class-teacher', element: <ClassTeacherAssignment /> },
                     { path: 'academics/exam-policies', element: <ExamPolicies /> },
                     { path: 'academics/exams', element: <Exams /> },
 

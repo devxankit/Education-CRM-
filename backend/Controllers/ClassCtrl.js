@@ -1,6 +1,7 @@
 import Class from "../Models/ClassModel.js";
 import Section from "../Models/SectionModel.js";
 import Student from "../Models/StudentModel.js";
+import Course from "../Models/CourseModel.js";
 
 // ================= CLASS CONTROLLERS =================
 
@@ -145,7 +146,7 @@ export const getSectionsByClass = async (req, res) => {
         }
 
         const classData = await Class.findById(classId);
-        const sections = await Section.find(query).populate('teacherId', 'name');
+        const sections = await Section.find(query).populate('teacherId', 'firstName lastName employeeId');
 
         // Add actual student count for each section and override capacity with class capacity
         const sectionsWithCount = await Promise.all(sections.map(async (sec) => {
@@ -174,7 +175,7 @@ export const updateSection = async (req, res) => {
             id,
             { $set: req.body },
             { new: true, runValidators: true }
-        ).populate('teacherId', 'name');
+        ).populate('teacherId', 'firstName lastName employeeId');
 
         res.status(200).json({
             success: true,
@@ -183,5 +184,72 @@ export const updateSection = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CLASS TEACHER ASSIGNMENT =================
+export const getSectionsForClassTeacherAssignment = async (req, res) => {
+    try {
+        const { branchId, academicYearId } = req.query;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        if (!branchId || !academicYearId) {
+            return res.status(400).json({
+                success: false,
+                message: "branchId and academicYearId are required",
+            });
+        }
+
+        const classQuery = { instituteId, branchId };
+        classQuery.$or = [
+            { academicYearId },
+            { academicYearId: null },
+            { academicYearId: { $exists: false } },
+        ];
+
+        const classes = await Class.find(classQuery)
+            .sort({ name: 1 })
+            .populate("academicYearId", "name");
+
+        const classIds = classes.map((c) => c._id);
+
+        const sections = await Section.find({
+            instituteId,
+            classId: { $in: classIds },
+        })
+            .populate("classId", "name academicYearId")
+            .populate("teacherId", "firstName lastName employeeId email")
+            .sort({ "classId.name": 1, name: 1 });
+
+        const sectionsWithCount = await Promise.all(
+            sections.map(async (sec) => {
+                const count = await Student.countDocuments({
+                    sectionId: sec._id,
+                    status: { $nin: ["withdrawn", "alumni"] },
+                });
+                const secObj = sec.toObject();
+                return { ...secObj, studentCount: count };
+            })
+        );
+
+        const courseQuery = { instituteId, branchId, status: "active" };
+        courseQuery.$or = [
+            { academicYearId },
+            { academicYearId: null },
+            { academicYearId: { $exists: false } },
+        ];
+        const courses = await Course.find(courseQuery)
+            .populate("teacherId", "firstName lastName employeeId email")
+            .sort({ name: 1 });
+
+        res.status(200).json({
+            success: true,
+            data: { classes, sections: sectionsWithCount, courses },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
 };
