@@ -85,7 +85,7 @@ const ProfilePage = () => {
         }
     };
 
-    if (isFetchingProfile && !profile) {
+    if (!profile) {
         return (
             <div className="min-h-screen bg-gray-50/50 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -130,7 +130,7 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="profile-section">
-                    <SettingsCard preferences={profile.preferences || {}} />
+                    <SettingsCard preferences={profile?.preferences || {}} />
                 </div>
 
                 <div className="profile-section">
