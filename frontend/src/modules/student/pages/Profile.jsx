@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Book, Users, User, Shield, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
+import { Book, Users, User, Shield, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
 
 // Components
 import ProfileSummaryCard from '../components/Profile/ProfileSummaryCard';
@@ -213,12 +213,6 @@ const ProfilePage = () => {
                             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors mr-1"
                         >
                             <User size={20} />
-                        </button>
-                        <button
-                            onClick={() => navigate('/student/settings')}
-                            className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors"
-                        >
-                            <Settings size={20} />
                         </button>
                     </div>
                 </div>

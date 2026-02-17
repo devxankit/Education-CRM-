@@ -334,7 +334,6 @@ export const getParentDashboard = async (req, res) => {
             const pendingHomework = await Homework.countDocuments({
                 classId: student.classId,
                 sectionId: student.sectionId,
-                dueDate: { $gte: new Date() },
                 status: "published",
                 _id: { $nin: submittedHwIds }
             });
@@ -603,9 +602,9 @@ export const getChildHomework = async (req, res) => {
 
             let status = "Pending";
             if (submission) {
-                status = "Submitted";
+                status = submission.status || "Submitted";
             } else if (new Date(hw.dueDate) < today) {
-                status = "Late";
+                status = "Overdue";
             }
 
             return {

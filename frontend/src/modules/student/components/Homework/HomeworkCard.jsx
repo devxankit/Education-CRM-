@@ -16,7 +16,7 @@ const HomeworkCard = ({ homework, index, onClick }) => {
     const statusConfig = {
         Pending: { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', icon: Clock },
         Submitted: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', icon: CheckCircle },
-        Checked: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', icon: CheckCircle },
+        Graded: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', icon: CheckCircle },
         Overdue: { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', icon: AlertCircle },
         Late: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100', icon: AlertCircle },
     };
@@ -66,7 +66,7 @@ const HomeworkCard = ({ homework, index, onClick }) => {
                 </div>
             )}
 
-            {homework.status === 'Checked' && homework.feedback && (
+            {(homework.status === 'Checked' || homework.status === 'Graded') && homework.feedback && (
                 <div className="flex items-center justify-between bg-emerald-50/50 p-2 rounded-lg mt-2 border border-emerald-50">
                     <span className="text-xs text-emerald-700 font-medium line-clamp-1 italic">"{homework.feedback.remarks}"</span>
                     <span className="text-xs font-bold text-emerald-800 bg-white px-2 py-0.5 rounded shadow-sm">

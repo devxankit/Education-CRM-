@@ -43,11 +43,11 @@ const HomeworkPage = () => {
         teacher: hw.teacherId ? `${hw.teacherId.firstName} ${hw.teacherId.lastName}` : "Teacher",
         instructions: hw.instructions,
         attachments: hw.attachments,
-        submission: (hw.submissionStatus === 'Submitted' || hw.submissionStatus === 'Checked' || hw.submissionStatus === 'Late') ? {
+        submission: (['Submitted', 'Checked', 'Graded', 'Late'].includes(hw.submissionStatus)) ? {
             date: hw.updatedAt,
             files: [] // Backend would need to return submission details if needed for display
         } : null,
-        feedback: hw.submissionStatus === 'Checked' ? {
+        feedback: (hw.submissionStatus === 'Checked' || hw.submissionStatus === 'Graded') ? {
             remarks: hw.feedback,
             marks: hw.marks,
             maxMarks: 100 // Placeholder
@@ -71,8 +71,8 @@ const HomeworkPage = () => {
         const newStats = {
             All: data.length,
             Pending: data.filter(h => h.status === 'Pending').length,
-            Submitted: data.filter(h => h.status === 'Submitted' || h.status === 'Checked').length,
-            Overdue: data.filter(h => h.status === 'Overdue' || h.status === 'Late').length
+            Submitted: data.filter(h => ['Submitted', 'Checked', 'Graded', 'Late'].includes(h.status)).length,
+            Overdue: data.filter(h => h.status === 'Overdue').length
         };
         setStats(newStats);
     }, [data]);
@@ -109,8 +109,8 @@ const HomeworkPage = () => {
     const filteredData = data.filter(item => {
         if (activeTab === 'All') return true;
         if (activeTab === 'Pending') return item.status === 'Pending';
-        if (activeTab === 'Submitted') return item.status === 'Submitted' || item.status === 'Checked';
-        if (activeTab === 'Overdue') return item.status === 'Overdue' || item.status === 'Late';
+        if (activeTab === 'Submitted') return ['Submitted', 'Checked', 'Graded', 'Late'].includes(item.status);
+        if (activeTab === 'Overdue') return item.status === 'Overdue';
         return true;
     });
 

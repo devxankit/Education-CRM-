@@ -181,7 +181,10 @@ export const getStudentDashboard = async (req, res) => {
                         status: attendanceStatus
                     },
                     homework: {
-                        pending: homework.length,
+                        pending: (await Promise.all(homework.map(async (hw) => {
+                            const sub = await HomeworkSubmission.findOne({ homeworkId: hw._id, studentId });
+                            return sub ? 1 : 0;
+                        }))).filter(x => x === 0).length,
                         nextDue: homework[0]?.dueDate ? new Date(homework[0].dueDate).toLocaleDateString() : null,
                         link: "/student/homework"
                     },
@@ -1176,9 +1179,17 @@ export const getStudentHomework = async (req, res) => {
                 homeworkId: hw._id,
                 studentId: studentId
             });
+
+            let status = "Pending";
+            if (submission) {
+                status = submission.status || "Submitted";
+            } else if (new Date() > hw.dueDate) {
+                status = "Overdue";
+            }
+
             return {
                 ...hw.toObject(),
-                submissionStatus: submission ? (submission.status || "Submitted") : "Pending",
+                submissionStatus: status,
                 marks: submission?.marks,
                 feedback: submission?.feedback
             };

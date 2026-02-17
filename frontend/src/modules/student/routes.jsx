@@ -17,7 +17,6 @@ import HomeworkPage from './pages/Homework';
 import FeesPage from './pages/Fees';
 import DocumentsPage from './pages/Documents';
 import HelpSupportPage from './pages/HelpSupport';
-import SettingsPage from './pages/Settings';
 import NotesPage from './pages/Notes';
 import NotificationsPage from './pages/Notifications';
 import EditProfilePage from './pages/EditProfile';
@@ -29,7 +28,6 @@ const StudentFees = FeesPage;
 const StudentDocuments = DocumentsPage;
 const StudentNotices = Notices;
 const StudentHelp = HelpSupportPage;
-const StudentSettings = SettingsPage;
 const StudentExams = ExamsResultsPage;
 const StudentNotes = NotesPage;
 const StudentNotifications = NotificationsPage;
@@ -118,7 +116,6 @@ const studentRoutes = [
                             },
                         ],
                     },
-                    { path: 'settings', element: <StudentSettings /> },
                 ]
             },
         ],

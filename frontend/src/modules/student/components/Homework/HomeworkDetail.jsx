@@ -7,7 +7,7 @@ const HomeworkDetail = ({ homework, onClose, onRefresh }) => {
     if (!homework) return null;
 
     const isPending = homework.status === 'Pending' || homework.status === 'Overdue';
-    const isSubmitted = homework.status === 'Submitted' || homework.status === 'Checked' || homework.status === 'Late';
+    const isSubmitted = ['Submitted', 'Checked', 'Graded', 'Late'].includes(homework.status);
     const isOverdue = homework.status === 'Overdue';
 
     return (
@@ -94,7 +94,7 @@ const HomeworkDetail = ({ homework, onClose, onRefresh }) => {
                             </div>
 
                             {/* Feedback Section */}
-                            {homework.status === 'Checked' && homework.feedback && (
+                            {(homework.status === 'Checked' || homework.status === 'Graded') && homework.feedback && (
                                 <div className="mt-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                                     <div className="flex justify-between items-center mb-2">
                                         <h5 className="text-xs font-bold text-emerald-800 uppercase">Teacher Feedback</h5>
