@@ -14,7 +14,7 @@ import {
     getStudentFees,
     getMyNotices,
     // acknowledgeNotice,
-    // getStudentNotifications,
+    getStudentNotifications,
     getStudentProfile,
     getStudentAcademics,
     getStudentHomework,
@@ -41,7 +41,7 @@ router.get("/results", isStudent, getStudentResults);
 router.get("/attendance", isStudent, getMyAttendance);
 router.get("/fees", isStudent, getStudentFees);
 router.get("/notices", isStudent, getMyNotices);
-// router.get("/notifications", isStudent, getStudentNotifications);
+router.get("/notifications", isStudent, getStudentNotifications);
 // router.put("/notices/:noticeId/acknowledge", isStudent, acknowledgeNotice);
 router.get("/profile", isStudent, getStudentProfile);
 router.put("/profile", isStudent, updateStudentProfile);

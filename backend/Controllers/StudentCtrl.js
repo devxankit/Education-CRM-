@@ -1350,6 +1350,20 @@ export const getSupportTickets = async (req, res) => {
     }
 };
 
+// ================= GET STUDENT NOTIFICATIONS =================
+export const getStudentNotifications = async (req, res) => {
+    try {
+        // For now returning empty array as Notification model is not implemented
+        // or can be linked to other models like Notices/Announcements in future
+        res.status(200).json({
+            success: true,
+            data: []
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= UPDATE STUDENT PROFILE (BY STUDENT) =================
 export const updateStudentProfile = async (req, res) => {
     try {
