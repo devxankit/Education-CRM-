@@ -27,7 +27,9 @@ import {
 } from "../Controllers/TeacherCtrl.js";
 import {
     getTeacherSupportTickets,
-    resolveSupportTicket
+    resolveSupportTicket,
+    createTeacherTicket,
+    getTeacherOwnTickets
 } from "../Controllers/TeacherSupportCtrl.js";
 import {
     addEligibleSubject,
@@ -69,9 +71,12 @@ router.get("/exams/students", isTeacher, getExamStudents);
 router.get("/exams/:id", isTeacher, getExamById);
 router.post("/exams/submit-marks", isTeacher, submitMarks);
 
-// Support Tickets
+// Support Tickets (student tickets - teacher views/resolves)
 router.get("/support/tickets", isTeacher, getTeacherSupportTickets);
 router.put("/support/tickets/:ticketId/resolve", isTeacher, resolveSupportTicket);
+// Teacher own tickets (teacher creates for self - salary, leave, etc.)
+router.post("/support/my-tickets", isTeacher, createTeacherTicket);
+router.get("/support/my-tickets", isTeacher, getTeacherOwnTickets);
 
 // Analytics
 router.get("/analytics", isTeacher, getTeacherAnalytics);

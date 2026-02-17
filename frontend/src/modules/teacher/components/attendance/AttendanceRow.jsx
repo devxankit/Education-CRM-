@@ -10,32 +10,32 @@ const AttendanceRow = ({ student, status, onStatusChange, disabled }) => {
     };
 
     return (
-        <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl mb-2 hover:border-gray-200 transition-all">
-            <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 text-xs font-bold flex items-center justify-center text-gray-500">
-                    {student.roll}
+        <div className="flex items-center justify-between gap-3 p-3 bg-white border border-gray-100 rounded-xl mb-2 hover:border-indigo-100 transition-all">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0 overflow-hidden" title={student.roll}>
+                    {student.roll?.length <= 6 ? student.roll : (student.roll?.slice(-6) || '—')}
                 </div>
-                <div>
-                    <h4 className="text-sm font-bold text-gray-900 leading-tight">{student.name}</h4>
-                    <span className="text-[10px] font-medium text-gray-400">ID: {student.id}</span>
+                <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-gray-900 leading-tight truncate">{student.name}</h4>
+                    <span className="text-[10px] font-medium text-gray-400">{student.admissionNo ? `Adm: ${student.admissionNo}` : (student.id ? `#${String(student.id).slice(-6)}` : '')}</span>
                 </div>
             </div>
 
-            <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200">
+            <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200 shrink-0">
                 {['Present', 'Absent', 'Leave'].map((s) => {
                     const isActive = status === s;
                     const config = statusConfig[s];
-
+                    const Icon = config.icon;
                     return (
                         <motion.button
                             key={s}
+                            type="button"
                             whileTap={disabled ? {} : { scale: 0.95 }}
                             onClick={() => !disabled && onStatusChange(student.id, s)}
-                            className={`p-1.5 rounded-md transition-all relative ${isActive ? config.color + ' shadow-sm' : 'text-gray-400 hover:text-gray-600'} ${disabled ? 'cursor-not-allowed opacity-80' : ''}`}
+                            className={`flex-1 min-w-[2rem] py-2 px-1.5 rounded-md transition-all flex items-center justify-center gap-0.5 ${isActive ? config.color + ' shadow-sm border border-transparent' : 'text-gray-400 hover:bg-gray-200/80 hover:text-gray-600'} ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                         >
-                            {/* <config.icon size={16} strokeWidth={2.5} /> */}
-                            <span className={`text-[10px] font-bold px-1 ${isActive ? '' : 'hidden'}`}>{s.charAt(0)}</span>
-                            <span className={`${isActive ? 'hidden' : 'block px-1 font-medium text-[10px]'}`}>{s.charAt(0)}</span>
+                            <Icon size={14} strokeWidth={2.5} className="shrink-0" />
+                            <span className="text-[10px] font-bold uppercase">{s.charAt(0)}</span>
                         </motion.button>
                     );
                 })}

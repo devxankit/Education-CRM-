@@ -12,18 +12,24 @@ const TeacherHelpPage = () => {
     const token = useTeacherStore((s) => s.token);
     const profile = useTeacherStore((s) => s.profile);
     const fetchProfile = useTeacherStore((s) => s.fetchProfile);
+    const myTickets = useTeacherStore((s) => s.myTickets) || [];
+    const fetchMyTickets = useTeacherStore((s) => s.fetchMyTickets);
+    const createMyTicket = useTeacherStore((s) => s.createMyTicket);
+    const isFetchingMyTickets = useTeacherStore((s) => s.isFetchingMyTickets);
     const [viewMode, setViewMode] = useState('faq'); // 'faq' | 'tickets'
     const [isRaiseModalOpen, setIsRaiseModalOpen] = useState(false);
     const [faqData, setFaqData] = useState([]);
     const [faqLoading, setFaqLoading] = useState(true);
-    const [tickets, setTickets] = useState([
-        { id: 'TKT-102', subject: 'Salary Slip Incorrect', status: 'Open', date: '2 days ago', category: 'Finance' },
-        { id: 'TKT-098', subject: 'Leave Approval Pending', status: 'Closed', date: '1 week ago', category: 'HR' },
-    ]);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [ticketForm, setTicketForm] = useState({ category: 'General', topic: '', details: '' });
 
     useEffect(() => {
         fetchProfile();
     }, [fetchProfile]);
+
+    useEffect(() => {
+        fetchMyTickets();
+    }, [fetchMyTickets]);
 
     useEffect(() => {
         if (!token) {
@@ -73,13 +79,28 @@ const TeacherHelpPage = () => {
         );
     };
 
-    const handleRaiseTicket = (e) => {
+    const handleRaiseTicket = async (e) => {
         e.preventDefault();
-        // Mock submission
-        const newTicket = { id: `TKT-${Math.floor(Math.random() * 1000)}`, subject: 'New Support Request', status: 'Open', date: 'Just now', category: 'General' };
-        setTickets([newTicket, ...tickets]);
-        setIsRaiseModalOpen(false);
-        setViewMode('tickets');
+        if (!ticketForm.topic?.trim() || !ticketForm.details?.trim()) return;
+        setSubmitLoading(true);
+        try {
+            const result = await createMyTicket({
+                category: ticketForm.category,
+                topic: ticketForm.topic.trim(),
+                details: ticketForm.details.trim(),
+            });
+            if (result.success) {
+                setTicketForm({ category: 'General', topic: '', details: '' });
+                setIsRaiseModalOpen(false);
+                setViewMode('tickets');
+            } else {
+                alert(result.message || 'Failed to create ticket');
+            }
+        } catch {
+            alert('Failed to create ticket');
+        } finally {
+            setSubmitLoading(false);
+        }
     };
 
     return (
@@ -113,7 +134,7 @@ const TeacherHelpPage = () => {
                     >
                         My Tickets
                         <span className={`text-[10px] px-1.5 rounded-full ${viewMode === 'tickets' ? 'bg-white text-gray-900' : 'bg-red-100 text-red-600'}`}>
-                            {tickets.filter(t => t.status === 'Open').length}
+                            {myTickets.filter(t => t.status === 'Open').length}
                         </span>
                     </button>
                 </div>
@@ -163,20 +184,28 @@ const TeacherHelpPage = () => {
                     </>
                 ) : (
                     <div className="space-y-3 mb-20">
-                        {tickets.map(ticket => (
-                            <div key={ticket.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{ticket.category}</span>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${ticket.status === 'Open' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                                        {ticket.status}
-                                    </span>
-                                </div>
-                                <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.subject}</h3>
-                                <p className="text-xs text-gray-400 flex items-center gap-1">
-                                    <Info size={12} /> Ref: {ticket.id} • {ticket.date}
-                                </p>
+                        {isFetchingMyTickets ? (
+                            <div className="flex justify-center py-12">
+                                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                             </div>
-                        ))}
+                        ) : myTickets.length === 0 ? (
+                            <p className="text-sm text-gray-500 py-8 text-center">No tickets raised yet.</p>
+                        ) : (
+                            myTickets.map(ticket => (
+                                <div key={ticket._id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{ticket.category}</span>
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${ticket.status === 'Open' || ticket.status === 'In-Progress' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                                            {ticket.status}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.topic}</h3>
+                                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                                        <Info size={12} /> Ref: {ticket._id?.slice(-8)} • {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ''}
+                                    </p>
+                                </div>
+                            ))
+                        )}
                     </div>
                 )}
 
@@ -214,22 +243,44 @@ const TeacherHelpPage = () => {
                                 <form onSubmit={handleRaiseTicket} className="space-y-4">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Category</label>
-                                        <select className="w-full p-3 bg-gray-50 border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none">
-                                            <option>General Inquiry</option>
-                                            <option>IT Support</option>
-                                            <option>HR & Payroll</option>
+                                        <select
+                                            value={ticketForm.category}
+                                            onChange={(e) => setTicketForm((p) => ({ ...p, category: e.target.value }))}
+                                            className="w-full p-3 bg-gray-50 border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        >
+                                            <option value="General">General Inquiry</option>
+                                            <option value="IT Support">IT Support</option>
+                                            <option value="HR & Payroll">HR & Payroll</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Leave">Leave</option>
+                                            <option value="Attendance">Attendance</option>
+                                            <option value="Other">Other</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subject</label>
-                                        <input type="text" className="w-full p-3 bg-gray-50 border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Brief issue title" required />
+                                        <input
+                                            type="text"
+                                            value={ticketForm.topic}
+                                            onChange={(e) => setTicketForm((p) => ({ ...p, topic: e.target.value }))}
+                                            className="w-full p-3 bg-gray-50 border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            placeholder="Brief issue title"
+                                            required
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
-                                        <textarea rows="4" className="w-full p-3 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Explain your issue in detail..." required></textarea>
+                                        <textarea
+                                            rows="4"
+                                            value={ticketForm.details}
+                                            onChange={(e) => setTicketForm((p) => ({ ...p, details: e.target.value }))}
+                                            className="w-full p-3 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                                            placeholder="Explain your issue in detail..."
+                                            required
+                                        />
                                     </div>
-                                    <button type="submit" className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl shadow-indigo-200 active:scale-95 transition-transform mt-2">
-                                        Submit Ticket
+                                    <button type="submit" disabled={submitLoading} className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl shadow-indigo-200 active:scale-95 transition-transform mt-2 disabled:opacity-70">
+                                        {submitLoading ? 'Submitting...' : 'Submit Ticket'}
                                     </button>
                                 </form>
                             </motion.div>

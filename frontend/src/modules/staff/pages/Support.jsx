@@ -117,7 +117,7 @@ const Support = () => {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-gray-900">{ticket.topic}</p>
-                                                <p className="text-[10px] text-gray-500 font-mono">{ticket.id.slice(-8)} • {new Date(ticket.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-[10px] text-gray-500 font-mono">{(ticket.id || ticket._id || '').toString().slice(-8)} • {new Date(ticket.createdAt).toLocaleDateString()}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -128,12 +128,12 @@ const Support = () => {
                                                     {(ticket.raisedBy?.firstName || ticket.raisedBy?.name || 'U').charAt(0)}
                                                 </div>
                                                 <span className="text-sm text-gray-900 font-bold">
-                                                    {ticket.raisedBy ? (ticket.raisedBy.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : ticket.raisedBy.name) : (ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A')}
+                                                    {ticket._ticketType === 'teacher' ? (ticket.raisedBy?.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : 'Teacher') : (ticket.raisedBy ? (ticket.raisedBy.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : ticket.raisedBy.name) : (ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'))}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${ticket.raisedByType === 'Parent' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}`}>
-                                                    {ticket.raisedByType || 'Student'}
+                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${ticket._ticketType === 'teacher' ? 'bg-purple-100 text-purple-700' : (ticket.raisedByType === 'Parent' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700')}`}>
+                                                    {ticket._ticketType === 'teacher' ? 'Teacher' : (ticket.raisedByType || 'Student')}
                                                 </span>
                                                 {ticket.raisedByType === 'Parent' && ticket.studentId && (
                                                     <span className="text-[10px] text-gray-400 font-medium">
@@ -184,7 +184,7 @@ const Support = () => {
 
                             <h3 className="text-sm font-bold text-gray-900 mb-1">{ticket.topic}</h3>
                             <p className="text-xs text-gray-500 mb-2">
-                                By: {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'}
+                                By: {ticket._ticketType === 'teacher' ? (ticket.raisedBy?.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : 'Teacher') : (ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A')}
                             </p>
 
                             <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono border-t border-gray-50 pt-2">

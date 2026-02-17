@@ -1137,7 +1137,7 @@ export const createChildTicket = async (req, res) => {
         const { studentId } = req.params;
         const { category, topic, details, priority, attachment } = req.body;
 
-        const student = await Student.findOne({ _id: studentId, parentId });
+        const student = await Student.findOne({ _id: studentId, parentId }).populate("classId", "academicYearId");
         if (!student) {
             return res.status(403).json({ success: false, message: "Unauthorized access" });
         }
@@ -1145,6 +1145,8 @@ export const createChildTicket = async (req, res) => {
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
+            branchId: student.branchId,
+            academicYearId: student.classId?.academicYearId || null,
             raisedBy: parentId,
             raisedByType: "Parent",
             category,

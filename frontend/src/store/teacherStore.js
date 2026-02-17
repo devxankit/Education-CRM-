@@ -354,8 +354,10 @@ export const useTeacherStore = create(
                 }
             },
 
-            // Support Queries
+            // Support Queries (student tickets teacher resolves)
             queries: [],
+            myTickets: [],
+            isFetchingMyTickets: false,
             isFetchingQueries: false,
             isResolvingQuery: false,
             fetchQueries: async () => {
@@ -373,6 +375,38 @@ export const useTeacherStore = create(
                     console.error('Error fetching support queries:', error);
                 } finally {
                     set({ isFetchingQueries: false });
+                }
+            },
+            fetchMyTickets: async () => {
+                if (get().isFetchingMyTickets) return;
+                set({ isFetchingMyTickets: true });
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/teacher/support/my-tickets`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ myTickets: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching my tickets:', error);
+                } finally {
+                    set({ isFetchingMyTickets: false });
+                }
+            },
+            createMyTicket: async (ticketData) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.post(`${API_URL}/teacher/support/my-tickets`, ticketData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({ myTickets: [response.data.data, ...state.myTickets] }));
+                        return { success: true };
+                    }
+                    return { success: false, message: response.data.message };
+                } catch (error) {
+                    return { success: false, message: error.response?.data?.message || 'Failed to create ticket' };
                 }
             },
             resolveQuery: async (queryId, responseText = '') => {

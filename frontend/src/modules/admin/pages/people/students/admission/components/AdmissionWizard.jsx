@@ -10,7 +10,7 @@ import Step5_Documents from './Step5_Documents';
 import Step5_AdmissionFee from './Step5_AdmissionFee';
 import Step6_Review from './Step6_Review';
 
-const AdmissionWizard = ({ onComplete, onCancel, academicYearId, workflow = {} }) => {
+const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBranchChange, onAcademicYearChange, workflow = {} }) => {
     const requireFee = workflow.requireFee === true;
     const requireDocs = workflow.requireDocs === true;
 
@@ -33,6 +33,7 @@ const AdmissionWizard = ({ onComplete, onCancel, academicYearId, workflow = {} }
         // 1
         firstName: '', middleName: '', lastName: '',
         dob: '', gender: '', bloodGroup: '', nationality: 'Indian',
+        category: 'General',
         parentEmail: '',
         address: '', city: '', pincode: '',
 
@@ -55,6 +56,13 @@ const AdmissionWizard = ({ onComplete, onCancel, academicYearId, workflow = {} }
     const currentStepKey = steps[currentStep - 1]?.key;
 
     const handleNext = () => {
+        if (currentStepKey === 'academic') {
+            const hasBranch = branchId || formData.branchId;
+            if (!hasBranch || !academicYearId || !formData.classId) {
+                alert("Please select Branch, Academic Year, and Class before proceeding.");
+                return;
+            }
+        }
         if (currentStepKey === 'personal') {
             if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.parentEmail) {
                 alert("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email)");
@@ -81,7 +89,7 @@ const AdmissionWizard = ({ onComplete, onCancel, academicYearId, workflow = {} }
     };
 
     const handleSubmit = () => {
-        onComplete(formData);
+        onComplete({ ...formData, branchId: branchId || formData.branchId, academicYearId });
     };
 
     const isLastStep = currentStep === totalSteps;
@@ -91,13 +99,13 @@ const AdmissionWizard = ({ onComplete, onCancel, academicYearId, workflow = {} }
         if (!step) return null;
         switch (step.key) {
             case 'personal': return <Step1_Personal data={formData} onChange={setFormData} />;
-            case 'academic': return <Step3_Academic data={formData} onChange={setFormData} />;
+            case 'academic': return <Step3_Academic data={formData} onChange={setFormData} branchId={branchId} academicYearId={academicYearId} onBranchChange={onBranchChange} onAcademicYearChange={onAcademicYearChange} />;
             case 'logistics': return <Step4_Rules data={formData} onChange={setFormData} />;
             case 'docs': return <Step5_Documents data={formData} onChange={setFormData} />;
             case 'fee': return <Step5_AdmissionFee data={formData} onChange={setFormData} academicYearId={academicYearId} />;
             case 'review': return (
                 <Step6_Review
-                    data={formData}
+                    data={{ ...formData, branchId: branchId || formData.branchId, academicYearId }}
                     onEditStep={setCurrentStep}
                     stepNumbers={{ personal: 1, academic: 2, logistics: 3, docs: requireDocs ? (steps.findIndex(s => s.key === 'docs') + 1) : 0, fee: requireFee ? (steps.findIndex(s => s.key === 'fee') + 1) : 0 }}
                     showDocs={requireDocs}

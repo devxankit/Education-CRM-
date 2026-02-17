@@ -59,53 +59,45 @@ const AttendancePage = () => {
 
     // Load Attendance Data (Existing or New)
     useEffect(() => {
+        if (!selectedMapping) return;
+        setAttendanceState({}); // Reset before load to avoid stale state
         const loadAttendance = async () => {
-            if (!selectedMapping) return;
-
-            // 1. Fetch Students
             await fetchClassStudents(selectedMapping.classId, selectedMapping.sectionId);
-
-            // 2. Try to fetch existing attendance for this date
             const existing = await fetchAttendanceByDate({
                 classId: selectedMapping.classId,
                 sectionId: selectedMapping.sectionId,
                 subjectId: selectedMapping.subjectId,
                 date: selectedDate
             });
-
-            if (existing && existing.attendanceData) {
+            if (existing && existing.attendanceData && existing.attendanceData.length > 0) {
                 const map = {};
                 existing.attendanceData.forEach(entry => {
-                    const studentId = entry.studentId._id || entry.studentId;
+                    const studentId = (entry.studentId?._id || entry.studentId)?.toString?.() || entry.studentId;
                     map[studentId] = entry.status;
                 });
                 setAttendanceState(map);
-            } else {
-                // Initialize new attendance (default Present)
-                // Use a functional update to ensure we use the latest students from the store
             }
         };
-
         loadAttendance();
     }, [selectedMapping, selectedDate, fetchClassStudents, fetchAttendanceByDate]);
 
-    // Separate effect to initialize default state when students change and NO existing record was found
+    // Initialize default Present for today when students load and no existing attendance
     useEffect(() => {
-        // If we have students but no attendance state (or empty state), initialize it
-        // ONLY initialize with defaults if it's TODAY. For past dates, empty means no record.
-        if (isToday(selectedDate) && students.length > 0 && Object.keys(attendanceState).length === 0) {
-            const initialMap = {};
+        if (!isToday(selectedDate) || students.length === 0) return;
+        setAttendanceState(prev => {
+            const next = { ...prev };
+            let changed = false;
             students.forEach(s => {
-                initialMap[s._id] = 'Present';
+                const id = (s._id || s.id)?.toString?.();
+                if (id && next[id] === undefined) {
+                    next[id] = 'Present';
+                    changed = true;
+                }
             });
-            setAttendanceState(initialMap);
-        }
-    }, [students, attendanceState, selectedDate]);
+            return changed ? next : prev;
+        });
+    }, [students, selectedDate]);
 
-    // Reset attendance state when mapping or date changes to force re-initialization
-    useEffect(() => {
-        setAttendanceState({});
-    }, [selectedMapping, selectedDate]);
 
 
     // Smooth Scroll
@@ -189,13 +181,18 @@ const AttendancePage = () => {
         }
     };
 
-    // Calculate Stats
-    const stats = Object.values(attendanceState).reduce((acc, status) => {
-        if (status === 'Present') acc.present++;
-        if (status === 'Absent') acc.absent++;
-        if (status === 'Leave') acc.leave++;
+    // Calculate Stats from displayed students (ensures summary matches list)
+    const stats = React.useMemo(() => {
+        const acc = { present: 0, absent: 0, leave: 0 };
+        students.forEach(s => {
+            const id = (s._id || s.id)?.toString?.();
+            const status = id ? (attendanceState[id] || (isToday(selectedDate) ? 'Present' : null)) : null;
+            if (status === 'Present') acc.present++;
+            else if (status === 'Absent') acc.absent++;
+            else if (status === 'Leave') acc.leave++;
+        });
         return acc;
-    }, { present: 0, absent: 0, leave: 0 });
+    }, [students, attendanceState, selectedDate]);
 
     const formattedClassesForSelector = flatMappings.map(m => ({
         id: m.id,
@@ -279,19 +276,23 @@ const AttendancePage = () => {
                             <p className="text-sm text-gray-500 font-medium font-['Inter']">Synchronizing data...</p>
                         </div>
                     ) : (isLocked ? (Object.keys(attendanceState).length > 0 ? students : []) : students).length > 0 ? (
-                        (isLocked ? (Object.keys(attendanceState).length > 0 ? students : []) : students).map(student => (
+                        (isLocked ? (Object.keys(attendanceState).length > 0 ? students : []) : students).map(student => {
+                            const sid = (student._id || student.id)?.toString?.();
+                            const status = sid ? (attendanceState[sid] ?? (isToday(selectedDate) ? 'Present' : undefined)) : undefined;
+                            return (
                             <AttendanceRow
-                                key={student._id}
+                                key={sid}
                                 student={{
-                                    id: student._id,
-                                    name: `${student.firstName} ${student.lastName}`,
-                                    roll: student.rollNo || 'N/A'
+                                    id: sid,
+                                    name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'N/A',
+                                    roll: student.rollNo || student.admissionNo || (sid ? sid.slice(-6) : '-'),
+                                    admissionNo: student.admissionNo
                                 }}
-                                status={attendanceState[student._id]}
+                                status={status}
                                 onStatusChange={handleStatusChange}
                                 disabled={isLocked}
                             />
-                        ))
+                        ); })
                     ) : isLocked ? (
                         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
                             <Clock className="mx-auto text-gray-300 mb-3" size={32} />

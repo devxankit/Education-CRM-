@@ -74,7 +74,7 @@ const TicketDetail = () => {
         if (!newMessage.trim() || !ticket) return;
 
         try {
-            await respondToTicketAction(ticket._id || ticket.id, newMessage, 'Resolved');
+            await respondToTicketAction(ticket._id || ticket.id, newMessage, 'Resolved', ticket._ticketType === 'teacher');
             setNewMessage('');
             await fetchTickets(); // Refresh
         } catch (err) {
@@ -85,7 +85,7 @@ const TicketDetail = () => {
     const confirmResolve = async () => {
         if (!resolutionNote.trim() || !ticket) return;
         try {
-            await respondToTicketAction(ticket._id || ticket.id, resolutionNote, 'Closed');
+            await respondToTicketAction(ticket._id || ticket.id, resolutionNote, 'Closed', ticket._ticketType === 'teacher');
             setShowResolveModal(false);
             setResolutionNote('');
             await fetchTickets();
@@ -185,7 +185,7 @@ const TicketDetail = () => {
                         <div className="px-8 py-5 bg-indigo-50/30 border-b border-gray-50 flex items-center justify-between">
                             <div className="flex items-center gap-2 text-indigo-600">
                                 <MessageSquare size={16} />
-                                <h2 className="text-xs font-black uppercase tracking-widest leading-none">Initial {ticket.raisedByType || 'Student'} Request</h2>
+                                <h2 className="text-xs font-black uppercase tracking-widest leading-none">Initial {ticket._ticketType === 'teacher' ? 'Teacher' : (ticket.raisedByType || 'Student')} Request</h2>
                             </div>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{new Date(ticket.createdAt).toLocaleTimeString()}</span>
                         </div>
@@ -197,7 +197,7 @@ const TicketDetail = () => {
                                 <div>
                                     <p className="text-sm font-black text-gray-900 leading-none">
                                         {ticket.raisedBy ? (ticket.raisedBy.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : ticket.raisedBy.name) : (ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'Anonymous')}
-                                        <span className="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded">{ticket.raisedByType || 'Student'}</span>
+                                        <span className="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded">{ticket._ticketType === 'teacher' ? 'Teacher' : (ticket.raisedByType || 'Student')}</span>
                                     </p>
                                     <p className="text-[11px] font-bold text-gray-400 mt-1">
                                         {ticket.raisedByType === 'Parent' && ticket.studentId ? `Parent of ${ticket.studentId.firstName}` : 'Sender Identity Verified'}
@@ -232,7 +232,7 @@ const TicketDetail = () => {
                                             {ticket.respondedBy ? (ticket.respondedBy.firstName ? `${ticket.respondedBy.firstName} ${ticket.respondedBy.lastName || ''}` : ticket.respondedBy.name) : 'Authorized Personnel'}
                                         </p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="text-[10px] font-black text-emerald-600 uppercase">{ticket.onModel || 'Staff'} Response</span>
+                                            <span className="text-[10px] font-black text-emerald-600 uppercase">{ticket.onModel || ticket.respondedByModel || 'Staff'} Response</span>
                                             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                                             <span className="text-[10px] font-bold text-gray-400">Verified Personnel</span>
                                         </div>
@@ -293,7 +293,7 @@ const TicketDetail = () => {
                 {/* Sidebar - Simplified */}
                 <aside className="hidden lg:block w-[22rem] p-8 border-l border-gray-100 bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.02)] overflow-y-auto">
                     <div className="space-y-8 sticky top-0">
-                        {/* Student Profile Overview */}
+                        {/* Subject Information - Student or Teacher */}
                         <section>
                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Subject Information</h3>
                             <div className="p-6 bg-[#F9FAFF] rounded-[2rem] border border-indigo-50 relative group">
@@ -301,30 +301,51 @@ const TicketDetail = () => {
                                     <User size={20} />
                                 </div>
                                 <div className="space-y-4">
-                                    <div>
-                                        <p className="text-[9px] font-black text-indigo-400 uppercase">Student Name</p>
-                                        <p className="text-sm font-black text-gray-900 mt-1">
-                                            {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-[9px] font-black text-gray-400 uppercase">Admission ID</p>
-                                            <p className="text-xs font-bold text-gray-700 mt-1">{ticket.studentId?.admissionNo || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] font-black text-gray-400 uppercase">Grade / Section</p>
-                                            <p className="text-xs font-bold text-gray-700 mt-1">
-                                                {ticket.studentId?.classId?.name || '-'}{ticket.studentId?.sectionId?.name || ''}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => navigate(`/staff/students/${ticket.studentId?._id}`)}
-                                        className="w-full bg-white hover:bg-gray-900 hover:text-white border border-gray-100 p-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
-                                    >
-                                        Official Profile
-                                    </button>
+                                    {ticket._ticketType === 'teacher' ? (
+                                        <>
+                                            <div>
+                                                <p className="text-[9px] font-black text-indigo-400 uppercase">Teacher</p>
+                                                <p className="text-sm font-black text-gray-900 mt-1">
+                                                    {ticket.raisedBy?.firstName ? `${ticket.raisedBy.firstName} ${ticket.raisedBy.lastName || ''}` : 'N/A'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-gray-400 uppercase">Employee ID</p>
+                                                <p className="text-xs font-bold text-gray-700 mt-1">{ticket.raisedBy?.employeeId || '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-gray-400 uppercase">Branch</p>
+                                                <p className="text-xs font-bold text-gray-700 mt-1">{ticket.branchId?.name || '-'}</p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                <p className="text-[9px] font-black text-indigo-400 uppercase">Student Name</p>
+                                                <p className="text-sm font-black text-gray-900 mt-1">
+                                                    {ticket.studentId ? `${ticket.studentId.firstName} ${ticket.studentId.lastName}` : 'N/A'}
+                                                </p>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase">Admission ID</p>
+                                                    <p className="text-xs font-bold text-gray-700 mt-1">{ticket.studentId?.admissionNo || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase">Grade / Section</p>
+                                                    <p className="text-xs font-bold text-gray-700 mt-1">
+                                                        {ticket.studentId?.classId?.name || '-'}{ticket.studentId?.sectionId?.name || ''}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => navigate(`/staff/students/${ticket.studentId?._id}`)}
+                                                className="w-full bg-white hover:bg-gray-900 hover:text-white border border-gray-100 p-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                                            >
+                                                Official Profile
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </section>

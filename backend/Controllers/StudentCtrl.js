@@ -392,9 +392,9 @@ export const admitStudent = async (req, res) => {
 
         // 3. Handle Cloudinary Document Uploads + Workflow Policy
         const workflow = admissionRule?.workflow;
-        const needsWorkflow = workflow && (workflow.requireDocs || workflow.requireFee);
-        const defaultDocStatus = (needsWorkflow || req.role !== 'institute') ? 'in_review' : 'approved';
-        const defaultStudentStatus = (needsWorkflow || req.role !== 'institute') ? 'in_review' : 'active';
+        const isAdminOrInstitute = ['institute', 'staff', 'admin'].includes((req.role || '').toLowerCase());
+        const defaultDocStatus = isAdminOrInstitute ? 'approved' : 'in_review';
+        const defaultStudentStatus = isAdminOrInstitute ? 'active' : 'in_review';
 
         if (admissionData.documents) {
             const keys = Object.keys(admissionData.documents);
@@ -463,11 +463,14 @@ export const admitStudent = async (req, res) => {
 
         const studentStatus = forceStatus || defaultStudentStatus;
 
+        const resolvedAcademicYearId = academicYearId || classData?.academicYearId;
+
         const student = new Student({
             ...admissionData,
             admissionNo,
             instituteId,
             branchId, // Use the resolved branchId
+            academicYearId: resolvedAcademicYearId || undefined,
             parentId: admissionData.parentId || parentId,
             password: admissionData.password || '12345678',
             status: studentStatus,
@@ -497,12 +500,13 @@ export const admitStudent = async (req, res) => {
 
         const msgWaitlist = studentStatus === 'waitlisted' ? " (Waitlisted - section is full)" : "";
         const msgLate = isLate ? " (Late application)" : "";
+        const studentObj = student.toObject ? student.toObject() : student;
         res.status(201).json({
             success: true,
             message: (parentCreated
                 ? "Student admitted successfully. Login credentials sent to parent email."
                 : "Student admitted successfully") + msgWaitlist + msgLate,
-            data: student,
+            data: studentObj,
             parentLinked: !!parentId,
             emailSent: parentCreated && !!admissionData.parentEmail,
             waitlisted: studentStatus === 'waitlisted',
@@ -1313,9 +1317,12 @@ export const createSupportTicket = async (req, res) => {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
 
+        const classDoc = student.classId ? await Class.findById(student.classId).select("academicYearId").lean() : null;
         const ticket = new SupportTicket({
             instituteId: student.instituteId,
             studentId,
+            branchId: student.branchId,
+            academicYearId: classDoc?.academicYearId || null,
             category,
             topic,
             details,
