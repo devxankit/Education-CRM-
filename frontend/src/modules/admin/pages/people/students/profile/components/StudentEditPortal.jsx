@@ -15,12 +15,20 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
     const fetchClasses = useAdminStore(state => state.fetchClasses);
     const sectionsObj = useAdminStore(state => state.sections);
     const fetchSections = useAdminStore(state => state.fetchSections);
+    const academicYears = useAdminStore(state => state.academicYears);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
+    const courses = useAdminStore(state => state.courses);
+    const fetchCourses = useAdminStore(state => state.fetchCourses);
+    const transportRoutes = useAdminStore(state => state.transportRoutes);
+    const fetchTransportRoutes = useAdminStore(state => state.fetchTransportRoutes);
 
     useEffect(() => {
         if (isOpen) {
             fetchBranches();
+            fetchAcademicYears();
+            fetchTransportRoutes('main');
         }
-    }, [isOpen, fetchBranches]);
+    }, [isOpen, fetchBranches, fetchAcademicYears, fetchTransportRoutes]);
 
     useEffect(() => {
         if (student) {
@@ -29,6 +37,10 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                 branchId: student.branchId?._id || student.branchId,
                 classId: student.classId?._id || student.classId,
                 sectionId: student.sectionId?._id || student.sectionId,
+                academicYearId: student.academicYearId?._id || student.academicYearId,
+                courseId: student.courseId?._id || student.courseId,
+                routeId: student.routeId,
+                stopId: student.stopId,
             });
         }
     }, [student, isOpen]);
@@ -36,8 +48,11 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
     useEffect(() => {
         if (formData.branchId) {
             fetchClasses(formData.branchId);
+            if (formData.academicYearId) {
+                fetchCourses(formData.branchId, formData.academicYearId);
+            }
         }
-    }, [formData.branchId, fetchClasses]);
+    }, [formData.branchId, formData.academicYearId, fetchClasses, fetchCourses]);
 
     useEffect(() => {
         if (formData.classId) {
@@ -48,15 +63,18 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
     if (!isOpen) return null;
 
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        // Mutual exclusion: Class and Course cannot be selected together
+        if (field === 'classId') {
+            setFormData(prev => ({ ...prev, classId: value, sectionId: '', courseId: '' }));
+        } else if (field === 'courseId') {
+            setFormData(prev => ({ ...prev, courseId: value, classId: '', sectionId: '' }));
+        } else {
+            setFormData(prev => ({ ...prev, [field]: value }));
+        }
     };
 
     const handleBranchChange = (branchId) => {
-        setFormData(prev => ({ ...prev, branchId, classId: '', sectionId: '' }));
-    };
-
-    const handleClassChange = (classId) => {
-        setFormData(prev => ({ ...prev, classId, sectionId: '' }));
+        setFormData(prev => ({ ...prev, branchId, classId: '', sectionId: '', courseId: '' }));
     };
 
     const handleFileUpload = (field, e) => {
@@ -156,6 +174,21 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                                         <input type="date" value={formData.dob ? formData.dob.split('T')[0] : ''} onChange={(e) => handleChange('dob', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold" />
                                     </div>
                                     <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Age</label>
+                                        <div className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-gray-500">
+                                            {formData.dob
+                                                ? (() => {
+                                                    const dob = new Date(formData.dob);
+                                                    const today = new Date();
+                                                    let age = today.getFullYear() - dob.getFullYear();
+                                                    const m = today.getMonth() - dob.getMonth();
+                                                    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                                    return `${age} ${age === 1 ? 'year' : 'years'}`;
+                                                })()
+                                                : '—'}
+                                        </div>
+                                    </div>
+                                    <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Gender</label>
                                         <select value={formData.gender || ''} onChange={(e) => handleChange('gender', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold">
                                             <option value="Male">Male</option>
@@ -223,21 +256,35 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                                         </select>
                                     </div>
                                     <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Academic Year</label>
+                                        <select value={formData.academicYearId || ''} onChange={(e) => handleChange('academicYearId', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold">
+                                            <option value="">Select Year</option>
+                                            {academicYears.map(ay => <option key={ay._id} value={ay._id}>{ay.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Admission Date</label>
                                         <input type="date" value={formData.admissionDate ? formData.admissionDate.split('T')[0] : ''} onChange={(e) => handleChange('admissionDate', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold" />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Class</label>
-                                        <select value={formData.classId || ''} onChange={(e) => handleClassChange(e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold">
-                                            <option value="">Select Class</option>
+                                        <select value={formData.classId || ''} onChange={(e) => handleChange('classId', e.target.value)} disabled={!!formData.courseId} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold disabled:opacity-50">
+                                            <option value="">{formData.courseId ? 'Cannot select - Course selected' : 'Select Class'}</option>
                                             {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Section</label>
-                                        <select value={formData.sectionId || ''} onChange={(e) => handleChange('sectionId', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold text-black" disabled={!formData.classId}>
-                                            <option value="">Select Section</option>
+                                        <select value={formData.sectionId || ''} onChange={(e) => handleChange('sectionId', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold text-black disabled:opacity-50" disabled={!formData.classId || !!formData.courseId}>
+                                            <option value="">{formData.classId ? (formData.courseId ? 'Cannot select - Course selected' : 'Select Section') : 'Select Class First'}</option>
                                             {currentSections.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider flex items-center gap-1"><School size={10} /> Course / Program</label>
+                                        <select value={formData.courseId || ''} onChange={(e) => handleChange('courseId', e.target.value)} disabled={!!formData.classId} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold disabled:opacity-50">
+                                            <option value="">{formData.classId ? 'Cannot select - Class selected' : 'Select Course'}</option>
+                                            {courses.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -247,7 +294,7 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                                     <div>
                                         <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Profile Status</label>
                                         <select value={formData.status || 'active'} onChange={(e) => handleChange('status', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold">
-                                            {['active', 'alumni', 'withdrawn', 'inactive'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
+                                            {['active', 'inactive'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -281,21 +328,41 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                                         <input type="checkbox" checked={formData.transportRequired || false} onChange={(e) => handleChange('transportRequired', e.target.checked)} className="w-6 h-6 rounded-lg border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-transform active:scale-90" />
                                     </div>
                                     {formData.transportRequired && (
-                                        <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
                                             <div>
-                                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Bed Type (Ref)</label>
-                                                <input type="text" value={formData.bedType || ''} onChange={(e) => handleChange('bedType', e.target.value)} placeholder="e.g. Lower" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500 font-bold" />
+                                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Select Route</label>
+                                                <select
+                                                    value={formData.routeId || ''}
+                                                    onChange={(e) => handleChange('routeId', e.target.value)}
+                                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500 font-bold"
+                                                >
+                                                    <option value="">Select Route</option>
+                                                    {transportRoutes.map(r => (
+                                                        <option key={r._id} value={r._id}>{r.name} ({r.code})</option>
+                                                    ))}
+                                                </select>
                                             </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Room Type (Ref)</label>
-                                                <input type="text" value={formData.roomType || ''} onChange={(e) => handleChange('roomType', e.target.value)} placeholder="e.g. 4-Sharing" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500 font-bold" />
-                                            </div>
+                                            {formData.routeId && (
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Select Stop</label>
+                                                    <select
+                                                        value={formData.stopId || ''}
+                                                        onChange={(e) => handleChange('stopId', e.target.value)}
+                                                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500 font-bold"
+                                                    >
+                                                        <option value="">Select Stop</option>
+                                                        {transportRoutes.find(r => r._id === formData.routeId)?.stops?.map(s => (
+                                                            <option key={s._id} value={s._id}>{s.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className={`p-6 rounded-2xl border transition-all ${formData.hostelRequired ? 'bg-white border-orange-200 shadow-lg ring-1 ring-orange-100' : 'bg-gray-50 border-gray-200'}`}>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className={`p-2 rounded-xl ${formData.hostelRequired ? 'bg-orange-100 text-orange-600' : 'bg-gray-200 text-gray-500'}`}><BookOpen size={20} /></div>
                                             <div>
@@ -305,6 +372,26 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                                         </div>
                                         <input type="checkbox" checked={formData.hostelRequired || false} onChange={(e) => handleChange('hostelRequired', e.target.checked)} className="w-6 h-6 rounded-lg border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer transition-transform active:scale-90" />
                                     </div>
+                                    {formData.hostelRequired && (
+                                        <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+                                            <div>
+                                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Room Preference</label>
+                                                <select value={formData.roomType || ''} onChange={(e) => handleChange('roomType', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500 font-bold">
+                                                    <option value="">Select Room</option>
+                                                    <option value="AC">AC Room</option>
+                                                    <option value="Non-AC">Non-AC Room</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 tracking-wider">Bed Type</label>
+                                                <select value={formData.bedType || ''} onChange={(e) => handleChange('bedType', e.target.value)} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500 font-bold">
+                                                    <option value="">Select Bed</option>
+                                                    <option value="Single">Single Bed</option>
+                                                    <option value="Bunk">Bunk Bed</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

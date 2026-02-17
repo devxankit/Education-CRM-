@@ -24,8 +24,8 @@ const StudentProfile = () => {
     const [isEditOpen, setIsEditOpen] = useState(false);
 
     // Fetch student data based on ID
-    const loadStudent = async () => {
-        setLoading(true);
+    const loadStudent = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const data = await fetchStudentById(id);
             if (data) {
@@ -34,7 +34,7 @@ const StudentProfile = () => {
         } catch (error) {
             console.error('Error fetching student:', error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -48,7 +48,7 @@ const StudentProfile = () => {
         if (!window.confirm("Confirm admission as per workflow policy? (Docs verified, fee paid, approval role required)")) return;
         try {
             const result = await confirmAdmission(studentId);
-            if (result) setStudent(result);
+            if (result) await loadStudent(true);
         } catch (e) { /* toast from store */ }
     };
 
@@ -56,8 +56,8 @@ const StudentProfile = () => {
         try {
             const result = await updateStudent(studentId, updatedData);
             if (result) {
-                // Manually update local state or re-fetch
-                setStudent(result);
+                // Re-fetch to get populated fields and updated subjects
+                await loadStudent(true);
                 return true;
             }
         } catch (error) {

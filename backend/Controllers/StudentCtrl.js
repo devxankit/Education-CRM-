@@ -132,7 +132,9 @@ export const getStudentDashboard = async (req, res) => {
                 .map((item, i) => ({
                     id: item._id ? item._id.toString() : `${timetableDoc._id}_${i}`,
                     subject: item.subjectId?.name || "N/A",
-                    teacher: item.teacherId ? `${(item.teacherId.firstName || "").trim()} ${(item.teacherId.lastName || "").trim()}`.trim() || "N/A" : "N/A",
+                    teacher: (student.status === 'in_review' || student.status === 'pending')
+                        ? "N/A"
+                        : (item.teacherId ? `${(item.teacherId.firstName || "").trim()} ${(item.teacherId.lastName || "").trim()}`.trim() || "N/A" : "N/A"),
                     time: item.startTime || "--",
                     room: item.room || "N/A",
                     mode: item.type === "online" ? "online" : "offline",
@@ -649,9 +651,11 @@ export const getStudentById = async (req, res) => {
                 name: m.subjectId?.name,
                 code: m.subjectId?.code,
                 type: m.subjectId?.type,
-                teacher: m.teacherId
-                    ? `${m.teacherId.firstName || ''} ${m.teacherId.lastName || ''}`.trim()
-                    : 'Not Assigned'
+                teacher: (student.status === 'in_review' || student.status === 'pending')
+                    ? 'Not Assigned'
+                    : (m.teacherId
+                        ? `${m.teacherId.firstName || ''} ${m.teacherId.lastName || ''}`.trim()
+                        : 'Not Assigned')
             }));
         }
 
@@ -1170,7 +1174,9 @@ export const getStudentAcademics = async (req, res) => {
                     code: m.subjectId?.code || "N/A",
                     type: m.subjectId?.type || "Internal",
                     description: m.subjectId?.description,
-                    teacher: m.teacherId ? `${m.teacherId.firstName || ''} ${m.teacherId.lastName || ''}`.trim() : "TBA",
+                    teacher: (studentData.status === 'in_review' || studentData.status === 'pending')
+                        ? "Not Assigned"
+                        : (m.teacherId ? `${m.teacherId.firstName || ''} ${m.teacherId.lastName || ''}`.trim() : "Not Assigned"),
                     color: subjectColors[randomIndex],
                     classesPerWeek: 4 // Default placeholder
                 };
@@ -1291,7 +1297,7 @@ export const submitHomework = async (req, res) => {
 
         const isLate = new Date() > homework.dueDate;
         const submissionStatus = isLate ? "Late" : "Submitted";
-        
+
         const submission = await HomeworkSubmission.findOneAndUpdate(
             { homeworkId, studentId },
             {
@@ -1309,8 +1315,8 @@ export const submitHomework = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: isLate 
-                ? "Homework submitted successfully (marked as Late - submitted after due date)" 
+            message: isLate
+                ? "Homework submitted successfully (marked as Late - submitted after due date)"
                 : "Homework submitted successfully",
             data: submission
         });
