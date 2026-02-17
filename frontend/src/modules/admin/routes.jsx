@@ -78,6 +78,7 @@ import CustomReports from './pages/reports/custom/CustomReports';
 import GeneralSettings from './pages/settings/general/GeneralSettings';
 import AppConfiguration from './pages/settings/app-configuration/AppConfiguration';
 import Integrations from './pages/settings/integrations/Integrations';
+import FAQ from './pages/settings/faq/FAQ';
 import BackupsRecovery from './pages/settings/backups/BackupsRecovery';
 import RequiredDocumentsRules from './pages/compliance/required-documents/RequiredDocumentsRules';
 import DocumentRulesCompliance from './pages/compliance/document-rules/DocumentRulesCompliance';
@@ -197,6 +198,7 @@ const adminRoutes = [
 
                     // 11. System Settings (Renamed from 'system')
                     { path: 'settings/general', element: <GeneralSettings /> },
+                    { path: 'settings/faq', element: <FAQ /> },
                     { path: 'settings/app-config', element: <AppConfiguration /> },
                     { path: 'settings/integrations', element: <Integrations /> },
                     { path: 'settings/backup', element: <BackupsRecovery /> },

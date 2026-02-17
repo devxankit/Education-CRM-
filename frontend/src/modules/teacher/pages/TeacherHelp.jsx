@@ -1,24 +1,45 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 import { ChevronLeft, Info, HelpCircle, Mail, MapPin, Phone, Plus, Tag } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTeacherStore } from '../../../store/teacherStore';
 
 const TeacherHelpPage = () => {
     const navigate = useNavigate();
+    const token = useTeacherStore((s) => s.token);
+    const profile = useTeacherStore((s) => s.profile);
+    const fetchProfile = useTeacherStore((s) => s.fetchProfile);
     const [viewMode, setViewMode] = useState('faq'); // 'faq' | 'tickets'
     const [isRaiseModalOpen, setIsRaiseModalOpen] = useState(false);
+    const [faqData, setFaqData] = useState([]);
+    const [faqLoading, setFaqLoading] = useState(true);
     const [tickets, setTickets] = useState([
         { id: 'TKT-102', subject: 'Salary Slip Incorrect', status: 'Open', date: '2 days ago', category: 'Finance' },
         { id: 'TKT-098', subject: 'Leave Approval Pending', status: 'Closed', date: '1 week ago', category: 'HR' },
     ]);
 
-    const faqData = [
-        { question: 'How to reset my password?', answer: 'You can reset your password by going to Profile > Settings > Change Password. If you forgot your password, contact Admin.' },
-        { question: 'How to apply for leave?', answer: 'Navigate to Profile, then select "Apply for Leave". Fill in the dates and reason, then submit for approval.' },
-        { question: 'How to update profile details?', answer: 'Some details can be updated in Profile > Edit. For critical changes like Name or Designation, please raise a ticket to HR.' },
-        { question: 'Issue with Attendance marking', answer: 'If attendance is not syncing, ensure you have a stable internet connection. If the issue persists, raise an IT Support ticket.' },
-    ];
+    useEffect(() => {
+        fetchProfile();
+    }, [fetchProfile]);
+
+    useEffect(() => {
+        if (!token) {
+            setFaqLoading(false);
+            return;
+        }
+        axios
+            .get(`${API_URL}/faq/public`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((res) => {
+                if (res.data?.success && Array.isArray(res.data.data)) {
+                    setFaqData(res.data.data.map((f) => ({ question: f.question, answer: f.answer })));
+                }
+            })
+            .catch(() => setFaqData([]))
+            .finally(() => setFaqLoading(false));
+    }, [token]);
 
     const FAQItem = ({ question, answer }) => {
         const [isOpen, setIsOpen] = useState(false);
@@ -107,8 +128,8 @@ const TeacherHelpPage = () => {
                                         <Phone size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold text-gray-900">Admin Office</h3>
-                                        <p className="text-xs text-gray-500">+91 98765 43210</p>
+                                        <h3 className="text-sm font-bold text-gray-900">Admin Office {profile?.branchId?.name && `(${profile.branchId.name})`}</h3>
+                                        <p className="text-xs text-gray-500">{profile?.branchId?.phone || profile?.instituteId?.phone || '—'}</p>
                                     </div>
                                 </div>
                                 <div className="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
@@ -116,8 +137,8 @@ const TeacherHelpPage = () => {
                                         <Mail size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold text-gray-900">Email Support</h3>
-                                        <p className="text-xs text-gray-500">support@educationcrm.com</p>
+                                        <h3 className="text-sm font-bold text-gray-900">Email Support {profile?.branchId?.name && `(${profile.branchId.name})`}</h3>
+                                        <p className="text-xs text-gray-500">{profile?.branchId?.email || profile?.instituteId?.email || '—'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -125,11 +146,19 @@ const TeacherHelpPage = () => {
 
                         <section className="mb-20">
                             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Common FAQs</h2>
-                            <div className="space-y-3">
-                                {faqData.map((faq, i) => (
-                                    <FAQItem key={i} question={faq.question} answer={faq.answer} />
-                                ))}
-                            </div>
+                            {faqLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                </div>
+                            ) : faqData.length === 0 ? (
+                                <p className="text-sm text-gray-500 py-4">No FAQs available.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {faqData.map((faq, i) => (
+                                        <FAQItem key={i} question={faq.question} answer={faq.answer} />
+                                    ))}
+                                </div>
+                            )}
                         </section>
                     </>
                 ) : (

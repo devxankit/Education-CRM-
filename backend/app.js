@@ -47,6 +47,7 @@ import LogRouter from "./Routers/LogRouter.js";
 import ReportRouter from "./Routers/ReportRouter.js";
 import DashboardRouter from "./Routers/DashboardRouter.js";
 import HostelRouter from "./routes/HostelRouter.js";
+import FAQRouter from "./Routers/FAQRouter.js";
 
 const router = Router();
 
@@ -98,5 +99,6 @@ router.use("/api/v1/teacher-attendance", TeacherAttendanceRouter);
 router.use("/api/v1/logs", LogRouter);
 router.use("/api/v1/reports", ReportRouter);
 router.use("/api/v1/dashboard", DashboardRouter);
+router.use("/api/v1/faq", FAQRouter);
 
 export default router;

@@ -307,9 +307,12 @@ export const getTeacherProfile = async (req, res) => {
             .select("-password")
             .populate({
                 path: "branchId",
-                select: "name",
+                select: "name phone email",
             })
-
+            .populate({
+                path: "instituteId",
+                select: "phone email",
+            });
 
         if (!teacher) {
             return res.status(404).json({ success: false, message: "Teacher not found" });

@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, Plus, History } from 'lucide-react';
+import { useStudentStore } from '../../../store/studentStore';
 
 // Components
 import QuickHelpCards from '../components/HelpSupport/QuickHelpCards';
@@ -12,16 +15,16 @@ import TicketCard from '../components/HelpSupport/TicketCard';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 import EmptyState from '../components/Attendance/EmptyState';
 
-import { useStudentStore } from '../../../store/studentStore';
-
 const HelpSupportPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
+    const token = useStudentStore((s) => s.token);
     const tickets = useStudentStore(state => state.tickets) || [];
     const fetchTickets = useStudentStore(state => state.fetchTickets);
     const addTicket = useStudentStore(state => state.addTicket);
 
     const [loading, setLoading] = useState(!tickets || tickets.length === 0);
+    const [faqData, setFaqData] = useState([]);
     const [showRaiseModal, setShowRaiseModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [viewMode, setViewMode] = useState('help'); // 'help' or 'tickets'
@@ -29,6 +32,27 @@ const HelpSupportPage = () => {
     useEffect(() => {
         fetchTickets().finally(() => setLoading(false));
     }, [fetchTickets]);
+
+    useEffect(() => {
+        if (!token) return;
+        axios
+            .get(`${API_URL}/faq/public`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((res) => {
+                if (res.data?.success && Array.isArray(res.data.data)) {
+                    const list = res.data.data;
+                    const grouped = {};
+                    list.forEach((f) => {
+                        const cat = f.category || 'General';
+                        if (!grouped[cat]) grouped[cat] = [];
+                        grouped[cat].push({ q: f.question, a: f.answer });
+                    });
+                    setFaqData(
+                        Object.entries(grouped).map(([category, questions]) => ({ category, questions }))
+                    );
+                }
+            })
+            .catch(() => setFaqData([]));
+    }, [token]);
 
     // Transform tickets for UI (backend uses topic, UI uses subject; backend status can be "In-Progress")
     const allTickets = tickets.map(t => ({
@@ -46,20 +70,7 @@ const HelpSupportPage = () => {
     }));
 
     const supportData = {
-        faq: [
-            {
-                category: "Payments",
-                questions: [
-                    { q: "How to pay fees online?", a: "Go to Fees page and click on Pay Now button. You can use cards, UPI or netbanking." }
-                ]
-            },
-            {
-                category: "Academics",
-                questions: [
-                    { q: "Where can I find school syllabus?", a: "Check the Notes section under Syllabus category." }
-                ]
-            }
-        ],
+        faq: faqData,
         categories: ["Academic", "Fee Related", "Homework", "General", "Correction", "Attendance Issue", "Homework Submission Issue", "Fees / Payment Issue", "Profile Correction"]
     };
 

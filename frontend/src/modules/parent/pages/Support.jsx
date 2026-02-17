@@ -1,9 +1,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '../../../app/api';
 import { ChevronLeft, Plus, MessageCircle, Clock, CheckCircle, ChevronRight, FileText } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import { useParentStore } from '../../../store/parentStore';
+
+const FAQItem = ({ question, answer }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div
+            onClick={() => setIsOpen(!isOpen)}
+            className="p-4 bg-white border border-gray-100 rounded-xl cursor-pointer hover:border-indigo-100 transition-all"
+        >
+            <div className="flex justify-between items-center">
+                <span className={`text-sm font-bold ${isOpen ? 'text-indigo-700' : 'text-gray-700'}`}>{question}</span>
+                <ChevronRight size={16} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+            </div>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.p
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="pt-3 text-xs text-gray-500 leading-relaxed border-t border-gray-50 mt-3"
+                    >
+                        {answer}
+                    </motion.p>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
 
 const ParentSupportPage = () => {
     const navigate = useNavigate();
@@ -11,6 +41,7 @@ const ParentSupportPage = () => {
     const state = location.state || {}; // { childId, issueType } passed from other pages
     const { childId } = state;
 
+    const token = useParentStore((s) => s.token);
     const tickets = useParentStore(state => state.tickets);
     const fetchTickets = useParentStore(state => state.fetchTickets);
     const isLoading = useParentStore(state => state.isLoading);
@@ -19,6 +50,24 @@ const ParentSupportPage = () => {
     const activeChildId = childId || selectedChildId;
 
     const [activeTab, setActiveTab] = useState('My Tickets');
+    const [faqData, setFaqData] = useState([]);
+    const [faqLoading, setFaqLoading] = useState(true);
+
+    useEffect(() => {
+        if (!token) {
+            setFaqLoading(false);
+            return;
+        }
+        axios
+            .get(`${API_URL}/faq/public`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((res) => {
+                if (res.data?.success && Array.isArray(res.data.data)) {
+                    setFaqData(res.data.data.map((f) => ({ question: f.question, answer: f.answer })));
+                }
+            })
+            .catch(() => setFaqData([]))
+            .finally(() => setFaqLoading(false));
+    }, [token]);
 
     useEffect(() => {
         if (activeChildId) {
@@ -120,15 +169,20 @@ const ParentSupportPage = () => {
                     </div>
                 )}
 
-                {/* FAQ Placeholder */}
+                {/* FAQ Dynamic */}
                 {activeTab === 'FAQs' && (
                     <div className="space-y-2">
-                        {['How to pay fees online?', 'Change contact details?', 'Apply for leave?'].map((q, i) => (
-                            <div key={i} className="p-4 bg-white border border-gray-100 rounded-xl flex justify-between items-center text-sm font-bold text-gray-700">
-                                {q}
-                                <ChevronRight size={16} className="text-gray-300" />
+                        {faqLoading ? (
+                            <div className="flex justify-center py-8">
+                                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                             </div>
-                        ))}
+                        ) : faqData.length === 0 ? (
+                            <p className="text-sm text-gray-500 py-4 text-center">No FAQs available.</p>
+                        ) : (
+                            faqData.map((faq, i) => (
+                                <FAQItem key={i} question={faq.question} answer={faq.answer} />
+                            ))
+                        )}
                     </div>
                 )}
 

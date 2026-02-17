@@ -29,35 +29,7 @@ const SettingsCard = ({ preferences }) => {
     };
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Preferences & Security</h3>
-
-            <div>
-                <ToggleRow
-                    icon={Bell}
-                    label="Push Notifications"
-                    description="Receive alerts for class & exams"
-                    checked={true}
-                    onChange={() => handleToggle('notifications')}
-                />
-                <ToggleRow
-                    icon={Lock}
-                    label="Two-Factor Auth"
-                    description="Extra security for account"
-                    checked={true}
-                    onChange={() => handleToggle('2fa')}
-                    color="emerald"
-                />
-                <ToggleRow
-                    icon={Moon}
-                    label="Dark Mode"
-                    description="Easier on eyes"
-                    checked={false}
-                    onChange={() => handleToggle('theme')}
-                    color="gray"
-                />
-            </div>
-        </div>
+       <></>
     );
 };
 

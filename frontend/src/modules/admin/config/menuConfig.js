@@ -160,6 +160,7 @@ export const adminMenuConfig = [
         path: '/admin/settings',
         subItems: [
             { id: 'general', label: 'General Settings', path: '/admin/settings/general' },
+            { id: 'faq', label: 'FAQ Management', path: '/admin/settings/faq' },
             { id: 'integrations', label: 'Integrations', path: '/admin/settings/integrations' },
             { id: 'backup', label: 'Backup & Recovery', path: '/admin/settings/backup' }
         ]
