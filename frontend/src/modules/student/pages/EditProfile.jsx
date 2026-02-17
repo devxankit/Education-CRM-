@@ -4,6 +4,9 @@ import { Camera, Loader2, Save, User, Calendar, Droplet, ArrowLeft } from 'lucid
 import toast from 'react-hot-toast';
 import { useStudentStore } from '../../../store/studentStore';
 import { motion } from 'framer-motion';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { format, parse } from 'date-fns';
 
 const EditProfilePage = () => {
     const navigate = useNavigate();
@@ -37,7 +40,7 @@ const EditProfilePage = () => {
                 firstName: student.firstName || '',
                 middleName: student.middleName || '',
                 lastName: student.lastName || '',
-                dob: student.dob ? new Date(student.dob).toISOString().split('T')[0] : '',
+                dob: student.dob ? new Date(student.dob) : null,
                 gender: student.gender || '',
                 bloodGroup: student.bloodGroup || '',
                 nationality: student.nationality || 'Indian',
@@ -82,7 +85,12 @@ const EditProfilePage = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const success = await updateProfile(formData);
+            // Convert Date object back to ISO string for backend
+            const submitData = {
+                ...formData,
+                dob: formData.dob ? format(formData.dob, 'yyyy-MM-dd') : ''
+            };
+            const success = await updateProfile(submitData);
             if (success) {
                 toast.success("Profile updated successfully");
                 await fetchProfile();
@@ -179,18 +187,30 @@ const EditProfilePage = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
+                                <div className="space-y-1.5 flex flex-col">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Date of Birth</label>
-                                    <div className="relative">
-                                        <input
-                                            type="date"
-                                            name="dob"
-                                            value={formData.dob}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                                        />
-                                        <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-                                    </div>
+                                    <DatePicker
+                                        selected={formData.dob}
+                                        onChange={(date) => setFormData(prev => ({ ...prev, dob: date }))}
+                                        dateFormat="dd/MM/yyyy"
+                                        placeholderText="DD/MM/YYYY"
+                                        showYearDropdown
+                                        showMonthDropdown
+                                        dropdownMode="select"
+                                        todayButton="Today"
+                                        isClearable
+                                        customInput={
+                                            <div className="relative w-full">
+                                                <input
+                                                    value={formData.dob ? format(formData.dob, 'dd/MM/yyyy') : ''}
+                                                    readOnly
+                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
+                                                    placeholder="DD/MM/YYYY"
+                                                />
+                                                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                                            </div>
+                                        }
+                                    />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Gender</label>

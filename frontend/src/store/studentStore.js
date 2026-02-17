@@ -222,13 +222,30 @@ export const useStudentStore = create(
                             ? ((present + late + halfDay * 0.5) / total) * 100
                             : 0;
 
-                        // Mock subject-wise (since backend returns general attendance for now)
-                        // In a real scenario, attendance model might include subjectId
-                        const mockSubjects = [
-                            { name: 'Physics', percentage: percentage, attended: present, total: total, color: '#6366f1' },
-                            { name: 'Chemistry', percentage: percentage, attended: present, total: total, color: '#a855f7' },
-                            { name: 'Mathematics', percentage: percentage, attended: present, total: total, color: '#ec4899' }
-                        ];
+                        // Real subject-wise calculation
+                        const subjectData = {};
+                        rawData.forEach(record => {
+                            const subName = record.subjectName || "General";
+                            if (!subjectData[subName]) {
+                                subjectData[subName] = { present: 0, total: 0, teacher: record.markedBy || "TBA" };
+                            }
+                            subjectData[subName].total += 1;
+                            if (['Present', 'Late', 'Half-Day'].includes(record.status)) {
+                                const weight = record.status === 'Half-Day' ? 0.5 : 1;
+                                subjectData[subName].present += weight;
+                            }
+                        });
+
+                        const subjectColors = ['#6366f1', '#a855f7', '#ec4899', '#f97316', '#10b981', '#06b6d4'];
+                        const subjects = Object.entries(subjectData).map(([name, stats], idx) => ({
+                            name,
+                            teacher: stats.teacher,
+                            present: stats.present,
+                            total: stats.total,
+                            percentage: Math.round((stats.present / stats.total) * 100),
+                            color: subjectColors[idx % subjectColors.length],
+                            riskLevel: Math.round((stats.present / stats.total) * 100) < 70 ? 'high' : 'normal'
+                        }));
 
                         const structuredData = {
                             overall: {
@@ -236,7 +253,7 @@ export const useStudentStore = create(
                                 totalClasses: total,
                                 present: present + late + halfDay,
                                 absent: absent,
-                                trend: '+2%'
+                                trend: '+0%'
                             },
                             eligibility: {
                                 status: percentage >= 75 ? 'Eligible' : (percentage >= 70 ? 'Warning' : 'At Risk'),
@@ -244,16 +261,16 @@ export const useStudentStore = create(
                                 current: Math.round(percentage),
                                 message: percentage >= 75 ? "You're doing great! Keep it up." : "Try to attend more classes."
                             },
-                            subjects: mockSubjects,
-                            monthlyLog: [
-                                { month: 'Current', present: present, total: total }
-                            ],
+                            subjects: subjects,
+                            monthlyLog: rawData,
                             history: rawData.map(r => ({
                                 id: r._id,
                                 date: new Date(r.date).toLocaleDateString(),
                                 day: new Date(r.date).toLocaleDateString('en-US', { weekday: 'long' }),
                                 status: r.status,
-                                time: "09:00 AM", // Placeholder
+                                time: "N/A",
+                                subject: r.subjectName,
+                                markedBy: r.markedBy,
                                 type: "Lecture"
                             }))
                         };

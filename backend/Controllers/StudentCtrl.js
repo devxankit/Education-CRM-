@@ -912,6 +912,8 @@ export const getMyAttendance = async (req, res) => {
         const attendanceRecords = await Attendance.find(query)
             .populate("classId", "name")
             .populate("sectionId", "name")
+            .populate("subjectId", "name code")
+            .populate("teacherId", "firstName lastName")
             .sort({ date: -1 });
 
         // Transform data to only show this student's status for each date
@@ -924,6 +926,10 @@ export const getMyAttendance = async (req, res) => {
                 date: record.date,
                 className: record.classId?.name,
                 sectionName: record.sectionId?.name,
+                subjectId: record.subjectId?._id,
+                subjectName: record.subjectId?.name || "General",
+                subjectCode: record.subjectId?.code,
+                markedBy: record.teacherId ? `${record.teacherId.firstName} ${record.teacherId.lastName}` : "System",
                 status: myEntry ? myEntry.status : "N/A",
                 remarks: myEntry ? myEntry.remarks : ""
             };

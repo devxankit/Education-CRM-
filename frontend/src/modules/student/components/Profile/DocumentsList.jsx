@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { FileText, Download, ShieldCheck, Eye } from 'lucide-react';
+import DocumentViewerModal from '../Documents/DocumentViewerModal';
 
 const DocumentsList = ({ documents }) => {
-    const handleView = (url) => {
-        if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    const [selectedDoc, setSelectedDoc] = useState(null);
+
+    const handleView = (doc) => {
+        if (doc?.url) {
+            const validDate = doc.size && doc.size !== 'Uploaded' && !isNaN(Date.parse(doc.size)) ? doc.size : undefined;
+            const modalDoc = {
+                ...doc,
+                permissions: doc.permissions || { view: true, download: true },
+                date: validDate || doc.date,
+            };
+            setSelectedDoc(modalDoc);
+        }
     };
 
     const handleDownload = async (url, name) => {
@@ -79,7 +91,7 @@ const DocumentsList = ({ documents }) => {
                             <div className="flex items-center gap-1 shrink-0">
                                 <button
                                     type="button"
-                                    onClick={() => handleView(doc.url)}
+                                    onClick={() => handleView(doc)}
                                     className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
                                     title="View"
                                 >
@@ -104,6 +116,15 @@ const DocumentsList = ({ documents }) => {
                     View Full Document Vault →
                 </a>
             </div>
+
+            <AnimatePresence>
+                {selectedDoc && (
+                    <DocumentViewerModal
+                        doc={selectedDoc}
+                        onClose={() => setSelectedDoc(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
