@@ -5,8 +5,10 @@ import {
     updateTeacher,
     loginTeacher,
     getTeacherProfile,
+    updateTeacherProfile,
     getTeacherClasses,
     getClassStudents,
+    getStudentDetail,
     createHomework,
     getHomeworks,
     getHomeworkById,
@@ -23,7 +25,11 @@ import {
     getHomeworkSubmissions,
     gradeSubmission,
     getTeacherAnalytics,
-    getTeacherPayrollHistory
+    getTeacherPayrollHistory,
+    getTeacherAcademicYears,
+    markClassCompletion,
+    getClassCompletions,
+    getTodayClassesWithCompletion
 } from "../Controllers/TeacherCtrl.js";
 import {
     getTeacherSupportTickets,
@@ -47,12 +53,15 @@ router.post("/login", loginTeacher);
 // Protected routes
 router.use(AuthMiddleware);
 
-// Teacher/Staff specific routes
+// Teacher/Staff specific routes (static paths must come before /:id)
 router.get("/profile", isTeacher, getTeacherProfile);
+router.get("/academic-years", isTeacher, getTeacherAcademicYears);
+router.put("/profile/update", isTeacher, updateTeacherProfile);
 router.get("/dashboard", isTeacher, getTeacherDashboard);
 router.get("/payroll", isTeacher, getTeacherPayrollHistory);
 router.get("/classes", isTeacher, getTeacherClasses);
 router.get("/students", isTeacher, getClassStudents);
+router.get("/students/:studentId", isTeacher, getStudentDetail);
 router.post("/homework", isTeacher, createHomework);
 router.get("/homework", isTeacher, getHomeworks);
 router.get("/homework/:id", isTeacher, getHomeworkById);
@@ -80,6 +89,11 @@ router.get("/support/my-tickets", isTeacher, getTeacherOwnTickets);
 
 // Analytics
 router.get("/analytics", isTeacher, getTeacherAnalytics);
+
+// Class Completion routes
+router.post("/class-completion", isTeacher, markClassCompletion);
+router.get("/class-completion", isTeacher, getClassCompletions);
+router.get("/today-classes", isTeacher, getTodayClassesWithCompletion);
 
 // Management routes
 router.post("/", isAdmin, createTeacher);

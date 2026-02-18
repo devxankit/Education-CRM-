@@ -82,7 +82,7 @@ const SubjectsGrid = ({ subjects }) => {
         }, gridRef);
 
         return () => {
-            ctx.revert();
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
         };
     }, [subjects]);
 

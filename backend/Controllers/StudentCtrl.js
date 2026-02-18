@@ -1040,20 +1040,36 @@ export const getStudentFees = async (req, res) => {
 export const getMyNotices = async (req, res) => {
     try {
         const studentId = req.user._id;
-        const student = await Student.findById(studentId);
+        const student = await Student.findById(studentId).populate("classId", "academicYearId");
 
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
 
-        const notices = await Notice.find({
-            status: "PUBLISHED",
-            $or: [
-                { audiences: "All Students" },
-                { targetClasses: student.classId },
-                { targetSections: student.sectionId }
-            ]
-        })
+        const studentBranchId = student.branchId?._id || student.branchId;
+        const studentAyId = student.classId?.academicYearId || student.academicYearId;
+
+        const andConditions = [
+            { instituteId: student.instituteId },
+            { status: "PUBLISHED" },
+            {
+                $or: [
+                    { audiences: "All Students" },
+                    { targetClasses: student.classId },
+                    { targetSections: student.sectionId }
+                ]
+            }
+        ];
+
+        // Branch filter: notice for this branch or institute-wide (branchId null)
+        andConditions.push({ $or: [{ branchId: studentBranchId }, { branchId: null }] });
+
+        // Academic year filter: notice for this year or all years (academicYearId null)
+        if (studentAyId) {
+            andConditions.push({ $or: [{ academicYearId: studentAyId }, { academicYearId: null }] });
+        }
+
+        const notices = await Notice.find({ $and: andConditions })
             .populate("branchId", "name")
             .sort({ publishDate: -1 });
 

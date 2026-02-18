@@ -18,7 +18,20 @@ const ProfilePage = () => {
     const assignedClasses = useTeacherStore(state => state.assignedClasses);
     const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
     const logout = useTeacherStore(state => state.logout);
+    const uploadProfilePhoto = useTeacherStore(state => state.uploadProfilePhoto);
     const isFetchingProfile = useTeacherStore(state => state.isFetchingProfile);
+    const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
+
+    const handlePhotoUpload = async (base64) => {
+        setIsUploadingPhoto(true);
+        const result = await uploadProfilePhoto(base64);
+        setIsUploadingPhoto(false);
+        if (result?.success) {
+            // Profile updated in store; optional: show toast
+        } else if (result?.message) {
+            alert(result.message);
+        }
+    };
 
     // Fetch Initial Data
     useEffect(() => {
@@ -119,7 +132,11 @@ const ProfilePage = () => {
             <main className="max-w-md mx-auto px-4 pt-4">
 
                 <div className="profile-section">
-                    <ProfileSummaryCard profile={profile} />
+                    <ProfileSummaryCard
+                        profile={profile}
+                        onPhotoUpload={handlePhotoUpload}
+                        isUploading={isUploadingPhoto}
+                    />
                 </div>
 
                 <div className="profile-section">

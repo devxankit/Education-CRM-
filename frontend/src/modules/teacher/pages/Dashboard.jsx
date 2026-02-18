@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import { Loader2 } from 'lucide-react';
 import { useTeacherStore } from '../../../store/teacherStore';
+import { getTodayClassesWithCompletion } from '../services/classCompletion.api';
 
 // Components
 import TeacherHeader from '../components/common/TeacherHeader';
@@ -21,11 +22,29 @@ const TeacherDashboard = () => {
     const fetchDashboard = useTeacherStore(state => state.fetchDashboard);
     const fetchProfile = useTeacherStore(state => state.fetchProfile);
     const isFetchingDashboard = useTeacherStore(state => state.isFetchingDashboard);
+    const [todayClasses, setTodayClasses] = useState([]);
+    const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+
+    // Fetch today's classes with completion status
+    const fetchTodayClasses = async () => {
+        setIsLoadingClasses(true);
+        try {
+            const response = await getTodayClassesWithCompletion();
+            if (response.success) {
+                setTodayClasses(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching today classes:', error);
+        } finally {
+            setIsLoadingClasses(false);
+        }
+    };
 
     // Fetch dashboard data on mount
     useEffect(() => {
         fetchProfile();
         fetchDashboard();
+        fetchTodayClasses();
     }, [fetchProfile, fetchDashboard]);
 
     // Dynamic Pending Actions
@@ -68,8 +87,9 @@ const TeacherDashboard = () => {
         date: new Date(notice.publishDate || notice.createdAt).toLocaleDateString()
     }));
 
-    // Format today's classes from real timetable data
-    const todayClasses = dashboardData?.todayClasses || [];
+    // Use todayClasses from state (fetched from new endpoint with completion status)
+    // Fallback to dashboardData if state is empty
+    const displayTodayClasses = todayClasses.length > 0 ? todayClasses : (dashboardData?.todayClasses || []);
 
     const performanceStats = {
         attendanceCompletion: 85,
@@ -122,7 +142,7 @@ const TeacherDashboard = () => {
                 <PayrollHistoryCard />
 
                 {/* 4. Today's Classes/Subjects (Core) */}
-                <TodayClassesCard classes={todayClasses} />
+                <TodayClassesCard classes={displayTodayClasses} onRefresh={fetchTodayClasses} />
 
                 {/* 5. Quick Actions (Thumb Zone) */}
                 <QuickActionsRow />

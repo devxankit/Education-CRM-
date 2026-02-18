@@ -25,8 +25,20 @@ export const getExams = asyncHandler(async (req, res) => {
         .populate("academicYearId", "name")
         .populate("subjects.subjectId", "name code")
         .sort({ startDate: -1 });
+    
+    // Filter out null values from populated arrays (in case classes/courses were deleted)
+    const examsWithFilteredClasses = exams.map(exam => {
+        const examObj = exam.toObject ? exam.toObject() : exam;
+        if (examObj.classes && Array.isArray(examObj.classes)) {
+            examObj.classes = examObj.classes.filter(cls => cls !== null && cls !== undefined);
+        }
+        if (examObj.courses && Array.isArray(examObj.courses)) {
+            examObj.courses = examObj.courses.filter(crs => crs !== null && crs !== undefined);
+        }
+        return examObj;
+    });
 
-    res.status(200).json({ success: true, data: exams });
+    res.status(200).json({ success: true, data: examsWithFilteredClasses });
 });
 
 /**

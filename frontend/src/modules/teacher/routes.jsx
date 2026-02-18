@@ -19,6 +19,7 @@ import TeacherHelpPage from './pages/TeacherHelp';
 import HomeworkDetailPage from './pages/HomeworkDetail';
 import SubmissionsPage from './pages/Submissions';
 import ClassDetailPage from './pages/ClassDetail';
+import StudentDetailPage from './pages/StudentDetail';
 import ExamDetailPage from './pages/ExamDetail';
 import TeacherPayroll from './pages/Payroll';
 
@@ -41,6 +42,7 @@ const teacherRoutes = [
                             { path: 'my-attendance', element: <MyAttendance /> },
                             { path: 'classes', element: <ClassesPage /> },
 
+                            { path: 'classes/:id/student/:studentId', element: <StudentDetailPage /> },
                             { path: 'classes/:id', element: <ClassDetailPage /> },
                             { path: 'attendance', element: <AttendancePage /> },
                             { path: 'homework', element: <HomeworkPage /> },

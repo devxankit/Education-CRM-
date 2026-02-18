@@ -9,11 +9,23 @@ const AttendanceRow = ({ student, status, onStatusChange, disabled }) => {
         'Leave': { color: 'bg-amber-50 text-amber-600 border-amber-200', icon: Clock },
     };
 
+    const getInitials = () => {
+        const first = (student.firstName || '').trim();
+        const last = (student.lastName || '').trim();
+        if (first && last) return (first.charAt(0) + last.charAt(0)).toUpperCase();
+        const name = first || last || student.name || '';
+        return name.charAt(0).toUpperCase() || '?';
+    };
+
     return (
         <div className="flex items-center justify-between gap-3 p-3 bg-white border border-gray-100 rounded-xl mb-2 hover:border-indigo-100 transition-all">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0 overflow-hidden" title={student.roll}>
-                    {student.roll?.length <= 6 ? student.roll : (student.roll?.slice(-6) || '—')}
+                <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 text-sm font-bold flex items-center justify-center shrink-0 overflow-hidden" title={student.name}>
+                    {student.photo ? (
+                        <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
+                    ) : (
+                        getInitials()
+                    )}
                 </div>
                 <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-bold text-gray-900 leading-tight truncate">{student.name}</h4>

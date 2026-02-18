@@ -1,16 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Calendar, FileText, CheckCircle, Loader2, Clock, XCircle, CreditCard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, FileText, CheckCircle, Loader2, XCircle, Clock, CreditCard, Banknote } from 'lucide-react';
 import { useTeacherStore } from '../../../store/teacherStore';
 
+const MONTHS = [
+    { value: 0, label: 'All Months' },
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+];
+
 const TeacherPayroll = () => {
+    const navigate = useNavigate();
     const { user, payrollHistory, fetchPayrollHistory, isFetchingPayroll } = useTeacherStore();
 
-    // Optional: Client-side filtering
-    const [filterYear, setFilterYear] = useState('All');
+    const [filterYear, setFilterYear] = useState('all');
+    const [filterMonth, setFilterMonth] = useState(0);
 
     useEffect(() => {
         fetchPayrollHistory();
     }, [fetchPayrollHistory]);
+
+    const history = payrollHistory || [];
 
     const getStatusBadge = (status) => {
         const badges = {
@@ -22,7 +42,7 @@ const TeacherPayroll = () => {
         const badge = badges[status] || badges.draft;
         const Icon = badge.icon;
         return (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${badge.bg} ${badge.text}`}>
                 <Icon size={12} />
                 {badge.label}
             </span>
@@ -41,10 +61,7 @@ const TeacherPayroll = () => {
             <head>
                 <title>Salary Payslip - ${employeeName}</title>
                 <style>
-                    @media print {
-                        body { margin: 0; padding: 20px; }
-                        .no-print { display: none; }
-                    }
+                    @media print { body { margin: 0; padding: 20px; } .no-print { display: none; } }
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body { font-family: 'Arial', sans-serif; padding: 30px; background: #f5f5f5; }
                     .payslip-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
@@ -80,11 +97,8 @@ const TeacherPayroll = () => {
                     <div class="header">
                         <h1>SALARY PAYSLIP</h1>
                         <p>For the month of ${monthName} ${payroll.year}</p>
-                        <div class="company-info">
-                            <p><strong>Generated On:</strong> ${currentDate}</p>
-                        </div>
+                        <div class="company-info"><p><strong>Generated On:</strong> ${currentDate}</p></div>
                     </div>
-
                     <div class="payslip-info">
                         <div class="info-section">
                             <h3>Employee Information</h3>
@@ -99,68 +113,27 @@ const TeacherPayroll = () => {
                             ${payroll.transactionId ? `<p><strong>Transaction ID:</strong> ${payroll.transactionId}</p>` : ''}
                         </div>
                     </div>
-
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Earnings</th>
-                                <th class="text-right">Amount (₹)</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Earnings</th><th class="text-right">Amount (₹)</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td>Basic Salary</td>
-                                <td class="text-right">${payroll.basicSalary?.toLocaleString() || '0'}</td>
-                            </tr>
-                            ${payroll.components?.filter(c => c.type === 'earning').map(c => `
-                                <tr>
-                                    <td>${c.name}</td>
-                                    <td class="text-right earning">+ ${c.amount?.toLocaleString() || '0'}</td>
-                                </tr>
-                            `).join('')}
-                            <tr class="total-row">
-                                <td><strong>Total Earnings</strong></td>
-                                <td class="text-right earning"><strong>${payroll.totalEarnings?.toLocaleString() || '0'}</strong></td>
-                            </tr>
+                            <tr><td>Basic Salary</td><td class="text-right">${payroll.basicSalary?.toLocaleString() || '0'}</td></tr>
+                            ${(payroll.components || []).filter(c => c.type === 'earning').map(c => `<tr><td>${c.name}</td><td class="text-right earning">+ ${c.amount?.toLocaleString() || '0'}</td></tr>`).join('')}
+                            <tr class="total-row"><td><strong>Total Earnings</strong></td><td class="text-right earning"><strong>${payroll.totalEarnings?.toLocaleString() || '0'}</strong></td></tr>
                         </tbody>
                     </table>
-
                     <table style="margin-top: 20px;">
-                        <thead>
-                            <tr>
-                                <th>Deductions</th>
-                                <th class="text-right">Amount (₹)</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Deductions</th><th class="text-right">Amount (₹)</th></tr></thead>
                         <tbody>
-                            ${payroll.components?.filter(c => c.type === 'deduction').length > 0 ? payroll.components.filter(c => c.type === 'deduction').map(c => `
-                                <tr>
-                                    <td>${c.name}</td>
-                                    <td class="text-right deduction">- ${c.amount?.toLocaleString() || '0'}</td>
-                                </tr>
-                            `).join('') : '<tr><td colspan="2" style="text-align: center; color: #999;">No deductions</td></tr>'}
-                            ${payroll.lopAmount > 0 ? `
-                                <tr>
-                                    <td>Loss of Pay (LOP) - ${payroll.leaveDays} days</td>
-                                    <td class="text-right deduction">- ${payroll.lopAmount?.toLocaleString() || '0'}</td>
-                                </tr>
-                            ` : ''}
-                            <tr class="total-row">
-                                <td><strong>Total Deductions</strong></td>
-                                <td class="text-right deduction"><strong>${payroll.totalDeductions?.toLocaleString() || '0'}</strong></td>
-                            </tr>
+                            ${(payroll.components || []).filter(c => c.type === 'deduction').length > 0 ? (payroll.components || []).filter(c => c.type === 'deduction').map(c => `<tr><td>${c.name}</td><td class="text-right deduction">- ${c.amount?.toLocaleString() || '0'}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align: center; color: #999;">No deductions</td></tr>'}
+                            ${payroll.lopAmount > 0 ? `<tr><td>Loss of Pay (LOP) - ${payroll.leaveDays} days</td><td class="text-right deduction">- ${payroll.lopAmount?.toLocaleString() || '0'}</td></tr>` : ''}
+                            <tr class="total-row"><td><strong>Total Deductions</strong></td><td class="text-right deduction"><strong>${payroll.totalDeductions?.toLocaleString() || '0'}</strong></td></tr>
                         </tbody>
                     </table>
-
                     <table style="margin-top: 20px;">
                         <tbody>
-                            <tr class="net-salary-row">
-                                <td><strong>NET SALARY (IN-HAND)</strong></td>
-                                <td class="text-right"><strong>₹${payroll.netSalary?.toLocaleString() || '0'}</strong></td>
-                            </tr>
+                            <tr class="net-salary-row"><td><strong>NET SALARY (IN-HAND)</strong></td><td class="text-right"><strong>₹${payroll.netSalary?.toLocaleString() || '0'}</strong></td></tr>
                         </tbody>
                     </table>
-
                     <div class="footer">
                         <p>This is a computer-generated payslip and does not require a signature.</p>
                         <p style="margin-top: 10px;">For any queries, please contact the HR department.</p>
@@ -171,156 +144,182 @@ const TeacherPayroll = () => {
         `;
     };
 
-    const handleGenerateInvoice = (payroll) => {
-        const invoiceWindow = window.open('', '_blank');
-        const invoiceHTML = generateInvoiceHTML(payroll);
-        invoiceWindow.document.write(invoiceHTML);
-        invoiceWindow.document.close();
-        // invoiceWindow.print(); // Optional: Auto print
+    const handleViewPayslip = (payroll) => {
+        const w = window.open('', '_blank');
+        w.document.write(generateInvoiceHTML(payroll));
+        w.document.close();
     };
 
-    // Filter logic
-    const filteredPayrolls = filterYear === 'All'
-        ? payrollHistory
-        : payrollHistory.filter(p => p.year === parseInt(filterYear));
+    // Filter by year + month
+    const filteredPayrolls = history.filter(p => {
+        if (filterYear !== 'all' && p.year !== parseInt(filterYear)) return false;
+        if (filterMonth > 0 && p.month !== filterMonth) return false;
+        return true;
+    });
 
-    // Get unique years for filter
-    const uniqueYears = [...new Set(payrollHistory.map(p => p.year))].sort((a, b) => b - a);
+    const uniqueYears = [...new Set(history.map(p => p.year))].sort((a, b) => b - a);
+    const yearOptions = uniqueYears.length > 0 ? uniqueYears : [new Date().getFullYear(), new Date().getFullYear() - 1];
 
-    if (isFetchingPayroll && payrollHistory.length === 0) {
+    const selectedMonthName = filterMonth > 0 ? MONTHS.find(m => m.value === filterMonth)?.label : null;
+    const selectedYear = filterYear !== 'all' ? filterYear : null;
+
+    if (isFetchingPayroll && history.length === 0) {
         return (
-            <div className="h-full flex items-center justify-center">
-                <Loader2 className="animate-spin text-indigo-500" size={32} />
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+                <p className="text-gray-500 font-medium">Loading payroll...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 pb-20 p-6">
-            <div className="max-w-5xl mx-auto">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">My Payroll History</h1>
-                        <p className="text-gray-500">Track all your earnings, deductions, and payslips</p>
-                    </div>
-
-                    {uniqueYears.length > 0 && (
-                        <select
-                            value={filterYear}
-                            onChange={(e) => setFilterYear(e.target.value)}
-                            className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500"
+        <div className="min-h-screen bg-gray-50/50 pb-28">
+            {/* Header */}
+            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 py-4 px-4 shadow-sm">
+                <div className="flex items-center justify-between max-w-2xl mx-auto">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 -ml-2 rounded-full hover:bg-gray-100 active:scale-95 transition-transform text-gray-700"
                         >
-                            <option value="All">All Years</option>
-                            {uniqueYears.map(year => (
-                                <option key={year} value={year}>{year}</option>
-                            ))}
-                        </select>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <div>
+                            <h1 className="text-lg font-bold text-gray-900">Payroll</h1>
+                            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Salary & Payslips</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main className="max-w-2xl mx-auto px-4 pt-4 pb-6">
+                {/* Year & Month Filter */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">View Salary By</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-500 mb-1.5">Year</label>
+                            <select
+                                value={filterYear}
+                                onChange={(e) => setFilterYear(e.target.value)}
+                                className="w-full py-2.5 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                            >
+                                <option value="all">All Years</option>
+                                {yearOptions.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-500 mb-1.5">Month</label>
+                            <select
+                                value={filterMonth}
+                                onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                                className="w-full py-2.5 px-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                            >
+                                {MONTHS.map(m => (
+                                    <option key={m.value} value={m.value}>{m.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    {(filterYear !== 'all' || filterMonth > 0) && (
+                        <button
+                            onClick={() => { setFilterYear('all'); setFilterMonth(0); }}
+                            className="mt-3 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                        >
+                            Clear filters
+                        </button>
                     )}
                 </div>
 
+                {/* Content */}
                 {filteredPayrolls.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                            <FileText size={40} className="text-gray-400" />
+                    <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                            <Banknote className="text-gray-400" size={32} />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No Payroll Records Found</h3>
-                        <p className="text-gray-500">Your payroll history will appear here once processed.</p>
+                        <h3 className="text-base font-bold text-gray-900 mb-1">No Salary Record</h3>
+                        <p className="text-sm text-gray-500">
+                            {selectedMonthName && selectedYear
+                                ? `No payroll found for ${selectedMonthName} ${selectedYear}.`
+                                : 'Your salary records will appear here once processed.'}
+                        </p>
                     </div>
                 ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         {filteredPayrolls.map((payroll) => {
                             const monthName = new Date(payroll.year, payroll.month - 1).toLocaleString('default', { month: 'long' });
-
                             return (
                                 <div
                                     key={payroll._id}
-                                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                                 >
-                                    {/* Card Header */}
-                                    <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                                                <Calendar size={24} />
+                                    <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                                                <Calendar className="text-indigo-600" size={20} />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-900">
-                                                    {monthName} {payroll.year}
-                                                </h3>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded">
-                                                        {payroll.financialYear}
-                                                    </span>
+                                                <h3 className="text-base font-bold text-gray-900">{monthName} {payroll.year}</h3>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    {payroll.financialYear && (
+                                                        <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                                                            FY {payroll.financialYear}
+                                                        </span>
+                                                    )}
                                                     {getStatusBadge(payroll.status)}
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center gap-3">
-                                            {(payroll.status === 'paid' || payroll.status === 'approved') && (
-                                                <button
-                                                    onClick={() => handleGenerateInvoice(payroll)}
-                                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                                                >
-                                                    <FileText size={16} />
-                                                    View Payslip
-                                                </button>
-                                            )}
-                                        </div>
+                                        {(payroll.status === 'paid' || payroll.status === 'approved') && (
+                                            <button
+                                                onClick={() => handleViewPayslip(payroll)}
+                                                className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors"
+                                            >
+                                                <FileText size={14} />
+                                                Payslip
+                                            </button>
+                                        )}
                                     </div>
 
-                                    {/* Card Body */}
-                                    <div className="p-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                            {/* Basic Salary */}
-                                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                                                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Basic Salary</p>
-                                                <p className="text-xl font-bold text-gray-900">₹{payroll.basicSalary?.toLocaleString()}</p>
+                                    <div className="p-4">
+                                        <div className="grid grid-cols-2 gap-3 mb-4">
+                                            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Basic</p>
+                                                <p className="text-lg font-bold text-gray-900">₹{(payroll.basicSalary || 0).toLocaleString()}</p>
                                             </div>
-
-                                            {/* Total Earnings */}
-                                            <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-                                                <p className="text-xs font-semibold text-green-600 uppercase mb-1">Total Earnings</p>
-                                                <p className="text-xl font-bold text-green-700">₹{payroll.totalEarnings?.toLocaleString()}</p>
+                                            <div className="p-3 rounded-xl bg-green-50 border border-green-100">
+                                                <p className="text-[10px] font-bold text-green-600 uppercase mb-0.5">Earnings</p>
+                                                <p className="text-lg font-bold text-green-700">₹{(payroll.totalEarnings || 0).toLocaleString()}</p>
                                             </div>
-
-                                            {/* Total Deductions */}
-                                            <div className="bg-red-50 rounded-lg p-4 border border-red-100">
-                                                <p className="text-xs font-semibold text-red-600 uppercase mb-1">Total Deductions</p>
-                                                <p className="text-xl font-bold text-red-700">₹{payroll.totalDeductions?.toLocaleString()}</p>
+                                            <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                                                <p className="text-[10px] font-bold text-red-600 uppercase mb-0.5">Deductions</p>
+                                                <p className="text-lg font-bold text-red-700">₹{(payroll.totalDeductions || 0).toLocaleString()}</p>
                                             </div>
-
-                                            {/* Net Salary */}
-                                            <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200 ring-2 ring-indigo-100">
-                                                <p className="text-xs font-semibold text-indigo-600 uppercase mb-1">Net Salary</p>
-                                                <p className="text-2xl font-bold text-indigo-700">₹{payroll.netSalary?.toLocaleString()}</p>
+                                            <div className="p-3 rounded-xl bg-indigo-50 border-2 border-indigo-200">
+                                                <p className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">Net Salary</p>
+                                                <p className="text-xl font-bold text-indigo-700">₹{(payroll.netSalary || 0).toLocaleString()}</p>
                                             </div>
                                         </div>
 
-                                        {/* Footer Details */}
-                                        <div className="mt-6 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                        <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-3 border-t border-gray-100">
                                             {payroll.paymentDate && (
-                                                <div className="flex items-center gap-2">
-                                                    <Clock size={16} className="text-gray-400" />
-                                                    <span>Paid on: <span className="font-semibold text-gray-900">{new Date(payroll.paymentDate).toLocaleDateString()}</span></span>
-                                                </div>
+                                                <span className="flex items-center gap-1.5">
+                                                    <Clock size={12} /> Paid: {new Date(payroll.paymentDate).toLocaleDateString('en-IN')}
+                                                </span>
                                             )}
                                             {payroll.paymentMethod && (
-                                                <div className="flex items-center gap-2">
-                                                    <CreditCard size={16} className="text-gray-400" />
-                                                    <span>Via: <span className="font-semibold text-gray-900 uppercase">{payroll.paymentMethod.replace('_', ' ')}</span></span>
-                                                </div>
-                                            )}
-                                            {payroll.transactionId && (
-                                                <div className="flex items-center gap-2">
-                                                    <FileText size={16} className="text-gray-400" />
-                                                    <span>Txn ID: <span className="font-mono text-gray-900">{payroll.transactionId}</span></span>
-                                                </div>
+                                                <span className="flex items-center gap-1.5">
+                                                    <CreditCard size={12} /> {payroll.paymentMethod.replace('_', ' ').toUpperCase()}
+                                                </span>
                                             )}
                                             {payroll.leaveDays > 0 && (
-                                                <div className="flex items-center gap-2 text-amber-600">
-                                                    <Calendar size={16} />
-                                                    <span>LOP Deduction: {payroll.leaveDays} Days (₹{payroll.lopAmount?.toLocaleString()})</span>
-                                                </div>
+                                                <span className="text-amber-600 font-medium">
+                                                    LOP: {payroll.leaveDays} days (−₹{(payroll.lopAmount || 0).toLocaleString()})
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -329,7 +328,7 @@ const TeacherPayroll = () => {
                         })}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 };

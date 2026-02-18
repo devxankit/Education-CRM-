@@ -55,13 +55,40 @@ const ResultDetailModal = ({ result, onClose }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {(result.subjects || []).map((sub, i) => (
-                                    <tr key={i}>
-                                        <td className="px-4 py-3 font-medium text-gray-800">{sub.name}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{sub.marks} <span className="text-[10px] text-gray-400">/ {sub.total}</span></td>
-                                        <td className="px-4 py-3 text-right font-bold text-gray-900">{sub.grade}</td>
+                                {result.subjects && result.subjects.length > 0 ? (
+                                    result.subjects.map((sub, i) => (
+                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3 font-medium text-gray-800">{sub.name}</td>
+                                            <td className="px-4 py-3 text-center text-gray-600">
+                                                {sub.marks || 0} <span className="text-[10px] text-gray-400">/ {sub.total || 0}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className={`font-bold ${
+                                                    sub.status === 'Pass' ? 'text-emerald-600' : 
+                                                    sub.status === 'Fail' ? 'text-red-600' : 
+                                                    'text-gray-900'
+                                                }`}>
+                                                    {sub.grade || 'N/A'}
+                                                </span>
+                                                {sub.status && (
+                                                    <span className={`ml-2 text-[10px] px-2 py-0.5 rounded ${
+                                                        sub.status === 'Pass' ? 'bg-emerald-50 text-emerald-600' : 
+                                                        sub.status === 'Fail' ? 'bg-red-50 text-red-600' : 
+                                                        'bg-gray-50 text-gray-600'
+                                                    }`}>
+                                                        {sub.status}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="3" className="px-4 py-8 text-center text-gray-400 text-sm">
+                                            No subject results available
+                                        </td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>

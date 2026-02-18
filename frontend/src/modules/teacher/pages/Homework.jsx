@@ -24,6 +24,7 @@ const HomeworkPage = () => {
     const [activeTab, setActiveTab] = useState('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [filteredHomework, setFilteredHomework] = useState([]);
+    const [selectedClassFilter, setSelectedClassFilter] = useState(null); // { classId, sectionId, label } or null for All
 
     // Smooth Scroll
     useEffect(() => {
@@ -40,47 +41,71 @@ const HomeworkPage = () => {
         return () => lenis.destroy();
     }, []);
 
-    // Fetch Homework on Mount
+    // Fetch assigned classes for form + class filter options
     useEffect(() => {
-        fetchHomeworkList();
-        if (assignedClasses.length === 0) {
-            fetchAssignedClasses();
-        }
-    }, [fetchHomeworkList, fetchAssignedClasses, assignedClasses.length]);
+        fetchAssignedClasses(true);
+    }, [fetchAssignedClasses]);
 
-    // Filter Logic
+    // Fetch Homework (with class filter when selected)
     useEffect(() => {
+        const params = selectedClassFilter
+            ? { classId: selectedClassFilter.classId, sectionId: selectedClassFilter.sectionId }
+            : {};
+        fetchHomeworkList(params);
+    }, [fetchHomeworkList, selectedClassFilter]);
+
+    // Filter Logic: All | Active (published + due not passed) | Past (published + due passed) | Drafts
+    useEffect(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const filtered = homeworkList.filter(hw => {
+            const due = hw.dueDate ? new Date(hw.dueDate) : null;
+            const isDraft = hw.status === 'draft' || hw.status === 'Draft';
+            const isPublished = hw.status === 'published' || hw.status === 'Active';
+            const isPastDue = due && due < today;
+
             if (activeTab === 'all') return true;
-            if (activeTab === 'active') return hw.status === 'published' || hw.status === 'Active';
-            if (activeTab === 'past') return hw.status === 'Closed' || hw.status === 'archived';
-            if (activeTab === 'draft') return hw.status === 'draft' || hw.status === 'Draft';
+            if (activeTab === 'active') return isPublished && !isPastDue;
+            if (activeTab === 'past') return isPublished && isPastDue;
+            if (activeTab === 'draft') return isDraft;
             return true;
         });
         setFilteredHomework(filtered);
     }, [activeTab, homeworkList]);
 
-    // Animation on Filter Change
+    // Animation on Filter Change (with cleanup)
     useEffect(() => {
-        if (listRef.current) {
-            gsap.fromTo(listRef.current.children,
+        const el = listRef.current;
+        if (!el) return;
+        const ctx = gsap.context(() => {
+            gsap.fromTo(el.children,
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out' }
             );
-        }
+        }, el);
+        return () => { try { ctx.revert(); } catch (_) { /* ignore */ } };
     }, [filteredHomework]);
 
-    // Flatten mappings for the form
-    const flatMappings = assignedClasses.flatMap(sub =>
-        sub.classes.map(cls => ({
-            id: `${sub.subjectId}_${cls.classId}_${cls.sectionId}`,
-            subjectId: sub.subjectId,
-            subjectName: sub.subjectName,
-            classId: cls.classId,
-            sectionId: cls.sectionId,
-            className: cls.fullClassName,
-            students: 0
-        }))
+    // Flatten mappings for the form - only assigned subjects (exclude "Class Teacher" for homework)
+    const flatMappings = assignedClasses
+        .filter(sub => sub.subjectId != null)
+        .flatMap(sub =>
+            sub.classes.map(cls => ({
+                id: `${sub.subjectId}_${cls.classId}_${cls.sectionId}`,
+                subjectId: sub.subjectId,
+                subjectName: sub.subjectName,
+                classId: cls.classId,
+                sectionId: cls.sectionId,
+                className: cls.fullClassName,
+                students: 0
+            }))
+        );
+
+    // Unique classes for filter dropdown (from flatMappings, deduped by classId_sectionId)
+    const classFilterOptions = Array.from(
+        new Map(
+            flatMappings.map(m => [`${m.classId}_${m.sectionId}`, { classId: m.classId, sectionId: m.sectionId, label: m.className }])
+        ).values()
     );
 
     return (
@@ -112,7 +137,34 @@ const HomeworkPage = () => {
                 {/* 1. Tabs */}
                 <HomeworkTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-                {/* 2. Homework List */}
+                {/* 2. Class Filter */}
+                {classFilterOptions.length > 0 && (
+                    <div className="mt-3 flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Class</span>
+                        <select
+                            value={selectedClassFilter ? `${selectedClassFilter.classId}_${selectedClassFilter.sectionId}` : ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                if (!v) {
+                                    setSelectedClassFilter(null);
+                                    return;
+                                }
+                                const opt = classFilterOptions.find(o => `${o.classId}_${o.sectionId}` === v);
+                                if (opt) setSelectedClassFilter(opt);
+                            }}
+                            className="flex-1 py-2 px-3 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M6%208L1%203h10z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px] bg-[right_0.75rem_center] bg-no-repeat pr-9"
+                        >
+                            <option value="">All Classes</option>
+                            {classFilterOptions.map((opt) => (
+                                <option key={`${opt.classId}_${opt.sectionId}`} value={`${opt.classId}_${opt.sectionId}`}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* 3. Homework List */}
                 <div ref={listRef} className="mt-2 min-h-[300px]">
                     {isFetching ? (
                         <div className="flex flex-col items-center justify-center py-20 text-indigo-600">

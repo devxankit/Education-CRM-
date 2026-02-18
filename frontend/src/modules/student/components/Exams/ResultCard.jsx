@@ -35,7 +35,7 @@ const ResultCard = ({ result, index, onClick }) => {
                 <div>
                     <h3 className="text-base font-bold text-gray-900">{result.examName}</h3>
                     <p className="text-xs text-gray-500 mt-1">
-                        Published on {new Date(result.publishedDate).toLocaleDateString()}
+                        Published on {new Date(result.date || result.publishedDate || result.updatedAt).toLocaleDateString()}
                     </p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${bgColor} ${textColor}`}>
@@ -51,7 +51,10 @@ const ResultCard = ({ result, index, onClick }) => {
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-gray-500 font-medium">Marks Obtained</p>
-                    <p className="text-sm font-bold text-gray-800">{result.obtainedMarks} <span className="text-gray-400 text-xs font-normal">/ {result.totalMarks}</span></p>
+                    <p className="text-sm font-bold text-gray-800">
+                        {result.obtainedMarks || (result.subjects?.reduce((sum, s) => sum + (s.marks || 0), 0) || 0)} 
+                        <span className="text-gray-400 text-xs font-normal"> / {result.totalMarks || (result.subjects?.reduce((sum, s) => sum + (s.total || 0), 0) || 0)}</span>
+                    </p>
                 </div>
             </div>
 

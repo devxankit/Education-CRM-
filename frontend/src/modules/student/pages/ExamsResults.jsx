@@ -58,12 +58,16 @@ const ExamsResultsPage = () => {
             status: r.overallStatus || "N/A",
             remarks: r.remarks || "Performance is recorded for this exam.",
             subjects: (r.results || []).map(s => ({
-                name: s.subjectId?.name || "Subject",
-                marks: s.marksObtained,
-                total: s.totalMarks,
-                grade: s.grade,
-                status: s.status
-            }))
+                name: s.subjectId?.name || s.subjectName || "Subject",
+                marks: s.marksObtained || s.marks || 0,
+                total: s.totalMarks || s.total || 0,
+                grade: s.grade || "N/A",
+                status: s.status || "N/A",
+                remarks: s.remarks || ""
+            })),
+            obtainedMarks: r.totalMarksObtained || (r.results || []).reduce((sum, s) => sum + (s.marksObtained || 0), 0),
+            totalMarks: r.totalMaxMarks || (r.results || []).reduce((sum, s) => sum + (s.totalMarks || 0), 0),
+            publishedDate: r.updatedAt || r.createdAt
         })),
         performance: {
             insight: (results || []).length > 0

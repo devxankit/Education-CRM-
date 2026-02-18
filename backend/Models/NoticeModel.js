@@ -12,6 +12,11 @@ const noticeSchema = new mongoose.Schema(
             ref: "Branch",
             required: true,
         },
+        academicYearId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AcademicYear",
+            default: null,
+        },
         noticeId: {
             type: String,
             unique: true,

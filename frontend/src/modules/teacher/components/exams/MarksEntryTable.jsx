@@ -11,29 +11,40 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     const classId = exam.classes?.[0]?._id;
+    // Get sectionId from exam or from the first student's sectionId
+    const sectionId = exam.sectionId || exam.classes?.[0]?.sectionId || students[0]?.sectionId;
     const key = `${exam._id}_${classId}_${subject.subjectId}`;
     const students = examStudents[key] || [];
 
     React.useEffect(() => {
         if (isOpen && exam && subject && classId) {
             const loadStudents = async () => {
-                const data = await fetchExamStudents(exam._id, classId, subject.subjectId);
-                // Initialize local state with existing marks if any
-                if (data) {
-                    const initialMarks = {};
-                    const initialRemarks = {};
-                    data.forEach(st => {
-                        initialMarks[st._id] = st.marksObtained ?? '';
-                        initialRemarks[st._id] = st.remarks ?? '';
-                    });
-                    setMarksData(initialMarks);
-                    setRemarksData(initialRemarks);
+                setIsLoading(true);
+                try {
+                    // Get sectionId from exam or students
+                    const sectionId = exam.sectionId || exam.classes?.[0]?.sectionId;
+                    const data = await fetchExamStudents(exam._id, classId, subject.subjectId, sectionId);
+                    // Initialize local state with existing marks if any
+                    if (data) {
+                        const initialMarks = {};
+                        const initialRemarks = {};
+                        data.forEach(st => {
+                            initialMarks[st._id] = st.marksObtained ?? '';
+                            initialRemarks[st._id] = st.remarks ?? '';
+                        });
+                        setMarksData(initialMarks);
+                        setRemarksData(initialRemarks);
+                    }
+                } catch (error) {
+                    console.error('Error loading students:', error);
+                    alert(error.response?.data?.message || 'Failed to load students. You may not be assigned to this subject.');
+                } finally {
+                    setIsLoading(false);
                 }
-                setIsLoading(false);
             };
             loadStudents();
         }
-    }, [isOpen, exam._id, classId, subject.subjectId, fetchExamStudents]);
+    }, [isOpen, exam?._id, classId, subject?.subjectId, fetchExamStudents]);
 
     if (!isOpen || !exam) return null;
 
@@ -53,6 +64,7 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
             const marksPayload = {
                 examId: exam._id,
                 classId: classId,
+                sectionId: sectionId, // Include sectionId for teacher assignment validation
                 subjectId: subject.subjectId,
                 maxMarks: subject.maxMarks,
                 passingMarks: subject.passingMarks,
@@ -111,16 +123,57 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {students.map((student) => (
+                            {/* Summary */}
+                            {students.length > 0 && (
+                                <div className="bg-white border border-gray-100 rounded-xl p-3 mb-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Total Students: <span className="text-indigo-600">{students.length}</span>
+                                        </span>
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Entered: <span className="text-emerald-600">{Object.values(marksData).filter(m => m !== '').length}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            {students.map((student, index) => (
                                 <div key={student._id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                     <div className="flex items-center justify-between p-3 border-b border-gray-50">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-100 bg-indigo-50 flex items-center justify-center font-bold text-indigo-600">
-                                                {student.photo ? <img src={student.photo} alt="" className="w-full h-full object-cover" /> : student.firstName.charAt(0)}
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            {/* Serial Number */}
+                                            <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                                                <span className="text-xs font-bold text-gray-600">{index + 1}</span>
                                             </div>
-                                            <div>
-                                                <h4 className="text-sm font-bold text-gray-900 leading-tight uppercase">{student.firstName} {student.lastName}</h4>
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Roll: {student.rollNo || 'N/A'}</p>
+                                            {/* Student Avatar */}
+                                            <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center font-bold text-indigo-600 shrink-0">
+                                                {student.photo ? (
+                                                    <img src={student.photo} alt={`${student.firstName} ${student.lastName}`} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-base">{student.firstName?.charAt(0) || 'S'}</span>
+                                                )}
+                                            </div>
+                                            {/* Student Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-bold text-gray-900 leading-tight uppercase truncate">
+                                                    {student.firstName} {student.lastName}
+                                                </h4>
+                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                    {student.rollNo && (
+                                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                            Roll: {student.rollNo}
+                                                        </span>
+                                                    )}
+                                                    {student.admissionNo && (
+                                                        <span className="text-[10px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                                                            Adm: {student.admissionNo}
+                                                        </span>
+                                                    )}
+                                                    {student.gender && (
+                                                        <span className="text-[10px] font-medium text-gray-400">
+                                                            {student.gender}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 

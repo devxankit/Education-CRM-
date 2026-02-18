@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Users, Clock, AlertCircle, BarChart2, MoreVertical, Edit, Eye, CheckCircle } from 'lucide-react';
+import { FileText, Users, Clock, AlertCircle, Edit, CheckCircle } from 'lucide-react';
 
 const NoticeTable = ({ notices, onAction }) => {
 
@@ -115,30 +115,12 @@ const NoticeTable = ({ notices, onAction }) => {
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
-                                            onClick={() => onAction('VIEW', notice)}
-                                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                            title="View Details"
+                                            onClick={() => onAction('EDIT', notice)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit Notice"
                                         >
-                                            <Eye size={18} />
+                                            <Edit size={18} />
                                         </button>
-                                        {notice.status === 'DRAFT' && (
-                                            <button
-                                                onClick={() => onAction('EDIT', notice)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Edit Notice"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                        )}
-                                        {notice.status !== 'DRAFT' && (
-                                            <button
-                                                onClick={() => onAction('STATS', notice)}
-                                                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                title="View Statistics"
-                                            >
-                                                <BarChart2 size={18} />
-                                            </button>
-                                        )}
                                     </div>
                                 </td>
 

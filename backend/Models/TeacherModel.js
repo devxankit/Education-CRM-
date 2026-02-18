@@ -42,6 +42,10 @@ const teacherSchema = new mongoose.Schema(
         phone: {
             type: String,
         },
+        photo: {
+            type: String,
+            default: null,
+        },
         role: {
             type: String,
             default: "teacher"
