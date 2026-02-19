@@ -109,8 +109,7 @@ const hostelSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Indexes
+// Indexes (code already has unique: true in field definition - no duplicate index)
 hostelSchema.index({ branchId: 1, type: 1 });
-hostelSchema.index({ code: 1 }, { unique: true });
 
 export default mongoose.model("Hostel", hostelSchema);

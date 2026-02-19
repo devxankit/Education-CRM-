@@ -1155,8 +1155,9 @@ export const getStudentAcademics = async (req, res) => {
                 if (timetableData.schedule[day]) {
                     formattedTimetable[day] = timetableData.schedule[day].map(item => ({
                         id: item._id,
-                        time: `${item.startTime} - ${item.endTime}`,
+                        subjectId: item.subjectId?._id?.toString(),
                         subject: item.subjectId?.name || "N/A",
+                        time: `${item.startTime} - ${item.endTime}`,
                         teacher: item.teacherId ? `${item.teacherId.firstName} ${item.teacherId.lastName}` : "N/A",
                         room: item.room || "N/A",
                         type: item.type || "offline",
