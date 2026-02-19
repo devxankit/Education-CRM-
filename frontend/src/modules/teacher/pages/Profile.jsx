@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { LogOut, HelpCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { LogOut, HelpCircle, ShieldCheck, Loader2, FolderOpen } from 'lucide-react';
 import gsap from 'gsap';
 import { useTeacherStore } from '../../../store/teacherStore';
 
@@ -18,7 +18,20 @@ const ProfilePage = () => {
     const assignedClasses = useTeacherStore(state => state.assignedClasses);
     const fetchAssignedClasses = useTeacherStore(state => state.fetchAssignedClasses);
     const logout = useTeacherStore(state => state.logout);
+    const uploadProfilePhoto = useTeacherStore(state => state.uploadProfilePhoto);
     const isFetchingProfile = useTeacherStore(state => state.isFetchingProfile);
+    const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
+
+    const handlePhotoUpload = async (base64) => {
+        setIsUploadingPhoto(true);
+        const result = await uploadProfilePhoto(base64);
+        setIsUploadingPhoto(false);
+        if (result?.success) {
+            // Profile updated in store; optional: show toast
+        } else if (result?.message) {
+            alert(result.message);
+        }
+    };
 
     // Fetch Initial Data
     useEffect(() => {
@@ -75,7 +88,9 @@ const ProfilePage = () => {
                 delay: 0.2
             });
         }, containerRef);
-        return () => ctx.revert();
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, [profile]);
 
     const handleLogout = () => {
@@ -119,7 +134,11 @@ const ProfilePage = () => {
             <main className="max-w-md mx-auto px-4 pt-4">
 
                 <div className="profile-section">
-                    <ProfileSummaryCard profile={profile} />
+                    <ProfileSummaryCard
+                        profile={profile}
+                        onPhotoUpload={handlePhotoUpload}
+                        isUploading={isUploadingPhoto}
+                    />
                 </div>
 
                 <div className="profile-section">
@@ -156,6 +175,17 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="profile-section space-y-3">
+                    <button
+                        onClick={() => navigate('/teacher/resources')}
+                        className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-left hover:bg-gray-50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                <FolderOpen size={18} />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900">My Resources</span>
+                        </div>
+                    </button>
                     <button
                         onClick={() => navigate('/teacher/help')}
                         className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-left hover:bg-gray-50 transition-colors"

@@ -1,23 +1,17 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Lenis from 'lenis';
-import { ChevronLeft, Users, BookOpen, Clock, MoreVertical, Search, Filter } from 'lucide-react';
+import { ChevronLeft, Users, BookOpen, Clock, Info } from 'lucide-react';
 import gsap from 'gsap';
-
-// Data
-import { academicsData } from '../data/academicsData';
-
 import { useTeacherStore } from '../../../store/teacherStore';
 import { Loader2 } from 'lucide-react';
 
 const ClassDetailPage = () => {
     const navigate = useNavigate();
-    const { id } = useParams(); // Format: classId_sectionId
+    const { id } = useParams(); // Format: classId_sectionId OR mappingId_day_startTime
     const containerRef = useRef(null);
     const listRef = useRef(null);
-
-    // Compound ID parsing
-    const [classId, sectionId] = (id || '').split('_');
+    const [showRestrictionMessage, setShowRestrictionMessage] = useState(false);
 
     // Store
     const assignedClasses = useTeacherStore(state => state.assignedClasses);
@@ -26,17 +20,51 @@ const ClassDetailPage = () => {
     const fetchClassStudents = useTeacherStore(state => state.fetchClassStudents);
     const isFetching = useTeacherStore(state => state.isFetchingStudents);
 
-    // Get class details from store
+    // Parse ID - could be classId_sectionId or mappingId_day_startTime
+    // Try to extract classId and sectionId from the URL or from assignedClasses
+    let classId, sectionId;
+    
+    // First, try to find in assignedClasses by matching the ID
     const classInfo = assignedClasses
         .flatMap(s => s.classes)
-        .find(c => c.classId === classId && c.sectionId === sectionId);
+        .find(c => {
+            // Check if id matches classId_sectionId format
+            const expectedId = `${c.classId}_${c.sectionId}`;
+            if (id === expectedId) {
+                classId = c.classId;
+                sectionId = c.sectionId;
+                return true;
+            }
+            return false;
+        });
+    
+    // If not found, try parsing as classId_sectionId
+    if (!classInfo && id) {
+        const parts = id.split('_');
+        if (parts.length >= 2) {
+            // Check if first two parts look like ObjectIds (24 hex chars)
+            const potentialClassId = parts[0];
+            const potentialSectionId = parts[1];
+            if (potentialClassId.length === 24 && potentialSectionId.length === 24) {
+                classId = potentialClassId;
+                sectionId = potentialSectionId;
+            }
+        }
+    }
+
+    // Is this teacher Class Teacher for this section? (only they can view student details)
+    const isClassTeacherForThisSection = classId && sectionId && assignedClasses.some(
+        s => (s.subjectName === 'Class Teacher' || s.subjectId == null) &&
+            s.classes?.some(c => c.classId === classId && c.sectionId === sectionId)
+    );
 
     // Fetch on mount
     useEffect(() => {
         if (assignedClasses.length === 0) {
             fetchAssignedClasses();
         }
-        if (classId && sectionId) {
+        if (classId && sectionId && classId.length === 24 && sectionId.length === 24) {
+            // Validate that both are valid ObjectIds before making API call
             fetchClassStudents(classId, sectionId);
         }
     }, [id, classId, sectionId, fetchAssignedClasses, fetchClassStudents, assignedClasses.length]);
@@ -56,14 +84,17 @@ const ClassDetailPage = () => {
         return () => lenis.destroy();
     }, []);
 
-    // Entrance Animation
+    // Entrance Animation (with cleanup)
     useEffect(() => {
-        if (listRef.current) {
-            gsap.fromTo(listRef.current.children,
+        const el = listRef.current;
+        if (!el) return;
+        const ctx = gsap.context(() => {
+            gsap.fromTo(el.children,
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out', delay: 0.2 }
             );
-        }
+        }, el);
+        return () => { try { ctx.revert(); } catch (_) { /* ignore */ } };
     }, [id]);
 
     if (isFetching && students.length === 0) {
@@ -159,6 +190,13 @@ const ClassDetailPage = () => {
                         ) : students.map((student) => (
                             <div
                                 key={student._id}
+                                onClick={() => {
+                                    if (isClassTeacherForThisSection) {
+                                        navigate(`/teacher/classes/${id}/student/${student._id}`);
+                                    } else {
+                                        setShowRestrictionMessage(true);
+                                    }
+                                }}
                                 className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 transition-all flex items-center justify-between group cursor-pointer"
                             >
                                 <div className="flex items-center gap-3">
@@ -193,6 +231,25 @@ const ClassDetailPage = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Info message when Subject Teacher clicks student - no navigation */}
+            {showRestrictionMessage && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30">
+                    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
+                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                            <Info className="text-amber-600" size={24} />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Access Restricted</h3>
+                        <p className="text-sm text-gray-600 mb-5">Only Class Teacher can view student details for this class.</p>
+                        <button
+                            onClick={() => setShowRestrictionMessage(false)}
+                            className="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

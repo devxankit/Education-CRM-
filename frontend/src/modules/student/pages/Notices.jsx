@@ -53,7 +53,7 @@ const Notices = () => {
     };
 
     const handleCloseDetail = () => {
-        navigate('/student/notices');
+        navigate('/student/notices', { replace: true });
     };
 
     const handleAcknowledge = async (id) => {

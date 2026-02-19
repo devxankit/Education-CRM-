@@ -38,7 +38,9 @@ export const useStudentStore = create(
             attendance: [],
             fees: null,
             exams: [],
+            examsError: null,
             results: [],
+            resultsError: null,
             homeworkList: [],
             support: {
                 tickets: [],
@@ -50,6 +52,7 @@ export const useStudentStore = create(
             academics: null,
             documents: [],
             notes: [],
+            myNotes: [],
             tickets: [],
             isLoading: false,
             error: null,
@@ -110,6 +113,7 @@ export const useStudentStore = create(
                     academics: null,
                     documents: [],
                     notes: [],
+                    myNotes: [],
                     tickets: [],
                     isLoading: false,
                     error: null
@@ -186,17 +190,20 @@ export const useStudentStore = create(
                 try {
                     const token = get().token;
                     const response = await axios.post(`${API_URL}/student/homework/submit`, homeworkData, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                     });
-                    if (response.data.success) {
+                    if (response.data?.success) {
                         await get().fetchHomework(); // Refresh list
                         set({ isLoading: false });
-                        return true;
+                        return { success: true };
                     }
+                    set({ isLoading: false });
+                    return { success: false, message: response.data?.message || 'Submission failed' };
                 } catch (error) {
                     console.error('Error submitting homework:', error);
+                    const message = error.response?.data?.message || error.message || 'Failed to submit homework';
                     set({ isLoading: false });
-                    return false;
+                    return { success: false, message };
                 }
             },
 
@@ -211,18 +218,30 @@ export const useStudentStore = create(
                     if (response.data.success) {
                         const rawData = response.data.data;
 
-                        // Transform raw records into stats
-                        const total = rawData.length;
-                        const present = rawData.filter(r => r.status === 'Present').length;
-                        const late = rawData.filter(r => r.status === 'Late').length;
-                        const halfDay = rawData.filter(r => r.status === 'Half-Day').length;
-                        const absent = rawData.filter(r => r.status === 'Absent').length;
+                        // DAY-WISE: One attendance mark per day = present for all classes
+                        // Group by date; if any record for a day is Present/Late/Half-Day → day = Present
+                        const dayMap = {};
+                        rawData.forEach(r => {
+                            const d = r.date ? new Date(r.date) : null;
+                            if (!d || isNaN(d.getTime())) return;
+                            const key = d.toISOString().split('T')[0];
+                            if (!dayMap[key]) {
+                                dayMap[key] = { date: d, status: r.status, markedBy: r.markedBy, id: r._id };
+                            } else {
+                                const curr = dayMap[key];
+                                const priority = { Present: 3, Late: 2, 'Half-Day': 1, Absent: 0, Leave: -1 };
+                                if ((priority[r.status] ?? -2) > (priority[curr.status] ?? -2)) {
+                                    dayMap[key] = { ...dayMap[key], status: r.status, markedBy: r.markedBy, id: r._id };
+                                }
+                            }
+                        });
+                        const dayWiseList = Object.values(dayMap).sort((a, b) => new Date(b.date) - new Date(a.date));
+                        const totalDays = dayWiseList.length;
+                        const presentDays = dayWiseList.filter(d => ['Present', 'Late', 'Half-Day'].includes(d.status)).length;
+                        const absentDays = dayWiseList.filter(d => d.status === 'Absent').length;
+                        const percentage = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
 
-                        const percentage = total > 0
-                            ? ((present + late + halfDay * 0.5) / total) * 100
-                            : 0;
-
-                        // Real subject-wise calculation
+                        // Subject breakdown (optional, from raw for reference)
                         const subjectData = {};
                         rawData.forEach(record => {
                             const subName = record.subjectName || "General";
@@ -235,7 +254,6 @@ export const useStudentStore = create(
                                 subjectData[subName].present += weight;
                             }
                         });
-
                         const subjectColors = ['#6366f1', '#a855f7', '#ec4899', '#f97316', '#10b981', '#06b6d4'];
                         const subjects = Object.entries(subjectData).map(([name, stats], idx) => ({
                             name,
@@ -247,32 +265,51 @@ export const useStudentStore = create(
                             riskLevel: Math.round((stats.present / stats.total) * 100) < 70 ? 'high' : 'normal'
                         }));
 
+                        const reqPct = 75;
+                        const isEligible = percentage >= reqPct;
+                        let latestDate = new Date();
+                        if (dayWiseList.length > 0) {
+                            const valid = dayWiseList.map(d => new Date(d.date)).filter(d => !isNaN(d.getTime()));
+                            if (valid.length > 0) latestDate = new Date(Math.max(...valid.map(d => d.getTime())));
+                        }
+
                         const structuredData = {
                             overall: {
                                 percentage: Math.round(percentage),
-                                totalClasses: total,
-                                present: present + late + halfDay,
-                                absent: absent,
-                                trend: '+0%'
+                                totalClasses: totalDays,
+                                total: totalDays,
+                                present: presentDays,
+                                absent: absentDays,
+                                trend: '+0%',
+                                status: percentage >= 75 ? 'Eligible' : (percentage >= 70 ? 'Warning' : 'At Risk'),
+                                lastUpdated: latestDate
                             },
                             eligibility: {
                                 status: percentage >= 75 ? 'Eligible' : (percentage >= 70 ? 'Warning' : 'At Risk'),
+                                isEligible,
                                 required: 75,
+                                requiredPercentage: reqPct,
                                 current: Math.round(percentage),
-                                message: percentage >= 75 ? "You're doing great! Keep it up." : "Try to attend more classes."
+                                message: percentage >= 75 ? "You're doing great! Keep it up." : "Try to attend more classes.",
+                                classesNeeded: !isEligible && totalDays > 0
+                                    ? Math.max(0, Math.ceil((reqPct / 100) * totalDays - presentDays))
+                                    : 0
                             },
-                            subjects: subjects,
-                            monthlyLog: rawData,
-                            history: rawData.map(r => ({
-                                id: r._id,
-                                date: new Date(r.date).toLocaleDateString(),
-                                day: new Date(r.date).toLocaleDateString('en-US', { weekday: 'long' }),
-                                status: r.status,
-                                time: "N/A",
-                                subject: r.subjectName,
-                                markedBy: r.markedBy,
-                                type: "Lecture"
-                            }))
+                            subjects,
+                            monthlyLog: dayWiseList.map(d => ({ date: d.date, status: d.status, _id: d.id })),
+                            history: dayWiseList.map(d => {
+                                const dt = new Date(d.date);
+                                return {
+                                    id: d.id,
+                                    date: dt,
+                                    dateStr: dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+                                    day: dt.toLocaleDateString('en-US', { weekday: 'long' }),
+                                    status: d.status,
+                                    subject: 'All Classes',
+                                    markedBy: d.markedBy,
+                                    type: 'Day'
+                                };
+                            })
                         };
 
                         set({ attendance: structuredData, isLoading: false });
@@ -300,34 +337,40 @@ export const useStudentStore = create(
             },
 
             fetchExams: async () => {
-                set({ isLoading: true });
+                set({ examsError: null });
                 try {
                     const token = get().token;
                     const response = await axios.get(`${API_URL}/student/exams`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set({ exams: response.data.data, isLoading: false });
+                        set({ exams: Array.isArray(response.data.data) ? response.data.data : [], examsError: null });
                     }
+                    return { success: true };
                 } catch (error) {
                     console.error('Error fetching exams:', error);
-                    set({ isLoading: false });
+                    const msg = error.response?.data?.message || error.message || 'Failed to load exams';
+                    set({ exams: [], examsError: msg });
+                    return { success: false, message: msg };
                 }
             },
 
             fetchResults: async () => {
-                set({ isLoading: true });
+                set({ resultsError: null });
                 try {
                     const token = get().token;
                     const response = await axios.get(`${API_URL}/student/results`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set({ results: response.data.data, isLoading: false });
+                        set({ results: Array.isArray(response.data.data) ? response.data.data : [], resultsError: null });
                     }
+                    return { success: true };
                 } catch (error) {
                     console.error('Error fetching results:', error);
-                    set({ isLoading: false });
+                    const msg = error.response?.data?.message || error.message || 'Failed to load results';
+                    set({ results: [], resultsError: msg });
+                    return { success: false, message: msg };
                 }
             },
 
@@ -381,6 +424,77 @@ export const useStudentStore = create(
                 }
             },
 
+            fetchMyNotes: async () => {
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/student/notes/my`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ myNotes: response.data.data || [] });
+                        return response.data.data || [];
+                    }
+                } catch (error) {
+                    console.error('Error fetching my notes:', error);
+                    return [];
+                }
+            },
+
+            addMyNote: async ({ title, content, subject }) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.post(
+                        `${API_URL}/student/notes/my`,
+                        { title, content: content || '', subject: subject || 'General' },
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
+                    if (response.data.success) {
+                        set(state => ({ myNotes: [response.data.data, ...state.myNotes] }));
+                        return { success: true, data: response.data.data };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to add note';
+                    return { success: false, message: msg };
+                }
+            },
+
+            updateMyNote: async (id, { title, content, subject }) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.put(
+                        `${API_URL}/student/notes/my/${id}`,
+                        { title, content, subject },
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
+                    if (response.data.success) {
+                        set(state => ({ myNotes: state.myNotes.map(n => n._id === id ? response.data.data : n) }));
+                        return { success: true, data: response.data.data };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to update note';
+                    return { success: false, message: msg };
+                }
+            },
+
+            deleteMyNote: async (id) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.delete(`${API_URL}/student/notes/my/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set(state => ({ myNotes: state.myNotes.filter(n => n._id !== id) }));
+                        return { success: true };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to delete note';
+                    return { success: false, message: msg };
+                }
+            },
+
             fetchTickets: async () => {
                 set({ isLoading: true });
                 try {
@@ -429,19 +543,40 @@ export const useStudentStore = create(
                 set({ isLoading: true });
                 try {
                     const token = get().token;
+                    if (!token) {
+                        set({ isLoading: false });
+                        return { success: false, message: 'Not logged in' };
+                    }
                     const response = await axios.put(`${API_URL}/student/profile`, formData, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                     });
                     if (response.data.success) {
                         set({ profile: response.data.data, isLoading: false });
-                        return true;
+                        return { success: true };
                     }
                     set({ isLoading: false });
-                    return false;
+                    return { success: false, message: response.data.message || 'Update failed' };
                 } catch (error) {
                     console.error('Error updating profile:', error);
+                    const msg = error.response?.data?.message || error.message || 'Failed to update profile';
                     set({ isLoading: false });
-                    return false;
+                    return { success: false, message: msg };
+                }
+            },
+            changePassword: async (currentPassword, newPassword) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.post(`${API_URL}/student/change-password`, {
+                        currentPassword,
+                        newPassword
+                    }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) return { success: true, message: response.data.message };
+                    return { success: false, message: response.data.message || 'Failed to change password' };
+                } catch (error) {
+                    const msg = error.response?.data?.message || 'Failed to change password';
+                    return { success: false, message: msg };
                 }
             },
 

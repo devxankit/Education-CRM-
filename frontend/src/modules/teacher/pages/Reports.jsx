@@ -33,18 +33,17 @@ const ReportsPage = () => {
 
     // Entrance Animation
     useEffect(() => {
-        if (!isFetchingAnalytics && analyticsData) {
-            const ctx = gsap.context(() => {
-                gsap.from('.report-section', {
-                    y: 30,
-                    opacity: 0,
-                    duration: 0.6,
-                    stagger: 0.1,
-                    ease: 'power2.out'
-                });
-            }, containerRef);
-            return () => ctx.revert();
-        }
+        if (!containerRef.current || !analyticsData) return;
+        const ctx = gsap.context(() => {
+            gsap.from('.report-section', {
+                y: 30,
+                opacity: 0,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: 'power2.out'
+            });
+        }, containerRef);
+        return () => { try { ctx.revert(); } catch (_) { /* ignore */ } };
     }, [isFetchingAnalytics, analyticsData]);
 
     return (

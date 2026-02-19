@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { API_URL } from '@/app/api';
+import { API_URL } from '../app/api';
 
 export const useAdminExamStore = create((set, get) => ({
     exams: [],

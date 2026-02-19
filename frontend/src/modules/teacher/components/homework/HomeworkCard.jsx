@@ -3,18 +3,17 @@ import { motion } from 'framer-motion';
 import { Clock, BookOpen, Users, FileText, ChevronRight } from 'lucide-react';
 
 const HomeworkCard = ({ homework, onClick }) => {
-    // Handle both API format and mock format
     const subject = homework.subjectId?.name || homework.subject || 'N/A';
-    const className = homework.classId?.name
-        ? `${homework.classId.name}-${homework.sectionId?.name || ''}`
-        : homework.class || 'N/A';
+    const classStr = homework.classId?.name && homework.sectionId?.name
+        ? `${homework.classId.name}-${homework.sectionId.name}`
+        : homework.classId?.name || homework.class || 'N/A';
     const dueDate = homework.dueDate ? new Date(homework.dueDate) : new Date();
-    const status = homework.status === 'published' ? 'Active' : homework.status;
+    const status = homework.status === 'published' ? 'Active' : (homework.status === 'draft' ? 'Draft' : homework.status);
     const attachments = homework.attachments || [];
-    const submissionCount = homework.submissionCount || 0;
-    const totalStudents = homework.totalStudents || '--';
+    const submissionCount = homework.submissionCount ?? 0;
+    const totalStudents = homework.totalStudents ?? 0;
 
-    const isLate = dueDate < new Date() && status === 'Active';
+    const isLate = dueDate < new Date() && (homework.status === 'published' || homework.status === 'Active');
 
     return (
         <motion.div
@@ -36,7 +35,7 @@ const HomeworkCard = ({ homework, onClick }) => {
                         </span>
                         <span className="mx-2 text-[10px] text-gray-300">•</span>
                         <span className="text-[10px] font-bold text-gray-500">
-                            {className}
+                            Class {classStr}
                         </span>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${status === 'Active' || status === 'published'
@@ -57,14 +56,14 @@ const HomeworkCard = ({ homework, onClick }) => {
                     </p>
                 )}
 
-                <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium mb-3">
-                    <span className={`flex items-center gap-1 ${isLate ? 'text-red-500' : ''}`}>
+                <div className="flex flex-wrap items-center gap-4 text-[11px] text-gray-500 font-medium mb-3">
+                    <span className={`flex items-center gap-1 ${isLate ? 'text-red-600 font-bold' : ''}`}>
                         <Clock size={12} />
-                        Due: {dueDate.toLocaleDateString()}
+                        Due Date: {dueDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
                     </span>
                     <span className="flex items-center gap-1">
                         <Users size={12} />
-                        {submissionCount}/{totalStudents} Submitted
+                        Submitted: {submissionCount}/{totalStudents}
                     </span>
                 </div>
 

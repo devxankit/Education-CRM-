@@ -16,6 +16,37 @@ import ExamResult from "../Models/ExamResultModel.js";
 import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import Payroll from "../Models/PayrollModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
+import AcademicYear from "../Models/AcademicYearModel.js";
+import ClassCompletion from "../Models/ClassCompletionModel.js";
+import LearningMaterial from "../Models/LearningMaterialModel.js";
+import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
+
+// ================= GET ACADEMIC YEARS (for teacher's branch) =================
+export const getTeacherAcademicYears = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const teacher = await Teacher.findById(teacherId).select("branchId");
+        const branchId = teacher?.branchId?._id || teacher?.branchId;
+
+        const query = { instituteId };
+        if (branchId) {
+            query.$or = [{ branchId }, { branchId: null }];
+        }
+
+        const academicYears = await AcademicYear.find(query)
+            .select("name startDate endDate status")
+            .sort({ startDate: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: academicYears
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // ================= TEACHER DASHBOARD =================
 export const getTeacherDashboard = async (req, res) => {
@@ -50,39 +81,77 @@ export const getTeacherDashboard = async (req, res) => {
             .sort({ publishDate: -1 })
             .limit(5);
 
-        // 5. Get Today's Schedule from Timetable
+        // 5. Get Today's Schedule from Timetable with Completion Status
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const today = days[new Date().getDay()];
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(todayDate);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const todayTimetables = await Timetable.find({
-            [`schedule.${today}.teacherId`]: teacherId
-        })
-            .populate("classId", "name")
-            .populate("sectionId", "name")
-            .populate(`schedule.${today}.subjectId`, "name");
+        // Get timetables for assigned classes (sectionIds already declared above)
+        const timetables = await Timetable.find({
+            instituteId,
+            sectionId: { $in: sectionIds },
+            status: "active"
+        });
+
+        // Get today's completions
+        const completions = await ClassCompletion.find({
+            teacherId,
+            date: {
+                $gte: todayDate,
+                $lt: tomorrow
+            }
+        });
+
+        // Build completion map
+        const completionMap = {};
+        completions.forEach(comp => {
+            const key = `${comp.classId}_${comp.sectionId}_${comp.subjectId}_${comp.day}_${comp.startTime}`;
+            completionMap[key] = comp;
+        });
 
         const todayClasses = [];
-        todayTimetables.forEach(tt => {
+        timetables.forEach(tt => {
             const dailySchedule = tt.schedule[today] || [];
             dailySchedule.forEach(item => {
-                if (item.teacherId?.toString() === teacherId.toString()) {
+                // Find matching mapping
+                const mapping = mappings.find(m => 
+                    (m.classId?._id || m.classId)?.toString() === tt.classId?.toString() &&
+                    (m.sectionId?._id || m.sectionId)?.toString() === tt.sectionId?.toString() &&
+                    (m.subjectId?._id || m.subjectId)?.toString() === item.subjectId?.toString() &&
+                    (item.teacherId?._id || item.teacherId)?.toString() === teacherId.toString()
+                );
+
+                if (mapping) {
+                    // Use mapping.subjectId as it's guaranteed to exist and match
+                    const subjectId = mapping.subjectId?._id || mapping.subjectId;
+                    const key = `${tt.classId}_${tt.sectionId}_${subjectId}_${today}_${item.startTime}`;
+                    const completion = completionMap[key];
+
                     todayClasses.push({
-                        id: tt._id + "_" + item._id,
-                        classId: tt.classId?._id,
-                        sectionId: tt.sectionId?._id,
-                        classSection: `${tt.classId?.name || "N/A"} - ${tt.sectionId?.name || "N/A"}`,
-                        subject: item.subjectId?.name || "N/A",
+                        id: `${mapping._id}_${today}_${item.startTime}`,
+                        classId: tt.classId?._id || tt.classId,
+                        sectionId: tt.sectionId?._id || tt.sectionId,
+                        subjectId: subjectId, // Use from mapping to ensure it's always present
+                        classSection: `${tt.classId?.name || "N/A"} ${tt.sectionId?.name || "N/A"}`,
+                        subject: mapping.subjectId?.name || "N/A",
                         time: `${item.startTime} - ${item.endTime}`,
-                        room: item.room || "N/A",
-                        type: item.type || "offline",
-                        status: "Pending" // Default status
+                        room: item.room || "TBD",
+                        status: completion ? "Marked" : "Pending",
+                        completionId: completion?._id
                     });
                 }
             });
         });
 
-        // Sort by start time if needed
-        todayClasses.sort((a, b) => a.time.localeCompare(b.time));
+        // Sort by start time
+        todayClasses.sort((a, b) => {
+            const timeA = a.time.split(" - ")[0];
+            const timeB = b.time.split(" - ")[0];
+            return timeA.localeCompare(timeB);
+        });
 
         res.status(200).json({
             success: true,
@@ -327,12 +396,104 @@ export const getTeacherProfile = async (req, res) => {
     }
 };
 
+// ================= UPDATE TEACHER PROFILE (own profile) =================
+export const updateTeacherProfile = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const { photo, firstName, lastName, phone } = req.body;
+
+        const teacher = await Teacher.findById(teacherId);
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "Teacher not found" });
+        }
+
+        if (firstName !== undefined) teacher.firstName = firstName;
+        if (lastName !== undefined) teacher.lastName = lastName;
+        if (phone !== undefined) teacher.phone = phone;
+
+        if (photo && (typeof photo === 'string' && photo.startsWith('data:image'))) {
+            const uploadedUrl = await uploadBase64ToCloudinary(photo, 'teacher_profiles');
+            teacher.photo = uploadedUrl;
+        }
+
+        await teacher.save();
+
+        const updated = await Teacher.findById(teacherId)
+            .select("-password")
+            .populate({ path: "branchId", select: "name phone email" })
+            .populate({ path: "instituteId", select: "phone email" });
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: updated
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= GET TEACHER ASSIGNED CLASSES & SUBJECTS =================
+// Returns: 1) Class Teacher sections (for Attendance)  2) TeacherMapping subject-class (for Homework, Classes)
 export const getTeacherClasses = async (req, res) => {
     try {
         const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
 
-        // Fetch all mappings for this teacher
+        if (!teacherId) {
+            return res.status(200).json({
+                success: true,
+                message: "No classes assigned.",
+                data: { subjects: [], totalClasses: 0, totalSubjects: 0 }
+            });
+        }
+
+        const subjectsArray = [];
+        const seenSectionKeys = new Set();
+        let totalClassesCount = 0;
+
+        // 1. Class Teacher sections (Section.teacherId) - for Attendance
+        const classTeacherSections = await Section.find({
+            instituteId,
+            teacherId,
+            status: "active"
+        })
+            .populate("classId", "name capacity")
+            .populate("branchId", "name");
+
+        const ctClasses = [];
+        for (const sec of classTeacherSections) {
+            const classId = sec.classId?._id;
+            const sectionId = sec._id;
+            if (!classId || seenSectionKeys.has(sectionId.toString())) continue;
+            seenSectionKeys.add(sectionId.toString());
+
+            const studentCount = await Student.countDocuments({ sectionId, status: "active" });
+            ctClasses.push({
+                classId,
+                sectionId,
+                className: sec.classId?.name || "N/A",
+                sectionName: sec.name,
+                fullClassName: `${sec.classId?.name || "N/A"}-${sec.name}`,
+                studentCount,
+                schedule: "Daily"
+            });
+        }
+        if (ctClasses.length > 0) {
+            subjectsArray.push({
+                subjectId: null,
+                subjectName: "Class Teacher",
+                subjectCode: "CT",
+                academicYear: "N/A",
+                status: "ACTIVE",
+                classesCount: ctClasses.length,
+                totalStudents: ctClasses.reduce((s, c) => s + (c.studentCount || 0), 0),
+                classes: ctClasses
+            });
+            totalClassesCount += ctClasses.length;
+        }
+
+        // 2. TeacherMapping (subject-wise) - for Homework, assigned subjects like Maths, Physics
         const mappings = await TeacherMapping.find({ teacherId, status: "active" })
             .populate("classId", "name")
             .populate("sectionId", "name")
@@ -340,31 +501,18 @@ export const getTeacherClasses = async (req, res) => {
             .populate("courseId", "name")
             .populate("academicYearId", "name");
 
-        if (!mappings || mappings.length === 0) {
-            return res.status(200).json({
-                success: true,
-                message: "No classes or subjects assigned yet.",
-                data: {
-                    subjects: [],
-                    totalClasses: 0,
-                    totalSubjects: 0
-                }
-            });
-        }
-
-        // Group by Subject
+        const validMappings = mappings.filter(m => m.sectionId && (m.classId || m.courseId));
         const subjectGroups = {};
 
-        for (const m of mappings) {
+        for (const m of validMappings) {
             const subjectId = m.subjectId?._id?.toString() || "unknown";
-
             if (!subjectGroups[subjectId]) {
                 subjectGroups[subjectId] = {
-                    subjectId: subjectId,
+                    subjectId,
                     subjectName: m.subjectId?.name || "N/A",
                     subjectCode: m.subjectId?.code || "N/A",
                     academicYear: m.academicYearId?.name || "N/A",
-                    status: m.status?.toUpperCase() || "ACTIVE",
+                    status: "ACTIVE",
                     classesCount: 0,
                     totalStudents: 0,
                     classes: []
@@ -372,34 +520,135 @@ export const getTeacherClasses = async (req, res) => {
             }
 
             const sectionId = m.sectionId?._id;
-
-            // Fetch student count for this section
             const studentCount = sectionId
                 ? await Student.countDocuments({ sectionId, status: "active" })
                 : 0;
 
             subjectGroups[subjectId].classes.push({
                 classId: m.classId?._id,
-                sectionId: sectionId,
+                sectionId,
                 className: m.classId?.name || m.courseId?.name || "N/A",
                 sectionName: m.sectionId?.name || "N/A",
                 fullClassName: `${m.classId?.name || m.courseId?.name || "N/A"}-${m.sectionId?.name || ""}`,
                 studentCount,
-                schedule: "Daily" // Day info placeholder
+                schedule: "Daily"
             });
-
             subjectGroups[subjectId].classesCount += 1;
             subjectGroups[subjectId].totalStudents += studentCount;
         }
 
-        const subjectsArray = Object.values(subjectGroups);
+        const mappingSubjects = Object.values(subjectGroups);
+        subjectsArray.push(...mappingSubjects);
+        totalClassesCount += mappingSubjects.reduce((s, sub) => s + sub.classesCount, 0);
 
         res.status(200).json({
             success: true,
             data: {
                 subjects: subjectsArray,
                 totalSubjects: subjectsArray.length,
-                totalClasses: mappings.length
+                totalClasses: totalClassesCount
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET STUDENT DETAIL (Profile + Attendance History) =================
+export const getStudentDetail = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { classId, sectionId } = req.query;
+        const teacherId = req.user._id;
+
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: "Student ID is required" });
+        }
+
+        const student = await Student.findById(studentId)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("branchId", "name")
+            .select("firstName lastName middleName admissionNo rollNo gender dob bloodGroup address city state pincode admissionDate documents status parentId classId sectionId branchId");
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const sClassId = student.classId?._id?.toString() || student.classId?.toString();
+        const sSectionId = student.sectionId?._id?.toString() || student.sectionId?.toString();
+
+        // Use query params if provided (from ClassDetail context), else use student's class/section
+        const checkClassId = classId || sClassId;
+        const checkSectionId = sectionId || sSectionId;
+
+        if (!checkClassId || !checkSectionId) {
+            return res.status(400).json({ success: false, message: "Student class/section not found" });
+        }
+
+        const section = await Section.findOne({ _id: checkSectionId });
+        if (!section) {
+            return res.status(404).json({ success: false, message: "Section not found" });
+        }
+        // Only Class Teacher can view student details (not Subject Teacher)
+        const isClassTeacher = section.teacherId?.toString() === teacherId.toString();
+        if (!isClassTeacher) {
+            return res.status(403).json({ success: false, message: "Only Class Teacher can view student details for this class" });
+        }
+        // Verify student belongs to this section
+        if (sClassId !== checkClassId || sSectionId !== checkSectionId) {
+            return res.status(403).json({ success: false, message: "Student does not belong to this class" });
+        }
+
+        // Fetch attendance history for this student (class+section, filter by student)
+        const attendanceRecords = await Attendance.find({
+            classId: checkClassId,
+            sectionId: checkSectionId,
+            "attendanceData.studentId": studentId
+        })
+            .populate("subjectId", "name")
+            .sort({ date: -1 })
+            .limit(90); // Last ~3 months
+
+        const attendanceHistory = attendanceRecords.map((rec) => {
+            const entry = rec.attendanceData.find(e => e.studentId?.toString() === studentId);
+            return {
+                _id: rec._id,
+                date: rec.date,
+                status: entry?.status || "Present",
+                subjectId: rec.subjectId?._id,
+                subjectName: rec.subjectId?.name || "General",
+                remarks: entry?.remarks
+            };
+        });
+
+        const photoUrl = student.documents?.photo?.url || null;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                profile: {
+                    _id: student._id,
+                    firstName: student.firstName,
+                    lastName: student.lastName,
+                    middleName: student.middleName,
+                    admissionNo: student.admissionNo,
+                    rollNo: student.rollNo,
+                    gender: student.gender,
+                    dob: student.dob,
+                    bloodGroup: student.bloodGroup,
+                    address: student.address,
+                    city: student.city,
+                    state: student.state,
+                    pincode: student.pincode,
+                    admissionDate: student.admissionDate,
+                    status: student.status,
+                    className: student.classId?.name,
+                    sectionName: student.sectionId?.name,
+                    branchName: student.branchId?.name,
+                    photo: photoUrl
+                },
+                attendanceHistory
             }
         });
     } catch (error) {
@@ -411,10 +660,22 @@ export const getTeacherClasses = async (req, res) => {
 export const getClassStudents = async (req, res) => {
     try {
         const { classId, sectionId } = req.query;
+        const teacherId = req.user._id;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!classId || !sectionId) {
             return res.status(400).json({ success: false, message: "Class ID and Section ID are required" });
+        }
+
+        // Allow if teacher is Class Teacher (Section.teacherId) OR assigned via TeacherMapping (subject teacher)
+        const section = await Section.findOne({ _id: sectionId });
+        if (!section) {
+            return res.status(404).json({ success: false, message: "Section not found." });
+        }
+        const isClassTeacher = section.teacherId?.toString() === teacherId.toString();
+        const isSubjectTeacher = await TeacherMapping.exists({ teacherId, sectionId, status: "active" });
+        if (!isClassTeacher && !isSubjectTeacher) {
+            return res.status(403).json({ success: false, message: "You are not assigned to this section." });
         }
 
         const students = await Student.find({
@@ -422,7 +683,7 @@ export const getClassStudents = async (req, res) => {
             classId,
             sectionId,
             status: "active"
-        }).select("firstName lastName admissionNo rollNo gender photo");
+        }).select("firstName lastName admissionNo rollNo gender documents");
 
         res.status(200).json({
             success: true,
@@ -444,6 +705,22 @@ export const createHomework = async (req, res) => {
         const teacherId = req.user._id;
         const instituteId = req.user.instituteId || req.user._id;
 
+        let uploadedAttachments = [];
+        if (attachments && attachments.length > 0) {
+            for (const att of attachments) {
+                if (att.base64) {
+                    try {
+                        const url = await uploadBase64ToCloudinary(att.base64, `teachers/homework/${instituteId}`);
+                        uploadedAttachments.push({ name: att.name || "attachment", url });
+                    } catch (uploadErr) {
+                        console.error("Homework attachment upload error:", uploadErr);
+                    }
+                } else if (att.url) {
+                    uploadedAttachments.push({ name: att.name || "attachment", url: att.url });
+                }
+            }
+        }
+
         const homework = new Homework({
             instituteId,
             branchId,
@@ -454,7 +731,7 @@ export const createHomework = async (req, res) => {
             title,
             instructions,
             dueDate,
-            attachments,
+            attachments: uploadedAttachments,
             status: status || "published",
             academicYearId
         });
@@ -491,9 +768,11 @@ export const getHomeworks = async (req, res) => {
         // Add counts for each homework
         const homeworksWithCounts = await Promise.all(homeworks.map(async (hw) => {
             const submissionCount = await HomeworkSubmission.countDocuments({ homeworkId: hw._id });
+            const classId = hw.classId?._id || hw.classId;
+            const sectionId = hw.sectionId?._id || hw.sectionId;
             const totalStudents = await Student.countDocuments({
-                classId: hw.classId,
-                sectionId: hw.sectionId,
+                classId,
+                sectionId,
                 status: 'active'
             });
             return {
@@ -616,6 +895,19 @@ export const markAttendance = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 message: "Teachers are only allowed to mark or update attendance for today's date."
+            });
+        }
+
+        // ONLY Class Teacher can mark attendance (not Subject Teacher)
+        const section = await Section.findOne({ _id: sectionId });
+        if (!section) {
+            return res.status(404).json({ success: false, message: "Section not found" });
+        }
+        const isClassTeacher = section.teacherId?.toString() === teacherId.toString();
+        if (!isClassTeacher) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Class Teacher can mark attendance for this class."
             });
         }
 
@@ -757,17 +1049,22 @@ export const getTeacherExams = async (req, res) => {
             .populate("subjects.subjectId", "name code")
             .sort({ startDate: -1 });
 
-        // Format response
+        // Format response - only include exams where teacher has at least one assigned subject
         const formattedExams = exams.map(exam => {
-            // Filter subjects to only those the teacher teaches
-            const teacherSubjectIds = mappings
-                .map(m => m.subjectId?.toString())
-                .filter(id => id);
+            // Filter subjects: teacher must be assigned to this subject FOR one of the exam's classes
+            const examClassIds = (exam.classes || []).map(c => c._id?.toString()).filter(id => id);
 
             const relevantSubjects = (exam.subjects || []).filter(s => {
                 const subId = s.subjectId?._id ? s.subjectId._id.toString() : s.subjectId?.toString();
-                return subId && teacherSubjectIds.includes(subId);
+                if (!subId) return false;
+                return mappings.some(m => {
+                    const mSubId = m.subjectId?.toString();
+                    const mClassId = m.classId?.toString();
+                    return mSubId === subId && mClassId && examClassIds.includes(mClassId);
+                });
             });
+
+            if (relevantSubjects.length === 0) return null;
 
             return {
                 _id: exam._id,
@@ -786,7 +1083,7 @@ export const getTeacherExams = async (req, res) => {
                     passingMarks: s.passingMarks
                 }))
             };
-        });
+        }).filter(Boolean);
 
         res.status(200).json({
             success: true,
@@ -797,10 +1094,11 @@ export const getTeacherExams = async (req, res) => {
     }
 };
 
-// ================= GET EXAM BY ID =================
+// ================= GET EXAM BY ID (teacher - only if assigned to at least one subject) =================
 export const getExamById = async (req, res) => {
     try {
         const { id } = req.params;
+        const teacherId = req.user._id;
 
         const exam = await Exam.findById(id)
             .populate("classes", "name")
@@ -812,9 +1110,52 @@ export const getExamById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Exam not found" });
         }
 
+        // Filter subjects: teacher must be assigned to this subject FOR one of the exam's classes
+        const mappings = await TeacherMapping.find({ teacherId, status: "active" });
+        const examClassIds = (exam.classes || []).map(c => c._id?.toString()).filter(id => id);
+
+        const relevantSubjects = (exam.subjects || []).filter(s => {
+            const subId = s.subjectId?._id ? s.subjectId._id.toString() : s.subjectId?.toString();
+            if (!subId) return false;
+            return mappings.some(m => {
+                const mSubId = m.subjectId?.toString();
+                const mClassId = m.classId?.toString();
+                return mSubId === subId && mClassId && examClassIds.includes(mClassId);
+            });
+        });
+
+        if (relevantSubjects.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to any subject in this exam."
+            });
+        }
+
+        // Return exam with only assigned subjects (same shape as getTeacherExams)
+        const data = {
+            _id: exam._id,
+            examName: exam.examName,
+            examType: exam.examType,
+            startDate: exam.startDate,
+            endDate: exam.endDate,
+            description: exam.description,
+            status: exam.status,
+            classes: exam.classes,
+            branchId: exam.branchId,
+            academicYearId: exam.academicYearId,
+            subjects: relevantSubjects.map(s => ({
+                subjectId: s.subjectId?._id,
+                subjectName: s.subjectId?.name,
+                subjectCode: s.subjectId?.code,
+                date: s.date,
+                maxMarks: s.maxMarks,
+                passingMarks: s.passingMarks
+            }))
+        };
+
         res.status(200).json({
             success: true,
-            data: exam
+            data
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -824,7 +1165,8 @@ export const getExamById = async (req, res) => {
 // ================= GET EXAM STUDENTS (for marks entry) =================
 export const getExamStudents = async (req, res) => {
     try {
-        const { examId, classId, subjectId } = req.query;
+        const { examId, classId, subjectId, sectionId } = req.query;
+        const teacherId = req.user._id;
 
         if (!examId || !classId || !subjectId) {
             return res.status(400).json({
@@ -833,11 +1175,35 @@ export const getExamStudents = async (req, res) => {
             });
         }
 
-        // Get students in the class
-        const students = await Student.find({
+        // CRITICAL: Verify teacher is assigned to this subject for this class/section
+        const assignmentQuery = {
+            teacherId,
             classId,
+            subjectId,
             status: "active"
-        }).select("firstName lastName admissionNo rollNo gender photo sectionId");
+        };
+        
+        // If sectionId is provided, use it; otherwise check any section
+        if (sectionId) {
+            assignmentQuery.sectionId = sectionId;
+        }
+        
+        const isAssigned = await TeacherMapping.findOne(assignmentQuery);
+
+        if (!isAssigned) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to teach this subject for this class. Only assigned teachers can view/enter marks."
+            });
+        }
+
+        // Get students in the class/section
+        const studentQuery = { classId, status: "active" };
+        if (sectionId) {
+            studentQuery.sectionId = sectionId;
+        }
+        const students = await Student.find(studentQuery)
+            .select("firstName lastName admissionNo rollNo gender photo sectionId");
 
         // Get existing results for these students in this exam/subject
         const existingResults = await ExamResult.find({
@@ -880,7 +1246,8 @@ export const getExamStudents = async (req, res) => {
 // ================= SUBMIT EXAM MARKS =================
 export const submitMarks = async (req, res) => {
     try {
-        const { examId, classId, subjectId, marksData, maxMarks, passingMarks } = req.body;
+        const { examId, classId, subjectId, marksData, maxMarks, passingMarks, sectionId } = req.body;
+        const teacherId = req.user._id;
         const instituteId = req.user.instituteId || req.user._id;
         const branchId = req.user.branchId;
 
@@ -888,6 +1255,28 @@ export const submitMarks = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "examId, classId, subjectId, and marksData are required"
+            });
+        }
+
+        // CRITICAL: Verify teacher is assigned to this subject for this class/section
+        const assignmentQuery = {
+            teacherId,
+            classId,
+            subjectId,
+            status: "active"
+        };
+        
+        // If sectionId is provided, use it; otherwise check any section
+        if (sectionId) {
+            assignmentQuery.sectionId = sectionId;
+        }
+        
+        const isAssigned = await TeacherMapping.findOne(assignmentQuery);
+
+        if (!isAssigned) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to teach this subject for this class. Only assigned teachers can enter marks."
             });
         }
 
@@ -1041,7 +1430,7 @@ export const getTeacherAnalytics = async (req, res) => {
 
         // 1. Get Teacher Mappings
         const mappings = await TeacherMapping.find({ teacherId, status: "active" });
-        const classIds = mappings.map(m => m.classId);
+        const classIds = mappings.map(m => m.classId).filter(Boolean);
         const uniqueClassIds = [...new Set(classIds.map(id => id.toString()))];
 
         // 2. Attendance Stats (last 7 days average)
@@ -1059,9 +1448,10 @@ export const getTeacherAnalytics = async (req, res) => {
         // Calculate avg attendance per day
         const dailyStats = {};
         attendanceRecords.forEach(record => {
+            const arr = record.attendanceData || [];
             const dateStr = record.date.toISOString().split('T')[0];
-            const presentCount = record.students.filter(s => s.status === 'Present').length;
-            const totalCount = record.students.length;
+            const presentCount = arr.filter(s => s.status === 'Present' || s.status === 'Late').length;
+            const totalCount = arr.length;
             const percentage = totalCount > 0 ? (presentCount / totalCount) * 100 : 0;
 
             if (!dailyStats[dateStr]) dailyStats[dateStr] = [];
@@ -1133,6 +1523,329 @@ export const getTeacherPayrollHistory = async (req, res) => {
         res.status(200).json({
             success: true,
             data: payrolls
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= MARK CLASS COMPLETION =================
+export const markClassCompletion = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+        const {
+            classId,
+            sectionId,
+            courseId,
+            subjectId,
+            day,
+            startTime,
+            endTime,
+            room,
+            date,
+            status = "Completed",
+            actualStartTime,
+            actualEndTime,
+            topicsCovered,
+            remarks,
+            totalStudents,
+            presentStudents,
+            absentStudents,
+            academicYearId
+        } = req.body;
+
+        // Validation
+        if (!subjectId || !day || !startTime || !endTime || !date) {
+            return res.status(400).json({
+                success: false,
+                message: "subjectId, day, startTime, endTime, and date are required"
+            });
+        }
+
+        // Verify teacher is assigned to this class/subject
+        const teacher = await Teacher.findById(teacherId);
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "Teacher not found" });
+        }
+
+        const branchId = teacher.branchId?._id || teacher.branchId;
+
+        // Get academicYearId from TeacherMapping or use provided one
+        let finalAcademicYearId = academicYearId;
+        
+        // Check if teacher is assigned via TeacherMapping and get academicYearId
+        const mappingQuery = {
+            teacherId,
+            subjectId,
+            status: "active"
+        };
+        
+        if (sectionId) {
+            mappingQuery.sectionId = sectionId;
+            if (classId) mappingQuery.classId = classId;
+        } else if (courseId) {
+            mappingQuery.courseId = courseId;
+        }
+        
+        const mapping = await TeacherMapping.findOne(mappingQuery).select("academicYearId");
+        
+        if (!mapping) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to teach this class/subject"
+            });
+        }
+        
+        // Use academicYearId from mapping if not provided
+        if (!finalAcademicYearId && mapping.academicYearId) {
+            finalAcademicYearId = mapping.academicYearId?._id || mapping.academicYearId;
+        }
+        
+        // Fallback to teacher's academicYearId if still not found
+        if (!finalAcademicYearId) {
+            finalAcademicYearId = teacher.academicYearId?._id || teacher.academicYearId;
+        }
+        
+        // Final validation - academicYearId is required
+        if (!finalAcademicYearId) {
+            return res.status(400).json({
+                success: false,
+                message: "Academic Year ID is required. Please ensure you are assigned to a class with an academic year."
+            });
+        }
+
+        // Check for duplicate entry
+        const existing = await ClassCompletion.findOne({
+            teacherId,
+            classId,
+            sectionId,
+            subjectId,
+            day,
+            date: new Date(date),
+            startTime
+        });
+
+        if (existing) {
+            // Update existing entry
+            existing.status = status;
+            existing.actualStartTime = actualStartTime || existing.actualStartTime;
+            existing.actualEndTime = actualEndTime || existing.actualEndTime;
+            existing.topicsCovered = topicsCovered || existing.topicsCovered;
+            existing.remarks = remarks || existing.remarks;
+            existing.totalStudents = totalStudents || existing.totalStudents;
+            existing.presentStudents = presentStudents || existing.presentStudents;
+            existing.absentStudents = absentStudents || existing.absentStudents;
+            await existing.save();
+
+            return res.status(200).json({
+                success: true,
+                message: "Class completion updated successfully",
+                data: existing
+            });
+        }
+
+        // Create new entry
+        const completion = new ClassCompletion({
+            instituteId,
+            branchId,
+            academicYearId: finalAcademicYearId,
+            teacherId,
+            classId,
+            sectionId,
+            courseId,
+            subjectId,
+            day,
+            startTime,
+            endTime,
+            room,
+            date: new Date(date),
+            status,
+            actualStartTime,
+            actualEndTime,
+            topicsCovered,
+            remarks,
+            totalStudents: totalStudents || 0,
+            presentStudents: presentStudents || 0,
+            absentStudents: absentStudents || 0
+        });
+
+        await completion.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Class completion marked successfully",
+            data: completion
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET CLASS COMPLETIONS =================
+export const getClassCompletions = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const { startDate, endDate, classId, sectionId, subjectId } = req.query;
+
+        const query = { teacherId };
+
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+        if (classId) query.classId = classId;
+        if (sectionId) query.sectionId = sectionId;
+        if (subjectId) query.subjectId = subjectId;
+
+        const completions = await ClassCompletion.find(query)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name code")
+            .populate("courseId", "name code")
+            .sort({ date: -1, startTime: 1 });
+
+        res.status(200).json({
+            success: true,
+            data: completions
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TODAY'S CLASSES WITH COMPLETION STATUS =================
+export const getTodayClassesWithCompletion = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Get teacher's assigned classes
+        const mappings = await TeacherMapping.find({
+            teacherId,
+            status: "active"
+        }).populate("classId", "name")
+          .populate("sectionId", "name")
+          .populate("subjectId", "name code")
+          .populate("academicYearId", "name");
+
+        if (mappings.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: []
+            });
+        }
+
+        // Get timetables for assigned classes
+        const sectionIds = mappings.map(m => m.sectionId?._id || m.sectionId).filter(Boolean);
+        const timetables = await Timetable.find({
+            instituteId,
+            sectionId: { $in: sectionIds },
+            status: "active"
+        });
+
+        // Get today's day name
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const todayDay = dayNames[new Date().getDay()];
+
+        // Get today's completions
+        const completions = await ClassCompletion.find({
+            teacherId,
+            date: {
+                $gte: today,
+                $lt: tomorrow
+            }
+        });
+
+        // Build completion map for quick lookup
+        const completionMap = {};
+        completions.forEach(comp => {
+            const key = `${comp.classId}_${comp.sectionId}_${comp.subjectId}_${comp.day}_${comp.startTime}`;
+            completionMap[key] = comp;
+        });
+
+        // Build today's classes list
+        const todayClasses = [];
+        timetables.forEach(timetable => {
+            const daySchedule = timetable.schedule[todayDay] || [];
+            daySchedule.forEach(period => {
+                // Find matching mapping
+                const mapping = mappings.find(m => 
+                    (m.classId?._id || m.classId)?.toString() === timetable.classId?.toString() &&
+                    (m.sectionId?._id || m.sectionId)?.toString() === timetable.sectionId?.toString() &&
+                    (m.subjectId?._id || m.subjectId)?.toString() === period.subjectId?.toString() &&
+                    (period.teacherId?._id || period.teacherId)?.toString() === teacherId.toString()
+                );
+
+                if (mapping) {
+                    // Use mapping.subjectId as it's guaranteed to exist and match
+                    const subjectId = mapping.subjectId?._id || mapping.subjectId;
+                    const key = `${timetable.classId}_${timetable.sectionId}_${subjectId}_${todayDay}_${period.startTime}`;
+                    const completion = completionMap[key];
+
+                    todayClasses.push({
+                        id: `${mapping._id}_${todayDay}_${period.startTime}`,
+                        classId: timetable.classId?._id || timetable.classId,
+                        sectionId: timetable.sectionId?._id || timetable.sectionId,
+                        subjectId: subjectId, // Use from mapping to ensure it's always present
+                        className: timetable.classId?.name || mapping.classId?.name,
+                        sectionName: timetable.sectionId?.name || mapping.sectionId?.name,
+                        subject: mapping.subjectId?.name || "N/A",
+                        classSection: `${timetable.classId?.name || mapping.classId?.name} ${timetable.sectionId?.name || mapping.sectionId?.name}`,
+                        time: `${period.startTime} - ${period.endTime}`,
+                        room: period.room || "TBD",
+                        status: completion ? "Marked" : "Pending",
+                        completionId: completion?._id,
+                        topicsCovered: completion?.topicsCovered,
+                        remarks: completion?.remarks
+                    });
+                }
+            });
+        });
+
+        // Sort by time
+        todayClasses.sort((a, b) => {
+            const timeA = a.time.split(" - ")[0];
+            const timeB = b.time.split(" - ")[0];
+            return timeA.localeCompare(timeB);
+        });
+
+        res.status(200).json({
+            success: true,
+            data: todayClasses
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER LEARNING MATERIALS (Resources) =================
+export const getTeacherLearningMaterials = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const { type, subjectId, classId } = req.query;
+
+        const query = { teacherId };
+
+        if (type) query.type = type;
+        if (subjectId) query.subjectId = subjectId;
+        if (classId) query.classId = classId;
+
+        const materials = await LearningMaterial.find(query)
+            .populate("subjectId", "name code")
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: materials
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

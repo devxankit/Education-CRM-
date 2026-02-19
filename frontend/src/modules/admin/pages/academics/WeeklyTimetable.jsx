@@ -185,7 +185,8 @@ const WeeklyTimetable = () => {
     };
 
     const handleAddPeriod = () => {
-        let startTime = '09:00';
+        // Use timetable rules startTime as default, fallback to 09:00 if no rules
+        let startTime = timetableRules?.startTime || '09:00';
         let duration = timetableRules?.periodDuration || 45;
 
         const currentPeriods = localSchedule[activeDay] || [];
@@ -194,7 +195,7 @@ const WeeklyTimetable = () => {
             // Start after the last period
             startTime = currentPeriods[currentPeriods.length - 1].endTime;
         } else if (timetableRules?.startTime) {
-            // First period of the day
+            // First period of the day - use rule startTime
             startTime = timetableRules.startTime;
         }
 
@@ -460,32 +461,28 @@ const WeeklyTimetable = () => {
             }
         });
 
-        // 8. Weekly Validations - Max Periods Per Teacher
+        // 8. Daily Validations - Max Periods Per Teacher (per day)
+        // NOTE: Weekly load is controlled separately via maxWeeklyHours below.
         if (timetableRules?.maxPeriodsTeacher) {
-            const teacherWeeklyCounts = {};
             Object.keys(localSchedule).forEach(day => {
-                localSchedule[day].forEach(period => {
+                const teacherDayIndices = {};
+
+                localSchedule[day].forEach((period, index) => {
                     const teacherId = period.teacherId?._id || period.teacherId;
-                    if (teacherId) {
-                        if (!teacherWeeklyCounts[teacherId]) {
-                            teacherWeeklyCounts[teacherId] = { count: 0, periods: [] };
-                        }
-                        teacherWeeklyCounts[teacherId].count++;
-                        teacherWeeklyCounts[teacherId].periods.push({ day, teacherId, period });
+                    if (!teacherId) return;
+                    if (!teacherDayIndices[teacherId]) teacherDayIndices[teacherId] = [];
+                    teacherDayIndices[teacherId].push(index);
+                });
+
+                Object.keys(teacherDayIndices).forEach(teacherId => {
+                    const count = teacherDayIndices[teacherId].length;
+                    if (count > timetableRules.maxPeriodsTeacher) {
+                        teacherDayIndices[teacherId].forEach(periodIndex => {
+                            newErrors[`${day}-${periodIndex}-teacher-max`] = `Teacher exceeds daily periods limit (${count}/${timetableRules.maxPeriodsTeacher})`;
+                            hasError = true;
+                        });
                     }
                 });
-            });
-
-            Object.keys(teacherWeeklyCounts).forEach(teacherId => {
-                if (teacherWeeklyCounts[teacherId].count > timetableRules.maxPeriodsTeacher) {
-                    teacherWeeklyCounts[teacherId].periods.forEach(({ day, period }) => {
-                        const periodIndex = localSchedule[day].indexOf(period);
-                        if (periodIndex !== -1) {
-                            newErrors[`${day}-${periodIndex}-teacher-max`] = `Teacher exceeds weekly limit (${teacherWeeklyCounts[teacherId].count}/${timetableRules.maxPeriodsTeacher})`;
-                            hasError = true;
-                        }
-                    });
-                }
             });
         }
 
@@ -525,7 +522,39 @@ const WeeklyTimetable = () => {
 
         if (hasError) {
             setValidationErrors(newErrors);
-            alert('Some assignments are invalid. Please check the highlighted periods.');
+            
+            // Collect unique error messages for better user feedback
+            const errorMessages = [];
+            const errorTypes = new Set();
+            
+            Object.values(newErrors).forEach(errorMsg => {
+                if (errorMsg.includes('non-working day')) {
+                    errorTypes.add('Non-working day');
+                } else if (errorMsg.includes('not assigned')) {
+                    errorTypes.add('Teacher not assigned to subject');
+                } else if (errorMsg.includes('daily periods limit')) {
+                    errorTypes.add('Teacher exceeds daily periods limit');
+                } else if (errorMsg.includes('Time range')) {
+                    errorTypes.add('Time range invalid');
+                } else if (errorMsg.includes('duration')) {
+                    errorTypes.add('Period duration incorrect');
+                } else if (errorMsg.includes('Maximum') && errorMsg.includes('periods')) {
+                    errorTypes.add('Too many periods per day');
+                } else if (errorMsg.includes('overlapping periods')) {
+                    errorTypes.add('Teacher has overlapping periods');
+                } else if (errorMsg.includes('already booked')) {
+                    errorTypes.add('Room already booked');
+                } else if (errorMsg.includes('weekly hours')) {
+                    errorTypes.add('Teacher exceeds weekly hours limit');
+                } else if (errorMsg.includes('consecutive')) {
+                    errorTypes.add('Consecutive periods issue');
+                }
+            });
+            
+            const errorSummary = Array.from(errorTypes).join(', ');
+            const errorCount = Object.keys(newErrors).length;
+            
+            alert(`Some assignments are invalid (${errorCount} error${errorCount > 1 ? 's' : ''} found).\n\nIssues: ${errorSummary || 'Please check highlighted periods'}\n\nPlease check the highlighted periods in red for details.`);
             return;
         }
 

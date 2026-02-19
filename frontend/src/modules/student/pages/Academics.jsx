@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
+import { AnimatePresence } from 'framer-motion';
 import PageHeader from '../components/Academics/PageHeader';
 import ClassInfoCard from '../components/Academics/ClassInfoCard';
 import TimetableSection from '../components/Academics/TimetableSection';
 import SubjectsGrid from '../components/Academics/SubjectsGrid';
+import SubjectScheduleModal from '../components/Academics/SubjectScheduleModal';
 
 import { useStudentStore } from '../../../store/studentStore';
 
@@ -14,6 +16,7 @@ const Academics = () => {
     const fetchAcademics = useStudentStore(state => state.fetchAcademics);
     const [activeDay, setActiveDay] = useState(new Date().toLocaleDateString('en-US', { weekday: 'short' })); // Default to today
     const [loading, setLoading] = useState(!data);
+    const [selectedSubject, setSelectedSubject] = useState(null);
 
     // Fetch on mount
     useEffect(() => {
@@ -77,8 +80,21 @@ const Academics = () => {
                 />
 
                 {/* Subjects */}
-                <SubjectsGrid subjects={data.subjects} />
+                <SubjectsGrid
+                    subjects={data.subjects}
+                    onSubjectClick={setSelectedSubject}
+                />
             </main>
+
+            <AnimatePresence>
+                {selectedSubject && (
+                    <SubjectScheduleModal
+                        subject={selectedSubject}
+                        timetable={data.timetable}
+                        onClose={() => setSelectedSubject(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Navigation */}
             {/* Bottom Nav removed */}

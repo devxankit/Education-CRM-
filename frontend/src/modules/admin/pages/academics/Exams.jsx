@@ -133,16 +133,48 @@ const Exams = () => {
                                     </td>
                                     <td className="px-6 py-4 align-middle">
                                         <div className="flex flex-wrap gap-1.5">
-                                            {exam.classes?.map(cls => (
-                                                <span key={'c-' + cls._id} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
-                                                    {cls.name}
-                                                </span>
-                                            ))}
-                                            {exam.courses?.map(crs => (
-                                                <span key={'cr-' + crs._id} className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-medium">
-                                                    {crs.name}
-                                                </span>
-                                            ))}
+                                            {(() => {
+                                                // Filter out null/undefined values and get valid classes
+                                                const validClasses = (exam.classes || []).filter(cls => cls !== null && cls !== undefined);
+                                                const validCourses = (exam.courses || []).filter(crs => crs !== null && crs !== undefined);
+                                                
+                                                if (validClasses.length > 0) {
+                                                    return validClasses.map((cls, idx) => {
+                                                        // Handle both populated objects and IDs
+                                                        const className = typeof cls === 'object' && cls !== null 
+                                                            ? (cls.name || cls._id?.toString().slice(-6) || 'N/A')
+                                                            : cls?.toString().slice(-6) || 'N/A';
+                                                        const classId = typeof cls === 'object' && cls !== null 
+                                                            ? (cls._id || cls.id || idx)
+                                                            : cls || idx;
+                                                        
+                                                        return (
+                                                            <span key={'c-' + classId} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
+                                                                {className}
+                                                            </span>
+                                                        );
+                                                    });
+                                                } else if (validCourses.length > 0) {
+                                                    return validCourses.map((crs, idx) => {
+                                                        const courseName = typeof crs === 'object' && crs !== null 
+                                                            ? (crs.name || crs.code || crs._id?.toString().slice(-6) || 'N/A')
+                                                            : crs?.toString().slice(-6) || 'N/A';
+                                                        const courseId = typeof crs === 'object' && crs !== null 
+                                                            ? (crs._id || crs.id || idx)
+                                                            : crs || idx;
+                                                        
+                                                        return (
+                                                            <span key={'cr-' + courseId} className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-medium">
+                                                                {courseName}
+                                                            </span>
+                                                        );
+                                                    });
+                                                } else {
+                                                    return (
+                                                        <span className="text-[10px] text-gray-400 italic">No classes/courses assigned</span>
+                                                    );
+                                                }
+                                            })()}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 align-middle">

@@ -40,30 +40,36 @@ const HomeworkSubmission = ({ homework, onSubmissionComplete }) => {
         }
 
         setIsSubmitting(true);
+        setError('');
         try {
             const base64 = await convertToBase64(file);
+            const homeworkId = homework.id || homework._id;
+            if (!homeworkId) {
+                setError('Invalid homework. Please go back and try again.');
+                setIsSubmitting(false);
+                return;
+            }
             const submissionData = {
-                homeworkId: homework.id,
-                content: note,
+                homeworkId,
+                content: note || '',
                 attachments: [
                     { name: file.name, base64 }
                 ]
             };
 
             const result = await submitHomework(submissionData);
-            if (result) {
-                // Check if homework was overdue
+            if (result?.success) {
                 const isOverdue = homework.dueDate && new Date() > new Date(homework.dueDate);
                 setSuccess(true);
                 setTimeout(() => {
                     onSubmissionComplete();
                 }, 1500);
             } else {
-                setError('Failed to submit homework. Please try again.');
+                setError(result?.message || 'Failed to submit homework. Please try again.');
             }
         } catch (err) {
             console.error(err);
-            setError('An error occurred during submission.');
+            setError(err?.message || 'An error occurred during submission.');
         } finally {
             setIsSubmitting(false);
         }

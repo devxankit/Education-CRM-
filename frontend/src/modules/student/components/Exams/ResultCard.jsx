@@ -12,17 +12,21 @@ const ResultCard = ({ result, index, onClick }) => {
     const textColor = isPass ? 'text-emerald-700' : 'text-red-700';
 
     useEffect(() => {
-        // Entrance
+        if (!cardRef.current || !progressRef.current) return;
         gsap.fromTo(cardRef.current,
             { y: 20, opacity: 0 },
             { y: 0, opacity: 1, duration: 0.5, delay: index * 0.1, ease: 'power2.out' }
         );
-
-        // Progress Bar Fill
         gsap.fromTo(progressRef.current,
             { width: "0%" },
             { width: `${result.percentage}%`, duration: 1.2, delay: 0.3 + (index * 0.1), ease: 'power2.out' }
         );
+        return () => {
+            try {
+                if (cardRef.current) gsap.killTweensOf(cardRef.current);
+                if (progressRef.current) gsap.killTweensOf(progressRef.current);
+            } catch (_) { /* ignore */ }
+        };
     }, [index, result.percentage]);
 
     return (
@@ -35,7 +39,12 @@ const ResultCard = ({ result, index, onClick }) => {
                 <div>
                     <h3 className="text-base font-bold text-gray-900">{result.examName}</h3>
                     <p className="text-xs text-gray-500 mt-1">
-                        Published on {new Date(result.publishedDate).toLocaleDateString()}
+                        Published on {(() => {
+                            const d = result.date || result.publishedDate || result.updatedAt;
+                            if (!d) return 'N/A';
+                            const dt = new Date(d);
+                            return isNaN(dt.getTime()) ? 'N/A' : dt.toLocaleDateString();
+                        })()}
                     </p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${bgColor} ${textColor}`}>
@@ -51,7 +60,10 @@ const ResultCard = ({ result, index, onClick }) => {
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-gray-500 font-medium">Marks Obtained</p>
-                    <p className="text-sm font-bold text-gray-800">{result.obtainedMarks} <span className="text-gray-400 text-xs font-normal">/ {result.totalMarks}</span></p>
+                    <p className="text-sm font-bold text-gray-800">
+                        {result.obtainedMarks || (result.subjects?.reduce((sum, s) => sum + (s.marks || 0), 0) || 0)} 
+                        <span className="text-gray-400 text-xs font-normal"> / {result.totalMarks || (result.subjects?.reduce((sum, s) => sum + (s.total || 0), 0) || 0)}</span>
+                    </p>
                 </div>
             </div>
 

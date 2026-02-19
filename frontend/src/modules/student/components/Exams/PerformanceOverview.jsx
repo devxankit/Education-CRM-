@@ -30,7 +30,9 @@ const PerformanceOverview = ({ data }) => {
                 ease: "power2.out"
             });
         }, containerRef);
-        return () => ctx.revert();
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, [data]);
 
     // Calculate overall improvement

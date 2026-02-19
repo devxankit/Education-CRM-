@@ -13,6 +13,7 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
     const [instructions, setInstructions] = useState('');
     const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [savingAs, setSavingAs] = useState(null); // 'draft' | 'publish'
     const fileInputRef = useRef(null);
 
     const handleFileSelect = (e) => {
@@ -27,13 +28,32 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const handlePublish = async () => {
+    const fileToBase64 = (file) =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+    const handleSubmit = async (asDraft = false) => {
         if (!selectedClassId || !title) {
-            alert("Please fill all required fields (Class and Title)");
+            alert("Please fill Class and Title (required for both Draft and Publish)");
             return;
         }
 
         const selectedMapping = classes.find(c => c.id === selectedClassId);
+
+        let attachments = [];
+        if (selectedFile) {
+            try {
+                const base64 = await fileToBase64(selectedFile);
+                attachments = [{ name: selectedFile.name, base64 }];
+            } catch {
+                alert("Failed to read file. Please try again.");
+                return;
+            }
+        }
 
         const payload = {
             classId: selectedMapping.classId,
@@ -42,23 +62,28 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
             title,
             instructions,
             dueDate,
-            status: 'published',
+            status: asDraft ? 'draft' : 'published',
             academicYearId: profile?.currentAcademicYear || profile?.academicYearId || "65af736f987654edcba98765",
             branchId: profile?.branchId?._id || profile?.branchId || "65af736f987654edcba12345",
-            attachments: selectedFile ? [{ name: selectedFile.name, url: "" }] : []
+            attachments
         };
 
-        const success = await addHomework(payload);
-
+        setSavingAs(asDraft ? 'draft' : 'publish');
+        let success = false;
+        try {
+            success = await addHomework(payload);
+        } finally {
+            setSavingAs(null);
+        }
         if (success) {
-            alert("Homework Published Successfully!");
+            alert(asDraft ? "Homework saved as Draft!" : "Homework Published Successfully!");
             setTitle('');
             setInstructions('');
             setSelectedClassId(null);
             setSelectedFile(null);
             onClose();
         } else {
-            alert("Failed to publish homework. Please try again.");
+            alert(asDraft ? "Failed to save draft." : "Failed to publish homework. Please try again.");
         }
     };
 
@@ -89,9 +114,12 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                 </div>
 
                 <div className="p-5 space-y-5 overflow-y-auto">
-                    {/* Class Selection Slider */}
+                    {/* Class Selection Slider - only assigned subjects */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2.5 px-1">Select Class (Drag to scroll)</label>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2.5 px-1">Select Class & Subject (Drag to scroll)</label>
+                        {classes.length === 0 ? (
+                            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-100 rounded-lg p-3">No subjects assigned. Ask admin to assign you to subjects (Timetable / Teacher Mapping).</p>
+                        ) : (
                         <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                             {classes.map(cls => {
                                 const isSelected = selectedClassId === cls.id;
@@ -115,6 +143,7 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                                 );
                             })}
                         </div>
+                        )}
                     </div>
 
                     {/* Title */}
@@ -164,6 +193,7 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                                 ref={fileInputRef}
                                 onChange={handleFileSelect}
                                 className="hidden"
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif"
                             />
                             {!selectedFile ? (
                                 <button
@@ -192,11 +222,18 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
                         Cancel
                     </button>
                     <button
-                        onClick={handlePublish}
+                        onClick={() => handleSubmit(true)}
                         disabled={isCreating}
-                        className="flex-1 py-3.5 px-4 rounded-xl bg-gray-900 text-white font-bold text-sm hover:bg-gray-800 shadow-xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-3.5 px-4 rounded-xl border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        {isCreating ? 'Publishing...' : 'Publish Homework'}
+                        {isCreating && savingAs === 'draft' ? 'Saving...' : 'Save Draft'}
+                    </button>
+                    <button
+                        onClick={() => handleSubmit(false)}
+                        disabled={isCreating}
+                        className="flex-1 py-3.5 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {isCreating && savingAs === 'publish' ? 'Publishing...' : 'Publish'}
                     </button>
                 </div>
 

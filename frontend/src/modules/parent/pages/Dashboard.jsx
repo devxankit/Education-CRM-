@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParentStore } from '../../../store/parentStore';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -14,6 +13,7 @@ import { Calendar, BookOpen, FileText, CreditCard, HeadphonesIcon } from 'lucide
 
 const ParentDashboard = () => {
     const navigate = useNavigate();
+    const containerRef = useRef(null);
 
     // Store Selectors
     const user = useParentStore(state => state.user);
@@ -89,12 +89,16 @@ const ParentDashboard = () => {
     }, [fetchDashboardData]);
 
     useEffect(() => {
-        if (!isLoading && activeChild) {
+        if (isLoading || !activeChild || !containerRef.current) return;
+        const ctx = gsap.context(() => {
             gsap.fromTo(".dashboard-item",
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "power2.out" }
             );
-        }
+        }, containerRef);
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, [isLoading, activeChild]);
 
     if (isLoading) {
@@ -106,7 +110,7 @@ const ParentDashboard = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50/50 pb-28">
+        <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-28">
             <DashboardHeader
                 parentName={user?.name || 'Parent'}
                 onNotificationClick={handleNotificationClick}

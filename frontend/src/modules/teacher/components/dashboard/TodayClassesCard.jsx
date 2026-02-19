@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, MapPin, CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
+import MarkCompletionModal from '../classes/MarkCompletionModal';
 
-const TodayClassesCard = ({ classes }) => {
+const TodayClassesCard = ({ classes, onRefresh }) => {
     const navigate = useNavigate();
+    const [selectedClass, setSelectedClass] = useState(null);
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
 
     return (
         <div className="mb-6">
@@ -17,7 +20,12 @@ const TodayClassesCard = ({ classes }) => {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: idx * 0.1 }}
                             key={cls.id}
-                            onClick={() => navigate(`/teacher/classes/${cls.id}`)}
+                            onClick={() => {
+                                // Use classId_sectionId format for navigation, not the mappingId_day_startTime format
+                                if (cls.classId && cls.sectionId) {
+                                    navigate(`/teacher/classes/${cls.classId}_${cls.sectionId}`);
+                                }
+                            }}
                             className={`bg-white p-4 rounded-xl border ${cls.status === 'Pending' ? 'border-orange-200 bg-orange-50/10' : 'border-gray-100'} shadow-sm flex items-center justify-between group active:scale-[0.99] transition-all cursor-pointer`}
                         >
                             <div className="flex-1 min-w-0">
@@ -39,16 +47,34 @@ const TodayClassesCard = ({ classes }) => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    if (cls.status === 'Pending') navigate('/teacher/attendance');
-                                    else navigate(`/teacher/classes/${cls.id}`);
+                                    if (cls.status === 'Pending') {
+                                        // Open completion modal
+                                        setSelectedClass(cls);
+                                        setShowCompletionModal(true);
+                                    } else {
+                                        // Use classId_sectionId format for navigation
+                                        if (cls.classId && cls.sectionId) {
+                                            navigate(`/teacher/classes/${cls.classId}_${cls.sectionId}`);
+                                        }
+                                    }
                                 }}
-                                className={`ml-3 px-4 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm whitespace-nowrap
+                                className={`ml-3 px-4 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm whitespace-nowrap flex items-center gap-1.5
                                     ${cls.status === 'Pending'
                                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
                                         : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
-                                {cls.status === 'Pending' ? 'Mark Attendance' : 'View Class'}
+                                {cls.status === 'Pending' ? (
+                                    <>
+                                        <BookOpen size={14} />
+                                        Mark Completion
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle size={14} />
+                                        Completed
+                                    </>
+                                )}
                             </button>
                         </motion.div>
                     ))
@@ -58,6 +84,20 @@ const TodayClassesCard = ({ classes }) => {
                     </div>
                 )}
             </div>
+
+            {/* Completion Modal */}
+            <MarkCompletionModal
+                isOpen={showCompletionModal}
+                onClose={() => {
+                    setShowCompletionModal(false);
+                    setSelectedClass(null);
+                }}
+                classData={selectedClass}
+                onSuccess={(completionData) => {
+                    // Refresh classes list
+                    onRefresh?.();
+                }}
+            />
         </div>
     );
 };

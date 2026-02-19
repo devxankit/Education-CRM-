@@ -15,10 +15,10 @@ const router = express.Router();
 router.use(AuthMiddleware);
 router.use(isAdmin);
 
-// Classes
+// Classes – static route before :id to avoid matching "class-teachers" as id
+router.get("/class-teachers", getSectionsForClassTeacherAssignment);
 router.post("/", createClass);
 router.get("/", getClasses);
-router.get("/class-teachers", getSectionsForClassTeacherAssignment);
 router.put("/:id", updateClass);
 
 // Sections

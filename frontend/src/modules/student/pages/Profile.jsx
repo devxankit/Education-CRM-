@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Users, User, Shield, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
+import { Book, Users, User, Shield, HelpCircle, ChevronRight, LogOut, Lock, Eye, EyeOff } from 'lucide-react';
 
 // Components
 import ProfileSummaryCard from '../components/Profile/ProfileSummaryCard';
@@ -86,11 +86,49 @@ const ProfilePage = () => {
     const student = useStudentStore(state => state.profile);
     const fetchProfile = useStudentStore(state => state.fetchProfile);
     const logout = useStudentStore(state => state.logout);
+    const changePassword = useStudentStore(state => state.changePassword);
     const [loading, setLoading] = useState(!student);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
+    const [showPasswords, setShowPasswords] = useState({ current: false, new: false });
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const handleLogout = () => {
         logout();
         navigate('/student/login');
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        setPasswordError('');
+        setPasswordSuccess('');
+        if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
+            setPasswordError('All fields are required');
+            return;
+        }
+        if (passwordForm.new.length < 6) {
+            setPasswordError('New password must be at least 6 characters');
+            return;
+        }
+        if (passwordForm.new !== passwordForm.confirm) {
+            setPasswordError('New password and confirm password do not match');
+            return;
+        }
+        setIsChangingPassword(true);
+        const result = await changePassword(passwordForm.current, passwordForm.new);
+        setIsChangingPassword(false);
+        if (result.success) {
+            setPasswordSuccess(result.message);
+            setPasswordForm({ current: '', new: '', confirm: '' });
+            setTimeout(() => {
+                setShowPasswordModal(false);
+                setPasswordSuccess('');
+            }, 1500);
+        } else {
+            setPasswordError(result.message);
+        }
     };
 
     // Initial Load & Smooth Scroll
@@ -256,7 +294,45 @@ const ProfilePage = () => {
                     </motion.div>
 
 
-                    {/* 6. Help Action */}
+                    {/* 6. Edit Profile */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <button
+                            onClick={() => navigate('/student/profile/edit')}
+                            className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <User size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-gray-900">Edit Profile</p>
+                                    <p className="text-xs text-gray-400">Update name, address, photo & more</p>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="text-gray-300 group-hover:text-indigo-600 transition-colors" />
+                        </button>
+                    </motion.div>
+
+                    {/* 7. Change Password */}
+                    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <button
+                            onClick={() => setShowPasswordModal(true)}
+                            className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                    <Lock size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-gray-900">Change Password</p>
+                                    <p className="text-xs text-gray-400">Update your account password</p>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="text-gray-300 group-hover:text-amber-600 transition-colors" />
+                        </button>
+                    </motion.div>
+
+                    {/* 7. Help Action */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <button
                             onClick={() => navigate('/student/help')}
@@ -275,7 +351,7 @@ const ProfilePage = () => {
                         </button>
                     </motion.div>
 
-                    {/* 7. Logout Action */}
+                    {/* 8. Logout Action */}
                     <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                         <button
                             onClick={handleLogout}
@@ -305,6 +381,90 @@ const ProfilePage = () => {
 
                 </motion.div>
             </main>
+
+            {/* Change Password Modal */}
+            <AnimatePresence mode="wait">
+                {showPasswordModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4"
+                        onClick={() => !isChangingPassword && setShowPasswordModal(false)}
+                    >
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-md shadow-xl overflow-hidden"
+                        >
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-gray-900">Change Password</h3>
+                                    <button
+                                        onClick={() => !isChangingPassword && setShowPasswordModal(false)}
+                                        className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                <form onSubmit={handleChangePassword} className="space-y-4">
+                                    {passwordError && <p className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-xl">{passwordError}</p>}
+                                    {passwordSuccess && <p className="text-sm text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl">{passwordSuccess}</p>}
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Current Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPasswords.current ? 'text' : 'password'}
+                                                value={passwordForm.current}
+                                                onChange={(e) => setPasswordForm(p => ({ ...p, current: e.target.value }))}
+                                                placeholder="Enter current password"
+                                                className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                                            />
+                                            <button type="button" onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">New Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPasswords.new ? 'text' : 'password'}
+                                                value={passwordForm.new}
+                                                onChange={(e) => setPasswordForm(p => ({ ...p, new: e.target.value }))}
+                                                placeholder="Min 6 characters"
+                                                className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                                            />
+                                            <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Confirm New Password</label>
+                                        <input
+                                            type="password"
+                                            value={passwordForm.confirm}
+                                            onChange={(e) => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                                            placeholder="Re-enter new password"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={isChangingPassword}
+                                        className="w-full py-3.5 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 disabled:opacity-70"
+                                    >
+                                        {isChangingPassword ? 'Updating...' : 'Update Password'}
+                                    </button>
+                                </form>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

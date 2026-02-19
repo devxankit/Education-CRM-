@@ -19,7 +19,7 @@ const EditProfilePage = () => {
         firstName: '',
         middleName: '',
         lastName: '',
-        dob: '',
+        dob: null,
         gender: '',
         bloodGroup: '',
         nationality: '',
@@ -36,11 +36,14 @@ const EditProfilePage = () => {
         if (!student) {
             fetchProfile();
         } else {
+            const parsedDob = student.dob
+                ? (student.dob instanceof Date ? student.dob : new Date(student.dob))
+                : null;
             setFormData({
                 firstName: student.firstName || '',
                 middleName: student.middleName || '',
                 lastName: student.lastName || '',
-                dob: student.dob ? new Date(student.dob) : null,
+                dob: parsedDob && !isNaN(parsedDob.getTime()) ? parsedDob : null,
                 gender: student.gender || '',
                 bloodGroup: student.bloodGroup || '',
                 nationality: student.nationality || 'Indian',
@@ -53,7 +56,7 @@ const EditProfilePage = () => {
                 photo: null
             });
         }
-    }, [student]);
+    }, [student, fetchProfile]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -85,25 +88,37 @@ const EditProfilePage = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            // Convert Date object back to ISO string for backend
             const submitData = {
                 ...formData,
-                dob: formData.dob ? format(formData.dob, 'yyyy-MM-dd') : ''
+                dob: formData.dob && formData.dob instanceof Date
+                    ? format(formData.dob, 'yyyy-MM-dd')
+                    : (formData.dob || '')
             };
-            const success = await updateProfile(submitData);
-            if (success) {
+            const result = await updateProfile(submitData);
+            if (result?.success) {
                 toast.success("Profile updated successfully");
                 await fetchProfile();
                 navigate('/student/profile');
             } else {
-                toast.error("Failed to update profile");
+                toast.error(result?.message || "Failed to update profile");
             }
         } catch (error) {
-            toast.error("Something went wrong");
+            toast.error(error?.message || "Something went wrong");
         } finally {
             setIsLoading(false);
         }
     };
+
+    if (!student) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500">Loading profile...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-24">

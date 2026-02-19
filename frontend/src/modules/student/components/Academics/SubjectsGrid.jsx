@@ -7,9 +7,15 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
-const SubjectCard = ({ subject }) => {
+const SubjectCard = ({ subject, onClick }) => {
     return (
-        <div className="subject-card group bg-white p-4 rounded-xl border border-gray-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-all active:scale-[0.98] cursor-pointer relative overflow-hidden">
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onClick?.(subject)}
+            onKeyDown={e => e.key === 'Enter' && onClick?.(subject)}
+            className="subject-card group bg-white p-4 rounded-xl border border-gray-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-all active:scale-[0.98] cursor-pointer relative overflow-hidden"
+        >
 
             <div className="flex items-start justify-between mb-3">
                 <div className={`p-2.5 rounded-lg ${subject?.color || 'bg-gray-50 text-gray-500'}`}>
@@ -37,7 +43,7 @@ const SubjectCard = ({ subject }) => {
     );
 };
 
-const SubjectsGrid = ({ subjects }) => {
+const SubjectsGrid = ({ subjects, onSubjectClick }) => {
     const gridRef = useRef(null);
 
     useEffect(() => {
@@ -82,7 +88,7 @@ const SubjectsGrid = ({ subjects }) => {
         }, gridRef);
 
         return () => {
-            ctx.revert();
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
         };
     }, [subjects]);
 
@@ -91,7 +97,7 @@ const SubjectsGrid = ({ subjects }) => {
             <h3 className="font-bold text-gray-800 text-lg mb-4 px-1">My Subjects</h3>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                 {subjects.map((sub) => (
-                    <SubjectCard key={sub.id} subject={sub} />
+                    <SubjectCard key={sub.id} subject={sub} onClick={onSubjectClick} />
                 ))}
             </div>
         </div>

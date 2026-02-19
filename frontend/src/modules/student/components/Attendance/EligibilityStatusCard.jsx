@@ -2,13 +2,15 @@ import React from 'react';
 import { colors } from '../../../../theme/colors';
 
 const EligibilityStatusCard = ({ eligibility }) => {
-    const { isEligible, requiredPercentage, classesNeeded } = eligibility;
+    const { isEligible, requiredPercentage, required, classesNeeded } = eligibility || {};
+    const reqPct = requiredPercentage ?? required ?? 75;
 
     // Derived state
-    const borderColor = isEligible ? colors.success : colors.warning;
-    const bgColor = isEligible ? '#F0FDF4' : '#FFFBEB'; // green-50 : amber-50
-    const textColor = isEligible ? '#166534' : '#B45309'; // green-800 : amber-700
-    const icon = isEligible ? (
+    const eligible = isEligible ?? eligibility?.status === 'Eligible';
+    const borderColor = eligible ? colors.success : colors.warning;
+    const bgColor = eligible ? '#F0FDF4' : '#FFFBEB'; // green-50 : amber-50
+    const textColor = eligible ? '#166534' : '#B45309'; // green-800 : amber-700
+    const icon = eligible ? (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -32,19 +34,19 @@ const EligibilityStatusCard = ({ eligibility }) => {
 
             <div className="flex-1">
                 <h4 className="font-semibold text-sm mb-1" style={{ color: textColor }}>
-                    {isEligible ? "Exam Eligibility: Eligible" : "Exam Eligibility: Risk"}
+                    {eligible ? "Exam Eligibility: Eligible" : "Exam Eligibility: Risk"}
                 </h4>
 
                 <p className="text-sm text-gray-700 leading-relaxed">
-                    {isEligible
-                        ? `You have maintained above ${requiredPercentage}% attendance. Great job!`
-                        : `You are currently below the ${requiredPercentage}% threshold.`
+                    {eligible
+                        ? `You have maintained above ${reqPct}% attendance. Great job!`
+                        : `You are currently below the ${reqPct}% threshold.`
                     }
                 </p>
 
-                {!isEligible && classesNeeded > 0 && (
+                {!eligible && (classesNeeded ?? 0) > 0 && (
                     <div className="mt-2 text-sm font-medium" style={{ color: textColor }}>
-                        Action: Attend the next <span className="underline">{classesNeeded} classes</span> to reach {requiredPercentage}%.
+                        Action: Attend the next <span className="underline">{classesNeeded} days</span> to reach {reqPct}%.
                     </div>
                 )}
             </div>

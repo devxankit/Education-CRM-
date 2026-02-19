@@ -47,7 +47,9 @@ export const useTeacherStore = create(
                         set({
                             user: data,
                             token,
-                            isAuthenticated: true
+                            isAuthenticated: true,
+                            assignedClasses: [],
+                            classStudents: []
                         });
                         return { success: true };
                     }
@@ -126,6 +128,33 @@ export const useTeacherStore = create(
                     set({ isFetchingClasses: false });
                 }
             },
+            studentDetail: null,
+            studentDetailError: null,
+            isFetchingStudentDetail: false,
+            fetchStudentDetail: async (studentId, classId, sectionId) => {
+                set({ isFetchingStudentDetail: true, studentDetail: null, studentDetailError: null });
+                try {
+                    const token = get().token;
+                    const params = classId && sectionId ? { classId, sectionId } : {};
+                    const response = await axios.get(`${API_URL}/teacher/students/${studentId}`, {
+                        params,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ studentDetail: response.data.data, studentDetailError: null });
+                        return response.data.data;
+                    }
+                    return null;
+                } catch (error) {
+                    const msg = error.response?.data?.message || 'Failed to load student details';
+                    set({ studentDetailError: msg });
+                    console.error('Error fetching student detail:', error);
+                    return null;
+                } finally {
+                    set({ isFetchingStudentDetail: false });
+                }
+            },
+            clearStudentDetail: () => set({ studentDetail: null, studentDetailError: null }),
             fetchClassStudents: async (classId, sectionId) => {
                 if (get().isFetchingStudents) return;
                 // Optional: Cache check (if same class/section already loaded)
@@ -173,6 +202,22 @@ export const useTeacherStore = create(
             updateProfile: (data) => set((state) => ({
                 profile: { ...state.profile, ...data }
             })),
+            uploadProfilePhoto: async (base64Photo) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.put(`${API_URL}/teacher/profile/update`, { photo: base64Photo }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ profile: response.data.data });
+                        return { success: true };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    console.error('Error uploading profile photo:', error);
+                    return { success: false, message: error.response?.data?.message || 'Upload failed' };
+                }
+            },
 
             // Attendance
             attendanceRecords: [],
@@ -190,7 +235,7 @@ export const useTeacherStore = create(
                     if (response.data.success) {
                         set((state) => ({
                             attendanceRecords: [...state.attendanceRecords, response.data.data],
-                            todayClasses: state.todayClasses.map(c =>
+                            todayClasses: (state.todayClasses || []).map(c =>
                                 c.id === record.classId ? { ...c, status: 'Marked' } : c
                             )
                         }));
@@ -223,7 +268,6 @@ export const useTeacherStore = create(
                 }
             },
             fetchMyAttendance: async (params = {}) => {
-                if (get().isFetchingMyAttendance) return;
                 set({ isFetchingMyAttendance: true });
                 try {
                     const token = get().token;
@@ -286,9 +330,7 @@ export const useTeacherStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set((state) => ({
-                            homeworkList: [response.data.data, ...state.homeworkList]
-                        }));
+                        await get().fetchHomeworkList();
                         return true;
                     }
                 } catch (error) {
@@ -332,6 +374,28 @@ export const useTeacherStore = create(
                 } catch (error) {
                     console.error('Error deleting homework:', error);
                     return false;
+                }
+            },
+
+            // Learning Materials (Resources)
+            learningMaterials: [],
+            isFetchingLearningMaterials: false,
+            fetchLearningMaterials: async (filters = {}) => {
+                if (get().isFetchingLearningMaterials) return;
+                set({ isFetchingLearningMaterials: true });
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/teacher/learning-materials`, {
+                        params: filters,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ learningMaterials: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching learning materials:', error);
+                } finally {
+                    set({ isFetchingLearningMaterials: false });
                 }
             },
 
@@ -456,14 +520,47 @@ export const useTeacherStore = create(
                 }
             },
 
+            currentExam: null,
+            isFetchingExam: false,
+            fetchExamById: async (examId) => {
+                set({ isFetchingExam: true, currentExam: null });
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/teacher/exams/${examId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ currentExam: response.data.data });
+                        return { success: true, data: response.data.data };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const status = error.response?.status;
+                    const message = error.response?.data?.message || error.message;
+                    if (status === 403) {
+                        return { success: false, forbidden: true, message };
+                    }
+                    if (status === 404) {
+                        return { success: false, notFound: true, message };
+                    }
+                    console.error('Error fetching exam:', error);
+                    return { success: false, message };
+                } finally {
+                    set({ isFetchingExam: false });
+                }
+            },
+
             examStudents: {}, // Stores students per exam-class-subject combo
             isFetchingExamStudents: false,
-            fetchExamStudents: async (examId, classId, subjectId) => {
+            fetchExamStudents: async (examId, classId, subjectId, sectionId) => {
                 set({ isFetchingExamStudents: true });
                 try {
                     const token = get().token;
+                    const params = { examId, classId, subjectId };
+                    if (sectionId) params.sectionId = sectionId;
+                    
                     const response = await axios.get(`${API_URL}/teacher/exams/students`, {
-                        params: { examId, classId, subjectId },
+                        params,
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -554,6 +651,27 @@ export const useTeacherStore = create(
             },
 
 
+            // Branch Academic Years (for filters)
+            branchAcademicYears: [],
+            isFetchingAcademicYears: false,
+            fetchBranchAcademicYears: async () => {
+                if (get().isFetchingAcademicYears) return;
+                set({ isFetchingAcademicYears: true });
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/teacher/academic-years`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ branchAcademicYears: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching academic years:', error);
+                } finally {
+                    set({ isFetchingAcademicYears: false });
+                }
+            },
+
             // Payroll
             payrollHistory: [],
             isFetchingPayroll: false,
@@ -597,6 +715,11 @@ export const useTeacherStore = create(
         }),
         {
             name: 'teacher-storage',
+            partialize: (state) => ({
+                user: state.user,
+                token: state.token,
+                isAuthenticated: state.isAuthenticated,
+            }),
         }
     )
 );

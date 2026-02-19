@@ -22,6 +22,7 @@ import { calculateTax } from "../Helpers/calculateTax.js";
 import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
 import LearningMaterial from "../Models/LearningMaterialModel.js";
+import StudentNote from "../Models/StudentNoteModel.js";
 import Role from "../Models/RoleModel.js";
 import { logFinancial, logUserActivity, logDataChange } from "../Helpers/logger.js";
 
@@ -170,6 +171,9 @@ export const getStudentDashboard = async (req, res) => {
             createdAt: { $gte: weekAgo }
         });
 
+        // 8b. Student's notes count
+        const myNotesCount = await StudentNote.countDocuments({ studentId });
+
         // 9. Performance (optional mock if no results yet)
         const performance = {
             currentGPA: "8.4",
@@ -212,6 +216,10 @@ export const getStudentDashboard = async (req, res) => {
                     },
                     materials: {
                         newCount: newMaterialsCount,
+                        link: "/student/notes"
+                    },
+                    myNotes: {
+                        count: myNotesCount,
                         link: "/student/notes"
                     }
                 },
@@ -888,6 +896,9 @@ export const getStudentExams = async (req, res) => {
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
+        if (!student.classId) {
+            return res.status(200).json({ success: true, data: [] });
+        }
 
         const exams = await Exam.find({
             classes: student.classId,
@@ -1040,20 +1051,36 @@ export const getStudentFees = async (req, res) => {
 export const getMyNotices = async (req, res) => {
     try {
         const studentId = req.user._id;
-        const student = await Student.findById(studentId);
+        const student = await Student.findById(studentId).populate("classId", "academicYearId");
 
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
 
-        const notices = await Notice.find({
-            status: "PUBLISHED",
-            $or: [
-                { audiences: "All Students" },
-                { targetClasses: student.classId },
-                { targetSections: student.sectionId }
-            ]
-        })
+        const studentBranchId = student.branchId?._id || student.branchId;
+        const studentAyId = student.classId?.academicYearId || student.academicYearId;
+
+        const andConditions = [
+            { instituteId: student.instituteId },
+            { status: "PUBLISHED" },
+            {
+                $or: [
+                    { audiences: "All Students" },
+                    { targetClasses: student.classId },
+                    { targetSections: student.sectionId }
+                ]
+            }
+        ];
+
+        // Branch filter: notice for this branch or institute-wide (branchId null)
+        andConditions.push({ $or: [{ branchId: studentBranchId }, { branchId: null }] });
+
+        // Academic year filter: notice for this year or all years (academicYearId null)
+        if (studentAyId) {
+            andConditions.push({ $or: [{ academicYearId: studentAyId }, { academicYearId: null }] });
+        }
+
+        const notices = await Notice.find({ $and: andConditions })
             .populate("branchId", "name")
             .sort({ publishDate: -1 });
 
@@ -1136,8 +1163,9 @@ export const getStudentAcademics = async (req, res) => {
                 if (timetableData.schedule[day]) {
                     formattedTimetable[day] = timetableData.schedule[day].map(item => ({
                         id: item._id,
-                        time: `${item.startTime} - ${item.endTime}`,
+                        subjectId: item.subjectId?._id?.toString(),
                         subject: item.subjectId?.name || "N/A",
+                        time: `${item.startTime} - ${item.endTime}`,
                         teacher: item.teacherId ? `${item.teacherId.firstName} ${item.teacherId.lastName}` : "N/A",
                         room: item.room || "N/A",
                         type: item.type || "offline",
@@ -1282,17 +1310,37 @@ export const submitHomework = async (req, res) => {
             return res.status(404).json({ success: false, message: "Homework not found" });
         }
 
+        // Verify student belongs to this homework's class/section
+        const studentClassId = student.classId?.toString();
+        const studentSectionId = student.sectionId?.toString();
+        const hwClassId = homework.classId?.toString();
+        const hwSectionId = homework.sectionId?.toString();
+        if (studentClassId !== hwClassId || studentSectionId !== hwSectionId) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to this homework. It belongs to a different class/section."
+            });
+        }
+
         // Handle file uploads if any
         let uploadedAttachments = [];
         if (attachments && attachments.length > 0) {
-            const uploadPromises = attachments.map(async (att) => {
-                if (att.base64) {
-                    const url = await uploadBase64ToCloudinary(att.base64, `students/homework/${studentId}`);
-                    return { name: att.name, url };
-                }
-                return att;
-            });
-            uploadedAttachments = await Promise.all(uploadPromises);
+            try {
+                const uploadPromises = attachments.map(async (att) => {
+                    if (att.base64) {
+                        const url = await uploadBase64ToCloudinary(att.base64, `students/homework/${studentId}`);
+                        return { name: att.name || "attachment", url };
+                    }
+                    return att;
+                });
+                uploadedAttachments = await Promise.all(uploadPromises);
+            } catch (uploadErr) {
+                console.error("Homework attachment upload error:", uploadErr);
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to upload file. Please try again or use a smaller file."
+                });
+            }
         }
 
         const isLate = new Date() > homework.dueDate;
@@ -1358,6 +1406,66 @@ export const getLearningMaterials = async (req, res) => {
             success: true,
             data: materials
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= STUDENT'S NOTES (multiple notes) =================
+export const getStudentNotes = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const notes = await StudentNote.find({ studentId }).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: notes });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const createStudentNote = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { title, content, subject } = req.body;
+        if (!title || !title.trim()) {
+            return res.status(400).json({ success: false, message: "Title is required" });
+        }
+        const note = new StudentNote({
+            studentId,
+            title: title.trim(),
+            content: (content || "").trim(),
+            subject: (subject || "General").trim()
+        });
+        await note.save();
+        res.status(201).json({ success: true, message: "Note added", data: note });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const updateStudentNote = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { id } = req.params;
+        const { title, content, subject } = req.body;
+        const note = await StudentNote.findOne({ _id: id, studentId });
+        if (!note) return res.status(404).json({ success: false, message: "Note not found" });
+        if (title !== undefined) note.title = title.trim();
+        if (content !== undefined) note.content = content.trim();
+        if (subject !== undefined) note.subject = subject.trim();
+        await note.save();
+        res.status(200).json({ success: true, message: "Note updated", data: note });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const deleteStudentNote = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { id } = req.params;
+        const note = await StudentNote.findOneAndDelete({ _id: id, studentId });
+        if (!note) return res.status(404).json({ success: false, message: "Note not found" });
+        res.status(200).json({ success: true, message: "Note deleted" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -1482,6 +1590,43 @@ export const updateStudentProfile = async (req, res) => {
             message: "Profile updated successfully",
             data: student,
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CHANGE STUDENT PASSWORD =================
+export const changeStudentPassword = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: "Current password and new password are required" });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "New password must be at least 6 characters" });
+        }
+
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        if (!student.password) {
+            return res.status(400).json({ success: false, message: "Password not set for this account. Please contact admin." });
+        }
+
+        const isMatch = await student.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: "Invalid current password" });
+        }
+
+        student.password = newPassword;
+        await student.save();
+
+        res.status(200).json({ success: true, message: "Password updated successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

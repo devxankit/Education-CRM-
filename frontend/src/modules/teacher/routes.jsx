@@ -19,8 +19,10 @@ import TeacherHelpPage from './pages/TeacherHelp';
 import HomeworkDetailPage from './pages/HomeworkDetail';
 import SubmissionsPage from './pages/Submissions';
 import ClassDetailPage from './pages/ClassDetail';
+import StudentDetailPage from './pages/StudentDetail';
 import ExamDetailPage from './pages/ExamDetail';
 import TeacherPayroll from './pages/Payroll';
+import ResourcesPage from './pages/Resources';
 
 const teacherRoutes = [
     {
@@ -41,6 +43,7 @@ const teacherRoutes = [
                             { path: 'my-attendance', element: <MyAttendance /> },
                             { path: 'classes', element: <ClassesPage /> },
 
+                            { path: 'classes/:id/student/:studentId', element: <StudentDetailPage /> },
                             { path: 'classes/:id', element: <ClassDetailPage /> },
                             { path: 'attendance', element: <AttendancePage /> },
                             { path: 'homework', element: <HomeworkPage /> },
@@ -52,6 +55,7 @@ const teacherRoutes = [
                             { path: 'reports', element: <ReportsPage /> },
                             { path: 'profile', element: <ProfilePage /> },
                             { path: 'payroll', element: <TeacherPayroll /> },
+                            { path: 'resources', element: <ResourcesPage /> },
                             { path: 'notices', element: <NoticesPage /> },
                             { path: 'notices/:id', element: <NoticeDetail /> },
                             { path: 'support', element: <SupportPage /> },

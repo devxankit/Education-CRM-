@@ -62,7 +62,9 @@ const Dashboard = () => {
             });
         }, containerRef);
 
-        return () => ctx.revert();
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, []);
 
     if (loading || !dashboardData) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Clock, TrendingUp, CalendarCheck, BookOpen } from 'lucide-react';
+import { CheckCircle, Clock, TrendingUp, CalendarCheck, BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const StatsCard = ({ title, value, subtext, icon: Icon, colorClass, link }) => {
@@ -74,14 +74,14 @@ const StatsSection = ({ stats }) => {
                 link={stats?.exams?.link || '/student/exams'}
             />
 
-            {/* Materials */}
+            {/* My Notes */}
             <StatsCard
-                title="New Notes"
-                value={stats?.materials?.newCount != null ? stats.materials.newCount : null}
-                subtext="Added this week"
-                icon={BookOpen}
-                colorClass={{ bg: 'bg-pink-50', text: 'text-pink-600' }}
-                link={stats?.materials?.link || '/student/notes'}
+                title="My Notes"
+                value={stats?.myNotes?.count != null ? stats.myNotes.count : null}
+                subtext="Personal notes"
+                icon={FileText}
+                colorClass={{ bg: 'bg-amber-50', text: 'text-amber-600' }}
+                link={stats?.myNotes?.link || '/student/notes'}
             />
         </div>
     );

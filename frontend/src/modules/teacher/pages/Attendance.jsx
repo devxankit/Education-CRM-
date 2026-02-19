@@ -32,23 +32,25 @@ const AttendancePage = () => {
     const fetchAttendanceByDate = useTeacherStore(state => state.fetchAttendanceByDate);
     const isFetchingAttendance = useTeacherStore(state => state.isFetchingAttendance);
 
-    // Fetch Initial Data on Mount
+    // Fetch Initial Data on Mount – always fetch fresh assigned classes for this teacher
     useEffect(() => {
         fetchProfile();
-        fetchAssignedClasses();
-    }, [fetchProfile, fetchAssignedClasses]); // Add fetchProfile and fetchAssignedClasses to dependencies for completeness, though Zustand functions are stable
+        fetchAssignedClasses(true); // force=true: bypass cache, always refetch from API
+    }, [fetchProfile, fetchAssignedClasses]);
 
-    // Flatten mappings for the selector
-    const flatMappings = React.useMemo(() => assignedClasses.flatMap(sub =>
-        sub.classes.map(cls => ({
-            id: `${sub.subjectId}_${cls.classId}_${cls.sectionId}`,
-            subjectId: sub.subjectId,
-            subjectName: sub.subjectName,
+    // Flatten mappings - ONLY Class Teacher sections (wo hi class ki attendance laga sakta hai)
+    const flatMappings = React.useMemo(() => {
+        const classTeacherSub = assignedClasses.find(s => s.subjectName === 'Class Teacher' || s.subjectId == null);
+        if (!classTeacherSub) return [];
+        return classTeacherSub.classes.map(cls => ({
+            id: `ct_${cls.classId}_${cls.sectionId}`,
+            subjectId: null,
+            subjectName: 'Class Teacher',
             classId: cls.classId,
             sectionId: cls.sectionId,
             className: cls.fullClassName,
-        }))
-    ), [assignedClasses]);
+        }));
+    }, [assignedClasses]);
 
     // Default to first mapping if none selected
     useEffect(() => {
@@ -115,14 +117,19 @@ const AttendancePage = () => {
         return () => lenis.destroy();
     }, []);
 
-    // Stagger Animation
+    // Stagger Animation (with cleanup to avoid GSAP/ScrollTrigger errors on unmount)
     useEffect(() => {
-        if (listRef.current && students.length > 0) {
-            gsap.fromTo(listRef.current.children,
+        const el = listRef.current;
+        if (!el || students.length === 0) return;
+        const ctx = gsap.context(() => {
+            gsap.fromTo(el.children,
                 { y: 20, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out', delay: 0.2 }
             );
-        }
+        }, el);
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, [students]);
 
     const isSubmitting = useTeacherStore(state => state.isSubmittingAttendance);
@@ -201,6 +208,7 @@ const AttendancePage = () => {
     }));
 
     const isLocked = !isToday(selectedDate);
+    const noClassTeacherAssignment = flatMappings.length === 0;
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-28">
@@ -229,14 +237,24 @@ const AttendancePage = () => {
 
             <main className="max-w-2xl mx-auto px-4 pt-6">
                 {/* 1. Controls */}
-                <ClassSubjectSelector
-                    classes={formattedClassesForSelector}
-                    selectedClass={selectedMapping ? { id: selectedMapping.id } : null}
-                    onClassChange={(cls) => {
-                        const mapping = flatMappings.find(m => m.id === cls.id);
-                        setSelectedMapping(mapping);
-                    }}
-                />
+                {noClassTeacherAssignment && !isFetchingClasses ? (
+                    <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-4 flex items-start gap-3">
+                        <Info className="text-amber-600 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <p className="text-sm font-bold text-amber-800">No Class Teacher Assignment</p>
+                            <p className="text-xs text-amber-700 mt-0.5">Only Class Teachers can mark attendance. You are not assigned as Class Teacher for any section.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <ClassSubjectSelector
+                        classes={formattedClassesForSelector}
+                        selectedClass={selectedMapping ? { id: selectedMapping.id } : null}
+                        onClassChange={(cls) => {
+                            const mapping = flatMappings.find(m => m.id === cls.id);
+                            setSelectedMapping(mapping);
+                        }}
+                    />
+                )}
 
                 <div className="flex items-center justify-between mb-4 px-1">
                     <div className="relative group">
@@ -285,6 +303,9 @@ const AttendancePage = () => {
                                 student={{
                                     id: sid,
                                     name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'N/A',
+                                    firstName: student.firstName,
+                                    lastName: student.lastName,
+                                    photo: student.photo || student.documents?.photo?.url,
                                     roll: student.rollNo || student.admissionNo || (sid ? sid.slice(-6) : '-'),
                                     admissionNo: student.admissionNo
                                 }}
@@ -307,8 +328,8 @@ const AttendancePage = () => {
                 </div>
             </main>
 
-            {/* 3. Bottom Action Bar */}
-            {!isLocked && (
+            {/* 3. Bottom Action Bar - Only show if teacher is assigned as Class Teacher */}
+            {flatMappings.length > 0 && !isLocked && (
                 <AttendanceSummaryBar
                     stats={stats}
                     onSubmit={handleSubmit}

@@ -13,16 +13,20 @@ import {
     getMyAttendance,
     getStudentFees,
     getMyNotices,
-    // acknowledgeNotice,
     getStudentNotifications,
     getStudentProfile,
     getStudentAcademics,
     getStudentHomework,
     submitHomework,
     getLearningMaterials,
+    getStudentNotes,
+    createStudentNote,
+    updateStudentNote,
+    deleteStudentNote,
     createSupportTicket,
     getSupportTickets,
-    updateStudentProfile
+    updateStudentProfile,
+    changeStudentPassword
 } from "../Controllers/StudentCtrl.js";
 import { AuthMiddleware, isAdmin, isStudent } from "../Middlewares/AuthMiddleware.js";
 
@@ -45,12 +49,18 @@ router.get("/notifications", isStudent, getStudentNotifications);
 // router.put("/notices/:noticeId/acknowledge", isStudent, acknowledgeNotice);
 router.get("/profile", isStudent, getStudentProfile);
 router.put("/profile", isStudent, updateStudentProfile);
+router.post("/change-password", isStudent, changeStudentPassword);
 router.get("/academics", isStudent, getStudentAcademics);
 router.get("/homework", isStudent, getStudentHomework);
 router.post("/homework/submit", isStudent, submitHomework);
 router.get("/learning-materials", isStudent, getLearningMaterials);
+router.get("/notes/my", isStudent, getStudentNotes);
+router.post("/notes/my", isStudent, createStudentNote);
+router.put("/notes/my/:id", isStudent, updateStudentNote);
+router.delete("/notes/my/:id", isStudent, deleteStudentNote);
 router.post("/tickets", isStudent, createSupportTicket);
 router.get("/tickets", isStudent, getSupportTickets);
+router.post("/change-password", isStudent, changeStudentPassword);
 
 // Admin only routes
 router.post("/admit", isAdmin, admitStudent);

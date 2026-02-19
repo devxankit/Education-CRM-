@@ -636,16 +636,48 @@ export const useAdminStore = create(
                 }
             },
             fetchSectionsForClassTeacher: async (branchId, academicYearId) => {
+                const token = localStorage.getItem('token');
+                const headers = { 'Authorization': `Bearer ${token}` };
                 try {
-                    const token = localStorage.getItem('token');
                     const params = new URLSearchParams({ branchId, academicYearId });
-                    const response = await axios.get(`${API_URL}/class/class-teachers?${params}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const response = await axios.get(`${API_URL}/class/class-teachers?${params}`, { headers });
                     if (response.data.success) {
                         return response.data.data;
                     }
                 } catch (error) {
+                    if (error.response?.status === 404) {
+                        try {
+                            const classParams = new URLSearchParams({ branchId });
+                            if (academicYearId) classParams.set('academicYearId', academicYearId);
+                            const courseParams = new URLSearchParams({ branchId });
+                            if (academicYearId) courseParams.set('academicYearId', academicYearId);
+                            const [classRes, courseRes] = await Promise.all([
+                                axios.get(`${API_URL}/class?${classParams}`, { headers }),
+                                axios.get(`${API_URL}/course?${courseParams}`, { headers })
+                            ]);
+                            const classes = classRes.data.success ? classRes.data.data : [];
+                            const courses = courseRes.data.success ? courseRes.data.data : [];
+                            const allSections = [];
+                            for (const cls of classes) {
+                                try {
+                                    const secRes = await axios.get(
+                                        `${API_URL}/class/section/${cls._id}?includeInactive=true`,
+                                        { headers }
+                                    );
+                                    if (secRes.data.success && Array.isArray(secRes.data.data)) {
+                                        const secs = secRes.data.data.map(s => ({
+                                            ...s,
+                                            classId: { _id: cls._id, name: cls.name }
+                                        }));
+                                        allSections.push(...secs);
+                                    }
+                                } catch { /* skip class if sections fail */ }
+                            }
+                            return { classes, sections: allSections, courses };
+                        } catch (fallbackErr) {
+                            console.error('Fallback fetch for class teacher failed:', fallbackErr);
+                        }
+                    }
                     console.error('Error fetching sections for class teacher:', error);
                     throw error;
                 }

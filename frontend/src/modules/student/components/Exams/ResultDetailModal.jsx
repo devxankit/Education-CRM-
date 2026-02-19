@@ -1,8 +1,71 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Award, FileText, Download } from 'lucide-react';
+import { X, Award, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+import { useStudentStore } from '../../../../store/studentStore';
 
 const ResultDetailModal = ({ result, onClose }) => {
+    const profile = useStudentStore(state => state.profile);
+
+    const handleDownloadMarksheet = useCallback(() => {
+        if (!result) return;
+        try {
+            const doc = new jsPDF();
+            const studentName = profile ? [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'Student' : 'Student';
+
+            // Header
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text(result.examName || 'Exam Result', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text('Report Card', 105, 28, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(`Student: ${studentName}`, 14, 38);
+            doc.text(`Date: ${result.date ? new Date(result.date).toLocaleDateString() : '-'}`, 14, 44);
+
+            // Score summary
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total Score: ${result.percentage}% (${result.grade})`, 14, 54);
+
+            // Subjects table
+            const tableData = (result.subjects || []).map(s => [
+                s.name || 'Subject',
+                `${s.marks ?? 0} / ${s.total ?? 0}`,
+                s.grade || '—',
+                s.status || '—'
+            ]);
+
+            autoTable(doc, {
+                startY: 62,
+                head: [['Subject', 'Marks', 'Grade', 'Status']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229], fontSize: 10 },
+                styles: { fontSize: 9 }
+            });
+
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80;
+
+            // Remarks
+            if (result.remarks) {
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('Teacher Remarks:', 14, finalY);
+                doc.setFont(undefined, 'normal');
+                const splitRemarks = doc.splitTextToSize(`"${result.remarks}"`, 180);
+                doc.text(splitRemarks, 14, finalY + 6);
+            }
+
+            doc.save(`Marksheet_${(result.examName || 'Exam').replace(/\s+/g, '_')}.pdf`);
+        } catch (err) {
+            console.error('Failed to generate marksheet:', err);
+            alert('Failed to download marksheet. Please try again.');
+        }
+    }, [result, profile]);
+
     if (!result) return null;
 
     return (
@@ -55,13 +118,40 @@ const ResultDetailModal = ({ result, onClose }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {(result.subjects || []).map((sub, i) => (
-                                    <tr key={i}>
-                                        <td className="px-4 py-3 font-medium text-gray-800">{sub.name}</td>
-                                        <td className="px-4 py-3 text-center text-gray-600">{sub.marks} <span className="text-[10px] text-gray-400">/ {sub.total}</span></td>
-                                        <td className="px-4 py-3 text-right font-bold text-gray-900">{sub.grade}</td>
+                                {result.subjects && result.subjects.length > 0 ? (
+                                    result.subjects.map((sub, i) => (
+                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3 font-medium text-gray-800">{sub.name}</td>
+                                            <td className="px-4 py-3 text-center text-gray-600">
+                                                {sub.marks || 0} <span className="text-[10px] text-gray-400">/ {sub.total || 0}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className={`font-bold ${
+                                                    sub.status === 'Pass' ? 'text-emerald-600' : 
+                                                    sub.status === 'Fail' ? 'text-red-600' : 
+                                                    'text-gray-900'
+                                                }`}>
+                                                    {sub.grade || 'N/A'}
+                                                </span>
+                                                {sub.status && (
+                                                    <span className={`ml-2 text-[10px] px-2 py-0.5 rounded ${
+                                                        sub.status === 'Pass' ? 'bg-emerald-50 text-emerald-600' : 
+                                                        sub.status === 'Fail' ? 'bg-red-50 text-red-600' : 
+                                                        'bg-gray-50 text-gray-600'
+                                                    }`}>
+                                                        {sub.status}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="3" className="px-4 py-8 text-center text-gray-400 text-sm">
+                                            No subject results available
+                                        </td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -73,7 +163,10 @@ const ResultDetailModal = ({ result, onClose }) => {
                     </div>
 
                     {/* Download Action */}
-                    <button className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-[0.98] transition-all">
+                    <button
+                        onClick={handleDownloadMarksheet}
+                        className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-[0.98] transition-all"
+                    >
                         <Download size={18} />
                         Download Marksheet
                     </button>
