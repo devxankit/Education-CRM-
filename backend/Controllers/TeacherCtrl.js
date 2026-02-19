@@ -18,6 +18,7 @@ import Payroll from "../Models/PayrollModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
 import AcademicYear from "../Models/AcademicYearModel.js";
 import ClassCompletion from "../Models/ClassCompletionModel.js";
+import LearningMaterial from "../Models/LearningMaterialModel.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 
 // ================= GET ACADEMIC YEARS (for teacher's branch) =================
@@ -1769,6 +1770,33 @@ export const getTodayClassesWithCompletion = async (req, res) => {
         res.status(200).json({
             success: true,
             data: todayClasses
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET TEACHER LEARNING MATERIALS (Resources) =================
+export const getTeacherLearningMaterials = async (req, res) => {
+    try {
+        const teacherId = req.user._id;
+        const { type, subjectId, classId } = req.query;
+
+        const query = { teacherId };
+
+        if (type) query.type = type;
+        if (subjectId) query.subjectId = subjectId;
+        if (classId) query.classId = classId;
+
+        const materials = await LearningMaterial.find(query)
+            .populate("subjectId", "name code")
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: materials
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

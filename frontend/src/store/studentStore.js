@@ -186,17 +186,20 @@ export const useStudentStore = create(
                 try {
                     const token = get().token;
                     const response = await axios.post(`${API_URL}/student/homework/submit`, homeworkData, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                     });
-                    if (response.data.success) {
+                    if (response.data?.success) {
                         await get().fetchHomework(); // Refresh list
                         set({ isLoading: false });
-                        return true;
+                        return { success: true };
                     }
+                    set({ isLoading: false });
+                    return { success: false, message: response.data?.message || 'Submission failed' };
                 } catch (error) {
                     console.error('Error submitting homework:', error);
+                    const message = error.response?.data?.message || error.message || 'Failed to submit homework';
                     set({ isLoading: false });
-                    return false;
+                    return { success: false, message };
                 }
             },
 
@@ -429,19 +432,40 @@ export const useStudentStore = create(
                 set({ isLoading: true });
                 try {
                     const token = get().token;
+                    if (!token) {
+                        set({ isLoading: false });
+                        return { success: false, message: 'Not logged in' };
+                    }
                     const response = await axios.put(`${API_URL}/student/profile`, formData, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                     });
                     if (response.data.success) {
                         set({ profile: response.data.data, isLoading: false });
-                        return true;
+                        return { success: true };
                     }
                     set({ isLoading: false });
-                    return false;
+                    return { success: false, message: response.data.message || 'Update failed' };
                 } catch (error) {
                     console.error('Error updating profile:', error);
+                    const msg = error.response?.data?.message || error.message || 'Failed to update profile';
                     set({ isLoading: false });
-                    return false;
+                    return { success: false, message: msg };
+                }
+            },
+            changePassword: async (currentPassword, newPassword) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.post(`${API_URL}/student/change-password`, {
+                        currentPassword,
+                        newPassword
+                    }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) return { success: true, message: response.data.message };
+                    return { success: false, message: response.data.message || 'Failed to change password' };
+                } catch (error) {
+                    const msg = error.response?.data?.message || 'Failed to change password';
+                    return { success: false, message: msg };
                 }
             },
 

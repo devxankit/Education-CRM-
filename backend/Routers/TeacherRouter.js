@@ -29,7 +29,8 @@ import {
     getTeacherAcademicYears,
     markClassCompletion,
     getClassCompletions,
-    getTodayClassesWithCompletion
+    getTodayClassesWithCompletion,
+    getTeacherLearningMaterials
 } from "../Controllers/TeacherCtrl.js";
 import {
     getTeacherSupportTickets,
@@ -73,6 +74,7 @@ router.post("/attendance", isTeacher, markAttendance);
 router.get("/attendance/my-attendance", isTeacher, getMyAttendanceHistory);
 router.get("/attendance/history", isTeacher, getAttendanceHistory);
 router.get("/attendance/by-date", isTeacher, getAttendanceByDate);
+router.get("/learning-materials", isTeacher, getTeacherLearningMaterials);
 
 // Exam routes
 router.get("/exams", isTeacher, getTeacherExams);

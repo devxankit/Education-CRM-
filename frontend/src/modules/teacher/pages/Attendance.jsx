@@ -127,7 +127,9 @@ const AttendancePage = () => {
                 { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out', delay: 0.2 }
             );
         }, el);
-        return () => ctx.revert();
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, [students]);
 
     const isSubmitting = useTeacherStore(state => state.isSubmittingAttendance);

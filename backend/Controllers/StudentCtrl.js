@@ -1298,17 +1298,37 @@ export const submitHomework = async (req, res) => {
             return res.status(404).json({ success: false, message: "Homework not found" });
         }
 
+        // Verify student belongs to this homework's class/section
+        const studentClassId = student.classId?.toString();
+        const studentSectionId = student.sectionId?.toString();
+        const hwClassId = homework.classId?.toString();
+        const hwSectionId = homework.sectionId?.toString();
+        if (studentClassId !== hwClassId || studentSectionId !== hwSectionId) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to this homework. It belongs to a different class/section."
+            });
+        }
+
         // Handle file uploads if any
         let uploadedAttachments = [];
         if (attachments && attachments.length > 0) {
-            const uploadPromises = attachments.map(async (att) => {
-                if (att.base64) {
-                    const url = await uploadBase64ToCloudinary(att.base64, `students/homework/${studentId}`);
-                    return { name: att.name, url };
-                }
-                return att;
-            });
-            uploadedAttachments = await Promise.all(uploadPromises);
+            try {
+                const uploadPromises = attachments.map(async (att) => {
+                    if (att.base64) {
+                        const url = await uploadBase64ToCloudinary(att.base64, `students/homework/${studentId}`);
+                        return { name: att.name || "attachment", url };
+                    }
+                    return att;
+                });
+                uploadedAttachments = await Promise.all(uploadPromises);
+            } catch (uploadErr) {
+                console.error("Homework attachment upload error:", uploadErr);
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to upload file. Please try again or use a smaller file."
+                });
+            }
         }
 
         const isLate = new Date() > homework.dueDate;
@@ -1494,6 +1514,43 @@ export const updateStudentProfile = async (req, res) => {
             message: "Profile updated successfully",
             data: student,
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= CHANGE STUDENT PASSWORD =================
+export const changeStudentPassword = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: "Current password and new password are required" });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "New password must be at least 6 characters" });
+        }
+
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        if (!student.password) {
+            return res.status(400).json({ success: false, message: "Password not set for this account. Please contact admin." });
+        }
+
+        const isMatch = await student.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: "Invalid current password" });
+        }
+
+        student.password = newPassword;
+        await student.save();
+
+        res.status(200).json({ success: true, message: "Password updated successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

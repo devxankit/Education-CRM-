@@ -6,7 +6,7 @@ import gsap from 'gsap';
 const actions = [
     { label: 'Homework', icon: Plus, bg: 'bg-indigo-100', text: 'text-indigo-600', path: '/teacher/homework' },
     { label: 'Attendance', icon: CheckSquare, bg: 'bg-emerald-100', text: 'text-emerald-600', path: '/teacher/attendance' },
-    { label: 'Materials', icon: UploadCloud, bg: 'bg-blue-100', text: 'text-blue-600', path: '/teacher/classes' },
+    { label: 'Resources', icon: UploadCloud, bg: 'bg-blue-100', text: 'text-blue-600', path: '/teacher/resources' },
     { label: 'Marks', icon: FileBarChart, bg: 'bg-purple-100', text: 'text-purple-600', path: '/teacher/exams' },
     { label: 'Support', icon: MessageCircle, bg: 'bg-orange-100', text: 'text-orange-600', path: '/teacher/support' },
 ];
@@ -16,19 +16,15 @@ const QuickActionsRow = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (rowRef.current) {
-            gsap.fromTo(rowRef.current.children,
-                { y: 15, opacity: 0 },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration: 0.4,
-                    stagger: 0.08,
-                    ease: 'power2.out',
-                    delay: 0.1
-                }
-            );
-        }
+        if (!rowRef.current) return;
+        const children = rowRef.current.children;
+        gsap.fromTo(children,
+            { y: 15, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out', delay: 0.1 }
+        );
+        return () => {
+            try { gsap.killTweensOf(children); } catch (_) { /* ignore */ }
+        };
     }, []);
 
     return (

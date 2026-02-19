@@ -55,7 +55,9 @@ const ClassesPage = () => {
                     delay: 0.2
                 });
             }, containerRef);
-            return () => ctx.revert();
+            return () => {
+                try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+            };
         }
     }, [isFetchingClasses, assignedClasses]);
 

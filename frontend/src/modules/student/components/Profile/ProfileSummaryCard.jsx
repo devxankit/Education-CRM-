@@ -18,6 +18,7 @@ const ProfileSummaryCard = ({ student }) => {
     };
 
     useEffect(() => {
+        if (!cardRef.current) return;
         const ctx = gsap.context(() => {
             gsap.from(cardRef.current, {
                 y: 20,
@@ -33,7 +34,9 @@ const ProfileSummaryCard = ({ student }) => {
                 ease: 'elastic.out(1, 0.5)'
             });
         }, cardRef);
-        return () => ctx.revert();
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, []);
 
     return (

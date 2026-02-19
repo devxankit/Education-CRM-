@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { LogOut, HelpCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { LogOut, HelpCircle, ShieldCheck, Loader2, FolderOpen } from 'lucide-react';
 import gsap from 'gsap';
 import { useTeacherStore } from '../../../store/teacherStore';
 
@@ -88,7 +88,9 @@ const ProfilePage = () => {
                 delay: 0.2
             });
         }, containerRef);
-        return () => ctx.revert();
+        return () => {
+            try { ctx.revert(); } catch (_) { /* ignore DOM errors on unmount */ }
+        };
     }, [profile]);
 
     const handleLogout = () => {
@@ -173,6 +175,17 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="profile-section space-y-3">
+                    <button
+                        onClick={() => navigate('/teacher/resources')}
+                        className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-left hover:bg-gray-50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                <FolderOpen size={18} />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900">My Resources</span>
+                        </div>
+                    </button>
                     <button
                         onClick={() => navigate('/teacher/help')}
                         className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-left hover:bg-gray-50 transition-colors"

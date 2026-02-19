@@ -22,6 +22,7 @@ import ClassDetailPage from './pages/ClassDetail';
 import StudentDetailPage from './pages/StudentDetail';
 import ExamDetailPage from './pages/ExamDetail';
 import TeacherPayroll from './pages/Payroll';
+import ResourcesPage from './pages/Resources';
 
 const teacherRoutes = [
     {
@@ -54,6 +55,7 @@ const teacherRoutes = [
                             { path: 'reports', element: <ReportsPage /> },
                             { path: 'profile', element: <ProfilePage /> },
                             { path: 'payroll', element: <TeacherPayroll /> },
+                            { path: 'resources', element: <ResourcesPage /> },
                             { path: 'notices', element: <NoticesPage /> },
                             { path: 'notices/:id', element: <NoticeDetail /> },
                             { path: 'support', element: <SupportPage /> },

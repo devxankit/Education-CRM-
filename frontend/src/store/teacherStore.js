@@ -377,6 +377,28 @@ export const useTeacherStore = create(
                 }
             },
 
+            // Learning Materials (Resources)
+            learningMaterials: [],
+            isFetchingLearningMaterials: false,
+            fetchLearningMaterials: async (filters = {}) => {
+                if (get().isFetchingLearningMaterials) return;
+                set({ isFetchingLearningMaterials: true });
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/teacher/learning-materials`, {
+                        params: filters,
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ learningMaterials: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching learning materials:', error);
+                } finally {
+                    set({ isFetchingLearningMaterials: false });
+                }
+            },
+
             // Notices
             notices: [],
             isFetchingNotices: false,

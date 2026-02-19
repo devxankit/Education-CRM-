@@ -6,10 +6,14 @@ const HomeworkCard = ({ homework, index, onClick }) => {
     const cardRef = useRef(null);
 
     useEffect(() => {
+        if (!cardRef.current) return;
         gsap.fromTo(cardRef.current,
             { y: 20, opacity: 0 },
             { y: 0, opacity: 1, duration: 0.5, delay: index * 0.05, ease: 'power2.out' }
         );
+        return () => {
+            try { if (cardRef.current) gsap.killTweensOf(cardRef.current); } catch (_) { /* ignore */ }
+        };
     }, [index]);
 
     // Status Config

@@ -12,17 +12,21 @@ const ResultCard = ({ result, index, onClick }) => {
     const textColor = isPass ? 'text-emerald-700' : 'text-red-700';
 
     useEffect(() => {
-        // Entrance
+        if (!cardRef.current || !progressRef.current) return;
         gsap.fromTo(cardRef.current,
             { y: 20, opacity: 0 },
             { y: 0, opacity: 1, duration: 0.5, delay: index * 0.1, ease: 'power2.out' }
         );
-
-        // Progress Bar Fill
         gsap.fromTo(progressRef.current,
             { width: "0%" },
             { width: `${result.percentage}%`, duration: 1.2, delay: 0.3 + (index * 0.1), ease: 'power2.out' }
         );
+        return () => {
+            try {
+                if (cardRef.current) gsap.killTweensOf(cardRef.current);
+                if (progressRef.current) gsap.killTweensOf(progressRef.current);
+            } catch (_) { /* ignore */ }
+        };
     }, [index, result.percentage]);
 
     return (
