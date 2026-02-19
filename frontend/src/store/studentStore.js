@@ -52,6 +52,7 @@ export const useStudentStore = create(
             academics: null,
             documents: [],
             notes: [],
+            myNotes: [],
             tickets: [],
             isLoading: false,
             error: null,
@@ -112,6 +113,7 @@ export const useStudentStore = create(
                     academics: null,
                     documents: [],
                     notes: [],
+                    myNotes: [],
                     tickets: [],
                     isLoading: false,
                     error: null
@@ -419,6 +421,77 @@ export const useStudentStore = create(
                 } catch (error) {
                     console.error('Error fetching learning materials:', error);
                     set({ isLoading: false });
+                }
+            },
+
+            fetchMyNotes: async () => {
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/student/notes/my`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ myNotes: response.data.data || [] });
+                        return response.data.data || [];
+                    }
+                } catch (error) {
+                    console.error('Error fetching my notes:', error);
+                    return [];
+                }
+            },
+
+            addMyNote: async ({ title, content, subject }) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.post(
+                        `${API_URL}/student/notes/my`,
+                        { title, content: content || '', subject: subject || 'General' },
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
+                    if (response.data.success) {
+                        set(state => ({ myNotes: [response.data.data, ...state.myNotes] }));
+                        return { success: true, data: response.data.data };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to add note';
+                    return { success: false, message: msg };
+                }
+            },
+
+            updateMyNote: async (id, { title, content, subject }) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.put(
+                        `${API_URL}/student/notes/my/${id}`,
+                        { title, content, subject },
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
+                    if (response.data.success) {
+                        set(state => ({ myNotes: state.myNotes.map(n => n._id === id ? response.data.data : n) }));
+                        return { success: true, data: response.data.data };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to update note';
+                    return { success: false, message: msg };
+                }
+            },
+
+            deleteMyNote: async (id) => {
+                try {
+                    const token = get().token;
+                    const response = await axios.delete(`${API_URL}/student/notes/my/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set(state => ({ myNotes: state.myNotes.filter(n => n._id !== id) }));
+                        return { success: true };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to delete note';
+                    return { success: false, message: msg };
                 }
             },
 

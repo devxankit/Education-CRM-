@@ -13,13 +13,16 @@ import {
     getMyAttendance,
     getStudentFees,
     getMyNotices,
-    // acknowledgeNotice,
     getStudentNotifications,
     getStudentProfile,
     getStudentAcademics,
     getStudentHomework,
     submitHomework,
     getLearningMaterials,
+    getStudentNotes,
+    createStudentNote,
+    updateStudentNote,
+    deleteStudentNote,
     createSupportTicket,
     getSupportTickets,
     updateStudentProfile,
@@ -51,6 +54,10 @@ router.get("/academics", isStudent, getStudentAcademics);
 router.get("/homework", isStudent, getStudentHomework);
 router.post("/homework/submit", isStudent, submitHomework);
 router.get("/learning-materials", isStudent, getLearningMaterials);
+router.get("/notes/my", isStudent, getStudentNotes);
+router.post("/notes/my", isStudent, createStudentNote);
+router.put("/notes/my/:id", isStudent, updateStudentNote);
+router.delete("/notes/my/:id", isStudent, deleteStudentNote);
 router.post("/tickets", isStudent, createSupportTicket);
 router.get("/tickets", isStudent, getSupportTickets);
 router.post("/change-password", isStudent, changeStudentPassword);

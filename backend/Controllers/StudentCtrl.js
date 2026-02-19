@@ -22,6 +22,7 @@ import { calculateTax } from "../Helpers/calculateTax.js";
 import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
 import LearningMaterial from "../Models/LearningMaterialModel.js";
+import StudentNote from "../Models/StudentNoteModel.js";
 import Role from "../Models/RoleModel.js";
 import { logFinancial, logUserActivity, logDataChange } from "../Helpers/logger.js";
 
@@ -170,6 +171,9 @@ export const getStudentDashboard = async (req, res) => {
             createdAt: { $gte: weekAgo }
         });
 
+        // 8b. Student's notes count
+        const myNotesCount = await StudentNote.countDocuments({ studentId });
+
         // 9. Performance (optional mock if no results yet)
         const performance = {
             currentGPA: "8.4",
@@ -212,6 +216,10 @@ export const getStudentDashboard = async (req, res) => {
                     },
                     materials: {
                         newCount: newMaterialsCount,
+                        link: "/student/notes"
+                    },
+                    myNotes: {
+                        count: myNotesCount,
                         link: "/student/notes"
                     }
                 },
@@ -1398,6 +1406,66 @@ export const getLearningMaterials = async (req, res) => {
             success: true,
             data: materials
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= STUDENT'S NOTES (multiple notes) =================
+export const getStudentNotes = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const notes = await StudentNote.find({ studentId }).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: notes });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const createStudentNote = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { title, content, subject } = req.body;
+        if (!title || !title.trim()) {
+            return res.status(400).json({ success: false, message: "Title is required" });
+        }
+        const note = new StudentNote({
+            studentId,
+            title: title.trim(),
+            content: (content || "").trim(),
+            subject: (subject || "General").trim()
+        });
+        await note.save();
+        res.status(201).json({ success: true, message: "Note added", data: note });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const updateStudentNote = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { id } = req.params;
+        const { title, content, subject } = req.body;
+        const note = await StudentNote.findOne({ _id: id, studentId });
+        if (!note) return res.status(404).json({ success: false, message: "Note not found" });
+        if (title !== undefined) note.title = title.trim();
+        if (content !== undefined) note.content = content.trim();
+        if (subject !== undefined) note.subject = subject.trim();
+        await note.save();
+        res.status(200).json({ success: true, message: "Note updated", data: note });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const deleteStudentNote = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { id } = req.params;
+        const note = await StudentNote.findOneAndDelete({ _id: id, studentId });
+        if (!note) return res.status(404).json({ success: false, message: "Note not found" });
+        res.status(200).json({ success: true, message: "Note deleted" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
