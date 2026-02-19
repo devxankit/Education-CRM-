@@ -888,6 +888,9 @@ export const getStudentExams = async (req, res) => {
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
+        if (!student.classId) {
+            return res.status(200).json({ success: true, data: [] });
+        }
 
         const exams = await Exam.find({
             classes: student.classId,

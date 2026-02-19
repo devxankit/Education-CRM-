@@ -520,6 +520,36 @@ export const useTeacherStore = create(
                 }
             },
 
+            currentExam: null,
+            isFetchingExam: false,
+            fetchExamById: async (examId) => {
+                set({ isFetchingExam: true, currentExam: null });
+                try {
+                    const token = get().token;
+                    const response = await axios.get(`${API_URL}/teacher/exams/${examId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ currentExam: response.data.data });
+                        return { success: true, data: response.data.data };
+                    }
+                    return { success: false };
+                } catch (error) {
+                    const status = error.response?.status;
+                    const message = error.response?.data?.message || error.message;
+                    if (status === 403) {
+                        return { success: false, forbidden: true, message };
+                    }
+                    if (status === 404) {
+                        return { success: false, notFound: true, message };
+                    }
+                    console.error('Error fetching exam:', error);
+                    return { success: false, message };
+                } finally {
+                    set({ isFetchingExam: false });
+                }
+            },
+
             examStudents: {}, // Stores students per exam-class-subject combo
             isFetchingExamStudents: false,
             fetchExamStudents: async (examId, classId, subjectId, sectionId) => {

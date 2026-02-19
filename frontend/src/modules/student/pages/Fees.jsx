@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lenis from 'lenis';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Info, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Info, Building2 } from 'lucide-react';
 
 // Components
 import FeeSummaryCard from '../components/Fees/FeeSummaryCard';
-import PaymentActionCard from '../components/Fees/PaymentActionCard';
 import { FeeBreakdownList, PaymentHistory } from '../components/Fees/FeeLists';
 import InfoTooltip from '../components/Attendance/InfoTooltip';
 
@@ -19,7 +18,6 @@ const FeesPage = () => {
     const fees = useStudentStore(state => state.fees);
     const fetchFees = useStudentStore(state => state.fetchFees);
     const [loading, setLoading] = useState(!fees);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Initial Load
     useEffect(() => {
@@ -72,17 +70,8 @@ const FeesPage = () => {
             },
             breakdown,
             history,
-            paymentAction: {
-                isInstallmentAvailable: true,
-                minAmount: 500
-            }
         };
     })() : null;
-
-    const handlePaymentSuccess = (amount) => {
-        setShowSuccessModal(true);
-        fetchFees().catch(() => {}); // Refresh fee data
-    };
 
     // Smooth Scroll
     useEffect(() => {
@@ -118,14 +107,14 @@ const FeesPage = () => {
                         </svg>
                     </button>
 
-                    <h1 className="text-lg font-bold text-gray-900">Fees & Payments</h1>
+                    <h1 className="text-lg font-bold text-gray-900">Fees</h1>
 
                     <InfoTooltip
                         content={
                             <div className="space-y-2">
-                                <p className="font-bold border-b border-gray-100 pb-1">Fee Policy</p>
-                                <p>1. Late fee of ₹50/day applicable after due date.</p>
-                                <p>2. Online payments reflect instantly.</p>
+                                <p className="font-bold border-b border-gray-100 pb-1">Fee (Offline)</p>
+                                <p>1. Fee is view-only here. Payment is accepted offline only.</p>
+                                <p>2. Pay at the school office / accounts desk and collect the receipt.</p>
                                 <p>3. Keep receipts for future reference.</p>
                             </div>
                         }
@@ -152,11 +141,17 @@ const FeesPage = () => {
                         <FeeSummaryCard summary={formattedData.summary} />
 
                         {formattedData.summary.pendingAmount > 0 && (
-                            <PaymentActionCard
-                                pendingAmount={formattedData.summary.pendingAmount}
-                                config={formattedData.paymentAction}
-                                onPay={handlePaymentSuccess}
-                            />
+                            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-6 flex items-start gap-4">
+                                <div className="p-2.5 bg-amber-100 text-amber-700 rounded-xl shrink-0">
+                                    <Building2 size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-amber-900 mb-1">Pay Offline</h3>
+                                    <p className="text-sm text-amber-800 leading-relaxed">
+                                        Pending amount: <span className="font-bold">₹{Number(formattedData.summary.pendingAmount).toLocaleString('en-IN')}</span>. Please pay at the school office or accounts desk. Collect and keep your receipt.
+                                    </p>
+                                </div>
+                            </div>
                         )}
 
                         <FeeBreakdownList breakdown={formattedData.breakdown} />
@@ -165,39 +160,6 @@ const FeesPage = () => {
                     </motion.div>
                 )}
             </main>
-
-            {/* Success Modal */}
-            <AnimatePresence>
-                {showSuccessModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-                        onClick={() => setShowSuccessModal(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.8, opacity: 0 }}
-                            className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle size={40} />
-                            </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
-                            <p className="text-gray-500 mb-6">Your transaction has been processed. The receipt has been sent to your email.</p>
-                            <button
-                                onClick={() => setShowSuccessModal(false)}
-                                className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors"
-                            >
-                                Done
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };

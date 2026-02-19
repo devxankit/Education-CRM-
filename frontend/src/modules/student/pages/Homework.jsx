@@ -103,7 +103,7 @@ const HomeworkPage = () => {
     };
 
     const handleCloseDetail = () => {
-        navigate('..', { relative: 'path' });
+        navigate('/student/homework', { replace: true });
     };
 
     const filteredData = data.filter(item => {

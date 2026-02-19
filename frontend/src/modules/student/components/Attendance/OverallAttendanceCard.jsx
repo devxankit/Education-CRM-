@@ -3,7 +3,12 @@ import { colors } from '../../../../theme/colors';
 import gsap from 'gsap';
 
 const OverallAttendanceCard = ({ attendance }) => {
-    const { percentage, present, total, status, lastUpdated } = attendance;
+    const { percentage, present, total, status, lastUpdated } = attendance || {};
+    const totalDisplay = total ?? attendance?.totalClasses ?? 0;
+    const lastUpdatedDate = lastUpdated ? new Date(lastUpdated) : null;
+    const lastUpdatedStr = lastUpdatedDate && !isNaN(lastUpdatedDate.getTime())
+        ? lastUpdatedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '—';
     const circleRef = useRef(null);
     const textRef = useRef(null);
 
@@ -14,12 +19,13 @@ const OverallAttendanceCard = ({ attendance }) => {
         return colors.error; // Red
     };
 
-    const statusColor = getStatusColor(percentage);
+    const pct = percentage ?? 0;
+    const statusColor = getStatusColor(pct);
 
     // Circular Progress Logic
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    const strokeDashoffset = circumference - (pct / 100) * circumference;
 
     useEffect(() => {
         // Animate the circle
@@ -34,7 +40,7 @@ const OverallAttendanceCard = ({ attendance }) => {
         gsap.fromTo(textRef.current,
             { innerText: 0 },
             {
-                innerText: percentage,
+                innerText: pct,
                 duration: 1.5,
                 snap: { innerText: 1 },
                 ease: "power3.out",
@@ -45,7 +51,7 @@ const OverallAttendanceCard = ({ attendance }) => {
                 }
             }
         );
-    }, [percentage, strokeDashoffset]);
+    }, [pct, strokeDashoffset]);
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
@@ -93,7 +99,7 @@ const OverallAttendanceCard = ({ attendance }) => {
                 <div className="text-center space-y-1">
                     <h3 className="text-gray-900 font-semibold text-lg">Overall Attendance</h3>
                     <p className="text-gray-500 text-sm">
-                        Total {total} Classes • Present {present}
+                        Total {totalDisplay} Days • Present {present ?? 0}
                     </p>
                 </div>
 
@@ -106,11 +112,11 @@ const OverallAttendanceCard = ({ attendance }) => {
                         borderColor: `${statusColor}30`
                     }}
                 >
-                    Status: {status}
+                    Status: {status ?? '—'}
                 </div>
 
                 <p className="mt-4 text-xs text-gray-400">
-                    Last updated: {new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    Last updated: {lastUpdatedStr}
                 </p>
             </div>
         </div>

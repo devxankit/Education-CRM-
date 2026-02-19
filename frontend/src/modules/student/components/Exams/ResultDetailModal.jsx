@@ -1,8 +1,71 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Award, FileText, Download } from 'lucide-react';
+import { X, Award, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+import { useStudentStore } from '../../../../store/studentStore';
 
 const ResultDetailModal = ({ result, onClose }) => {
+    const profile = useStudentStore(state => state.profile);
+
+    const handleDownloadMarksheet = useCallback(() => {
+        if (!result) return;
+        try {
+            const doc = new jsPDF();
+            const studentName = profile ? [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'Student' : 'Student';
+
+            // Header
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text(result.examName || 'Exam Result', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text('Report Card', 105, 28, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(`Student: ${studentName}`, 14, 38);
+            doc.text(`Date: ${result.date ? new Date(result.date).toLocaleDateString() : '-'}`, 14, 44);
+
+            // Score summary
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total Score: ${result.percentage}% (${result.grade})`, 14, 54);
+
+            // Subjects table
+            const tableData = (result.subjects || []).map(s => [
+                s.name || 'Subject',
+                `${s.marks ?? 0} / ${s.total ?? 0}`,
+                s.grade || '—',
+                s.status || '—'
+            ]);
+
+            autoTable(doc, {
+                startY: 62,
+                head: [['Subject', 'Marks', 'Grade', 'Status']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229], fontSize: 10 },
+                styles: { fontSize: 9 }
+            });
+
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80;
+
+            // Remarks
+            if (result.remarks) {
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('Teacher Remarks:', 14, finalY);
+                doc.setFont(undefined, 'normal');
+                const splitRemarks = doc.splitTextToSize(`"${result.remarks}"`, 180);
+                doc.text(splitRemarks, 14, finalY + 6);
+            }
+
+            doc.save(`Marksheet_${(result.examName || 'Exam').replace(/\s+/g, '_')}.pdf`);
+        } catch (err) {
+            console.error('Failed to generate marksheet:', err);
+            alert('Failed to download marksheet. Please try again.');
+        }
+    }, [result, profile]);
+
     if (!result) return null;
 
     return (
@@ -100,7 +163,10 @@ const ResultDetailModal = ({ result, onClose }) => {
                     </div>
 
                     {/* Download Action */}
-                    <button className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-[0.98] transition-all">
+                    <button
+                        onClick={handleDownloadMarksheet}
+                        className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-[0.98] transition-all"
+                    >
                         <Download size={18} />
                         Download Marksheet
                     </button>

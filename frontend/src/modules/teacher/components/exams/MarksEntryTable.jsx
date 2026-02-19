@@ -11,10 +11,9 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     const classId = exam.classes?.[0]?._id;
-    // Get sectionId from exam or from the first student's sectionId
-    const sectionId = exam.sectionId || exam.classes?.[0]?.sectionId || students[0]?.sectionId;
     const key = `${exam._id}_${classId}_${subject.subjectId}`;
     const students = examStudents[key] || [];
+    const sectionId = exam.sectionId || exam.classes?.[0]?.sectionId || students[0]?.sectionId;
 
     React.useEffect(() => {
         if (isOpen && exam && subject && classId) {

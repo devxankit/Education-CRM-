@@ -1049,17 +1049,22 @@ export const getTeacherExams = async (req, res) => {
             .populate("subjects.subjectId", "name code")
             .sort({ startDate: -1 });
 
-        // Format response
+        // Format response - only include exams where teacher has at least one assigned subject
         const formattedExams = exams.map(exam => {
-            // Filter subjects to only those the teacher teaches
-            const teacherSubjectIds = mappings
-                .map(m => m.subjectId?.toString())
-                .filter(id => id);
+            // Filter subjects: teacher must be assigned to this subject FOR one of the exam's classes
+            const examClassIds = (exam.classes || []).map(c => c._id?.toString()).filter(id => id);
 
             const relevantSubjects = (exam.subjects || []).filter(s => {
                 const subId = s.subjectId?._id ? s.subjectId._id.toString() : s.subjectId?.toString();
-                return subId && teacherSubjectIds.includes(subId);
+                if (!subId) return false;
+                return mappings.some(m => {
+                    const mSubId = m.subjectId?.toString();
+                    const mClassId = m.classId?.toString();
+                    return mSubId === subId && mClassId && examClassIds.includes(mClassId);
+                });
             });
+
+            if (relevantSubjects.length === 0) return null;
 
             return {
                 _id: exam._id,
@@ -1078,7 +1083,7 @@ export const getTeacherExams = async (req, res) => {
                     passingMarks: s.passingMarks
                 }))
             };
-        });
+        }).filter(Boolean);
 
         res.status(200).json({
             success: true,
@@ -1089,10 +1094,11 @@ export const getTeacherExams = async (req, res) => {
     }
 };
 
-// ================= GET EXAM BY ID =================
+// ================= GET EXAM BY ID (teacher - only if assigned to at least one subject) =================
 export const getExamById = async (req, res) => {
     try {
         const { id } = req.params;
+        const teacherId = req.user._id;
 
         const exam = await Exam.findById(id)
             .populate("classes", "name")
@@ -1104,9 +1110,52 @@ export const getExamById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Exam not found" });
         }
 
+        // Filter subjects: teacher must be assigned to this subject FOR one of the exam's classes
+        const mappings = await TeacherMapping.find({ teacherId, status: "active" });
+        const examClassIds = (exam.classes || []).map(c => c._id?.toString()).filter(id => id);
+
+        const relevantSubjects = (exam.subjects || []).filter(s => {
+            const subId = s.subjectId?._id ? s.subjectId._id.toString() : s.subjectId?.toString();
+            if (!subId) return false;
+            return mappings.some(m => {
+                const mSubId = m.subjectId?.toString();
+                const mClassId = m.classId?.toString();
+                return mSubId === subId && mClassId && examClassIds.includes(mClassId);
+            });
+        });
+
+        if (relevantSubjects.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to any subject in this exam."
+            });
+        }
+
+        // Return exam with only assigned subjects (same shape as getTeacherExams)
+        const data = {
+            _id: exam._id,
+            examName: exam.examName,
+            examType: exam.examType,
+            startDate: exam.startDate,
+            endDate: exam.endDate,
+            description: exam.description,
+            status: exam.status,
+            classes: exam.classes,
+            branchId: exam.branchId,
+            academicYearId: exam.academicYearId,
+            subjects: relevantSubjects.map(s => ({
+                subjectId: s.subjectId?._id,
+                subjectName: s.subjectId?.name,
+                subjectCode: s.subjectId?.code,
+                date: s.date,
+                maxMarks: s.maxMarks,
+                passingMarks: s.passingMarks
+            }))
+        };
+
         res.status(200).json({
             success: true,
-            data: exam
+            data
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

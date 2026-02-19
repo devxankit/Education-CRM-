@@ -46,8 +46,9 @@ const AttendancePage = () => {
                     <InfoTooltip
                         content={
                             <div className="space-y-2">
+                                <p><strong>Day-wise:</strong> Attendance is marked once per day. If marked Present, you are present for all classes that day.</p>
                                 <p><strong>Safe (&ge;75%):</strong> You are eligible for exams.</p>
-                                <p><strong>Warning (70-74%):</strong> You need to attend more classes to be safe.</p>
+                                <p><strong>Warning (70-74%):</strong> Attend more days to be safe.</p>
                                 <p><strong>Risk (&lt;70%):</strong> You are at risk of detainment. Contact administration.</p>
                             </div>
                         }

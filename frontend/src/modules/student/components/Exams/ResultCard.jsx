@@ -39,7 +39,12 @@ const ResultCard = ({ result, index, onClick }) => {
                 <div>
                     <h3 className="text-base font-bold text-gray-900">{result.examName}</h3>
                     <p className="text-xs text-gray-500 mt-1">
-                        Published on {new Date(result.date || result.publishedDate || result.updatedAt).toLocaleDateString()}
+                        Published on {(() => {
+                            const d = result.date || result.publishedDate || result.updatedAt;
+                            if (!d) return 'N/A';
+                            const dt = new Date(d);
+                            return isNaN(dt.getTime()) ? 'N/A' : dt.toLocaleDateString();
+                        })()}
                     </p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${bgColor} ${textColor}`}>

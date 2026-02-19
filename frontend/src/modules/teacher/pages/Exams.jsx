@@ -11,9 +11,6 @@ import ExamTabs from '../components/exams/ExamTabs';
 import ExamCard from '../components/exams/ExamCard';
 import MarksEntryTable from '../components/exams/MarksEntryTable';
 
-// Data
-import { examsData } from '../data/examsData';
-
 const ExamsPage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);

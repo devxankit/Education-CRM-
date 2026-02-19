@@ -21,11 +21,11 @@ const MonthlyAttendanceView = ({ monthlyLog = [] }) => {
     const emptyDays = Array.from({ length: firstDayOfMonth }, (_, i) => i);
     const dayNumbers = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    // Filter log for current month and build O(1) map
+    // Filter log for current month and build O(1) map (day-wise: one entry per date)
     const logMap = {};
-    monthlyLog.forEach(entry => {
+    (monthlyLog || []).forEach(entry => {
         const entryDate = new Date(entry.date);
-        if (entryDate.getMonth() === month && entryDate.getFullYear() === year) {
+        if (!isNaN(entryDate.getTime()) && entryDate.getMonth() === month && entryDate.getFullYear() === year) {
             logMap[entryDate.getDate()] = entry;
         }
     });

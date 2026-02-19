@@ -14,14 +14,14 @@ const AttendanceHistory = ({ history }) => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {history.map((log) => (
+                        {(history || []).map((log) => (
                             <tr key={log.id}>
                                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                    {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                    {log.dateStr || (log.date ? new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—')}
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                    <div className="font-medium text-gray-900">{log.subject}</div>
-                                    <div className="text-xs text-gray-400">By: {log.markedBy}</div>
+                                    <div className="font-medium text-gray-900">{log.subject || 'All Classes'}</div>
+                                    {log.markedBy && <div className="text-xs text-gray-400">By: {log.markedBy}</div>}
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap text-sm">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
