@@ -18,6 +18,10 @@ export const createTicket = async (req, res) => {
             academicYearId = student.classId?.academicYearId || null;
         }
 
+        if (!branchId) {
+            return res.status(400).json({ success: false, message: "Branch ID is required to raise a ticket. Please ensure student is assigned to a branch." });
+        }
+
         const ticket = new SupportTicket({
             instituteId,
             studentId,
@@ -61,7 +65,7 @@ export const getAllTickets = async (req, res) => {
         const ayFilter = academicYearId && academicYearId !== "all" ? academicYearId : null;
         const andParts = [];
         if (branchFilter && branchFilter !== "all") {
-            andParts.push({ $or: [{ branchId: branchFilter }, { branchId: null }, { branchId: { $exists: false } }] });
+            query.branchId = branchFilter;
         }
         if (ayFilter) {
             andParts.push({ $or: [{ academicYearId: ayFilter }, { academicYearId: null }, { academicYearId: { $exists: false } }] });

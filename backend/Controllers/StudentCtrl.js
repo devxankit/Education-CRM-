@@ -1374,6 +1374,10 @@ export const createSupportTicket = async (req, res) => {
             return res.status(404).json({ success: false, message: "Student not found" });
         }
 
+        if (!student.branchId) {
+            return res.status(400).json({ success: false, message: "You must be assigned to a branch to raise a ticket" });
+        }
+
         const classDoc = student.classId ? await Class.findById(student.classId).select("academicYearId").lean() : null;
         const ticket = new SupportTicket({
             instituteId: student.instituteId,

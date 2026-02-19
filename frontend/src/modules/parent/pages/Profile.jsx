@@ -224,8 +224,9 @@ const ParentProfilePage = () => {
                                     <input
                                         type="email"
                                         value={editForm.email}
-                                        onChange={(e) => setEditForm(p => ({ ...p, email: e.target.value }))}
-                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-100 outline-none"
+                                        readOnly
+                                        className="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl text-sm font-medium text-gray-400 cursor-not-allowed outline-none"
+                                        title="Email cannot be changed"
                                     />
                                 </div>
                                 <div>
