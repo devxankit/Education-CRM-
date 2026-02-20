@@ -7,7 +7,11 @@ const supportTicketSchema = new mongoose.Schema(
             ref: "Institute",
             required: true,
         },
-        branchId: { type: mongoose.Schema.Types.ObjectId, ref: "Branch" },
+        branchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Branch",
+            required: true
+        },
         academicYearId: { type: mongoose.Schema.Types.ObjectId, ref: "AcademicYear" },
         studentId: {
             type: mongoose.Schema.Types.ObjectId,

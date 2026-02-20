@@ -931,11 +931,11 @@ export const getParentProfile = async (req, res) => {
 export const updateParentProfile = async (req, res) => {
     try {
         const parentId = req.user._id;
-        const { name, email, address, occupation } = req.body;
+        const { name, mobile, address, occupation } = req.body;
 
         const parent = await Parent.findByIdAndUpdate(
             parentId,
-            { $set: { name, email, address, occupation } },
+            { $set: { name, mobile, address, occupation } },
             { new: true, runValidators: true }
         ).select("-password");
 
@@ -1140,6 +1140,10 @@ export const createChildTicket = async (req, res) => {
         const student = await Student.findOne({ _id: studentId, parentId }).populate("classId", "academicYearId");
         if (!student) {
             return res.status(403).json({ success: false, message: "Unauthorized access" });
+        }
+
+        if (!student.branchId) {
+            return res.status(400).json({ success: false, message: "Student must be assigned to a branch to raise a ticket" });
         }
 
         const ticket = new SupportTicket({
