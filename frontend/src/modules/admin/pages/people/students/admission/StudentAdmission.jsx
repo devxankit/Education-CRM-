@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdmissionWizard from './components/AdmissionWizard';
 import { CheckCircle, AlertCircle, Lock, Loader2 } from 'lucide-react';
@@ -46,6 +46,8 @@ const StudentAdmission = () => {
             }
             setPolicyLoading(true);
             const data = await fetchAdmissionRule(academicYearId);
+            console.log('Fetched admission policy:', data);
+            console.log('Workflow from policy:', data?.workflow);
             setPolicy(data);
             setPolicyLoading(false);
         };
@@ -160,6 +162,15 @@ const StudentAdmission = () => {
     const blocked = isAdmissionBlocked();
     const blockMsg = getBlockMessage();
 
+    const workflowProp = useMemo(() => {
+        const wf = {
+            requireFee: Boolean(policy?.workflow?.requireFee),
+            requireDocs: Boolean(policy?.workflow?.requireDocs)
+        };
+        console.log('Workflow prop calculated:', wf, 'from policy:', policy);
+        return wf;
+    }, [policy]);
+
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
@@ -200,10 +211,7 @@ const StudentAdmission = () => {
                         academicYearId={academicYearId}
                         onBranchChange={setBranchId}
                         onAcademicYearChange={setAcademicYearId}
-                        workflow={{
-                            requireFee: policy?.workflow?.requireFee ?? false,
-                            requireDocs: policy?.workflow?.requireDocs ?? false
-                        }}
+                        workflow={workflowProp}
                     />
                 )}
             </div>

@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Check, Save } from 'lucide-react';
 
 // Steps
@@ -11,24 +11,39 @@ import Step5_AdmissionFee from './Step5_AdmissionFee';
 import Step6_Review from './Step6_Review';
 
 const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBranchChange, onAcademicYearChange, workflow = {} }) => {
-    const requireFee = workflow.requireFee === true;
-    const requireDocs = workflow.requireDocs === true;
+    // Use Boolean() to handle truthy values (true, "true", 1, etc.)
+    const requireFee = Boolean(workflow.requireFee);
+    const requireDocs = Boolean(workflow.requireDocs);
+
+    // Debug logging
+    useEffect(() => {
+        console.log('AdmissionWizard workflow prop:', workflow);
+        console.log('requireDocs:', requireDocs, 'requireFee:', requireFee);
+    }, [workflow, requireDocs, requireFee]);
 
     const steps = useMemo(() => {
         const list = [
             { key: 'personal', label: 'Personal' },
             { key: 'academic', label: 'Academic' },
             { key: 'logistics', label: 'Logistics' },
-            ...(requireDocs ? [{ key: 'docs', label: 'Docs' }] : []),
-            ...(requireFee ? [{ key: 'fee', label: 'Fee' }] : []),
+            ...(requireDocs && requireFee ? [{ key: 'docs', label: 'Docs' }] : []),
+            ...(requireDocs && requireFee ? [{ key: 'fee', label: 'Fee' }] : []),
             { key: 'review', label: 'Review' }
         ];
+        console.log('Steps calculated:', list.length, 'steps', list.map(s => s.key));
         return list;
-    }, [requireFee, requireDocs]);
+    }, [requireDocs, requireFee]);
 
     const totalSteps = steps.length;
 
     const [currentStep, setCurrentStep] = useState(1);
+
+    // Reset step if it goes out of bounds when steps change
+    useEffect(() => {
+        if (currentStep > totalSteps) {
+            setCurrentStep(totalSteps);
+        }
+    }, [totalSteps, currentStep]);
     const [formData, setFormData] = useState({
         // 1
         firstName: '', middleName: '', lastName: '',
@@ -113,9 +128,16 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
                 <Step6_Review
                     data={{ ...formData, branchId: branchId || formData.branchId, academicYearId }}
                     onEditStep={setCurrentStep}
-                    stepNumbers={{ personal: 1, academic: 2, logistics: 3, docs: requireDocs ? (steps.findIndex(s => s.key === 'docs') + 1) : 0, fee: requireFee ? (steps.findIndex(s => s.key === 'fee') + 1) : 0 }}
-                    showDocs={requireDocs}
-                    showFee={requireFee}
+                    stepNumbers={{ 
+                        personal: 1, 
+                        academic: 2, 
+                        logistics: 3, 
+                        docs: requireDocs && requireFee ? 4 : 0, 
+                        fee: requireDocs && requireFee ? 5 : 0, 
+                        review: requireDocs && requireFee ? 6 : 4 
+                    }}
+                    showDocs={requireDocs && requireFee}
+                    showFee={requireDocs && requireFee}
                 />
             );
             default: return null;
