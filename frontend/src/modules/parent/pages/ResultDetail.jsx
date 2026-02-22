@@ -9,7 +9,10 @@ const ResultDetailPage = () => {
     const { examId } = useParams();
     const navigate = useNavigate();
     const exams = useParentStore(state => state.exams);
-    const result = exams.find(e => e.id === examId || e.id === parseInt(examId));
+    const result = (exams || []).find(e => {
+        const eId = e._id || e.id;
+        return eId?.toString() === examId || eId === examId;
+    });
 
     const [expandedSubject, setExpandedSubject] = useState(null);
 

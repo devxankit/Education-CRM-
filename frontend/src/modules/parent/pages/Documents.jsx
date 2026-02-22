@@ -96,9 +96,9 @@ const DocumentsPage = () => {
                     <div className="flex gap-2 overflow-x-auto no-scrollbar">
                         {children.map(child => (
                             <button
-                                key={child.id}
-                                onClick={() => setSelectedChildId(child.id)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedChildId === child.id
+                                key={child._id || child.id}
+                                onClick={() => setSelectedChildId(child._id || child.id)}
+                                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedChildId === (child._id || child.id)
                                     ? 'bg-indigo-600 text-white'
                                     : 'bg-white border border-gray-200 text-gray-700'
                                     }`}
@@ -138,7 +138,7 @@ const DocumentsPage = () => {
                 ) : (
                     filteredDocs.map((doc) => (
                         <div
-                            key={doc.id}
+                            key={doc.id || doc._id}
                             className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm"
                         >
                             <div className="flex items-start justify-between">
@@ -168,16 +168,25 @@ const DocumentsPage = () => {
                             </div>
 
                             {/* Actions */}
-                            {doc.status === 'Available' && (
+                            {doc.status === 'Available' && doc.url && (
                                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-                                    <button className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors">
+                                    <a
+                                        href={doc.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                                    >
                                         <Eye size={14} />
                                         View
-                                    </button>
-                                    <button className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium text-indigo-700 transition-colors">
+                                    </a>
+                                    <a
+                                        href={doc.url}
+                                        download
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium text-indigo-700 transition-colors"
+                                    >
                                         <Download size={14} />
                                         Download
-                                    </button>
+                                    </a>
                                 </div>
                             )}
                         </div>

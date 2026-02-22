@@ -46,8 +46,6 @@ const StudentAdmission = () => {
             }
             setPolicyLoading(true);
             const data = await fetchAdmissionRule(academicYearId);
-            console.log('Fetched admission policy:', data);
-            console.log('Workflow from policy:', data?.workflow);
             setPolicy(data);
             setPolicyLoading(false);
         };
@@ -125,6 +123,12 @@ const StudentAdmission = () => {
         return null;
     };
 
+    // Must be before any early return - React hooks rules
+    const workflowProp = useMemo(() => ({
+        requireFee: Boolean(policy?.workflow?.requireFee),
+        requireDocs: Boolean(policy?.workflow?.requireDocs)
+    }), [policy]);
+
     if (isComplete) {
         return (
             <div className="h-full flex flex-col items-center justify-center bg-white p-6 text-center animate-in zoom-in-95 duration-500">
@@ -161,15 +165,6 @@ const StudentAdmission = () => {
 
     const blocked = isAdmissionBlocked();
     const blockMsg = getBlockMessage();
-
-    const workflowProp = useMemo(() => {
-        const wf = {
-            requireFee: Boolean(policy?.workflow?.requireFee),
-            requireDocs: Boolean(policy?.workflow?.requireDocs)
-        };
-        console.log('Workflow prop calculated:', wf, 'from policy:', policy);
-        return wf;
-    }, [policy]);
 
     return (
         <div className="h-full flex flex-col">

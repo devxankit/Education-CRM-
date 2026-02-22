@@ -163,10 +163,16 @@ export const useAdminStore = create(
 
             // Actions: Students
             setStudents: (students) => set({ students }),
-            fetchStudents: async () => {
+            fetchStudents: async (filters = {}) => {
                 try {
                     const token = localStorage.getItem('token');
+                    const params = {};
+                    if (filters.branchId) params.branchId = filters.branchId;
+                    if (filters.academicYearId) params.academicYearId = filters.academicYearId;
+                    if (filters.classId) params.classId = filters.classId;
+                    if (filters.sectionId) params.sectionId = filters.sectionId;
                     const response = await axios.get(`${API_URL}/student`, {
+                        params,
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
@@ -318,6 +324,22 @@ export const useAdminStore = create(
                 } catch (error) {
                     console.error('Error updating parent:', error);
                     get().addToast(error.response?.data?.message || 'Error updating parent', 'error');
+                }
+            },
+            syncLinksByEmail: async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/parent/sync-by-email`, {}, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(response.data.message || 'Student-parent links synced by email', 'success');
+                        get().fetchParents();
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error syncing links:', error);
+                    get().addToast(error.response?.data?.message || 'Sync failed', 'error');
                 }
             },
 

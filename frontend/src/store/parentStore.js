@@ -98,10 +98,11 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        const children = response.data.data;
+                        const raw = response.data.data;
+                        const children = Array.isArray(raw) ? raw.map(c => ({ ...c, id: c._id || c.id })) : [];
                         set({
                             children,
-                            selectedChildId: get().selectedChildId || children[0]?._id
+                            selectedChildId: get().selectedChildId || children[0]?._id || children[0]?.id
                         });
                     }
                 } catch (error) {
@@ -118,10 +119,11 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        const { children } = response.data.data;
+                        const { children = [] } = response.data.data;
+                        const normalized = Array.isArray(children) ? children.map(c => ({ ...c, id: c.id || c._id })) : [];
                         set({
-                            children,
-                            selectedChildId: get().selectedChildId || children[0]?.id || children[0]?._id
+                            children: normalized,
+                            selectedChildId: get().selectedChildId || normalized[0]?.id || normalized[0]?._id
                         });
                     }
                 } catch (error) {
@@ -139,7 +141,10 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        const { summary, history = [], monthly = [] } = response.data.data;
+                        const data = response.data.data;
+                        const summary = data?.summary || {};
+                        const history = data?.history || [];
+                        const monthly = data?.monthly || [];
                         set({
                             attendance: {
                                 summary: {
@@ -179,7 +184,12 @@ export const useParentStore = create(
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {
-                        set({ homework: response.data.data || [], isLoading: false });
+                        const list = (response.data.data || []).map(h => ({
+                            ...h,
+                            id: h._id || h.id,
+                            status: h.status === 'Overdue' ? 'Late' : (h.status || 'Pending')
+                        }));
+                        set({ homework: list, isLoading: false });
                     }
                 } catch (error) {
                     console.error('Error fetching child homework:', error);

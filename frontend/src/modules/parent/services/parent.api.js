@@ -1,67 +1,46 @@
 // parent.api.js - Parent Module API Service
-// This service will be used for backend integration
+// Uses parentStore for live data; this file kept for potential direct API usage
+// All pages use parentStore - no mock data
 
-import { MOCK_PARENT_DATA } from '../data/mockData';
+import { API_URL } from '../../../app/api';
+import axios from 'axios';
 
-/**
- * Get parent dashboard data
- * @returns {Promise<Object>} Parent dashboard data
- */
+const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const getDashboard = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_PARENT_DATA), 300);
+    const res = await axios.get(`${API_URL}/parent/portal/dashboard`, {
+        headers: getAuthHeader()
     });
+    return res.data?.success ? res.data.data : null;
 };
 
-/**
- * Get parent profile
- * @returns {Promise<Object>} Parent profile data
- */
 export const getProfile = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_PARENT_DATA.user), 300);
+    const res = await axios.get(`${API_URL}/parent/portal/profile`, {
+        headers: getAuthHeader()
     });
+    return res.data?.success ? res.data.data : null;
 };
 
-/**
- * Update parent profile
- * @param {Object} profileData - Updated profile data
- * @returns {Promise<Object>} Updated profile
- */
 export const updateProfile = async (profileData) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve({ success: true, data: profileData }), 300);
+    const res = await axios.put(`${API_URL}/parent/portal/profile`, profileData, {
+        headers: getAuthHeader()
     });
+    return res.data?.success ? { success: true, data: res.data.data } : { success: false };
 };
 
-/**
- * Get parent settings
- * @returns {Promise<Object>} Settings data
- */
 export const getSettings = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve({
-            notifications: { attendance: true, homework: true, fees: true, notices: true },
-            privacy: { showPhone: true, showEmail: true },
-            appearance: { darkMode: false, language: 'English' }
-        }), 300);
-    });
+    return {
+        notifications: { attendance: true, homework: true, fees: true, notices: true },
+        privacy: { showPhone: true, showEmail: true },
+        appearance: { darkMode: false, language: 'English' }
+    };
 };
 
-/**
- * Update parent settings
- * @param {Object} settings - Updated settings
- * @returns {Promise<Object>} Updated settings
- */
 export const updateSettings = async (settings) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve({ success: true, data: settings }), 300);
-    });
+    return { success: true, data: settings };
 };
 
 export const ParentService = {

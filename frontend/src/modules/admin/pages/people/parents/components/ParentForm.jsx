@@ -1,31 +1,43 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, User, Phone, MapPin, Briefcase, Building2 } from 'lucide-react';
+import { Save, User, Phone, MapPin, Briefcase, Building2, GraduationCap } from 'lucide-react';
 import StudentLinkPanel from './StudentLinkPanel';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
 const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
     const branches = useAdminStore(state => state.branches);
+    const academicYears = useAdminStore(state => state.academicYearsForSelect || state.academicYears || []);
+    const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
 
     const [formData, setFormData] = useState({
         name: '',
-        relationship: 'Father', // Father, Mother, Guardian
+        relationship: 'Father',
         mobile: '',
         email: '',
         occupation: '',
         address: '',
         status: 'Active',
         branchId: '',
+        academicYearId: '',
         linkedStudents: []
     });
 
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData);
+            setFormData(prev => ({
+                ...initialData,
+                linkedStudents: initialData.linkedStudents || prev.linkedStudents
+            }));
         } else if (branches.length > 0) {
             setFormData(prev => ({ ...prev, branchId: branches[0]._id }));
         }
     }, [initialData, branches]);
+
+    useEffect(() => {
+        if (formData.branchId) {
+            fetchAcademicYears(formData.branchId);
+        }
+    }, [formData.branchId, fetchAcademicYears]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -33,10 +45,10 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Include only IDs for the backend to save
+        const { academicYearId, linkedStudents, ...rest } = formData;
         const submissionData = {
-            ...formData,
-            studentIds: formData.linkedStudents.map(s => s._id)
+            ...rest,
+            studentIds: linkedStudents.map(s => s._id).filter(Boolean)
         };
         onSave(submissionData);
     };
@@ -70,13 +82,30 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                             <select
                                 required
                                 value={formData.branchId}
-                                onChange={(e) => handleChange('branchId', e.target.value)}
+                                onChange={(e) => { handleChange('branchId', e.target.value); handleChange('academicYearId', ''); }}
                                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
                                 disabled={initialData?._id}
                             >
                                 <option value="" disabled>Select Campus</option>
                                 {branches.map(b => (
                                     <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <GraduationCap size={12} className="text-gray-400" /> Academic Year
+                            </label>
+                            <select
+                                required={!initialData?._id}
+                                value={formData.academicYearId}
+                                onChange={(e) => handleChange('academicYearId', e.target.value)}
+                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                disabled={initialData?._id || !formData.branchId}
+                            >
+                                <option value="" disabled>Select Academic Year</option>
+                                {academicYears.map(ay => (
+                                    <option key={ay._id} value={ay._id}>{ay.name || ay.label || ay.code || ay._id}</option>
                                 ))}
                             </select>
                         </div>
@@ -126,9 +155,10 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
                             <input
                                 type="email"
+                                required
                                 value={formData.email}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -170,6 +200,8 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                 {/* Student Links */}
                 <StudentLinkPanel
                     parentId={initialData?._id}
+                    branchId={formData.branchId}
+                    academicYearId={formData.academicYearId}
                     initialLinkedStudents={formData.linkedStudents}
                     onChange={(newList) => handleChange('linkedStudents', newList)}
                 />

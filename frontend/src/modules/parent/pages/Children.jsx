@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     User, Phone, Mail, MapPin, Calendar, BookOpen,
@@ -11,6 +11,11 @@ const ChildrenPage = () => {
     const children = useParentStore(state => state.children);
     const selectedChildId = useParentStore(state => state.selectedChildId);
     const setSelectedChild = useParentStore(state => state.setSelectedChild);
+    const fetchDashboardData = useParentStore(state => state.fetchDashboardData);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -45,11 +50,18 @@ const ChildrenPage = () => {
 
             {/* Children List */}
             <div className="p-4 space-y-4">
-                {children.map((child) => (
+                {children.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                        <p className="text-sm font-medium">No children linked to your account.</p>
+                        <p className="text-xs mt-1">Contact the school office to link your ward.</p>
+                    </div>
+                ) : children.map((child) => {
+                    const cId = child._id || child.id;
+                    return (
                     <div
-                        key={child.id}
-                        onClick={() => handleChildClick(child.id)}
-                        className={`bg-white rounded-xl border p-4 shadow-sm cursor-pointer transition-all active:scale-[0.98] ${selectedChildId === child.id
+                        key={cId}
+                        onClick={() => handleChildClick(cId)}
+                        className={`bg-white rounded-xl border p-4 shadow-sm cursor-pointer transition-all active:scale-[0.98] ${selectedChildId === cId
                             ? 'border-indigo-300 ring-2 ring-indigo-100'
                             : 'border-gray-200'
                             }`}
@@ -63,7 +75,7 @@ const ChildrenPage = () => {
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900">{child.name}</h3>
                                     <p className="text-sm text-gray-500">
-                                        Class {child.class} - Section {child.section}
+                                        {child.class}{child.section ? ` - ${child.section}` : ''}
                                     </p>
                                     <p className="text-xs text-gray-400">Roll No: {child.rollNo}</p>
                                 </div>
@@ -74,15 +86,16 @@ const ChildrenPage = () => {
                         </div>
 
                         {/* Quick Stats */}
+                        {child.academics && (
                         <div className="grid grid-cols-3 gap-3 mb-4">
                             <div className="text-center p-3 bg-gray-50 rounded-lg">
                                 <Clock size={16} className="mx-auto text-emerald-600 mb-1" />
-                                <p className="text-lg font-bold text-gray-900">{child.academics.attendance}%</p>
+                                <p className="text-lg font-bold text-gray-900">{child.academics.attendance ?? '-'}%</p>
                                 <p className="text-[10px] text-gray-500 uppercase">Attendance</p>
                             </div>
                             <div className="text-center p-3 bg-gray-50 rounded-lg">
                                 <BookOpen size={16} className="mx-auto text-blue-600 mb-1" />
-                                <p className="text-lg font-bold text-gray-900">{child.academics.homeworkPending}</p>
+                                <p className="text-lg font-bold text-gray-900">{child.academics.homeworkPending ?? '-'}</p>
                                 <p className="text-[10px] text-gray-500 uppercase">Pending HW</p>
                             </div>
                             <div className="text-center p-3 bg-gray-50 rounded-lg">
@@ -91,19 +104,22 @@ const ChildrenPage = () => {
                                 <p className="text-[10px] text-gray-500 uppercase">Last Grade</p>
                             </div>
                         </div>
+                        )}
 
                         {/* Fee Status */}
+                        {child.fees && (
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div>
                                 <p className="text-xs text-gray-500">Fee Status</p>
                                 <p className="text-sm font-bold text-gray-900">
-                                    ₹{child.fees.pending.toLocaleString()} pending
+                                    ₹{(child.fees.pending || 0).toLocaleString()} pending
                                 </p>
                             </div>
                             <ChevronRight size={20} className="text-gray-400" />
                         </div>
+                        )}
                     </div>
-                ))}
+                );})}
             </div>
         </div>
     );

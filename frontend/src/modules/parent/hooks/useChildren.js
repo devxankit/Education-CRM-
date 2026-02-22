@@ -1,69 +1,34 @@
 // useChildren.js - Parent Module Children Hook
-// Provides children data and selection logic
+// Uses parentStore for dynamic data
 
-import { useState, useEffect } from 'react';
-import { MOCK_PARENT_DATA } from '../data/mockData';
+import { useEffect } from 'react';
+import { useParentStore } from '../../../store/parentStore';
 
 /**
- * Hook for managing children data and selection
+ * Hook for managing children data and selection (uses parentStore)
  * @returns {Object} Children data and utilities
  */
 export const useChildren = () => {
-    const [children, setChildren] = useState([]);
-    const [selectedChildId, setSelectedChildId] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const children = useParentStore(state => state.children);
+    const selectedChildId = useParentStore(state => state.selectedChildId);
+    const setSelectedChild = useParentStore(state => state.setSelectedChild);
+    const fetchDashboardData = useParentStore(state => state.fetchDashboardData);
+    const isLoading = useParentStore(state => state.isLoading);
 
-    // Initialize with persisted selection
     useEffect(() => {
-        const fetchChildren = async () => {
-            setLoading(true);
-            setError(null);
+        fetchDashboardData();
+    }, [fetchDashboardData]);
 
-            try {
-                // TODO: Replace with actual API call
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                setChildren(MOCK_PARENT_DATA.children);
-
-                // Restore persisted selection or default to first child
-                const persistedId = localStorage.getItem('selectedChildId');
-                const validId = MOCK_PARENT_DATA.children.find(c => c.id === persistedId)?.id;
-                setSelectedChildId(validId || MOCK_PARENT_DATA.children[0]?.id);
-            } catch (err) {
-                setError(err.message || 'Failed to load children');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchChildren();
-    }, []);
-
-    /**
-     * Select a child and persist the selection
-     * @param {string} childId - Child ID to select
-     */
-    const selectChild = (childId) => {
-        setSelectedChildId(childId);
-        localStorage.setItem('selectedChildId', childId);
-    };
-
-    /**
-     * Get currently selected child's data
-     * @returns {Object|null} Selected child data
-     */
-    const getSelectedChild = () => {
-        return children.find(c => c.id === selectedChildId) || null;
-    };
+    const selectChild = (childId) => setSelectedChild(childId);
+    const selectedChild = children?.find(c => (c._id || c.id) === selectedChildId) || null;
 
     return {
-        children,
+        children: children || [],
         selectedChildId,
-        selectedChild: getSelectedChild(),
+        selectedChild,
         selectChild,
-        loading,
-        error,
+        loading: isLoading,
+        error: null,
     };
 };
 

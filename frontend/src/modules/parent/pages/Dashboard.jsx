@@ -160,7 +160,7 @@ const ParentDashboard = () => {
                         <QuickActionButton icon={Calendar} label="View Attendance" onClick={() => handleQuickAction('/parent/attendance')} color="text-emerald-600" bg="bg-emerald-50" />
                         <QuickActionButton icon={BookOpen} label="Homework" onClick={() => handleQuickAction('/parent/homework')} color="text-blue-600" bg="bg-blue-50" />
                         <QuickActionButton icon={FileText} label="Exam Results" onClick={() => handleQuickAction('/parent/exams')} color="text-purple-600" bg="bg-purple-50" />
-                        <QuickActionButton icon={CreditCard} label="Pay Fees" onClick={() => handleQuickAction('/parent/fees')} color="text-orange-600" bg="bg-orange-50" />
+                        <QuickActionButton icon={CreditCard} label="Fee Status" onClick={() => handleQuickAction('/parent/fees')} color="text-orange-600" bg="bg-orange-50" />
                         <QuickActionButton icon={HeadphonesIcon} label="Help & Support" onClick={() => handleQuickAction('/parent/support')} color="text-gray-600" bg="bg-gray-100" />
                     </div>
                 </div>

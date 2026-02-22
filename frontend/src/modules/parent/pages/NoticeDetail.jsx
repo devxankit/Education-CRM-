@@ -11,14 +11,17 @@ const NoticeDetailPage = () => {
     const notices = useParentStore(state => state.notices);
     const acknowledgeNotice = useParentStore(state => state.acknowledgeNotice);
 
-    const notice = notices.find(n => n.id === noticeId || n.id === parseInt(noticeId));
+    const notice = notices.find(n => {
+        const nId = n._id || n.id;
+        return nId?.toString() === noticeId || nId === noticeId;
+    });
 
     const [isAcknowledging, setIsAcknowledging] = useState(false);
     const [showAckModal, setShowAckModal] = useState(false);
 
     const handleAcknowledge = async () => {
         setIsAcknowledging(true);
-        const res = await acknowledgeNotice(noticeId);
+        const res = await acknowledgeNotice(notice._id || notice.id);
         setIsAcknowledging(false);
         if (res.success) {
             setShowAckModal(false);
@@ -52,7 +55,7 @@ const NoticeDetailPage = () => {
                 <div className="flex items-center justify-between text-xs text-gray-500 border-b border-gray-200 pb-3">
                     <div className="flex items-center gap-1.5">
                         <Calendar size={14} />
-                        <span>{notice.date}</span>
+                        <span>{notice.date ? (typeof notice.date === 'string' ? notice.date : new Date(notice.date).toLocaleDateString()) : 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <User size={14} />

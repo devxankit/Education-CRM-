@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, PieChart, CreditCard, Bell, User } from 'lucide-react';
+import { useParentStore } from '@/store/parentStore';
 
 const ParentBottomNav = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const selectedChildId = useParentStore(state => state.selectedChildId);
 
     const navItems = [
         { id: 'dashboard', label: 'Home', icon: Home, path: '/parent/dashboard' },
@@ -21,7 +23,7 @@ const ParentBottomNav = () => {
                 return (
                     <button
                         key={item.id}
-                        onClick={() => navigate(item.path)}
+                        onClick={() => navigate(item.path, { state: { childId: selectedChildId } })}
                         className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all duration-300 ${isActive ? 'text-indigo-600 -translate-y-1' : 'text-gray-400 hover:text-gray-600'
                             }`}
                     >

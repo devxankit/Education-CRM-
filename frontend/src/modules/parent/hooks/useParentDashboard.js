@@ -1,66 +1,41 @@
 // useParentDashboard.js - Parent Module Dashboard Hook
-// Provides dashboard data and loading state
+// Uses parentStore for dynamic data
 
-import { useState, useEffect } from 'react';
-import { MOCK_PARENT_DATA } from '../data/mockData';
+import { useEffect } from 'react';
+import { useParentStore } from '../../../store/parentStore';
 
 /**
- * Hook for fetching parent dashboard data
+ * Hook for parent dashboard data (uses parentStore)
  * @param {string} childId - Selected child ID
  * @returns {Object} Dashboard data and loading state
  */
 export const useParentDashboard = (childId) => {
-    const [dashboardData, setDashboardData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const user = useParentStore(state => state.user);
+    const children = useParentStore(state => state.children);
+    const notices = useParentStore(state => state.notices);
+    const fetchDashboardData = useParentStore(state => state.fetchDashboardData);
+    const isLoading = useParentStore(state => state.isLoading);
 
     useEffect(() => {
-        const fetchDashboard = async () => {
-            setLoading(true);
-            setError(null);
+        fetchDashboardData();
+    }, [fetchDashboardData]);
 
-            try {
-                // TODO: Replace with actual API call
-                await new Promise(resolve => setTimeout(resolve, 500));
+    const child = children?.find(c => (c._id || c.id) === childId) || children?.[0];
+    const dashboardData = child ? {
+        parent: user,
+        child,
+        alerts: child.alerts || [],
+        academics: child.academics,
+        fees: child.fees,
+        notices: notices || []
+    } : null;
 
-                const child = MOCK_PARENT_DATA.children.find(c => c.id === childId);
-
-                if (child) {
-                    setDashboardData({
-                        parent: MOCK_PARENT_DATA.user,
-                        child: child,
-                        alerts: child.alerts,
-                        academics: child.academics,
-                        fees: child.fees,
-                        notices: MOCK_PARENT_DATA.notices
-                    });
-                } else {
-                    setError('Child not found');
-                }
-            } catch (err) {
-                setError(err.message || 'Failed to load dashboard');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (childId) {
-            fetchDashboard();
-        }
-    }, [childId]);
-
-    /**
-     * Refresh dashboard data
-     */
-    const refresh = () => {
-        setLoading(true);
-        // Re-trigger effect by changing a dependency
-    };
+    const refresh = () => fetchDashboardData();
 
     return {
         dashboardData,
-        loading,
-        error,
+        loading: isLoading,
+        error: null,
         refresh,
     };
 };

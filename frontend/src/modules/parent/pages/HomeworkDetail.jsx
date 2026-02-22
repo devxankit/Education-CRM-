@@ -11,7 +11,10 @@ const HomeworkDetailPage = () => {
     const location = useLocation();
     const homeworkList = useParentStore(state => state.homework);
 
-    const homework = homeworkList.find(h => h.id === homeworkId || h.id === parseInt(homeworkId));
+    const homework = homeworkList?.find(h => {
+        const hid = h._id || h.id;
+        return hid?.toString() === homeworkId || hid === homeworkId;
+    });
 
     if (!homework) return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
@@ -56,7 +59,7 @@ const HomeworkDetailPage = () => {
                                 ? 'Assignment turned in on time.'
                                 : homework.status === 'Late'
                                     ? 'The due date has passed.'
-                                    : `Due on ${homework.dueDate}`
+                                    : `Due on ${homework.dueDate ? new Date(homework.dueDate).toLocaleDateString() : 'N/A'}`
                             }
                         </p>
                     </div>

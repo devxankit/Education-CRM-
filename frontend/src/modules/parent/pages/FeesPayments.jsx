@@ -47,7 +47,18 @@ const ParentFeesPage = () => {
         );
     }
 
-    if (!fees || !fees.summary) return null;
+    if (!fees || !fees.summary) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+                <p className="text-sm text-gray-500 text-center">
+                    {!childId && !selectedChildIdStore
+                        ? 'Select a child from the dashboard to view fee details.'
+                        : 'No fee data available.'}
+                </p>
+                <button onClick={() => navigate('/parent/dashboard')} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm">Go to Dashboard</button>
+            </div>
+        );
+    }
 
     // Handlers
     const handleBack = () => navigate(-1);
@@ -74,7 +85,7 @@ const ParentFeesPage = () => {
                     <button onClick={handleBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                         <ChevronLeft size={22} className="text-gray-600" />
                     </button>
-                    <h1 className="text-lg font-bold text-gray-900">Fees & Payments</h1>
+                    <h1 className="text-lg font-bold text-gray-900">Fee Status</h1>
                 </div>
                 <button
                     onClick={() => setIsInfoModalOpen(true)}
@@ -91,16 +102,16 @@ const ParentFeesPage = () => {
 
                 {/* 6. Overdue Warning */}
                 {isOverdue && (
-                    <div ref={pendingRef} className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                        <AlertOctagon className="text-red-500 shrink-0 mt-0.5" size={20} />
+                    <div ref={pendingRef} className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                        <AlertOctagon className="text-amber-600 shrink-0 mt-0.5" size={20} />
                         <div className="flex-1">
-                            <h3 className="text-sm font-bold text-gray-900">Payment Due</h3>
+                            <h3 className="text-sm font-bold text-gray-900">Amount to Pay</h3>
                             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                                You have pending dues of ₹{fees.summary.pending.toLocaleString()}. Please clear them by {fees.summary.nextDue} to avoid late charges.
+                                Pending dues: ₹{fees.summary.pending.toLocaleString()}. Due by {fees.summary.nextDue}. Pay at school office / admin counter. Once paid, admin will update the record and it will reflect here.
                             </p>
                             <button
                                 onClick={handleSupportClick}
-                                className="mt-3 text-xs font-bold text-red-700 underline"
+                                className="mt-3 text-xs font-bold text-amber-700 underline"
                             >
                                 Contact Accounts Office
                             </button>
@@ -239,14 +250,14 @@ const ParentFeesPage = () => {
                         >
                             <h3 className="text-lg font-bold text-gray-900 mb-2">Fee Policy</h3>
                             <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                                Fees must be paid by the 10th of every quarter. Late fees of ₹50 per day apply directly after the due date.
+                                Payment is accepted only at the school office / admin counter. This screen shows your fee status only. After you pay at the office, the admin will update the record and it will reflect here automatically.
                             </p>
                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
-                                <h4 className="text-xs font-bold text-gray-700 mb-1">Payment Methods:</h4>
+                                <h4 className="text-xs font-bold text-gray-700 mb-1">Where to Pay:</h4>
                                 <ul className="text-xs text-gray-600 space-y-1">
-                                    <li>• Bank Transfer (NEFT/IMPS)</li>
-                                    <li>• Cheque in School Office</li>
-                                    <li>• Cash Counter (9 AM - 1 PM)</li>
+                                    <li>• School Office / Accounts Counter</li>
+                                    <li>• Cash, Cheque, or Bank Transfer (at office)</li>
+                                    <li>• Contact Accounts Office for timings & queries</li>
                                 </ul>
                             </div>
                             <button onClick={() => setIsInfoModalOpen(false)} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl text-sm">Got it</button>

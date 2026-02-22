@@ -12,11 +12,12 @@ const ChildSelector = ({ children, selectedChildId, onSelect }) => {
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Your Children</h2>
             <div className="flex gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {children.map(child => {
-                    const isSelected = selectedChildId === child.id;
+                    const cId = child._id || child.id;
+                    const isSelected = selectedChildId === cId;
                     return (
                         <button
-                            key={child.id}
-                            onClick={() => onSelect(child.id)}
+                            key={cId}
+                            onClick={() => onSelect(cId)}
                             className={`flex items-center gap-3 p-2 pr-4 rounded-xl border transition-all flex-shrink-0 ${isSelected
                                 ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-100'
                                 : 'bg-white border-gray-100 grayscale opacity-70'
@@ -30,7 +31,7 @@ const ChildSelector = ({ children, selectedChildId, onSelect }) => {
                                     {child.name}
                                 </h3>
                                 <p className="text-[10px] font-medium text-gray-500">
-                                    Class {child.class}-{child.section}
+                                    {child.class}{child.section ? ` - ${child.section}` : ''}
                                 </p>
                             </div>
                         </button>

@@ -23,8 +23,15 @@ export const createParent = async (req, res) => {
         const { name, mobile, email, relationship, branchId, address, occupation, studentIds } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
+        if (!email || !email.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+
         const existingParent = await Parent.findOne({
-            $or: [{ mobile }, { email: email || "no-email" }]
+            $or: [{ mobile }, { email: email.trim() }]
         });
 
         if (existingParent && (existingParent.mobile === mobile || (email && existingParent.email === email))) {
@@ -41,7 +48,7 @@ export const createParent = async (req, res) => {
             branchId,
             name,
             mobile,
-            email,
+            email: email.trim(),
             relationship,
             address,
             occupation,
@@ -126,9 +133,13 @@ export const getParents = async (req, res) => {
 export const updateParent = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const updateData = { ...req.body };
 
         delete updateData.password; // Don't allow password update here
+
+        // Handle student linking separately (stored on Student, not Parent)
+        const studentIds = Array.isArray(updateData.studentIds) ? updateData.studentIds.filter(Boolean) : [];
+        delete updateData.studentIds;
 
         const parent = await Parent.findByIdAndUpdate(
             id,
@@ -138,6 +149,26 @@ export const updateParent = async (req, res) => {
 
         if (!parent) {
             return res.status(404).json({ success: false, message: "Parent not found" });
+        }
+
+        // Sync linked students: unlink removed, link added
+        const currentLinked = await Student.find({ parentId: id }).select("_id").lean();
+        const currentIds = currentLinked.map(s => s._id.toString());
+        const newIds = studentIds.map(s => String(s));
+        const toUnlink = currentIds.filter(c => !newIds.includes(c));
+        const toLink = newIds.filter(n => !currentIds.includes(n));
+
+        if (toUnlink.length > 0) {
+            await Student.updateMany(
+                { _id: { $in: toUnlink } },
+                { $unset: { parentId: "" } }
+            );
+        }
+        if (toLink.length > 0) {
+            await Student.updateMany(
+                { _id: { $in: toLink } },
+                { $set: { parentId: id } }
+            );
         }
 
         res.status(200).json({
@@ -225,6 +256,48 @@ export const getLinkedStudents = async (req, res) => {
         res.status(200).json({
             success: true,
             data: linkedStudents
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= SYNC LINKS BY EMAIL (Admin utility) =================
+export const syncLinksByEmail = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const parents = await Parent.find({ instituteId }).select("_id email").lean();
+        const parentByEmail = new Map();
+        parents.forEach(p => {
+            const e = (p.email || '').toLowerCase().trim();
+            if (e) parentByEmail.set(e, p._id);
+        });
+
+        const students = await Student.find({
+            instituteId,
+            parentEmail: { $exists: true, $ne: '' }
+        }).select("_id parentEmail parentId").lean();
+
+        let linked = 0;
+        let skipped = 0;
+        for (const s of students) {
+            const email = (s.parentEmail || '').toLowerCase().trim();
+            if (!email) continue;
+            const parentId = parentByEmail.get(email);
+            if (!parentId) {
+                skipped++;
+                continue;
+            }
+            if (s.parentId && s.parentId.toString() === parentId.toString()) continue;
+            await Student.updateOne({ _id: s._id }, { $set: { parentId } });
+            linked++;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Sync complete. Linked: ${linked}, Skipped (no parent match): ${skipped}`,
+            data: { linked, skipped }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -409,8 +482,8 @@ export const getParentDashboard = async (req, res) => {
                     type: "fee",
                     icon: "CreditCard",
                     title: "Fee Due",
-                    message: `₹${pendingFees} pending`,
-                    cta: "Pay Now"
+                    message: `₹${pendingFees} pending • Pay at school office`,
+                    cta: "View Details"
                 });
             }
 

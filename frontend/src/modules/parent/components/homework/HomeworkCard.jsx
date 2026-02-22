@@ -46,7 +46,7 @@ const HomeworkCard = ({ homework, onClick }) => {
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
                 <div className="flex items-center gap-1.5 text-gray-500">
                     <Calendar size={14} />
-                    <span className="text-xs font-medium">Due: {homework.dueDate}</span>
+                    <span className="text-xs font-medium">Due: {homework.dueDate ? new Date(homework.dueDate).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 {homework.teacher && (
                     <span className="text-[10px] font-medium text-gray-400">

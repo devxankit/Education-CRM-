@@ -47,7 +47,7 @@ const ParentNoticesPage = () => {
     const handleBack = () => navigate(-1);
 
     // 2. Filter Logic
-    const filteredNotices = notices.filter(notice => {
+    const filteredNotices = (notices || []).filter(notice => {
         const matchesTab =
             activeTab === 'All' ? true :
                 activeTab === 'Important' ? notice.isImportant :
@@ -60,7 +60,8 @@ const ParentNoticesPage = () => {
     });
 
     // 3. Navigation to Details
-    const handleNoticeClick = (id) => {
+    const handleNoticeClick = (notice) => {
+        const id = notice._id || notice.id;
         navigate(`/parent/notices/${id}`, { state: { childId, source: 'notices_list' } });
     };
 
@@ -117,10 +118,10 @@ const ParentNoticesPage = () => {
                 <div className="space-y-3">
                     {filteredNotices.length > 0 ? (
                         filteredNotices.map(notice => (
-                            <div key={notice.id} ref={notice.isImportant ? importantRef : null}>
+                            <div key={notice._id || notice.id} ref={notice.isImportant ? importantRef : null}>
                                 <NoticeCard
                                     notice={notice}
-                                    onClick={() => handleNoticeClick(notice.id)}
+                                    onClick={() => handleNoticeClick(notice)}
                                 />
                             </div>
                         ))

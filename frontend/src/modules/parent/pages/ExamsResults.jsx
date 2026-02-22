@@ -101,15 +101,17 @@ const ParentExamsPage = () => {
                 {/* 3. Exam List */}
                 <div className="space-y-4">
                     {filteredExams.length > 0 ? (
-                        filteredExams.map(exam => (
-                            <div key={exam.id} ref={exam.isLatest ? latestExamRef : null}>
+                        filteredExams.map(exam => {
+                            const eId = exam._id || exam.id;
+                            return (
+                            <div key={eId} ref={exam.isLatest ? latestExamRef : null}>
                                 <ResultCard
                                     exam={exam}
-                                    onClick={() => handleExamClick(exam.id)}
+                                    onClick={() => handleExamClick(eId)}
                                     isHighlighted={exam.isLatest && highlightLatestResult}
                                 />
                             </div>
-                        ))
+                        );})
                     ) : (
                         <div className="text-center py-12">
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">

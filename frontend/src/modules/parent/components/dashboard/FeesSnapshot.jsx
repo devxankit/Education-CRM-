@@ -23,9 +23,9 @@ const FeesSnapshot = ({ fees, onActionClick }) => {
                 {isPending ? (
                     <button
                         onClick={() => onActionClick('pay')}
-                        className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-gray-200 active:scale-95 transition-transform"
+                        className="w-full py-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
                     >
-                        Pay Fees Now
+                        Amount Due • Pay at School Office
                     </button>
                 ) : (
                     <button

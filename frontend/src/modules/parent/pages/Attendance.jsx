@@ -54,7 +54,16 @@ const ParentAttendancePage = () => {
         );
     }
 
-    if (!attendance || !attendance.monthly) return null;
+    if (!attendance || (Array.isArray(attendance) && attendance.length === 0)) return null;
+    const hasMonthly = attendance?.monthly && attendance.monthly.length > 0;
+    if (!hasMonthly) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+                <p className="text-sm text-gray-500 text-center">No attendance records found for this period.</p>
+                <button onClick={() => navigate(-1)} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm">Go Back</button>
+            </div>
+        );
+    }
 
     // Handlers
     const handleBack = () => navigate(-1);

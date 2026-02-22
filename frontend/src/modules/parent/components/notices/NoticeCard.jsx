@@ -21,7 +21,9 @@ const NoticeCard = ({ notice, onClick }) => {
                     }`}>
                     {notice.category}
                 </span>
-                <span className="text-[10px] font-medium text-gray-400">{notice.date}</span>
+                <span className="text-[10px] font-medium text-gray-400">
+                    {notice.date ? (typeof notice.date === 'string' ? notice.date : new Date(notice.date).toLocaleDateString()) : ''}
+                </span>
             </div>
 
             <h3 className={`text-sm font-bold mb-2 group-hover:text-indigo-600 transition-colors ${notice.isRead ? 'text-gray-700' : 'text-gray-900'}`}>{notice.title}</h3>

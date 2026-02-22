@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Filter, Search } from 'lucide-react';
+import { Plus, Download, Filter, Search, Link2, Loader2 } from 'lucide-react';
 import { useAdminStore } from '../../../../../store/adminStore';
 
 // Components
@@ -8,7 +8,7 @@ import ParentsTable from './components/ParentsTable';
 import ParentDetailDrawer from './components/ParentDetailDrawer';
 
 const Parents = () => {
-    const { parents, fetchParents, addParent, updateParent, branches, fetchBranches } = useAdminStore();
+    const { parents, fetchParents, addParent, updateParent, syncLinksByEmail, branches, fetchBranches } = useAdminStore();
 
     useEffect(() => {
         fetchParents();
@@ -20,6 +20,17 @@ const Parents = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [viewingParent, setViewingParent] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [syncing, setSyncing] = useState(false);
+
+    const handleSyncByEmail = async () => {
+        if (!confirm('Link students to parents where student email matches parent email. Continue?')) return;
+        setSyncing(true);
+        try {
+            await syncLinksByEmail();
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     // Handlers
     const handleAdd = () => {
@@ -83,6 +94,15 @@ const Parents = () => {
                     </button>
                     <button className="p-2 border border-gray-200 rounded-lg bg-white text-gray-600 hover:text-indigo-600 shadow-sm">
                         <Download size={18} />
+                    </button>
+                    <button
+                        onClick={handleSyncByEmail}
+                        disabled={syncing}
+                        className="flex items-center gap-2 px-4 py-2 border border-teal-200 text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 font-medium transition-all disabled:opacity-60"
+                        title="Link students to parents by matching emails"
+                    >
+                        {syncing ? <Loader2 size={18} className="animate-spin" /> : <Link2 size={18} />}
+                        {syncing ? 'Syncing...' : 'Sync by Email'}
                     </button>
                     <button
                         onClick={handleAdd}

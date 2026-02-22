@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Upload, Save, CheckCircle, FileText, User as UserIcon, Calendar, MapPin, Mail, Truck, Home, CreditCard, School } from 'lucide-react';
+import { ArrowLeft, Upload, Save, CheckCircle, FileText, User as UserIcon, Calendar, MapPin, Mail, Phone, Truck, Home, CreditCard, School } from 'lucide-react';
 import { useStaffStore } from '../../../store/staffStore';
 import { useAdminStore } from '../../../store/adminStore';
 import { useAppStore } from '../../../store';
@@ -50,10 +50,11 @@ const NewAdmission = () => {
         courseId: '',
         admissionDate: new Date().toISOString().split('T')[0],
         admissionNo: `ADM-${new Date().getFullYear()}-XXXX`,
-        rollNo: '',
         prevSchool: '',
         lastClass: '',
 
+        parentName: '',
+        parentMobile: '',
         parentEmail: '',
         address: '',
         city: '',
@@ -146,6 +147,8 @@ const NewAdmission = () => {
                     classId: student.classId?._id || student.classId || '',
                     sectionId: student.sectionId?._id || student.sectionId || '',
                     courseId: student.courseId?._id || student.courseId || '',
+                    parentName: student.parentId?.name || '',
+                    parentMobile: student.parentId?.mobile || '',
                     parentEmail: student.parentEmail || student.email || '',
                     branchId: student.branchId?._id || student.branchId || '',
                     documents: student.documents || formData.documents,
@@ -548,17 +551,6 @@ const NewAdmission = () => {
                                 </select>
                                 <p className="text-[10px] text-gray-400 mt-1">Optional: Cannot select if Class is selected.</p>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Roll Number</label>
-                                <input
-                                    name="rollNo"
-                                    value={formData.rollNo}
-                                    onChange={handleChange}
-                                    type="text"
-                                    className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:bg-white focus:border-purple-200 outline-none transition-all"
-                                    placeholder="Manual or Auto"
-                                />
-                            </div>
                         </div>
 
                         {/* 4. Previous History */}
@@ -717,8 +709,38 @@ const NewAdmission = () => {
                             <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Parent & Contact Details</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parent/Guardian Name <span className="text-red-500">*</span></label>
+                                <div className="relative">
+                                    <UserIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        required
+                                        name="parentName"
+                                        value={formData.parentName}
+                                        onChange={handleChange}
+                                        type="text"
+                                        className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
+                                        placeholder="e.g. Rajesh Kumar"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parent Mobile <span className="text-red-500">*</span></label>
+                                <div className="relative">
+                                    <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        required
+                                        name="parentMobile"
+                                        value={formData.parentMobile}
+                                        onChange={handleChange}
+                                        type="tel"
+                                        className="w-full pl-11 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-bold focus:ring-4 focus:ring-emerald-50 focus:bg-white focus:border-emerald-200 outline-none transition-all"
+                                        placeholder="e.g. 9876543210"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parent/Guardian Email <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />

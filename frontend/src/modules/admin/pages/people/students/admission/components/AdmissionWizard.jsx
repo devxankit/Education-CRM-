@@ -4,6 +4,7 @@ import { ChevronRight, ChevronLeft, Check, Save } from 'lucide-react';
 
 // Steps
 import Step1_Personal from './Step1_Personal';
+import Step2_ParentGuardian from './Step2_ParentGuardian';
 import Step3_Academic from './Step3_Academic';
 import Step4_Rules from './Step4_Rules';
 import Step5_Documents from './Step5_Documents';
@@ -15,24 +16,15 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
     const requireFee = Boolean(workflow.requireFee);
     const requireDocs = Boolean(workflow.requireDocs);
 
-    // Debug logging
-    useEffect(() => {
-        console.log('AdmissionWizard workflow prop:', workflow);
-        console.log('requireDocs:', requireDocs, 'requireFee:', requireFee);
-    }, [workflow, requireDocs, requireFee]);
-
-    const steps = useMemo(() => {
-        const list = [
-            { key: 'personal', label: 'Personal' },
-            { key: 'academic', label: 'Academic' },
-            { key: 'logistics', label: 'Logistics' },
-            ...(requireDocs && requireFee ? [{ key: 'docs', label: 'Docs' }] : []),
-            ...(requireDocs && requireFee ? [{ key: 'fee', label: 'Fee' }] : []),
-            { key: 'review', label: 'Review' }
-        ];
-        console.log('Steps calculated:', list.length, 'steps', list.map(s => s.key));
-        return list;
-    }, [requireDocs, requireFee]);
+    const steps = useMemo(() => [
+        { key: 'personal', label: 'Personal' },
+        { key: 'parent', label: 'Parent' },
+        { key: 'academic', label: 'Academic' },
+        { key: 'logistics', label: 'Logistics' },
+        ...(requireDocs && requireFee ? [{ key: 'docs', label: 'Docs' }] : []),
+        ...(requireDocs && requireFee ? [{ key: 'fee', label: 'Fee' }] : []),
+        { key: 'review', label: 'Review' }
+    ], [requireDocs, requireFee]);
 
     const totalSteps = steps.length;
 
@@ -49,13 +41,13 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
         firstName: '', middleName: '', lastName: '',
         dob: '', gender: '', bloodGroup: '', nationality: 'Indian',
         category: 'General',
-        parentEmail: '',
+        parentName: '', parentMobile: '', parentEmail: '',
         address: '', city: '', pincode: '',
 
         // 3 (Now 2)
         branchId: '',
         admissionDate: new Date().toISOString().split('T')[0],
-        classId: '', sectionId: '', courseId: '', rollNo: '',
+        classId: '', sectionId: '', courseId: '',
         prevSchool: '',
         lastClass: '',
 
@@ -89,9 +81,26 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
                 alert("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email)");
                 return;
             }
+            if (!formData.parentMobile || String(formData.parentMobile).trim().length < 10) {
+                alert("Please enter a valid Parent Mobile number (at least 10 digits)");
+                return;
+            }
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.parentEmail)) {
                 alert("Please enter a valid Parent Email address");
+                return;
+            }
+        }
+        if (currentStepKey === 'parent') {
+            const linkMode = formData.parentMode === 'link';
+            const hasParentId = !!formData.parentId;
+            const hasCreateDetails = formData.parentName && formData.parentMobile && formData.parentEmail;
+            if (linkMode && !hasParentId) {
+                alert("Please select an existing parent or switch to 'Create New Parent' and fill the details");
+                return;
+            }
+            if (!linkMode && (!formData.parentName || !formData.parentMobile || formData.parentMobile.trim().length < 10 || !formData.parentEmail)) {
+                alert("Please fill Parent Name, Mobile (10+ digits), and Email for Create New Parent");
                 return;
             }
         }
@@ -120,6 +129,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
         if (!step) return null;
         switch (step.key) {
             case 'personal': return <Step1_Personal data={formData} onChange={setFormData} />;
+            case 'parent': return <Step2_ParentGuardian data={formData} onChange={setFormData} />;
             case 'academic': return <Step3_Academic data={formData} onChange={setFormData} branchId={branchId} academicYearId={academicYearId} onBranchChange={onBranchChange} onAcademicYearChange={onAcademicYearChange} />;
             case 'logistics': return <Step4_Rules data={formData} onChange={setFormData} />;
             case 'docs': return <Step5_Documents data={formData} onChange={setFormData} />;
@@ -130,11 +140,12 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
                     onEditStep={setCurrentStep}
                     stepNumbers={{ 
                         personal: 1, 
-                        academic: 2, 
-                        logistics: 3, 
-                        docs: requireDocs && requireFee ? 4 : 0, 
-                        fee: requireDocs && requireFee ? 5 : 0, 
-                        review: requireDocs && requireFee ? 6 : 4 
+                        parent: 2, 
+                        academic: 3, 
+                        logistics: 4, 
+                        docs: requireDocs && requireFee ? 5 : 0, 
+                        fee: requireDocs && requireFee ? 6 : 0, 
+                        review: requireDocs && requireFee ? 7 : 5 
                     }}
                     showDocs={requireDocs && requireFee}
                     showFee={requireDocs && requireFee}

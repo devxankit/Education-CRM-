@@ -4,7 +4,7 @@ import { UserPlus, Trash2, Link, AlertCircle, Loader2, Search, X, User } from 'l
 import { API_URL } from '@/app/api';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
-const StudentLinkPanel = ({ parentId, initialLinkedStudents = [], onChange }) => {
+const StudentLinkPanel = ({ parentId, branchId, academicYearId, initialLinkedStudents = [], onChange }) => {
     const students = useAdminStore(state => state.students);
     const fetchStudents = useAdminStore(state => state.fetchStudents);
 
@@ -51,12 +51,14 @@ const StudentLinkPanel = ({ parentId, initialLinkedStudents = [], onChange }) =>
         loadLinkedStudents();
     }, [parentId]);
 
-    // Ensure all students are loaded for the search
+    // Fetch students for search - filter by branch + academic year when available
     useEffect(() => {
-        if (students.length === 0) {
+        if (branchId) {
+            fetchStudents({ branchId, academicYearId: academicYearId || undefined });
+        } else {
             fetchStudents();
         }
-    }, [students.length, fetchStudents]);
+    }, [branchId, academicYearId, fetchStudents]);
 
     // Filter students for the search dropdown
     const availableStudents = useMemo(() => {
@@ -152,12 +154,17 @@ const StudentLinkPanel = ({ parentId, initialLinkedStudents = [], onChange }) =>
     };
 
     return (
-        <div className="space-y-4">
+            <div className="space-y-4">
+            {(!branchId || !academicYearId) && (
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    Select Branch and Academic Year above to search and link students from that year.
+                </p>
+            )}
             <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-2 tracking-wider">
                     <Link size={14} className="text-indigo-500" /> Linked Children
                 </h4>
-                {!isAdding && (
+                {!isAdding && branchId && (
                     <button
                         type="button"
                         onClick={() => setIsAdding(true)}

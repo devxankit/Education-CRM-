@@ -442,28 +442,36 @@ export const admitStudent = async (req, res) => {
             }
         }
 
-        // 4. Create/Find Parent
-        let parentId = admissionData.parentId;
+        // 4. Create/Find Parent and set parentId for linking
+        let parentId = admissionData.parentId || null;
         let parentPassword = null;
         let parentCreated = false;
 
-        if (!parentId && admissionData.parentEmail && admissionData.parentMobile) {
-            let parent = await Parent.findOne({
-                mobile: admissionData.parentMobile,
-                instituteId
-            });
+        if (!parentId && (admissionData.parentEmail || admissionData.parentMobile)) {
+            const email = (admissionData.parentEmail || '').trim().toLowerCase();
+            const mobile = (admissionData.parentMobile || '').trim();
+            const findQuery = { instituteId };
+            if (email || mobile) {
+                findQuery.$or = [];
+                if (email) findQuery.$or.push({ email });
+                if (mobile && mobile.length >= 10) findQuery.$or.push({ mobile });
+                if (findQuery.$or.length === 0) delete findQuery.$or;
+            }
+
+            let parent = findQuery.$or ? await Parent.findOne(findQuery) : null;
 
             if (!parent) {
+                const parentMobile = mobile && mobile.length >= 10 ? mobile : (email ? email.split('@')[0] + '000' : '0000000000');
                 parentPassword = "123456";
                 const parentCode = `PRT-${Date.now().toString().slice(-6)}`;
 
                 parent = new Parent({
                     instituteId,
-                    branchId, // Use the resolved branchId
-                    name: admissionData.parentName || "Parent",
-                    mobile: admissionData.parentMobile,
-                    email: admissionData.parentEmail,
-                    relationship: admissionData.parentRelationship || "Father",
+                    branchId,
+                    name: (admissionData.parentName || '').trim() || "Parent",
+                    mobile: parentMobile,
+                    email: email || parentMobile + '@parent.local',
+                    relationship: admissionData.parentRelationship || admissionData.relation || "Father",
                     address: admissionData.address,
                     occupation: admissionData.parentOccupation,
                     code: parentCode,
@@ -499,8 +507,15 @@ export const admitStudent = async (req, res) => {
 
         const resolvedAcademicYearId = academicYearId || classData?.academicYearId;
 
+        // Auto-generate roll number if not provided
+        let rollNo = (admissionData.rollNo || '').trim();
+        if (!rollNo) {
+            rollNo = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit random
+        }
+
         const student = new Student({
             ...admissionData,
+            rollNo,
             admissionNo,
             instituteId,
             branchId, // Use the resolved branchId
@@ -606,13 +621,25 @@ export const recordFeePayment = async (req, res) => {
 // ================= GET STUDENTS =================
 export const getStudents = async (req, res) => {
     try {
-        const { branchId, classId, sectionId } = req.query;
+        const { branchId, academicYearId, classId, sectionId } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
 
         let query = { instituteId };
         if (branchId) query.branchId = branchId;
         if (classId) query.classId = classId;
         if (sectionId) query.sectionId = sectionId;
+
+        // Filter by academic year: students whose class or direct academicYearId matches
+        if (academicYearId) {
+            const classQuery = { academicYearId };
+            if (branchId) classQuery.branchId = branchId;
+            const classesInYear = await Class.find(classQuery).select("_id");
+            const classIds = classesInYear.map(c => c._id);
+            query.$or = [
+                { academicYearId },
+                ...(classIds.length ? [{ classId: { $in: classIds } }] : [])
+            ];
+        }
 
         const students = await Student.find(query)
             .populate("classId", "name")

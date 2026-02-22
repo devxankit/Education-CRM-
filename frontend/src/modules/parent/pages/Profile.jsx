@@ -127,10 +127,12 @@ const ParentProfilePage = () => {
                 <div>
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Linked Students</h3>
                     <div className="space-y-3">
-                        {children.map(child => (
+                        {children.map(child => {
+                            const cId = child._id || child.id;
+                            return (
                             <div
-                                key={child.id}
-                                onClick={() => handleChildClick(child.id)}
+                                key={cId}
+                                onClick={() => handleChildClick(cId)}
                                 className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-indigo-100 transition-all"
                             >
                                 <div className="flex items-center gap-3">
@@ -144,7 +146,7 @@ const ParentProfilePage = () => {
                                 </div>
                                 <ChevronRight size={18} className="text-gray-300" />
                             </div>
-                        ))}
+                        );})}
                     </div>
                 </div>
 

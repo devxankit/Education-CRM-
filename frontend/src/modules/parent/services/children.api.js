@@ -1,67 +1,23 @@
 // children.api.js - Parent Module Children API Service
-// This service will be used for backend integration
+// All pages use parentStore - this file kept for potential direct API usage
+// No mock data - uses parentStore or API
 
-import { MOCK_PARENT_DATA } from '../data/mockData';
+import { API_URL } from '../../../app/api';
+import axios from 'axios';
 
-/**
- * Get all children of the parent
- * @returns {Promise<Array>} List of children
- */
-export const getChildren = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_PARENT_DATA.children), 300);
-    });
+const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-/**
- * Get child by ID
- * @param {string} childId - Child ID
- * @returns {Promise<Object|null>} Child data or null
- */
-export const getChildById = async (childId) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const child = MOCK_PARENT_DATA.children.find(c => c.id === childId);
-            resolve(child || null);
-        }, 300);
+export const getLinkedStudents = async (parentId) => {
+    const res = await axios.get(`${API_URL}/parent/${parentId}/linked-students`, {
+        headers: getAuthHeader()
     });
+    return res.data?.success ? res.data.data : [];
 };
 
-/**
- * Get child's academic summary
- * @param {string} childId - Child ID
- * @returns {Promise<Object>} Academic data
- */
-export const getChildAcademics = async (childId) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const child = MOCK_PARENT_DATA.children.find(c => c.id === childId);
-            resolve(child?.academics || null);
-        }, 300);
-    });
-};
-
-/**
- * Get child's fee summary
- * @param {string} childId - Child ID
- * @returns {Promise<Object>} Fee data
- */
-export const getChildFees = async (childId) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const child = MOCK_PARENT_DATA.children.find(c => c.id === childId);
-            resolve(child?.fees || null);
-        }, 300);
-    });
-};
-
-export default {
-    getChildren,
-    getChildById,
-    getChildAcademics,
-    getChildFees,
+export const getChildById = async (parentId, childId) => {
+    const students = await getLinkedStudents(parentId);
+    return students.find(s => (s._id || s.id)?.toString() === childId?.toString()) || null;
 };

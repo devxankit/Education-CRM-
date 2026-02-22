@@ -54,14 +54,15 @@ const ParentHomeworkPage = () => {
     };
 
     // 2. Tab filtering logic
-    const filteredHomework = homework.filter(hw => {
+    const hwList = Array.isArray(homework) ? homework : [];
+    const filteredHomework = hwList.filter(hw => {
         const matchesTab = activeTab === 'All' || hw.status === activeTab;
-        const matchesSearch = hw.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            hw.subject.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (hw.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (hw.subject || '').toLowerCase().includes(searchTerm.toLowerCase());
         return matchesTab && matchesSearch;
     });
 
-    const pendingCount = homework.filter(h => h.status === 'Pending' || h.status === 'Late').length;
+    const pendingCount = hwList.filter(h => h.status === 'Pending' || h.status === 'Late').length;
 
     // 3. Navigation to Details
     const handleHomeworkClick = (id) => {
@@ -157,9 +158,9 @@ const ParentHomeworkPage = () => {
                     {filteredHomework.length > 0 ? (
                         filteredHomework.map(hw => (
                             <HomeworkCard
-                                key={hw.id}
+                                key={hw._id || hw.id}
                                 homework={hw}
-                                onClick={() => handleHomeworkClick(hw.id)}
+                                onClick={() => handleHomeworkClick(hw._id || hw.id)}
                             />
                         ))
                     ) : (

@@ -7,6 +7,7 @@ import {
     getLinkedStudents,
     linkStudent,
     unlinkStudent,
+    syncLinksByEmail,
     // Parent Portal APIs
     getParentDashboard,
     getChildAttendance,
@@ -39,6 +40,7 @@ router.post("/login", loginParent);
 router.post("/", AuthMiddleware, isAdmin, createParent);
 router.get("/", AuthMiddleware, isAdmin, getParents);
 router.put("/:id", AuthMiddleware, isAdmin, updateParent);
+router.post("/sync-by-email", AuthMiddleware, isAdmin, syncLinksByEmail);
 
 // Student Linking (Admin & Parent)
 router.get("/:parentId/linked-students", AuthMiddleware, getLinkedStudents);
