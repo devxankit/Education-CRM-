@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { STAFF_ROLES } from '../config/roles';
 import { getMyPermissions } from '../services/auth.api';
 import { API_URL } from '../../../app/api';
+import { useStaffStore } from '../../../store/staffStore';
 
 const StaffAuthContext = createContext(null);
 
@@ -54,6 +55,11 @@ export const StaffAuthProvider = ({ children }) => {
                 console.log('🔔 Permission Updated Real-time', data);
                 fetchPermissions();
             }
+        });
+
+        // Sync student list when admin edits a student (fix: Others/Staff panel not updating)
+        socket.on('student_updated', () => {
+            useStaffStore.getState().fetchStudents();
         });
 
         return () => {

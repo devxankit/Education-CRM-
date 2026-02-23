@@ -766,6 +766,12 @@ export const updateStudent = async (req, res) => {
             logUserActivity(req, { branchId: student.branchId, action: "student_updated", entityType: "Student", entityId: student._id, description: "Student record updated" });
         }
 
+        // Emit socket event so Staff panel ("others") gets updated in real-time
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('student_updated', { studentId: student._id, student });
+        }
+
         res.status(200).json({
             success: true,
             message: "Student record updated successfully",
@@ -850,6 +856,12 @@ export const confirmAdmission = async (req, res) => {
 
         student.status = "active";
         await student.save();
+
+        // Emit socket event so Staff panel gets updated in real-time
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('student_updated', { studentId: student._id, student });
+        }
 
         res.status(200).json({
             success: true,
