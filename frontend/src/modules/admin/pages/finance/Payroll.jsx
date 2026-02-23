@@ -198,7 +198,7 @@ const Payroll = () => {
         
         // Institute details
         const instituteName = instituteData?.legalName || instituteData?.shortName || 'Educational Institution';
-        const instituteLogo = instituteData?.logoLight || instituteData?.logoDark || '';
+        const instituteLogo = instituteData?.logo || instituteData?.logoLight || instituteData?.logoDark || '';
         const instituteAddress = [
             instituteData?.address,
             instituteData?.city,

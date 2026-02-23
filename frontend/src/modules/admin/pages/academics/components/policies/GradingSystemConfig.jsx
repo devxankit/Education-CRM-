@@ -9,12 +9,13 @@ const GradingSystemConfig = ({ isLocked }) => {
     const handleGradeChange = (index, field, value) => {
         if (isLocked) return;
         const newScale = [...gradingScale];
+        const row = { ...newScale[index] };
         if (field === 'label') {
-            newScale[index][field] = value.toUpperCase();
+            row[field] = String(value).toUpperCase();
         } else {
-            // Store value as is (string) to allow clearing the field in UI
-            newScale[index][field] = value;
+            row[field] = (field === 'minPercentage' || field === 'maxPercentage' || field === 'gradePoints') ? (Number(value) || 0) : value;
         }
+        newScale[index] = row;
         useExamPolicyStore.setState({
             policy: { ...policy, gradingScale: newScale }
         });

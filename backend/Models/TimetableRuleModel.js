@@ -12,6 +12,11 @@ const timetableRuleSchema = new mongoose.Schema(
             ref: "Branch",
             required: true,
         },
+        academicYearId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AcademicYear",
+            default: null,
+        },
         // Global Time Settings
         startTime: {
             type: String,
@@ -88,6 +93,6 @@ const timetableRuleSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-timetableRuleSchema.index({ instituteId: 1, branchId: 1 }, { unique: true });
+timetableRuleSchema.index({ instituteId: 1, branchId: 1, academicYearId: 1 }, { unique: true });
 
 export default mongoose.model("TimetableRule", timetableRuleSchema);

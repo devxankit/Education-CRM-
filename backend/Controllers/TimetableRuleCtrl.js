@@ -1,10 +1,10 @@
 import TimetableRule from "../Models/TimetableRuleModel.js";
 
-// ================= GET TIMETABLE RULES BY BRANCH =================
+// ================= GET TIMETABLE RULES BY BRANCH + ACADEMIC YEAR =================
 export const getTimetableRules = async (req, res) => {
     try {
         const instituteId = req.user._id;
-        const { branchId } = req.query;
+        const { branchId, academicYearId } = req.query;
 
         if (!branchId) {
             return res.status(400).json({
@@ -13,11 +13,11 @@ export const getTimetableRules = async (req, res) => {
             });
         }
 
-        let rules = await TimetableRule.findOne({ instituteId, branchId });
+        const ayId = academicYearId && academicYearId !== "all" ? academicYearId : null;
+        let rules = await TimetableRule.findOne({ instituteId, branchId, academicYearId: ayId });
 
-        // If no rules exist yet, create default rules for this branch
         if (!rules) {
-            rules = new TimetableRule({ instituteId, branchId });
+            rules = new TimetableRule({ instituteId, branchId, academicYearId: ayId });
             await rules.save();
         }
 
@@ -33,11 +33,11 @@ export const getTimetableRules = async (req, res) => {
     }
 };
 
-// ================= UPDATE TIMETABLE RULES BY BRANCH =================
+// ================= UPDATE TIMETABLE RULES BY BRANCH + ACADEMIC YEAR =================
 export const updateTimetableRules = async (req, res) => {
     try {
         const instituteId = req.user._id;
-        const { branchId } = req.query;
+        const { branchId, academicYearId } = req.query;
         const updateData = req.body;
 
         if (!branchId) {
@@ -47,8 +47,9 @@ export const updateTimetableRules = async (req, res) => {
             });
         }
 
+        const ayId = academicYearId && academicYearId !== "all" ? academicYearId : null;
         const rules = await TimetableRule.findOneAndUpdate(
-            { instituteId, branchId },
+            { instituteId, branchId, academicYearId: ayId },
             { $set: updateData },
             { new: true, upsert: true, runValidators: true }
         );
@@ -66,11 +67,11 @@ export const updateTimetableRules = async (req, res) => {
     }
 };
 
-// ================= TOGGLE LOCK BY BRANCH =================
+// ================= TOGGLE LOCK BY BRANCH + ACADEMIC YEAR =================
 export const toggleTimetableLock = async (req, res) => {
     try {
         const instituteId = req.user._id;
-        const { branchId } = req.query;
+        const { branchId, academicYearId } = req.query;
         const { isLocked } = req.body;
 
         if (!branchId) {
@@ -80,8 +81,9 @@ export const toggleTimetableLock = async (req, res) => {
             });
         }
 
+        const ayId = req.query.academicYearId && req.query.academicYearId !== "all" ? req.query.academicYearId : null;
         const rules = await TimetableRule.findOneAndUpdate(
-            { instituteId, branchId },
+            { instituteId, branchId, academicYearId: ayId },
             { $set: { isLocked } },
             { new: true }
         );

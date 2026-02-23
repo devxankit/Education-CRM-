@@ -80,8 +80,7 @@ export const adminMenuConfig = [
             { id: 'teachers', label: 'Teachers', path: '/admin/people/teachers' },
 
             { id: 'parents', label: 'Parents', path: '/admin/people/parents' },
-            { id: 'departments', label: 'Departments & Roles', path: '/admin/people/departments' },
-            { id: 'bulk-import', label: 'Bulk Import', path: '/admin/people/bulk-import' }
+            { id: 'departments', label: 'Departments & Roles', path: '/admin/people/departments' }
         ]
     },
     {

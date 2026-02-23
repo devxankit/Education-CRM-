@@ -1,14 +1,26 @@
 
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
+const PAGE_SIZE = 5;
+
 const StudentTable = () => {
     const navigate = useNavigate();
     const students = useAdminStore(state => state.students);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const DISPLAY_STUDENTS = students;
+    const totalPages = Math.ceil(students.length / PAGE_SIZE) || 1;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
+    }, [students.length, currentPage, totalPages]);
+    const DISPLAY_STUDENTS = useMemo(
+        () => students.slice(startIndex, startIndex + PAGE_SIZE),
+        [students, startIndex]
+    );
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
@@ -89,11 +101,33 @@ const StudentTable = () => {
 
             {/* Pagination */}
             <div className="p-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                <span>Showing 1 to {DISPLAY_STUDENTS.length} of {DISPLAY_STUDENTS.length} entries</span>
+                <span>
+                    Showing {students.length === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + PAGE_SIZE, students.length)} of {students.length} entries
+                </span>
                 <div className="flex gap-2">
-                    <button className="px-3 py-1 border rounded hover:bg-gray-50">Previous</button>
-                    <button className="px-3 py-1 border rounded bg-indigo-50 text-indigo-600 font-bold">1</button>
-                    <button className="px-3 py-1 border rounded hover:bg-gray-50">Next</button>
+                    <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <button
+                            key={p}
+                            onClick={() => setCurrentPage(p)}
+                            className={`px-3 py-1 border rounded ${currentPage === p ? 'bg-indigo-50 text-indigo-600 font-bold' : 'hover:bg-gray-50'}`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                        className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
                 </div>
             </div>
         </div>

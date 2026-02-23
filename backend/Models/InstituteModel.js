@@ -77,13 +77,12 @@ const instituteSchema = new mongoose.Schema(
       type: String,
     },
 
-    // Branding (BrandingUploader)
-    logoLight: {
-      type: String, // URL/Path
+    // Branding – single logo (logoLight/logoDark kept for backward compat)
+    logo: {
+      type: String,
     },
-    logoDark: {
-      type: String, // URL/Path
-    },
+    logoLight: { type: String },
+    logoDark: { type: String },
     letterheadHeader: {
       type: String, // URL/Path
     },

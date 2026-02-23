@@ -9,7 +9,8 @@ const ExamTypesConfig = ({ isLocked }) => {
     const handleChange = (index, field, value) => {
         if (isLocked) return;
         const updatedExamTypes = [...examTypes];
-        updatedExamTypes[index] = { ...updatedExamTypes[index], [field]: value };
+        const numVal = (field === 'weightage' || field === 'maxMarks') ? (Number(value) || 0) : value;
+        updatedExamTypes[index] = { ...updatedExamTypes[index], [field]: numVal };
         useExamPolicyStore.setState({
             policy: { ...policy, examTypes: updatedExamTypes }
         });
@@ -80,7 +81,7 @@ const ExamTypesConfig = ({ isLocked }) => {
                                         type="number"
                                         value={exam.maxMarks}
                                         disabled={isLocked}
-                                        onChange={(e) => handleChange(index, 'maxMarks', e.target.value)}
+                                        onChange={(e) => handleChange(index, 'maxMarks', e.target.value === '' ? '' : Number(e.target.value))}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-center disabled:bg-gray-100 disabled:text-gray-500"
                                     />
                                 </td>
@@ -90,7 +91,7 @@ const ExamTypesConfig = ({ isLocked }) => {
                                             type="number"
                                             value={exam.weightage}
                                             disabled={isLocked || !exam.isIncluded}
-                                            onChange={(e) => handleChange(index, 'weightage', e.target.value)}
+                                            onChange={(e) => handleChange(index, 'weightage', e.target.value === '' ? '' : Number(e.target.value))}
                                             className="w-full px-2 py-1 border border-gray-300 rounded text-center disabled:bg-gray-100 disabled:text-gray-400 font-bold text-gray-700"
                                         />
                                         <span className="absolute right-2 top-1.5 text-xs text-gray-400">%</span>

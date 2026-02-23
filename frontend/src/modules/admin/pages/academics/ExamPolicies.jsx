@@ -7,8 +7,6 @@ import { useAppStore } from '../../../../store/index';
 import PolicyLockBanner from './components/policies/PolicyLockBanner';
 import ExamTypesConfig from './components/policies/ExamTypesConfig';
 import GradingSystemConfig from './components/policies/GradingSystemConfig';
-import PromotionRulesConfig from './components/policies/PromotionRulesConfig';
-import VisibilityConfig from './components/policies/VisibilityConfig';
 
 const ExamPolicies = () => {
     const { policy, isFetching, fetchPolicy, unlockPolicy, lockPolicy, savePolicy, isProcessing } = useExamPolicyStore();
@@ -25,9 +23,8 @@ const ExamPolicies = () => {
     const selectedYearName = academicYears.find(y => y._id === selectedYear)?.name || '...';
 
     useEffect(() => {
-        fetchAcademicYears();
         fetchBranches();
-    }, [fetchAcademicYears, fetchBranches]);
+    }, [fetchBranches]);
 
     useEffect(() => {
         if (branches.length > 0 && !selectedBranchId) {
@@ -37,6 +34,18 @@ const ExamPolicies = () => {
         }
     }, [branches, selectedBranchId, user?.branchId]);
 
+    // Load academic years for selected branch only
+    useEffect(() => {
+        if (selectedBranchId) {
+            fetchAcademicYears(selectedBranchId);
+        }
+    }, [selectedBranchId, fetchAcademicYears]);
+
+    // When branch changes, clear academic year so it gets reset from new list
+    useEffect(() => {
+        setSelectedYear('');
+    }, [selectedBranchId]);
+
     useEffect(() => {
         if (academicYears.length > 0 && !selectedYear) {
             const currentYear = academicYears.find(y => y.status === 'active') || academicYears[0];
@@ -45,9 +54,11 @@ const ExamPolicies = () => {
     }, [academicYears, selectedYear]);
 
     useEffect(() => {
-        if (selectedYear) {
-            fetchPolicy(selectedYear, selectedBranchId || undefined);
+        if (!selectedBranchId || !selectedYear) {
+            useExamPolicyStore.setState({ policy: null });
+            return;
         }
+        fetchPolicy(selectedYear, selectedBranchId);
     }, [selectedYear, selectedBranchId, fetchPolicy]);
 
     const handleUnlock = async () => {
@@ -81,9 +92,7 @@ const ExamPolicies = () => {
 
     const steps = [
         { id: 'types', label: '1. Exam Types & Weightage' },
-        { id: 'grading', label: '2. Grading & Marks' },
-        { id: 'promotion', label: '3. Promotion Rules' },
-        { id: 'visibility', label: '4. Visibility & Publish' }
+        { id: 'grading', label: '2. Grading & Marks' }
     ];
 
     return (
@@ -108,34 +117,37 @@ const ExamPolicies = () => {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                    {branches.length > 0 && (
-                        <div className="flex flex-col">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Branch</label>
-                            <select 
-                                value={selectedBranchId}
-                                onChange={(e) => setSelectedBranchId(e.target.value)}
-                                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[140px]"
-                            >
-                                {branches.map(b => (
-                                    <option key={b._id} value={b._id}>{b.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
+                    <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Branch</label>
+                        <select 
+                            value={selectedBranchId}
+                            onChange={(e) => setSelectedBranchId(e.target.value)}
+                            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px]"
+                        >
+                            <option value="">Select Branch</option>
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
                     <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Academic Year</label>
                         <select 
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            disabled={!selectedBranchId || academicYears.length === 0}
+                            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[180px] disabled:opacity-60 disabled:cursor-not-allowed"
                         >
+                            <option value="">
+                                {!selectedBranchId ? 'Select branch first' : academicYears.length === 0 ? 'Loading...' : 'Select Academic Year'}
+                            </option>
                             {academicYears.map(year => (
-                                <option key={year._id} value={year._id}>{year.name}</option>
+                                <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(active)' : ''}</option>
                             ))}
                         </select>
                     </div>
 
-                    {!isLocked && (
+                    {!isLocked && selectedBranchId && selectedYear && (
                         <button 
                             onClick={handleSave}
                             disabled={isProcessing}
@@ -206,8 +218,6 @@ const ExamPolicies = () => {
 
                         {activeTab === 'types' && <ExamTypesConfig isLocked={isLocked} />}
                         {activeTab === 'grading' && <GradingSystemConfig isLocked={isLocked} />}
-                        {activeTab === 'promotion' && <PromotionRulesConfig isLocked={isLocked} />}
-                        {activeTab === 'visibility' && <VisibilityConfig isLocked={isLocked} />}
 
                     </div>
 

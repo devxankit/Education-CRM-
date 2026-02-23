@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import AcademicYear from "../Models/AcademicYearModel.js";
 
 // ================= CREATE ACADEMIC YEAR =================
@@ -36,9 +37,10 @@ export const getAcademicYears = async (req, res) => {
         const instituteId = req.user.instituteId || req.user._id;
         const { branchId } = req.query;
         const query = { instituteId };
-        if (branchId && branchId.length === 24) {
+        if (branchId && branchId !== "all" && mongoose.Types.ObjectId.isValid(branchId)) {
+            const branchObjId = new mongoose.Types.ObjectId(branchId);
             query.$or = [
-                { branchId },
+                { branchId: branchObjId },
                 { branchId: null }
             ];
         }

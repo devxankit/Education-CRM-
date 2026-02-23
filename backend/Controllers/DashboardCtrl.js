@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Student from "../Models/StudentModel.js";
 import Teacher from "../Models/TeacherModel.js";
 import Staff from "../Models/StaffModel.js";
@@ -8,33 +9,56 @@ import UserActivityLog from "../Models/UserActivityLogModel.js";
 import Checklist from "../Models/ChecklistModel.js";
 
 /**
- * GET Admin Dashboard stats (counts, academic year, alerts, recent activity)
- * Query: branchId (optional - filter counts by branch)
+ * GET Admin Dashboard stats (counts, academic year, alerts, recent activity, chart data)
+ * Query: branchId (optional), academicYearId (optional - filter students & pending by year)
  */
 export const getDashboardStats = async (req, res) => {
     try {
         const instituteId = req.user.instituteId || req.user._id;
-        const { branchId } = req.query;
+        const { branchId, academicYearId } = req.query;
 
         const baseQuery = { instituteId };
         const branchFilter = branchId && branchId !== "all" ? { branchId } : {};
+        // Academic years for dropdown: for this branch (or institute-wide when branch is all)
+        const academicYearQuery = { instituteId };
+        if (branchId && branchId !== "all") {
+            academicYearQuery.$or = [
+                { branchId: new mongoose.Types.ObjectId(branchId) },
+                { branchId: null },
+            ];
+        }
+        const studentFilter = {
+            ...baseQuery,
+            ...branchFilter,
+            status: { $nin: ["withdrawn", "alumni"] },
+        };
+        if (academicYearId && academicYearId !== "all") {
+            studentFilter.academicYearId = new mongoose.Types.ObjectId(academicYearId);
+        }
+        const pendingFilter = { ...baseQuery, ...branchFilter, status: "in_review" };
+        if (academicYearId && academicYearId !== "all") {
+            pendingFilter.academicYearId = new mongoose.Types.ObjectId(academicYearId);
+        }
 
         const [
             totalStudents,
             totalTeachers,
             totalStaff,
-            activeAcademicYear,
+            academicYearsList,
+            activeAcademicYearDoc,
             pendingAdmissionApprovals,
             openTickets,
             inactiveFeeStructures,
             draftChecklists,
             recentLogs,
+            studentsByClassAgg,
         ] = await Promise.all([
-            Student.countDocuments({ ...baseQuery, ...branchFilter, status: { $nin: ["withdrawn", "alumni"] } }),
+            Student.countDocuments(studentFilter),
             Teacher.countDocuments({ ...baseQuery, ...branchFilter }),
             Staff.countDocuments({ ...baseQuery, ...branchFilter, status: "active" }),
+            AcademicYear.find(academicYearQuery).sort({ startDate: -1 }).select("_id name startDate endDate status branchId").lean(),
             AcademicYear.findOne({ instituteId, status: "active" }).select("name startDate endDate status").lean(),
-            Student.countDocuments({ ...baseQuery, ...branchFilter, status: "in_review" }),
+            Student.countDocuments(pendingFilter),
             SupportTicket.countDocuments({ instituteId, status: { $in: ["Open", "In-Progress"] } }),
             FeeStructure.countDocuments({ instituteId, status: { $ne: "active" } }),
             Checklist.countDocuments({ instituteId, isActive: false }),
@@ -43,9 +67,55 @@ export const getDashboardStats = async (req, res) => {
                 .limit(10)
                 .select("userName userEmail action entityType description createdAt")
                 .lean(),
+            Student.aggregate([
+                { $match: studentFilter },
+                { $group: { _id: "$classId", count: { $sum: 1 } } },
+                {
+                    $lookup: {
+                        from: "classes",
+                        localField: "_id",
+                        foreignField: "_id",
+                        as: "classDoc",
+                    },
+                },
+                {
+                    $project: {
+                        className: {
+                            $cond: {
+                                if: { $and: [{ $ne: ["$_id", null] }, { $gt: [{ $size: "$classDoc" }, 0] }] },
+                                then: { $arrayElemAt: ["$classDoc.name", 0] },
+                                else: "Unassigned",
+                            },
+                        },
+                        count: 1,
+                    },
+                },
+                { $sort: { className: 1 } },
+            ]),
         ]);
 
-        const pendingApprovals = pendingAdmissionApprovals;
+        const activeAcademicYear = activeAcademicYearDoc
+            ? {
+                _id: activeAcademicYearDoc._id,
+                name: activeAcademicYearDoc.name,
+                startDate: activeAcademicYearDoc.startDate,
+                endDate: activeAcademicYearDoc.endDate,
+                status: activeAcademicYearDoc.status,
+            }
+            : null;
+
+        const academicYears = (academicYearsList || []).map((ay) => ({
+            _id: ay._id,
+            name: ay.name,
+            startDate: ay.startDate,
+            endDate: ay.endDate,
+            status: ay.status,
+        }));
+
+        const studentsByClass = (studentsByClassAgg || []).map((row) => ({
+            name: row.className || "Unassigned",
+            count: row.count || 0,
+        }));
 
         const alerts = [];
         if (inactiveFeeStructures > 0) {
@@ -100,23 +170,19 @@ export const getDashboardStats = async (req, res) => {
                 totalStudents: totalStudents || 0,
                 totalTeachers: totalTeachers || 0,
                 totalStaff: totalStaff || 0,
-                pendingApprovals: pendingApprovals || 0,
+                pendingApprovals: pendingAdmissionApprovals || 0,
                 openTickets,
-                activeAcademicYear: activeAcademicYear
-                    ? {
-                        name: activeAcademicYear.name,
-                        startDate: activeAcademicYear.startDate,
-                        endDate: activeAcademicYear.endDate,
-                        status: activeAcademicYear.status,
-                    }
-                    : null,
+                activeAcademicYear,
+                academicYears,
                 alerts,
                 recentActivity,
-                systemHealth: {
-                    server: "Stable",
-                    database: "Synced",
-                    uptime: "99.98%",
-                    lastBackup: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + " Today",
+                chartData: {
+                    studentsByClass,
+                    roleDistribution: [
+                        { name: "Students", value: totalStudents || 0 },
+                        { name: "Teachers", value: totalTeachers || 0 },
+                        { name: "Support Staff", value: totalStaff || 0 },
+                    ],
                 },
             },
         });

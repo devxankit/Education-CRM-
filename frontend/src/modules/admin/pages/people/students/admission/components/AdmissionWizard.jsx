@@ -171,11 +171,27 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
                     ></div>
                 </div>
 
-                {/* Horizontal Step Labels (Hidden on mobile) */}
-                <div className="hidden md:flex justify-between mt-3 text-[10px] uppercase font-bold text-gray-400">
-                    {steps.map((s, i) => (
-                        <span key={s.key} className={currentStep >= i + 1 ? 'text-indigo-600' : ''}>{i + 1}. {s.label}</span>
-                    ))}
+                {/* Horizontal Step Labels - clickable (Hidden on mobile) */}
+                <div className="hidden md:flex justify-between mt-3 text-[10px] uppercase font-bold gap-2">
+                    {steps.map((s, i) => {
+                        const stepNum = i + 1;
+                        const isActive = currentStep === stepNum;
+                        const isCompleted = currentStep > stepNum;
+                        const isClickable = true;
+                        return (
+                            <button
+                                key={s.key}
+                                type="button"
+                                onClick={() => isClickable && setCurrentStep(stepNum)}
+                                className={`min-w-0 flex-1 truncate px-1 py-1 rounded transition-colors hover:bg-indigo-50 ${
+                                    isActive ? 'text-indigo-600' : isCompleted ? 'text-indigo-500 hover:text-indigo-700' : 'text-gray-400 hover:text-gray-600'
+                                } ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+                                title={`Go to step ${stepNum}: ${s.label}`}
+                            >
+                                {stepNum}. {s.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 

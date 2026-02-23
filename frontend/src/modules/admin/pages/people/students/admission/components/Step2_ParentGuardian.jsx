@@ -1,23 +1,44 @@
 
-import React, { useState, useEffect } from 'react';
-import { UserPlus, Search, Link } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { UserPlus, Search, ChevronDown, X } from 'lucide-react';
 import { useAdminStore } from '../../../../../../../store/adminStore';
 
 const Step2_ParentGuardian = ({ data, onChange }) => {
-    // data.parentMode: 'link' | 'create'
     const [mode, setMode] = useState(data.parentMode || 'link');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [searching, setSearching] = useState(false);
+    const dropdownRef = useRef(null);
+
     const parents = useAdminStore(state => state.parents);
     const fetchParents = useAdminStore(state => state.fetchParents);
 
+    const selectedParent = parents.find(p => p._id === data.parentId) || (data.parentId && data.parentName ? { name: data.parentName, mobile: data.parentMobile, code: '' } : null);
+
     useEffect(() => {
-        if (mode === 'link' && searchQuery.length >= 3) {
-            const timer = setTimeout(() => {
-                fetchParents(searchQuery);
-            }, 500);
-            return () => clearTimeout(timer);
+        if (mode === 'link') {
+            if (searchQuery.length >= 2) {
+                setSearching(true);
+                const timer = setTimeout(() => {
+                    fetchParents(searchQuery);
+                    setSearching(false);
+                }, 400);
+                return () => clearTimeout(timer);
+            } else if (isDropdownOpen && searchQuery.length === 0) {
+                fetchParents('');
+            }
         }
-    }, [searchQuery, mode, fetchParents]);
+    }, [searchQuery, mode, isDropdownOpen, fetchParents]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleChange = (field, value) => {
         onChange({ ...data, [field]: value, parentMode: mode });
@@ -31,6 +52,15 @@ const Step2_ParentGuardian = ({ data, onChange }) => {
             parentMobile: parent.mobile,
             parentEmail: parent.email
         });
+        setSearchQuery('');
+        setIsDropdownOpen(false);
+    };
+
+    const handleClearParent = (e) => {
+        e.stopPropagation();
+        onChange({ ...data, parentId: '', parentName: '', parentMobile: '', parentEmail: '' });
+        setSearchQuery('');
+        setIsDropdownOpen(true);
     };
 
     return (
@@ -52,63 +82,91 @@ const Step2_ParentGuardian = ({ data, onChange }) => {
                 >
                     Link Existing Parent
                 </button>
-                <button
-                    onClick={() => { setMode('create'); handleChange('parentMode', 'create'); }}
-                    className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${mode === 'create' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    Create New Parent
-                </button>
+             
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
 
                 {mode === 'link' ? (
-                    <div className="space-y-6">
-                        <div>
+                    <div className="space-y-4">
+                        <div className="relative" ref={dropdownRef}>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Search Parent</label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search by Mobile, Name, or Parent ID..."
-                                    className="w-full pl-10 pr-4 py-2 border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50/30"
-                                    autoFocus
-                                />
-                            </div>
-                            <p className="text-xs text-gray-400 mt-2 italic">
-                                Try searching for "Smith" or "98765..."
-                            </p>
-                        </div>
-
-                        {/* Result List */}
-                        {searchQuery.length >= 3 && parents.map((parent) => (
                             <div
-                                key={parent._id}
-                                className={`border rounded-lg p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between group ${data.parentId === parent._id ? 'border-indigo-500 bg-indigo-50/30' : 'border-gray-200'}`}
-                                onClick={() => handleSelectParent(parent)}
+                                className={`flex items-center gap-2 w-full pl-3 pr-2 py-2.5 border rounded-lg outline-none bg-white transition-all cursor-text min-h-[42px] ${
+                                    isDropdownOpen ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                                onClick={() => setIsDropdownOpen(true)}
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold">
-                                        {parent.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-800">{parent.name}</p>
-                                        <p className="text-xs text-gray-500">{parent.code} • {parent.mobile}</p>
-                                    </div>
-                                </div>
-                                <div className={`px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold ${data.parentId === parent._id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    {data.parentId === parent._id ? 'Selected' : 'Select'}
-                                </div>
+                                <Search className="text-gray-400 shrink-0" size={18} />
+                                {selectedParent ? (
+                                    <span className="flex-1 text-sm text-gray-800 truncate">
+                                        {selectedParent.name}
+                                        {selectedParent.mobile && <span className="text-gray-500"> • {selectedParent.mobile}</span>}
+                                    </span>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }}
+                                        onFocus={() => setIsDropdownOpen(true)}
+                                        placeholder="Search by Mobile, Name, or Parent ID..."
+                                        className="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
+                                    />
+                                )}
+                                {selectedParent ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearParent}
+                                        className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                                        title="Clear"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                ) : (
+                                    <ChevronDown className={`text-gray-400 shrink-0 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} size={18} />
+                                )}
                             </div>
-                        ))}
 
-                        {searchQuery.length >= 3 && parents.length === 0 && (
-                            <div className="text-center py-6 text-gray-500 text-sm">
-                                No parents found with this query. Try a different name or mobile.
-                            </div>
-                        )}
+                            {/* Dropdown with search results */}
+                            {isDropdownOpen && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-lg z-20 overflow-hidden max-h-64 overflow-y-auto">
+                                    {searching || (searchQuery.length < 2 && parents.length === 0) ? (
+                                        <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                                            {searching ? 'Searching...' : 'Type 2+ characters to search'}
+                                        </div>
+                                    ) : parents.length > 0 ? (
+                                        parents.map((parent) => (
+                                            <button
+                                                key={parent._id}
+                                                type="button"
+                                                onClick={() => handleSelectParent(parent)}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors text-left ${
+                                                    data.parentId === parent._id ? 'bg-indigo-50' : ''
+                                                }`}
+                                            >
+                                                <div className="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                                                    {(parent.name || 'P').charAt(0)}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-gray-800 truncate">{parent.name}</p>
+                                                    <p className="text-xs text-gray-500 truncate">{parent.code || ''} • {parent.mobile || 'N/A'}</p>
+                                                </div>
+                                                {data.parentId === parent._id && (
+                                                    <span className="text-xs font-bold text-green-600 shrink-0">✓ Selected</span>
+                                                )}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                                            No parents found. Try a different search.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-400 italic">
+                            Select a parent from the dropdown or type to search by name, mobile, or ID
+                        </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

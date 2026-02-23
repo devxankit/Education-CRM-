@@ -6,7 +6,6 @@ import RuleLockBanner from './components/timetable-rules/RuleLockBanner';
 import GlobalTimeSettings from './components/timetable-rules/GlobalTimeSettings';
 import PeriodRules from './components/timetable-rules/PeriodRules';
 import WorkloadRules from './components/timetable-rules/WorkloadRules';
-import ConflictRules from './components/timetable-rules/ConflictRules';
 import { API_URL } from '@/app/api';
 
 const TimetableRules = () => {
@@ -16,7 +15,9 @@ const TimetableRules = () => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [branches, setBranches] = useState([]);
+    const [academicYears, setAcademicYears] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('');
+    const [selectedAcademicYearId, setSelectedAcademicYearId] = useState('all');
 
     const [rules, setRules] = useState({
         // Global
@@ -66,15 +67,28 @@ const TimetableRules = () => {
         }
     }, []);
 
-    const fetchRules = useCallback(async (branchId) => {
+    const fetchAcademicYears = useCallback(async (branchId) => {
+        if (!branchId) return;
+        try {
+            const token = localStorage.getItem('token');
+            const url = `${API_URL}/academic-year${branchId && branchId !== 'all' ? `?branchId=${branchId}` : ''}`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await response.json();
+            if (data.success) setAcademicYears(data.data || []);
+        } catch (error) {
+            console.error('Error fetching academic years:', error);
+        }
+    }, []);
+
+    const fetchRules = useCallback(async (branchId, academicYearId) => {
         if (!branchId) return;
         setFetching(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/timetable-rule?branchId=${branchId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const params = new URLSearchParams({ branchId });
+            if (academicYearId && academicYearId !== 'all') params.set('academicYearId', academicYearId);
+            const response = await fetch(`${API_URL}/timetable-rule?${params.toString()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
             if (data.success && data.data) {
@@ -94,10 +108,16 @@ const TimetableRules = () => {
     }, [fetchBranches]);
 
     useEffect(() => {
-        if (selectedBranchId) {
-            fetchRules(selectedBranchId);
-        }
-    }, [selectedBranchId, fetchRules]);
+        if (selectedBranchId) fetchAcademicYears(selectedBranchId);
+    }, [selectedBranchId, fetchAcademicYears]);
+
+    useEffect(() => {
+        setSelectedAcademicYearId('all');
+    }, [selectedBranchId]);
+
+    useEffect(() => {
+        if (selectedBranchId) fetchRules(selectedBranchId, selectedAcademicYearId);
+    }, [selectedBranchId, selectedAcademicYearId, fetchRules]);
 
     const handleChange = (key, value) => {
         setRules(prev => ({ ...prev, [key]: value }));
@@ -105,6 +125,7 @@ const TimetableRules = () => {
 
     const handleToggleLock = async () => {
         if (!selectedBranchId) return;
+        const ayId = selectedAcademicYearId && selectedAcademicYearId !== 'all' ? selectedAcademicYearId : 'all';
         let reason = '';
         if (isLocked) {
             reason = window.prompt("To UNLOCK rules, please provide an Admin Reason for the audit log:");
@@ -117,7 +138,9 @@ const TimetableRules = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/timetable-rule/lock?branchId=${selectedBranchId}`, {
+            const params = new URLSearchParams({ branchId: selectedBranchId });
+            if (ayId !== 'all') params.set('academicYearId', ayId);
+            const response = await fetch(`${API_URL}/timetable-rule/lock?${params.toString()}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,8 +169,10 @@ const TimetableRules = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const { _id, instituteId, branchId, createdAt, updatedAt, __v, ...pureRules } = rules;
-            const response = await fetch(`${API_URL}/timetable-rule?branchId=${selectedBranchId}`, {
+            const { _id, instituteId, branchId, academicYearId, createdAt, updatedAt, __v, ...pureRules } = rules;
+            const params = new URLSearchParams({ branchId: selectedBranchId });
+            if (selectedAcademicYearId && selectedAcademicYearId !== 'all') params.set('academicYearId', selectedAcademicYearId);
+            const response = await fetch(`${API_URL}/timetable-rule?${params.toString()}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -192,28 +217,38 @@ const TimetableRules = () => {
             />
 
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* Branch Selector */}
-                <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                {/* Branch & Academic Year Selector */}
+                <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="bg-indigo-100 p-2 rounded-lg">
                             <History className="text-indigo-600" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-sm font-bold text-gray-900">Select Campus/Branch</h2>
-                            <p className="text-xs text-gray-500">Rules are configured per branch</p>
+                            <h2 className="text-sm font-bold text-gray-900">Branch & Academic Year</h2>
+                            <p className="text-xs text-gray-500">Rules are configured per branch and academic year</p>
                         </div>
                     </div>
-                    <select
-                        value={selectedBranchId}
-                        onChange={(e) => setSelectedBranchId(e.target.value)}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none min-w-[200px]"
-                    >
-                        {branches.map(branch => (
-                            <option key={branch._id} value={branch._id}>
-                                {branch.name}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <select
+                            value={selectedBranchId}
+                            onChange={(e) => setSelectedBranchId(e.target.value)}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none min-w-[180px]"
+                        >
+                            {branches.map(branch => (
+                                <option key={branch._id} value={branch._id}>{branch.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={selectedAcademicYearId}
+                            onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none min-w-[180px]"
+                        >
+                            <option value="all">All Academic Years</option>
+                            {academicYears.map(ay => (
+                                <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(active)' : ''}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Intro Text */}
@@ -243,11 +278,6 @@ const TimetableRules = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <WorkloadRules
-                        ruleData={rules}
-                        onChange={handleChange}
-                        isLocked={isLocked}
-                    />
-                    <ConflictRules
                         ruleData={rules}
                         onChange={handleChange}
                         isLocked={isLocked}

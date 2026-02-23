@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Holiday from "../Models/HolidayModel.js";
 
 // ================= ADD HOLIDAY =================
@@ -5,14 +6,15 @@ export const createHoliday = async (req, res) => {
     try {
         const {
             name, type, startDate, endDate, isRange,
-            applicableTo, branchId, description
+            applicableTo, branchId, academicYearId, description
         } = req.body;
 
         const instituteId = req.user._id;
 
         const holiday = new Holiday({
             instituteId,
-            branchId,
+            branchId: branchId || "all",
+            academicYearId: academicYearId || null,
             name,
             type,
             startDate,
@@ -41,12 +43,16 @@ export const createHoliday = async (req, res) => {
 export const getHolidays = async (req, res) => {
     try {
         const instituteId = req.user._id;
-        const { branchId, year } = req.query;
+        const { branchId, academicYearId, year } = req.query;
 
         let query = { instituteId };
 
         if (branchId && branchId !== "all") {
             query.$or = [{ branchId: "all" }, { branchId }];
+        }
+
+        if (academicYearId && academicYearId !== "all" && mongoose.Types.ObjectId.isValid(academicYearId)) {
+            query.academicYearId = { $in: [new mongoose.Types.ObjectId(academicYearId), null] };
         }
 
         if (year) {
@@ -73,8 +79,8 @@ export const getHolidays = async (req, res) => {
 export const updateHoliday = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
-
+        const updateData = { ...req.body };
+        if (updateData.academicYearId === '') updateData.academicYearId = null;
         if (!updateData.isRange) {
             updateData.endDate = updateData.startDate;
         }

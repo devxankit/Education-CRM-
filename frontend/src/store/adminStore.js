@@ -105,13 +105,15 @@ export const useAdminStore = create(
             },
 
             // Actions: Dashboard
-            fetchDashboardStats: async (branchId) => {
+            fetchDashboardStats: async (branchId, academicYearId) => {
                 set({ dashboardLoading: true });
                 try {
                     const token = localStorage.getItem('token');
-                    const url = branchId && branchId !== 'all'
-                        ? `${API_URL}/dashboard?branchId=${branchId}`
-                        : `${API_URL}/dashboard`;
+                    const params = new URLSearchParams();
+                    if (branchId && branchId !== 'all') params.set('branchId', branchId);
+                    if (academicYearId && academicYearId !== 'all') params.set('academicYearId', academicYearId);
+                    const qs = params.toString();
+                    const url = qs ? `${API_URL}/dashboard?${qs}` : `${API_URL}/dashboard`;
                     const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

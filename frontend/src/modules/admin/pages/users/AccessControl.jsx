@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Smartphone, Globe, Clock, AlertTriangle, Save, Plus, Trash2, MapPin, Filter } from 'lucide-react';
+import { Smartphone, Globe, AlertTriangle, Save, Plus, Trash2, MapPin, Filter } from 'lucide-react';
 import { API_URL } from '@/app/api';
 
 const AccessControl = () => {
@@ -276,21 +276,6 @@ const AccessControl = () => {
                             </div>
                         )}
 
-                        <div className="pt-4 border-t border-gray-50">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                                <Clock size={16} className="text-gray-400" /> Staff Session Timeout (Minutes)
-                            </label>
-                            <p className="text-xs text-gray-500 mb-2">JWT expiry for Staff login. Session ends after this duration.</p>
-                            <div className="flex items-center gap-4">
-                                <input
-                                    type="range" min="5" max="120" step="5"
-                                    value={policies.sessionTimeout}
-                                    onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
-                                    className="w-full accent-indigo-600 cursor-pointer"
-                                />
-                                <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded w-16 text-center">{policies.sessionTimeout}m</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

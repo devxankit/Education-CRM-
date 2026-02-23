@@ -1,15 +1,15 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, GraduationCap, UsersRound, FileText } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useAdminStore } from '../../../store/adminStore';
 
 // Components
 import KpiCard from '../components/dashboard/KpiCard';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
-import PendingActionsTable from '../components/dashboard/PendingActionsTable';
-import SystemHealthPanel from '../components/dashboard/SystemHealthPanel';
 import RecentActivityLog from '../components/dashboard/RecentActivityLog';
+
+const CHART_COLORS = ['#2563eb', '#0ea5e9', '#06b6d4', '#8b5cf6', '#ec4899'];
 
 const Dashboard = () => {
     const branches = useAdminStore(state => state.branches);
@@ -19,23 +19,30 @@ const Dashboard = () => {
     const fetchDashboardStats = useAdminStore(state => state.fetchDashboardStats);
 
     const [selectedBranchId, setSelectedBranchId] = useState('all');
+    const [selectedAcademicYearId, setSelectedAcademicYearId] = useState('all');
 
     useEffect(() => {
         fetchBranches();
     }, [fetchBranches]);
 
+    // When branch changes, reset academic year so dropdown shows years for the new branch
     useEffect(() => {
-        fetchDashboardStats(selectedBranchId);
-    }, [selectedBranchId, fetchDashboardStats]);
+        setSelectedAcademicYearId('all');
+    }, [selectedBranchId]);
+
+    useEffect(() => {
+        fetchDashboardStats(selectedBranchId, selectedAcademicYearId);
+    }, [selectedBranchId, selectedAcademicYearId, fetchDashboardStats]);
 
     const data = dashboardStats;
     const totalStudents = data?.totalStudents ?? 0;
     const totalTeachers = data?.totalTeachers ?? 0;
     const totalStaff = data?.totalStaff ?? 0;
     const pendingApprovals = data?.pendingApprovals ?? 0;
-    const academicYearLabel = data?.activeAcademicYear?.name
-        ? `Academic Year ${data.activeAcademicYear.name} (${data.activeAcademicYear.status || 'Active'})`
-        : 'No active academic year';
+    const academicYears = data?.academicYears ?? [];
+    const chartData = data?.chartData ?? {};
+    const studentsByClass = chartData.studentsByClass ?? [];
+    const roleDistribution = chartData.roleDistribution ?? [];
 
     return (
         <div className="space-y-6 pb-10">
@@ -46,7 +53,7 @@ const Dashboard = () => {
                     <p className="text-gray-500 text-sm">Real-time overview of institution performance and compliance.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <select
                         value={selectedBranchId}
                         onChange={(e) => setSelectedBranchId(e.target.value)}
@@ -59,9 +66,18 @@ const Dashboard = () => {
                             </option>
                         ))}
                     </select>
-                    <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-100">
-                        {dashboardLoading ? 'Loading...' : academicYearLabel}
-                    </div>
+                    <select
+                        value={selectedAcademicYearId}
+                        onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                        className="px-4 py-2 border border-blue-200 rounded-lg text-sm bg-white text-gray-700 outline-none focus:border-blue-500 font-medium shadow-sm"
+                    >
+                        <option value="all">All Academic Years</option>
+                        {academicYears.map((ay) => (
+                            <option key={ay._id} value={ay._id}>
+                                {ay.name} {ay.status === 'active' ? '(active)' : ''}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
@@ -141,22 +157,62 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* SECTION 2 & 3: ALERTS & PENDING ACTIONS */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto items-stretch">
+            {/* CHARTS */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 className="font-bold text-gray-800 mb-4">Students by Class</h3>
+                    {studentsByClass.length > 0 ? (
+                        <div className="h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={studentsByClass} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                                    <Tooltip />
+                                    <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} name="Students" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-sm py-8 text-center">No class-wise data for selected filters.</p>
+                    )}
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 className="font-bold text-gray-800 mb-4">Role Distribution</h3>
+                    {roleDistribution.some((d) => d.value > 0) ? (
+                        <div className="h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={roleDistribution}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={80}
+                                        label={({ name, value }) => `${name}: ${value}`}
+                                    >
+                                        {roleDistribution.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-sm py-8 text-center">No distribution data for selected filters.</p>
+                    )}
+                </div>
+            </div>
+
+            {/* ALERTS & ACTIVITY */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
                     <AlertsPanel alerts={data?.alerts ?? []} />
                 </div>
                 <div className="lg:col-span-2">
-                    <PendingActionsTable />
-                </div>
-            </div>
-
-            {/* SECTION 4 & 5: SYSTEM HEALTH & ACTIVITY */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <SystemHealthPanel systemHealth={data?.systemHealth ?? {}} />
-                </div>
-                <div className="lg:col-span-1">
                     <RecentActivityLog recentActivity={data?.recentActivity ?? []} />
                 </div>
             </div>

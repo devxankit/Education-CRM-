@@ -17,7 +17,7 @@ const ParentStatusBadge = ({ status }) => {
     };
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${getStyles()}`}>
+        <span className={`inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold border capitalize ${getStyles()}`}>
             {status}
         </span>
     );

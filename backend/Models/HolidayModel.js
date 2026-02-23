@@ -11,6 +11,11 @@ const holidaySchema = new mongoose.Schema(
             type: String,
             default: "all"
         },
+        academicYearId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AcademicYear",
+            default: null
+        },
         name: {
             type: String,
             required: true,

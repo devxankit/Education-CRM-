@@ -2,30 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { X, CalendarPlus, Check, Info, Loader2 } from 'lucide-react';
 
-const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branches = [] }) => {
-    const defaultForm = {
+const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branches = [], academicYears = [], selectedBranchId = 'all', selectedAcademicYearId = 'all' }) => {
+    const getDefaultForm = () => ({
         name: '',
         type: 'academic',
         startDate: '',
         endDate: '',
         isRange: false,
-        applicableTo: ['students', 'teachers', 'staff'], // Default to all
-        branchId: 'all'
-    };
+        applicableTo: ['students', 'teachers', 'staff'],
+        branchId: selectedBranchId !== 'all' ? selectedBranchId : 'all',
+        academicYearId: selectedAcademicYearId !== 'all' ? selectedAcademicYearId : ''
+    });
 
-    const [formData, setFormData] = useState(defaultForm);
+    const [formData, setFormData] = useState(getDefaultForm());
 
     useEffect(() => {
         if (initialData) {
             setFormData({
                 ...initialData,
                 isRange: initialData.startDate !== initialData.endDate,
-                startDate: initialData.date || initialData.startDate // Handle legacy or unified
+                startDate: initialData.date || initialData.startDate,
+                branchId: initialData.branchId ?? (selectedBranchId !== 'all' ? selectedBranchId : 'all'),
+                academicYearId: initialData.academicYearId ?? (selectedAcademicYearId !== 'all' ? selectedAcademicYearId : '')
             });
         } else {
-            setFormData(defaultForm);
+            setFormData(getDefaultForm());
         }
-    }, [initialData, isOpen]);
+    }, [initialData, isOpen, selectedBranchId, selectedAcademicYearId]);
 
     if (!isOpen) return null;
 
@@ -51,11 +54,11 @@ const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branc
         e.preventDefault();
         onSave({
             ...formData,
-            // Normalize dates
+            branchId: formData.branchId || 'all',
+            academicYearId: formData.academicYearId || null,
             endDate: formData.isRange ? formData.endDate : formData.startDate,
-            date: formData.startDate // Flat date for grid
+            date: formData.startDate
         });
-        // Remove onClose() here, let parent handle it on success
     };
 
     return (
@@ -78,15 +81,31 @@ const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branc
                         <label className="block text-sm font-medium text-gray-700 mb-1">Select Branch / Campus</label>
                         <select
                             name="branchId"
-                            value={formData.branchId}
+                            value={formData.branchId || 'all'}
                             onChange={handleChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm"
                         >
                             <option value="all">All Branches (Global Holiday)</option>
                             {branches.map(branch => (
                                 <option key={branch._id} value={branch._id}>
-                                    {branch.name} ({branch.code})
+                                    {branch.name} {branch.code ? `(${branch.code})` : ''}
                                 </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Academic Year */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                        <select
+                            name="academicYearId"
+                            value={formData.academicYearId || ''}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm"
+                        >
+                            <option value="">All Years (Global)</option>
+                            {academicYears.map(ay => (
+                                <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(active)' : ''}</option>
                             ))}
                         </select>
                     </div>

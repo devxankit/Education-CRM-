@@ -126,16 +126,16 @@ export const updateInstituteDetails = async (req, res) => {
     const fieldsToExclude = ['password', 'email', '_id', 'createdAt', 'updatedAt', '__v', 'role'];
     fieldsToExclude.forEach(field => delete updateData[field]);
 
-    // Handle Branding Base64 uploads
-    const brandingFields = ['logoLight', 'logoDark', 'letterheadHeader', 'letterheadFooter'];
+    // Handle Branding Base64 uploads (single logo + letterhead)
+    const brandingFields = ['logo', 'letterheadHeader', 'letterheadFooter'];
     for (const field of brandingFields) {
       if (updateData[field] && updateData[field].startsWith('data:')) {
         try {
           const imageUrl = await uploadBase64ToCloudinary(updateData[field], `institutes/${id}/branding`);
           updateData[field] = imageUrl;
+          if (field === 'logo') updateData.logoLight = imageUrl;
         } catch (uploadError) {
           console.error(`Error uploading ${field} to Cloudinary:`, uploadError);
-          // Optionally handle error or keep existing value
         }
       }
     }
@@ -188,6 +188,7 @@ export const updateInstituteBranding = async (req, res) => {
     });
 
     await Promise.all(uploadPromises);
+    if (updateData.logo) updateData.logoLight = updateData.logo;
 
     const institute = await Institute.findByIdAndUpdate(
       id,

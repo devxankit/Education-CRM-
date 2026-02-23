@@ -23,7 +23,9 @@ const Calendars = () => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [branches, setBranches] = useState([]);
+    const [academicYears, setAcademicYears] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('all');
+    const [selectedAcademicYearId, setSelectedAcademicYearId] = useState('all');
 
     // Mock Role
     const isSuperAdmin = true;
@@ -35,36 +37,49 @@ const Calendars = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/branch`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            if (data.success) {
-                setBranches(data.data);
-            }
+            if (data.success) setBranches(data.data);
         } catch (error) {
             console.error('Error fetching branches:', error);
         }
     }, []);
 
-    const fetchHolidays = useCallback(async (branchId = 'all') => {
+    const fetchAcademicYears = useCallback(async (branchId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams();
+            if (branchId && branchId !== 'all') params.set('branchId', branchId);
+            const qs = params.toString();
+            const url = qs ? `${API_URL}/academic-year?${qs}` : `${API_URL}/academic-year`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) setAcademicYears(data.data || []);
+            else setAcademicYears([]);
+        } catch (error) {
+            console.error('Error fetching academic years:', error);
+            setAcademicYears([]);
+        }
+    }, []);
+
+    const fetchHolidays = useCallback(async (branchId = 'all', academicYearId = 'all') => {
         setFetching(true);
         try {
             const token = localStorage.getItem('token');
-            const url = branchId === 'all' 
-                ? `${API_URL}/holiday` 
-                : `${API_URL}/holiday?branchId=${branchId}`;
+            const params = new URLSearchParams();
+            if (branchId && branchId !== 'all') params.set('branchId', branchId);
+            if (academicYearId && academicYearId !== 'all') params.set('academicYearId', academicYearId);
+            const qs = params.toString();
+            const url = qs ? `${API_URL}/holiday?${qs}` : `${API_URL}/holiday`;
 
             const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            if (data.success) {
-                setHolidays(data.data);
-            }
+            if (data.success) setHolidays(data.data);
         } catch (error) {
             console.error('Error fetching holidays:', error);
         } finally {
@@ -77,8 +92,16 @@ const Calendars = () => {
     }, [fetchBranches]);
 
     useEffect(() => {
-        fetchHolidays(selectedBranchId);
-    }, [selectedBranchId, fetchHolidays]);
+        fetchAcademicYears(selectedBranchId);
+    }, [selectedBranchId, fetchAcademicYears]);
+
+    useEffect(() => {
+        setSelectedAcademicYearId('all');
+    }, [selectedBranchId]);
+
+    useEffect(() => {
+        fetchHolidays(selectedBranchId, selectedAcademicYearId);
+    }, [selectedBranchId, selectedAcademicYearId, fetchHolidays]);
 
     // Handlers
     const handleSave = async (holidayData) => {
@@ -102,7 +125,7 @@ const Calendars = () => {
             const data = await response.json();
             if (data.success) {
                 alert(holidayData._id ? 'Holiday Updated Successfully' : 'Holiday Created Successfully');
-                fetchHolidays();
+                fetchHolidays(selectedBranchId, selectedAcademicYearId);
                 setIsCreateOpen(false);
                 setEditingHoliday(null);
             } else {
@@ -138,7 +161,7 @@ const Calendars = () => {
             const data = await response.json();
             if (data.success) {
                 alert('Holiday Deleted Successfully');
-                fetchHolidays();
+                fetchHolidays(selectedBranchId, selectedAcademicYearId);
             } else {
                 alert(data.message || 'Failed to delete holiday');
             }
@@ -159,7 +182,7 @@ const Calendars = () => {
             setEditingHoliday(null);
             // We need a way to pass initial date to modal, actually simplistic modal handles this internally via form state reset
             // Refactor: Pass initialData as partial
-            setEditingHoliday({ startDate: dateStr, endDate: dateStr, name: '', type: 'academic', applicableTo: ['students', 'teachers', 'staff'], isRange: false });
+            setEditingHoliday({ startDate: dateStr, endDate: dateStr, name: '', type: 'academic', applicableTo: ['students', 'teachers', 'staff'], isRange: false, branchId: selectedBranchId !== 'all' ? selectedBranchId : 'all', academicYearId: selectedAcademicYearId !== 'all' ? selectedAcademicYearId : '' });
             setIsCreateOpen(true);
         }
     };
@@ -207,21 +230,30 @@ const Calendars = () => {
                 </div>
             </div>
 
-            {/* Legend */}
+            {/* Legend & Filters */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <HolidayTypeLegend />
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Filter by Branch:</span>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Branch:</span>
                     <select
                         value={selectedBranchId}
                         onChange={(e) => setSelectedBranchId(e.target.value)}
-                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2 outline-none min-w-[180px]"
+                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2 outline-none min-w-[160px]"
                     >
                         <option value="all">All Branches</option>
                         {branches.map(branch => (
-                            <option key={branch._id} value={branch._id}>
-                                {branch.name}
-                            </option>
+                            <option key={branch._id} value={branch._id}>{branch.name}</option>
+                        ))}
+                    </select>
+                    <span className="text-sm font-medium text-gray-700">Academic Year:</span>
+                    <select
+                        value={selectedAcademicYearId}
+                        onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2 outline-none min-w-[160px]"
+                    >
+                        <option value="all">All Academic Years</option>
+                        {academicYears.map(ay => (
+                            <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(active)' : ''}</option>
                         ))}
                     </select>
                 </div>
@@ -262,6 +294,9 @@ const Calendars = () => {
                 initialData={editingHoliday}
                 loading={loading}
                 branches={branches}
+                academicYears={academicYears}
+                selectedBranchId={selectedBranchId}
+                selectedAcademicYearId={selectedAcademicYearId}
             />
         </div>
     );

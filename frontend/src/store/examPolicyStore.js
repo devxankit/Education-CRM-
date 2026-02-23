@@ -9,7 +9,7 @@ export const useExamPolicyStore = create((set, get) => ({
 
     fetchPolicy: async (academicYearId, branchId) => {
         if (!academicYearId) return;
-        set({ isFetching: true });
+        set({ isFetching: true, policy: null });
         try {
             const token = localStorage.getItem('token');
             const params = { academicYearId };
@@ -32,7 +32,22 @@ export const useExamPolicyStore = create((set, get) => ({
         set({ isProcessing: true });
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/exam-policy`, policyData, {
+            const payload = {
+                ...policyData,
+                examTypes: (policyData.examTypes || []).map((e) => ({
+                    name: e.name,
+                    weightage: Number(e.weightage) || 0,
+                    maxMarks: Number(e.maxMarks) || 100,
+                    isIncluded: !!e.isIncluded,
+                })),
+                gradingScale: (policyData.gradingScale || []).map((g) => ({
+                    label: g.label,
+                    minPercentage: Number(g.minPercentage) || 0,
+                    maxPercentage: Number(g.maxPercentage) || 0,
+                    gradePoints: Number(g.gradePoints) || 0,
+                })),
+            };
+            const response = await axios.post(`${API_URL}/exam-policy`, payload, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.data.success) {

@@ -29,8 +29,7 @@ router.put(
   AuthMiddleware,
   isInstitute,
   upload.fields([
-    { name: 'logoLight', maxCount: 1 },
-    { name: 'logoDark', maxCount: 1 },
+    { name: 'logo', maxCount: 1 },
     { name: 'letterheadHeader', maxCount: 1 },
     { name: 'letterheadFooter', maxCount: 1 }
   ]),

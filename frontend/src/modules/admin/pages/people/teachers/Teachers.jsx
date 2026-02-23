@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Filter, Download, Search, UserPlus, Loader2, GraduationCap, School } from 'lucide-react';
+import { Filter, Download, Search, UserPlus, Loader2, GraduationCap, School, CalendarOff } from 'lucide-react';
 
 // Components
 import TeacherTable from './components/TeacherTable';
@@ -48,11 +48,12 @@ const Teachers = () => {
                     id: t._id,
                     name: `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'No Name',
                     code: t.employeeId || 'No ID',
-                    // UI Defaults for fields not present in basic model but used in components
                     academicLevel: t.academicLevel || 'N/A',
-                    eligibleSubjectsCount: t.eligibleSubjectsCount || 0,
-                    department: t.department || 'General',
-                    designation: t.designation || 'Teacher'
+                    eligibleSubjectsCount: t.eligibleSubjectsCount ?? (t.eligibleSubjects?.length ?? 0),
+                    eligibleSubjectsDisplay: t.eligibleSubjects?.length ?? t.eligibleSubjectsCount ?? 0,
+                    department: t.department || t.roleId?.name || 'General',
+                    designation: t.designation || 'Teacher',
+                    teachingStatus: t.teachingStatus || t.status || 'Active'
                 }));
                 setTeachers(transformed);
             }
@@ -161,90 +162,84 @@ const Teachers = () => {
     return (
         <div className="h-full flex flex-col pb-10 font-['Inter']">
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            {/* Header - compact for 100% zoom */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 font-['Poppins']">Faculty Management</h1>
-                    <p className="text-gray-500 text-sm mt-1">Manage academic profiles, subject eligibility, and teaching roles.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Faculty Management</h1>
+                    <p className="text-gray-500 text-xs mt-0.5">Manage academic profiles, subject eligibility, and teaching roles.</p>
                 </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
-                    <div className="relative flex-1 md:flex-none min-w-[200px] md:min-w-[280px]">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative flex-1 md:flex-none min-w-[160px] md:min-w-[220px]">
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Search by name, ID, or department..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm transition-all"
+                            className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
                         />
                     </div>
-                    <button 
-                        className="p-2.5 border border-gray-300 rounded-lg bg-white text-gray-600 hover:text-indigo-600 hover:border-indigo-300 shadow-sm transition-all hover:bg-indigo-50"
-                        title="Filter"
-                    >
-                        <Filter size={18} />
+                    <button className="p-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50" title="Filter">
+                        <Filter size={16} />
                     </button>
-                    <button 
-                        className="p-2.5 border border-gray-300 rounded-lg bg-white text-gray-600 hover:text-indigo-600 hover:border-indigo-300 shadow-sm transition-all hover:bg-indigo-50"
-                        title="Export"
-                    >
-                        <Download size={18} />
+                    <button className="p-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50" title="Export">
+                        <Download size={16} />
                     </button>
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all font-medium text-sm shadow-md hover:shadow-lg active:scale-95"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-xs shadow-sm active:scale-95"
                     >
-                        <UserPlus size={18} /> Add Teacher
+                        <UserPlus size={16} /> Add Teacher
                     </button>
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-5 rounded-xl border border-indigo-200 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+            {/* Stats Overview - compact */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wider mb-1">Total Faculty</p>
-                            <h3 className="text-3xl font-black text-indigo-900">{teachers.length}</h3>
+                            <p className="text-[10px] font-semibold text-indigo-700 uppercase tracking-wider">Total Faculty</p>
+                            <h3 className="text-2xl font-black text-indigo-900">{teachers.length}</h3>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-indigo-200 flex items-center justify-center">
-                            <UserPlus size={24} className="text-indigo-700" />
+                        <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center shrink-0">
+                            <UserPlus size={20} className="text-indigo-700" />
                         </div>
                     </div>
                 </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Active Teaching</p>
-                            <h3 className="text-3xl font-black text-green-900">{teachers.filter(t => t.teachingStatus === 'Active' || !t.teachingStatus).length}</h3>
+                            <p className="text-[10px] font-semibold text-green-700 uppercase tracking-wider">Active Teaching</p>
+                            <h3 className="text-2xl font-black text-green-900">{teachers.filter(t => (t.teachingStatus || t.status || 'Active') === 'Active').length}</h3>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center">
-                            <GraduationCap size={24} className="text-green-700" />
+                        <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center shrink-0">
+                            <GraduationCap size={20} className="text-green-700" />
                         </div>
                     </div>
                 </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border border-blue-200 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Subjects Assigned</p>
-                            <h3 className="text-3xl font-black text-blue-900">
-                                {teachers.reduce((sum, t) => sum + (t.eligibleSubjectsCount || 0), 0)}
+                            <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider">Subjects Assigned</p>
+                            <h3 className="text-2xl font-black text-blue-900">
+                                {teachers.reduce((sum, t) => sum + (t.eligibleSubjectsCount ?? t.eligibleSubjects?.length ?? 0), 0)}
                             </h3>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
-                            <School size={24} className="text-blue-700" />
+                        <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+                            <School size={20} className="text-blue-700" />
                         </div>
                     </div>
                 </div>
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl border border-orange-200 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-semibold text-orange-700 uppercase tracking-wider mb-1">On Leave</p>
-                            <h3 className="text-3xl font-black text-orange-900">{teachers.filter(t => t.teachingStatus === 'On Leave').length}</h3>
+                            <p className="text-[10px] font-semibold text-orange-700 uppercase tracking-wider">On Leave</p>
+                            <h3 className="text-2xl font-black text-orange-900">{teachers.filter(t => (t.teachingStatus || t.status) === 'On Leave').length}</h3>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-orange-200 flex items-center justify-center">
-                            <Filter size={24} className="text-orange-700" />
+                        <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center shrink-0">
+                            <CalendarOff size={20} className="text-orange-700" />
                         </div>
                     </div>
                 </div>

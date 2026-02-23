@@ -61,16 +61,20 @@ const StudentLinkPanel = ({ parentId, branchId, academicYearId, initialLinkedStu
     }, [branchId, academicYearId, fetchStudents]);
 
     // Filter students for the search dropdown
+    // Exclude: (1) already linked to this parent, (2) already linked to another parent
     const availableStudents = useMemo(() => {
         if (!searchTerm.trim()) return [];
         return students.filter(s => {
-            const isAlreadyLinked = linkedStudents.some(ls => ls._id === s._id || ls.id === s._id);
+            const isAlreadyLinkedToThisParent = linkedStudents.some(ls => ls._id === s._id || ls.id === s._id);
+            const studentParentId = s.parentId?._id || s.parentId;
+            // Exclude students already linked to another parent (or any parent when creating new)
+            const isLinkedToOtherParent = studentParentId && (!parentId || String(studentParentId) !== String(parentId));
             const matchesSearch =
-                `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (s.admissionNo && s.admissionNo.toLowerCase().includes(searchTerm.toLowerCase()));
-            return !isAlreadyLinked && matchesSearch;
+            return !isAlreadyLinkedToThisParent && !isLinkedToOtherParent && matchesSearch;
         }).slice(0, 5); // Limit to top 5 results for cleaner UI
-    }, [students, linkedStudents, searchTerm]);
+    }, [students, linkedStudents, searchTerm, parentId]);
 
     const handleSelectStudent = async (student) => {
         if (parentId) {

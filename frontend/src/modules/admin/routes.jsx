@@ -65,7 +65,6 @@ import StudentList from './pages/people/students/StudentList';
 import StudentAdmission from './pages/people/students/admission/StudentAdmission';
 import StudentProfile from './pages/people/students/profile/StudentProfile';
 import EmploymentTypes from './pages/people/employment-types/EmploymentTypes';
-import BulkImport from './pages/people/bulk-import/BulkImport';
 import Notices from './pages/communication/notices/Notices';
 import Announcements from './pages/communication/announcements/Announcements';
 import MessageTemplates from './pages/communication/templates/MessageTemplates';
@@ -152,7 +151,6 @@ const adminRoutes = [
                     { path: 'people/employment-types', element: <EmploymentTypes /> }, // New Route
                     { path: 'people/parents', element: <Parents /> },
                     { path: 'people/departments', element: <Departments /> }, // New Route
-                    { path: 'people/bulk-import', element: <BulkImport /> },
 
                     // 6. Finance Management
                     { path: 'finance/fee-structures', element: <FeeStructures /> },

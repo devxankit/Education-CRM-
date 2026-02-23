@@ -68,14 +68,26 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
         }
     }, [isOpen, formData.branchId, formData.academicYearId, fetchClasses, fetchCourses, fetchSubjects]);
 
-    // 6. Fetch Policy only when academicYearId changes
+    // 6. Fetch exam policy (for exam types) when branch + academic year are set
     useEffect(() => {
-        if (isOpen && formData.academicYearId) {
-            fetchPolicy(formData.academicYearId);
+        if (isOpen && formData.branchId && formData.branchId.length === 24 && formData.academicYearId && formData.academicYearId.length === 24) {
+            fetchPolicy(formData.academicYearId, formData.branchId);
         }
-    }, [isOpen, formData.academicYearId, fetchPolicy]);
+    }, [isOpen, formData.branchId, formData.academicYearId, fetchPolicy]);
 
-    // 7. Handle Exam Data for Editing - Run when exam or modal status changes
+    // 7. Reset exam type when policy changes (branch or year change) so it matches new policy
+    useEffect(() => {
+        const types = policy?.examTypes?.filter(t => t.isIncluded) || [];
+        const valid = types.some(t => t.name === formData.examType);
+        if (types.length > 0 && !valid) {
+            setFormData(prev => ({ ...prev, examType: types[0].name || '' }));
+        }
+        if (types.length === 0 && formData.examType) {
+            setFormData(prev => ({ ...prev, examType: '' }));
+        }
+    }, [policy?.examTypes]);
+
+    // 8. Handle Exam Data for Editing - Run when exam or modal status changes
     useEffect(() => {
         if (isOpen && exam) {
             setFormData({
@@ -232,7 +244,7 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                                     value={formData.branchId}
                                     onChange={(e) => {
                                         const newBranchId = e.target.value;
-                                        setFormData({ ...formData, branchId: newBranchId, academicYearId: '' });
+                                        setFormData(prev => ({ ...prev, branchId: newBranchId, academicYearId: '', examType: '' }));
                                         setSelectedClasses([]);
                                         setSelectedCourses([]);
                                     }}
@@ -258,39 +270,37 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1">Exam Type</label>
-                                <select
-                                    required
-                                    value={formData.examType}
-                                    onChange={(e) => setFormData({ ...formData, examType: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm"
-                                >
-                                    <option value="">Select Category</option>
-                                    {policy?.examTypes?.filter(t => t.isIncluded).map(type => (
-                                        <option key={type._id} value={type.name}>{type.name}</option>
-                                    ))}
-                                    {!policy?.examTypes?.length && (
-                                        <>
-                                            <option value="Internal">Internal</option>
-                                            <option value="External">External</option>
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-                            <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1">Academic Year</label>
                                 <select
                                     required
                                     value={formData.academicYearId}
-                                    onChange={(e) => setFormData({ ...formData, academicYearId: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, academicYearId: e.target.value, examType: '' })}
                                     disabled={!formData.branchId}
                                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     <option value="">{formData.branchId ? 'Select Year' : 'Select Branch first'}</option>
                                     {academicYears.map(year => (
-                                        <option key={year._id} value={year._id}>{year.name}</option>
+                                        <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(active)' : ''}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1">Exam Type</label>
+                                <select
+                                    required
+                                    value={formData.examType}
+                                    onChange={(e) => setFormData({ ...formData, examType: e.target.value })}
+                                    disabled={!formData.branchId || !formData.academicYearId}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">{formData.branchId && formData.academicYearId ? 'Select type from policy' : 'Select branch & year first'}</option>
+                                    {(policy?.examTypes || []).filter(t => t.isIncluded).map((type, idx) => (
+                                        <option key={type._id || idx} value={type.name}>{type.name} ({type.weightage}%)</option>
+                                    ))}
+                                </select>
+                                {formData.branchId && formData.academicYearId && !policy?.examTypes?.length && (
+                                    <p className="text-[10px] text-amber-600 mt-0.5">Add exam types in Exam Policies for this branch & year first.</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase ml-1">Start Date</label>
@@ -525,7 +535,6 @@ const ExamFormModal = ({ isOpen, onClose, exam }) => {
                             <option value="Published">Publish Now</option>
                             <option value="Draft">Save as Draft</option>
                         </select>
-                        <span className="text-[10px] text-gray-400 uppercase tracking-widest">Visibility Rule</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <button

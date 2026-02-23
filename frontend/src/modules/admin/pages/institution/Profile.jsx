@@ -43,8 +43,7 @@ const InstitutionProfile = () => {
         phone: '',
         email: '',
         website: '',
-        logoLight: null,
-        logoDark: null,
+        logo: null,
         letterheadHeader: null,
         letterheadFooter: null
     });
@@ -64,9 +63,11 @@ const InstitutionProfile = () => {
             const data = await response.json();
             
             if (data.success) {
+                const d = data.data;
                 setFormData(prev => ({
                     ...prev,
-                    ...data.data
+                    ...d,
+                    logo: d.logo ?? d.logoLight ?? d.logoDark ?? null
                 }));
             }
         } catch (error) {
