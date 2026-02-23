@@ -81,7 +81,6 @@ export const adminMenuConfig = [
 
             { id: 'parents', label: 'Parents', path: '/admin/people/parents' },
             { id: 'departments', label: 'Departments & Roles', path: '/admin/people/departments' },
-            { id: 'employment-types', label: 'Employment Types & Rules', path: '/admin/people/employment-types' },
             { id: 'bulk-import', label: 'Bulk Import', path: '/admin/people/bulk-import' }
         ]
     },
