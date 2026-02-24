@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronLeft, Check, Save } from 'lucide-react';
 
 // Steps
@@ -29,6 +29,15 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
     const totalSteps = steps.length;
 
     const [currentStep, setCurrentStep] = useState(1);
+    const [error, setError] = useState('');
+    const topRef = useRef(null);
+
+    const showError = (message) => {
+        setError(message);
+        if (topRef.current) {
+            topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
     // Reset step if it goes out of bounds when steps change
     useEffect(() => {
@@ -67,58 +76,58 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
             const hasBranch = branchId || formData.branchId;
             // Either Class OR Course must be selected (mutual exclusion)
             if (!hasBranch || !academicYearId || (!formData.classId && !formData.courseId)) {
-                alert("Please select Branch, Academic Year, and either Class or Course/Program before proceeding.");
+                showError("Please select Branch, Academic Year, and either Class or Course/Program before proceeding.");
                 return;
             }
             // Ensure both are not selected (should not happen due to UI, but double-check)
             if (formData.classId && formData.courseId) {
-                alert("Cannot select both Class and Course/Program. Please select only one.");
+                showError("Cannot select both Class and Course/Program. Please select only one.");
                 return;
             }
         }
         if (currentStepKey === 'personal') {
             if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.parentEmail) {
-                alert("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email)");
+                showError("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email).");
                 return;
             }
             if (!formData.parentMobile || String(formData.parentMobile).trim().length < 10) {
-                alert("Please enter a valid Parent Mobile number (at least 10 digits)");
+                showError("Please enter a valid Parent Mobile number (at least 10 digits).");
                 return;
             }
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.parentEmail)) {
-                alert("Please enter a valid Parent Email address");
+                showError("Please enter a valid Parent Email address.");
                 return;
             }
         }
         if (currentStepKey === 'parent') {
-            const linkMode = formData.parentMode === 'link';
+            const linkMode = (formData.parentMode || 'link') === 'link';
             const hasParentId = !!formData.parentId;
-            const hasCreateDetails = formData.parentName && formData.parentMobile && formData.parentEmail;
             if (linkMode && !hasParentId) {
-                alert("Please select an existing parent or switch to 'Create New Parent' and fill the details");
-                return;
-            }
-            if (!linkMode && (!formData.parentName || !formData.parentMobile || formData.parentMobile.trim().length < 10 || !formData.parentEmail)) {
-                alert("Please fill Parent Name, Mobile (10+ digits), and Email for Create New Parent");
+                showError("Please search and select an existing parent/guardian before proceeding.");
                 return;
             }
         }
         if (currentStepKey === 'fee' && formData.admissionFee?.collectNow) {
             const fee = formData.admissionFee;
             if (!fee.feeStructureId || !fee.amount || Number(fee.amount) <= 0) {
-                alert("Please select a fee structure and enter a valid amount.");
+                showError("Please select a fee structure and enter a valid fee amount greater than zero.");
                 return;
             }
         }
+        setError('');
         if (currentStep < totalSteps) setCurrentStep(prev => prev + 1);
     };
 
     const handleBack = () => {
-        if (currentStep > 1) setCurrentStep(prev => prev - 1);
+        if (currentStep > 1) {
+            setError('');
+            setCurrentStep(prev => prev - 1);
+        }
     };
 
     const handleSubmit = () => {
+        setError('');
         onComplete({ ...formData, branchId: branchId || formData.branchId, academicYearId });
     };
 
@@ -156,7 +165,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-50/50">
+        <div ref={topRef} className="flex flex-col h-full bg-gray-50/50">
 
             {/* Progress Bar */}
             <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -171,22 +180,35 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
                     ></div>
                 </div>
 
+                {error && (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700">
+                        {error}
+                    </div>
+                )}
+
                 {/* Horizontal Step Labels - clickable (Hidden on mobile) */}
                 <div className="hidden md:flex justify-between mt-3 text-[10px] uppercase font-bold gap-2">
                     {steps.map((s, i) => {
                         const stepNum = i + 1;
                         const isActive = currentStep === stepNum;
                         const isCompleted = currentStep > stepNum;
-                        const isClickable = true;
+                        // Allow clicking only on current or previous steps so
+                        // users can review, but cannot jump ahead and skip validation.
+                        const isClickable = stepNum < currentStep;
                         return (
                             <button
                                 key={s.key}
                                 type="button"
                                 onClick={() => isClickable && setCurrentStep(stepNum)}
-                                className={`min-w-0 flex-1 truncate px-1 py-1 rounded transition-colors hover:bg-indigo-50 ${
-                                    isActive ? 'text-indigo-600' : isCompleted ? 'text-indigo-500 hover:text-indigo-700' : 'text-gray-400 hover:text-gray-600'
+                                className={`min-w-0 flex-1 truncate px-1 py-1 rounded transition-colors ${
+                                    isActive
+                                        ? 'text-indigo-600 bg-indigo-50'
+                                        : isCompleted
+                                            ? 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'
+                                            : 'text-gray-400 cursor-not-allowed'
                                 } ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
-                                title={`Go to step ${stepNum}: ${s.label}`}
+                                title={`Step ${stepNum}: ${s.label}`}
+                                disabled={!isClickable && !isActive}
                             >
                                 {stepNum}. {s.label}
                             </button>

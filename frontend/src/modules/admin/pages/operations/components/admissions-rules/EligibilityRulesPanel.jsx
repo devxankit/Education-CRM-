@@ -4,9 +4,9 @@ import { useAdminStore } from '../../../../../../store/adminStore';
 
 const getId = (c) => c._id || c.id;
 
-const EligibilityRulesPanel = ({ isLocked, data, onChange }) => {
-    const criteria = Array.isArray(data) ? data : [];
-    const { branches, fetchBranches, fetchClasses, fetchCourses, classes = [], courses = [] } = useAdminStore();
+const EligibilityRulesPanel = ({ isLocked, data, onChange, academicYearId }) => {
+    const allCriteria = Array.isArray(data) ? data : [];
+    const { academicYears = [], branches, fetchBranches, fetchClasses, fetchCourses, fetchAcademicYears, classes = [], courses = [] } = useAdminStore();
     const [branchId, setBranchId] = useState('');
 
     useEffect(() => {
@@ -21,30 +21,53 @@ const EligibilityRulesPanel = ({ isLocked, data, onChange }) => {
 
     useEffect(() => {
         if (branchId) {
+            // Load classes/courses and academic years for the selected branch
             fetchClasses(branchId);
             fetchCourses(branchId);
+            fetchAcademicYears(branchId);
         } else {
             fetchClasses();
             fetchCourses();
         }
-    }, [branchId, fetchClasses, fetchCourses]);
+    }, [branchId, fetchClasses, fetchCourses, fetchAcademicYears]);
+
+    // Filter criteria for selected branch
+    const criteria = allCriteria.filter(c => {
+        const cBranchId = c.branchId || c.branch;
+        return cBranchId === branchId || (!cBranchId && branchId === branches[0]?._id);
+    });
 
     const handleChange = (id, field, value) => {
         if (isLocked) return;
-        const updated = criteria.map(c => getId(c) === id ? { ...c, [field]: value } : c);
+        // Update the specific criterion and preserve branchId
+        const updated = allCriteria.map(c => {
+            const cId = getId(c);
+            if (cId === id) {
+                return { ...c, [field]: value, branchId: branchId || c.branchId };
+            }
+            return c;
+        });
         onChange(updated);
     };
 
     const handleRemove = (id) => {
         if (isLocked) return;
-        const updated = criteria.filter(c => getId(c) !== id);
+        const updated = allCriteria.filter(c => getId(c) !== id);
         onChange(updated);
     };
 
     const handleAdd = () => {
-        if (isLocked) return;
-        const newItem = { id: `new-${Date.now()}`, class: '', minAge: 0, maxAge: 0, prevClassRequired: false };
-        onChange([...criteria, newItem]);
+        if (isLocked || !branchId) return;
+        const newItem = { 
+            id: `new-${Date.now()}`, 
+            branchId: branchId,
+            class: '', 
+            minAge: 0, 
+            maxAge: 0, 
+            prevClassRequired: false 
+        };
+        // Add to all criteria, not just filtered
+        onChange([...allCriteria, newItem]);
     };
 
     return (
@@ -55,27 +78,42 @@ const EligibilityRulesPanel = ({ isLocked, data, onChange }) => {
                 </div>
                 <div>
                     <h3 className="text-base font-bold text-gray-900">Eligibility Criteria</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Age and qualification limits per academic level.</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                        Age and qualification limits per class / program for the selected branch and academic year.
+                    </p>
                 </div>
             </div>
 
-            <div className="p-4">
-                {/* Branch & options */}
-                <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Branch</label>
-                        <select
-                            value={branchId}
-                            onChange={(e) => setBranchId(e.target.value)}
-                            disabled={isLocked}
-                            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                        >
-                            {branches.map(b => (
-                                <option key={b._id} value={b._id}>{b.name}</option>
-                            ))}
-                        </select>
+            <div className="p-6">
+                {/* Branch & Academic Year Selection */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Select Branch</label>
+                            <select
+                                value={branchId}
+                                onChange={(e) => setBranchId(e.target.value)}
+                                disabled={isLocked}
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                            >
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {academicYearId && (
+                            <div className="flex-1">
+                                <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Academic Year</label>
+                                <div className="px-4 py-2.5 bg-indigo-50 border border-indigo-200 rounded-lg text-sm font-semibold text-indigo-700">
+                                    {academicYears.find(ay => ay._id === academicYearId)?.name || 'Selected Year'}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    <span className="text-xs text-gray-400">Select class or program from dropdown</span>
+                    <p className="mt-3 text-xs text-gray-500">
+                        Eligibility criteria below will be saved for <strong>{branches.find(b => b._id === branchId)?.name || 'selected branch'}</strong> 
+                        {academicYearId && ` and the selected academic year`}.
+                    </p>
                 </div>
 
                 <div className="overflow-x-auto rounded-lg border border-gray-100">
@@ -93,7 +131,12 @@ const EligibilityRulesPanel = ({ isLocked, data, onChange }) => {
                             {criteria.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">
-                                        No eligibility criteria defined. Click "Add Criterion" below.
+                                        <div className="flex flex-col items-center gap-2">
+                                            <p>No eligibility criteria defined for <strong>{branches.find(b => b._id === branchId)?.name || 'this branch'}</strong>.</p>
+                                            {!isLocked && (
+                                                <p className="text-xs text-gray-400">Click "Add Criterion" below to create eligibility rules.</p>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ) : criteria.map((c) => {

@@ -105,14 +105,17 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'admissions-rules', label: 'Admission Policy', path: '/admin/operations/admissions-rules' },
             { id: 'transport', label: 'Transport Setup', path: '/admin/operations/transport-config' },
+            { id: 'vehicle-create', label: 'Vehicles', path: '/admin/operations/vehicles/create' },
+            { id: 'driver-create', label: 'Drivers', path: '/admin/operations/drivers/create' },
             { id: 'routes', label: 'Routes & Stops', path: '/admin/operations/routes' },
-            { id: 'asset-rules', label: 'Asset Governance', path: '/admin/operations/asset-rules' },
-            { id: 'support-rules', label: 'Helpdesk Rules', path: '/admin/operations/support-rules' },
-            { id: 'inventory', label: 'Inventory Categories', path: '/admin/operations/inventory' },
-            { id: 'assets-master', label: 'Assets Master', path: '/admin/operations/inventory/assets' },
-            { id: 'hostels', label: 'Hostel Management', path: '/admin/operations/hostels' },
             { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
-            { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' }
+          
+            // { id: 'asset-rules', label: 'Asset Governance', path: '/admin/operations/asset-rules' },
+            // { id: 'support-rules', label: 'Helpdesk Rules', path: '/admin/operations/support-rules' },
+            // { id: 'inventory', label: 'Inventory Categories', path: '/admin/operations/inventory' },
+            // { id: 'assets-master', label: 'Assets Master', path: '/admin/operations/inventory/assets' },
+            // { id: 'hostels', label: 'Hostel Management', path: '/admin/operations/hostels' },
+            // { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' }
         ]
     },
     {
@@ -135,7 +138,6 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'notices', label: 'Notices & Circulars', path: '/admin/communication/notices' },
             { id: 'announcements', label: 'Announcements', path: '/admin/communication/announcements' },
-            { id: 'templates', label: 'Email / SMS Templates', path: '/admin/communication/templates' },
             { id: 'notification-rules', label: 'Notification Rules', path: '/admin/communication/notification-rules' }
         ]
     },
@@ -147,9 +149,7 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'academic', label: 'Academic Reports', path: '/admin/reports/academic' },
             { id: 'finance', label: 'Finance Reports', path: '/admin/reports/finance' },
-            { id: 'hr', label: 'HR Reports', path: '/admin/reports/hr' },
-            { id: 'operations', label: 'Operations Reports', path: '/admin/reports/operations' },
-            { id: 'custom', label: 'Custom Reports', path: '/admin/reports/custom' }
+            { id: 'operations', label: 'Operations Reports', path: '/admin/reports/operations' }
         ]
     },
     {
@@ -158,9 +158,9 @@ export const adminMenuConfig = [
         icon: Cog,
         path: '/admin/settings',
         subItems: [
-            { id: 'general', label: 'General Settings', path: '/admin/settings/general' },
+            // { id: 'general', label: 'General Settings', path: '/admin/settings/general' },
             { id: 'faq', label: 'FAQ Management', path: '/admin/settings/faq' },
-            { id: 'integrations', label: 'Integrations', path: '/admin/settings/integrations' },
+            // { id: 'integrations', label: 'Integrations', path: '/admin/settings/integrations' },
             { id: 'backup', label: 'Backup & Recovery', path: '/admin/settings/backup' }
         ]
     },
@@ -171,7 +171,7 @@ export const adminMenuConfig = [
         path: '/admin/audit',
         subItems: [
             { id: 'user-activity', label: 'User Activity Logs', path: '/admin/audit/user-activity' },
-            { id: 'financial', label: 'Financial Logs', path: '/admin/audit/financial' },
+            // { id: 'financial', label: 'Financial Logs', path: '/admin/audit/financial' },
             { id: 'data-history', label: 'Data Change History', path: '/admin/audit/data-history' },
             { id: 'security', label: 'Login & Security Logs', path: '/admin/audit/security' }
         ]

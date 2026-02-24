@@ -1,10 +1,18 @@
 
-import React, { useState } from 'react';
-import { X, Send, Save, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Send } from 'lucide-react';
 import AudienceSelector from './AudienceSelector';
 import ChannelSelector from './ChannelSelector';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
 const AnnouncementForm = ({ onClose, onPublish }) => {
+
+    const {
+        branches,
+        fetchBranches,
+        academicYears,
+        fetchAcademicYears
+    } = useAdminStore();
 
     // Single page form instead of stepper
     const [formData, setFormData] = useState({
@@ -13,8 +21,32 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
         content: '',
         audiences: [],
         channels: ['APP'],
-        isEmergency: false
+        isEmergency: false,
+        branchId: '',
+        academicYearId: ''
     });
+
+    // Load branches and default academic years
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        if (formData.branchId) {
+            fetchAcademicYears(formData.branchId);
+            setFormData(prev => ({ ...prev, academicYearId: '' }));
+        }
+    }, [formData.branchId, fetchAcademicYears]);
+
+    // Auto-select active academic year for selected branch
+    useEffect(() => {
+        if (academicYears.length > 0 && !formData.academicYearId) {
+            const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
+            if (active) {
+                setFormData(prev => ({ ...prev, academicYearId: active._id }));
+            }
+        }
+    }, [academicYears, formData.academicYearId]);
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,6 +62,8 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
     };
 
     const handleSubmit = (status) => {
+        if (!formData.branchId) return alert("Please select a branch");
+        if (!formData.academicYearId) return alert("Please select an academic year");
         if (!formData.title || !formData.content) return alert("Please fill title and content");
         if (formData.audiences.length === 0) return alert("Please select audience");
 
@@ -53,34 +87,68 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
                 {/* Form Body */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
 
-                    {/* 1. Basic Info */}
+                    {/* 1. Context & Basic Info */}
                     <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Headline <span className="text-red-500">*</span></label>
-                            <input
-                                type="text"
-                                value={formData.title}
-                                onChange={(e) => updateField('title', e.target.value)}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 font-medium placeholder-gray-400"
-                                placeholder="What's happening?"
-                                autoFocus
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Branch <span className="text-red-500">*</span></label>
+                                <select
+                                    value={formData.branchId}
+                                    onChange={(e) => updateField('branchId', e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm bg-white"
+                                >
+                                    <option value="">Select Branch</option>
+                                    {branches.map(b => (
+                                        <option key={b._id} value={b._id}>{b.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Academic Year <span className="text-red-500">*</span></label>
+                                <select
+                                    value={formData.academicYearId}
+                                    onChange={(e) => updateField('academicYearId', e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm bg-white"
+                                    disabled={!formData.branchId}
+                                >
+                                    <option value="">{formData.branchId ? 'Select Academic Year' : 'Select branch first'}</option>
+                                    {academicYears.map(ay => (
+                                        <option key={ay._id} value={ay._id}>
+                                            {ay.name} {ay.status === 'active' ? '(Active)' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select
-                                value={formData.category}
-                                onChange={handleCategoryChange}
-                                className="w-full rounded-md border-gray-300 shadow-sm py-2 px-3 text-sm"
-                            >
-                                <option value="GENERAL">General Info</option>
-                                <option value="EVENT">Event / Activity</option>
-                                <option value="ACADEMIC">Academic Update</option>
-                                <option value="SPORTS">Sports & Cultural</option>
-                                <option value="ADMINISTRATIVE">Administrative</option>
-                                <option value="EMERGENCY">Emergency (FYI Only)</option>
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Headline <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={(e) => updateField('title', e.target.value)}
+                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 font-medium placeholder-gray-400"
+                                    placeholder="What's happening?"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select
+                                    value={formData.category}
+                                    onChange={handleCategoryChange}
+                                    className="w-full rounded-md border-gray-300 shadow-sm py-2 px-3 text-sm"
+                                >
+                                    <option value="GENERAL">General Info</option>
+                                    <option value="EVENT">Event / Activity</option>
+                                    <option value="ACADEMIC">Academic Update</option>
+                                    <option value="SPORTS">Sports & Cultural</option>
+                                    <option value="ADMINISTRATIVE">Administrative</option>
+                                    <option value="EMERGENCY">Emergency (FYI Only)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -108,16 +176,6 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
                         <AudienceSelector
                             selectedAudiences={formData.audiences}
                             onUpdate={(list) => updateField('audiences', list)}
-                        />
-                    </div>
-
-                    {/* 4. Delivery */}
-                    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                        <label className="block text-sm font-medium text-gray-700 mb-3">Delivery Method</label>
-                        <ChannelSelector
-                            selectedChannels={formData.channels}
-                            onUpdate={(list) => updateField('channels', list)}
-                            isEmergency={formData.isEmergency}
                         />
                     </div>
 

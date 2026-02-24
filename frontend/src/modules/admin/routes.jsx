@@ -55,6 +55,8 @@ import CommunicationRules from './pages/operations/CommunicationRules';
 import AssetRules from './pages/operations/AssetRules';
 import SupportRules from './pages/operations/SupportRules';
 import TransportRoutes from './pages/operations/TransportRoutes';
+import VehicleCreate from './pages/operations/VehicleCreate';
+import DriverCreate from './pages/operations/DriverCreate';
 import InventoryCategories from './pages/operations/InventoryCategories';
 import AssetsMaster from './pages/operations/AssetsMaster';
 
@@ -162,8 +164,10 @@ const adminRoutes = [
 
                     // 7. Operations Management
                     { path: 'operations/admissions-rules', element: <AdmissionRules /> },
-                    { path: 'operations/transport-config', element: <TransportConfig /> }, // Renamed from 'transport' to 'transport-config' to match request or keep 'transport'? Request said '/admin/operations/transport-config'
+                    { path: 'operations/transport-config', element: <TransportConfig /> },
                     { path: 'operations/routes', element: <TransportRoutes /> },
+                    { path: 'operations/vehicles/create', element: <VehicleCreate /> },
+                    { path: 'operations/drivers/create', element: <DriverCreate /> },
                     { path: 'operations/asset-rules', element: <AssetRules /> },
                     { path: 'operations/support-rules', element: <SupportRules /> },
                     { path: 'operations/inventory', element: <InventoryCategories /> },

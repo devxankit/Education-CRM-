@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Settings, Loader2 } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 
@@ -7,10 +7,12 @@ import { useAdminStore } from '../../../../store/adminStore';
 import RouteList from './components/routes-stops/RouteList';
 import RouteForm from './components/routes-stops/RouteForm';
 
-const TransportRoutes = () => {
+const TransportRoutes = ({ startInCreateMode = false }) => {
     const {
         branches,
         fetchBranches,
+        academicYears,
+        fetchAcademicYears,
         transportRoutes,
         fetchTransportRoutes,
         addTransportRoute,
@@ -20,10 +22,12 @@ const TransportRoutes = () => {
 
     // Global State
     const [branchId, setBranchId] = useState('');
+    const [academicYearId, setAcademicYearId] = useState('');
     const [loading, setLoading] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState(null);
+    const hasInitializedCreate = useRef(false);
 
     useEffect(() => {
         fetchBranches();
@@ -44,6 +48,28 @@ const TransportRoutes = () => {
         };
         loadRoutes();
     }, [branchId, fetchTransportRoutes]);
+
+    // Load academic years for selected branch and pick default
+    useEffect(() => {
+        if (branchId) {
+            fetchAcademicYears(branchId);
+        }
+    }, [branchId, fetchAcademicYears]);
+
+    useEffect(() => {
+        if (academicYears.length > 0 && !academicYearId) {
+            const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
+            if (active) setAcademicYearId(active._id);
+        }
+    }, [academicYears, academicYearId]);
+
+    // If this page is opened specifically for "Vehicle Create", auto-open the create form once
+    useEffect(() => {
+        if (startInCreateMode && branchId && !hasInitializedCreate.current) {
+            hasInitializedCreate.current = true;
+            handleCreateNew();
+        }
+    }, [startInCreateMode, branchId]);
 
     // Handlers
     const handleSelectRoute = (route) => {
@@ -104,17 +130,35 @@ const TransportRoutes = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm shadow-sm">
-                        <span className="text-gray-500">Branch:</span>
-                        <select
-                            value={branchId}
-                            onChange={(e) => setBranchId(e.target.value)}
-                            className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer"
-                        >
-                            {branches.map(b => (
-                                <option key={b._id} value={b._id}>{b.name}</option>
-                            ))}
-                        </select>
+                    <div className="flex items-center gap-2">
+                        <div className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm shadow-sm">
+                            <span className="text-gray-500">Branch:</span>
+                            <select
+                                value={branchId}
+                                onChange={(e) => {
+                                    setBranchId(e.target.value);
+                                    setAcademicYearId('');
+                                }}
+                                className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer"
+                            >
+                                {branches.map(b => (
+                                    <option key={b._id} value={b._id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm shadow-sm">
+                            <span className="text-gray-500">Academic Year:</span>
+                            <select
+                                value={academicYearId}
+                                onChange={(e) => setAcademicYearId(e.target.value)}
+                                className="font-bold text-gray-800 outline-none bg-transparent cursor-pointer"
+                            >
+                                <option value="">All</option>
+                                {academicYears.map(ay => (
+                                    <option key={ay._id} value={ay._id}>{ay.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <button
                         onClick={handleCreateNew}
@@ -126,7 +170,7 @@ const TransportRoutes = () => {
             </div>
 
             {/* Split View */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 overflow-hidden">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 overflow-y-auto">
 
                 {/* Left Listing */}
                 <div className={`col-span-12 md:col-span-4 lg:col-span-3 transition-all ${isEditing ? 'hidden md:block' : 'block'}`}>
@@ -151,6 +195,8 @@ const TransportRoutes = () => {
                         <RouteForm
                             route={editData}
                             isNew={!editData}
+                            branchId={branchId}
+                            academicYearId={academicYearId}
                             onSave={handleSave}
                             onCancel={handleCancel}
                             onDelete={() => handleDelete(editData._id)}

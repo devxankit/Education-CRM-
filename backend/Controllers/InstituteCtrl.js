@@ -208,3 +208,57 @@ export const updateInstituteBranding = async (req, res) => {
     });
   }
 };
+
+// ================= CHANGE INSTITUTE ADMIN PASSWORD =================
+export const changeInstitutePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const id = req.user._id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    const institute = await Institute.findById(id).select("+password");
+    if (!institute) {
+      return res.status(404).json({
+        success: false,
+        message: "Institute not found",
+      });
+    }
+
+    const isMatch = await institute.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid current password",
+      });
+    }
+
+    institute.password = newPassword;
+    await institute.save();
+
+    logSecurity(req, {
+      instituteId: institute._id,
+      userId: institute._id,
+      userModel: "Institute",
+      identifier: institute.email,
+      action: "password_change",
+      success: true,
+      message: "Institute admin password updated",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

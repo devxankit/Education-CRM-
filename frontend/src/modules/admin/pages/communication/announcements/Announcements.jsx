@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Search, Megaphone, Bell } from 'lucide-react';
 import AnnouncementTable from './components/AnnouncementTable';
 import AnnouncementForm from './components/AnnouncementForm';
+import { API_URL } from '@/app/api';
 
 const Announcements = () => {
 
@@ -12,68 +14,136 @@ const Announcements = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('ALL');
 
-    // Data State (Mock)
+    // Data State (from backend)
     const [announcements, setAnnouncements] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('');
 
-    // Mock Load
+    // Load branches
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => {
-            setAnnouncements([
-                {
-                    id: 'A-2023-440',
-                    title: 'Cafeteria Menu Update for February',
-                    category: 'GENERAL',
-                    audienceSummary: 'Students, Staff',
-                    recipientCount: 1800,
-                    channels: ['APP'],
-                    status: 'PUBLISHED',
-                    publishDate: '26 Jan 2026'
-                },
-                {
-                    id: 'A-2023-441',
-                    title: 'Annual Science Fair Registration',
-                    category: 'EVENT',
-                    audienceSummary: 'Students (Class 8-12)',
-                    recipientCount: 450,
-                    channels: ['APP', 'EMAIL'],
-                    status: 'SCHEDULED',
-                    publishDate: '28 Jan 2026'
+        const fetchBranches = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${API_URL}/branch`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    const list = response.data.data || [];
+                    setBranches(list);
+                    if (list.length > 0 && !selectedBranchId) {
+                        setSelectedBranchId(list[0]._id);
+                    }
                 }
-            ]);
-            setLoading(false);
-        }, 600);
-    }, []);
+            } catch (error) {
+                console.error('Error fetching branches for announcements:', error);
+            }
+        };
+        fetchBranches();
+    }, [selectedBranchId]);
 
-    // Handlers
-    const handlePublish = (formData) => {
-        const newAnnouncement = {
-            id: `A-2026-${Math.floor(Math.random() * 1000)}`,
-            ...formData,
-            audienceSummary: formData.audiences.map(a => a.toLowerCase().replace(/^\w/, c => c.toUpperCase())).join(', '),
-            recipientCount: 320, // mock count
-            publishDate: formData.status === 'PUBLISHED' ? 'Just Now' : '-',
+    // Load announcements when branch or status tab changes
+    useEffect(() => {
+        const fetchAnnouncements = async () => {
+            if (!selectedBranchId) return;
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams();
+                if (selectedBranchId && selectedBranchId !== 'all') params.append('branchId', selectedBranchId);
+                if (activeTab && activeTab !== 'ALL') params.append('status', activeTab);
+
+                const response = await axios.get(`${API_URL}/announcement?${params.toString()}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    setAnnouncements(response.data.data || []);
+                }
+            } catch (error) {
+                console.error('Error fetching announcements:', error);
+            } finally {
+                setLoading(false);
+            }
         };
 
-        setAnnouncements(prev => [newAnnouncement, ...prev]);
-        setIsFormOpen(false);
+        fetchAnnouncements();
+    }, [selectedBranchId, activeTab]);
+
+    // Create / publish announcement
+    const handlePublish = async (formData) => {
+        const finalBranchId = formData.branchId || selectedBranchId;
+        if (!finalBranchId) {
+            alert('Please select a branch in the form.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const payload = {
+                ...formData,
+                branchId: finalBranchId
+            };
+            const response = await axios.post(`${API_URL}/announcement`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                const created = response.data.data;
+                setAnnouncements(prev => [created, ...prev]);
+                setIsFormOpen(false);
+            }
+        } catch (error) {
+            console.error('Error creating announcement:', error);
+            alert(error.response?.data?.message || 'Failed to create announcement');
+        }
     };
 
-    const handleAction = (type, item) => {
+    const handleAction = async (type, item) => {
         if (type === 'ARCHIVE') {
-            if (window.confirm('Archive this announcement?')) {
-                setAnnouncements(prev => prev.map(a => a.id === item.id ? { ...a, status: 'ARCHIVED' } : a));
+            if (!item.dbId && !item._id) {
+                console.warn('Announcement identifier missing for archive action');
+                return;
+            }
+            if (!window.confirm('Archive this announcement?')) return;
+            const id = item.dbId || item._id;
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.put(`${API_URL}/announcement/${id}`, { status: 'ARCHIVED' }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    const updated = response.data.data;
+                    setAnnouncements(prev => prev.map(a => (a._id === updated._id ? updated : a)));
+                }
+            } catch (error) {
+                console.error('Error archiving announcement:', error);
+                alert(error.response?.data?.message || 'Failed to archive announcement');
             }
         } else {
+            // VIEW / EDIT / STATS can be wired later
             alert(`${type} action clicked for: ${item.title}`);
         }
     };
 
-    const filteredList = announcements.filter(item => {
-        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesTab = activeTab === 'ALL' || item.status === activeTab;
-        return matchesSearch && matchesTab;
-    });
+    const normalizedAnnouncements = announcements.map(a => ({
+        id: a.announcementId,
+        dbId: a._id,
+        title: a.title,
+        category: a.category,
+        audienceSummary: (a.audiences || []).join(', '),
+        recipientCount: a.recipientsCount || 0,
+        channels: a.channels || ['APP'],
+        status: a.status,
+        publishDate: a.publishDate ? new Date(a.publishDate).toLocaleDateString() : '-'
+    }));
+
+    const filteredList = normalizedAnnouncements.filter(item =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const stats = {
+        activeBroadcasts: normalizedAnnouncements.filter(a => a.status === 'PUBLISHED').length,
+        totalRecipients: normalizedAnnouncements.reduce((sum, a) => sum + (a.recipientCount || 0), 0),
+        scheduled: normalizedAnnouncements.filter(a => a.status === 'SCHEDULED').length
+    };
 
     return (
         <div className="pb-20 relative min-h-screen bg-gray-50/50">
@@ -94,23 +164,39 @@ const Announcements = () => {
                 </button>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                {[
-                    { label: 'Active Broadcasts', val: '5', icon: Megaphone, color: 'text-indigo-600' },
-                    { label: 'Avg Reach', val: '92%', icon: Bell, color: 'text-green-600' },
-                    { label: 'Scheduled', val: '2', icon: Plus, color: 'text-purple-600' } // Using Plus as placeholder for Calendar
-                ].map((stat, i) => (
-                    <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div className={`p-3 rounded-lg bg-gray-50 ${stat.color}`}>
-                            <stat.icon size={24} />
+            {/* Branch Filter + Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 items-stretch">
+                <div className="md:col-span-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Branch</label>
+                    <select
+                        value={selectedBranchId}
+                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                    >
+                        <option value="">Select Branch</option>
+                        {branches.map(b => (
+                            <option key={b._id} value={b._id}>{b.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[
+                        { label: 'Active Broadcasts', val: stats.activeBroadcasts, icon: Megaphone, color: 'text-indigo-600' },
+                        { label: 'Total Recipients', val: stats.totalRecipients, icon: Bell, color: 'text-green-600' },
+                        { label: 'Scheduled', val: stats.scheduled, icon: Plus, color: 'text-purple-600' }
+                    ].map((stat, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+                            <div className={`p-3 rounded-lg bg-gray-50 ${stat.color}`}>
+                                <stat.icon size={24} />
+                            </div>
+                            <div>
+                                <div className="text-2xl font-bold text-gray-900">{stat.val}</div>
+                                <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{stat.label}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="text-2xl font-bold text-gray-900">{stat.val}</div>
-                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{stat.label}</div>
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
 
             {/* Filters & Tabs */}

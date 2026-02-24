@@ -2,16 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertTriangle, Loader2 } from 'lucide-react';
 import PolicyLockBanner from '../academics/components/policies/PolicyLockBanner';
-import { useAdminStore, selectAcademicYearsForSelect } from '../../../../store/adminStore';
+import { useAdminStore } from '../../../../store/adminStore';
 
 // Components
 import AdmissionWindowPanel from './components/admissions-rules/AdmissionWindowPanel';
 import EligibilityRulesPanel from './components/admissions-rules/EligibilityRulesPanel';
-import SeatCapacityPanel from './components/admissions-rules/SeatCapacityPanel';
 import AdmissionWorkflowPanel from './components/admissions-rules/AdmissionWorkflowPanel';
 
 const AdmissionRules = () => {
-    const academicYears = useAdminStore(selectAcademicYearsForSelect);
+    // Use all academic years (including closed) so "sabhi academic year" per branch are available
+    const academicYears = useAdminStore(state => state.academicYears || []);
     const { fetchAcademicYears, fetchAdmissionRule, saveAdmissionRule } = useAdminStore();
 
     // Global State
@@ -41,7 +41,6 @@ const AdmissionRules = () => {
             if (data) {
                 const merged = {
                     window: { isOpen: true, startDate: null, endDate: null, allowLate: false, ...data.window },
-                    seatCapacity: { strictCapacity: true, waitlistEnabled: true, autoPromoteWaitlist: false, ...data.seatCapacity },
                     workflow: { requireFee: true, requireDocs: true, approval: 'admin', ...data.workflow },
                     eligibility: Array.isArray(data.eligibility) ? data.eligibility : [],
                     isLocked: data.isLocked ?? false
@@ -149,16 +148,7 @@ const AdmissionRules = () => {
                         />
                     </div>
 
-                    {/* 2. Seat Capacity */}
-                    <div className="lg:col-span-1">
-                        <SeatCapacityPanel
-                            isLocked={isLocked}
-                            data={policy.seatCapacity}
-                            onChange={(val) => handlePolicyChange('seatCapacity', val)}
-                        />
-                    </div>
-
-                    {/* 3. Workflow (Full Width) */}
+                    {/* 2. Workflow (Full Width) */}
                     <div className="lg:col-span-2">
                         <AdmissionWorkflowPanel
                             isLocked={isLocked}
@@ -167,12 +157,13 @@ const AdmissionRules = () => {
                         />
                     </div>
 
-                    {/* 4. Eligibility (Full Width) */}
+                    {/* 3. Eligibility (Full Width) */}
                     <div className="lg:col-span-2">
                         <EligibilityRulesPanel
                             isLocked={isLocked}
                             data={policy.eligibility}
                             onChange={(val) => handlePolicyChange('eligibility', val)}
+                            academicYearId={academicYearId}
                         />
                     </div>
                 </div>

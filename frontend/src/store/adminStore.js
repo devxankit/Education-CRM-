@@ -1338,6 +1338,46 @@ export const useAdminStore = create(
                 }
             },
 
+            // Local Master Data: Transport Vehicles & Drivers (UI-level, no backend yet)
+            transportVehicles: [],
+            transportDrivers: [],
+            addTransportVehicle: (vehicle) => {
+                set((state) => ({
+                    transportVehicles: [
+                        ...state.transportVehicles,
+                        { id: vehicle.id || `VEH-${Date.now()}`, ...vehicle }
+                    ]
+                }));
+            },
+            updateTransportVehicle: (id, data) => {
+                set((state) => ({
+                    transportVehicles: state.transportVehicles.map(v => (v.id === id ? { ...v, ...data } : v))
+                }));
+            },
+            deleteTransportVehicle: (id) => {
+                set((state) => ({
+                    transportVehicles: state.transportVehicles.filter(v => v.id !== id)
+                }));
+            },
+            addTransportDriver: (driver) => {
+                set((state) => ({
+                    transportDrivers: [
+                        ...state.transportDrivers,
+                        { id: driver.id || `DRV-${Date.now()}`, ...driver }
+                    ]
+                }));
+            },
+            updateTransportDriver: (id, data) => {
+                set((state) => ({
+                    transportDrivers: state.transportDrivers.map(d => (d.id === id ? { ...d, ...data } : d))
+                }));
+            },
+            deleteTransportDriver: (id) => {
+                set((state) => ({
+                    transportDrivers: state.transportDrivers.filter(d => d.id !== id)
+                }));
+            },
+
             // Actions: Asset Governance
             assetCategories: [],
             fetchAssetCategories: async (branchId) => {

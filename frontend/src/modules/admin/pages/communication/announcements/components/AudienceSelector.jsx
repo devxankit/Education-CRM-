@@ -51,32 +51,7 @@ const AudienceSelector = ({ selectedAudiences, onUpdate }) => {
                 })}
             </div>
 
-            {selectedAudiences.length > 0 && (
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm">
-                    <h4 className="flex items-center gap-2 text-xs font-bold text-gray-700 mb-3">
-                        <Target size={14} /> Refine Audience (Optional)
-                    </h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {(selectedAudiences.includes('STUDENT') || selectedAudiences.includes('PARENT')) && (
-                            <div>
-                                <select className="w-full bg-white border border-gray-300 text-xs rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="ALL">All Classes & Sections</option>
-                                    {filters.Classes.map(c => <option key={c}>{c}</option>)}
-                                </select>
-                            </div>
-                        )}
-                        {(selectedAudiences.includes('TEACHER') || selectedAudiences.includes('STAFF')) && (
-                            <div>
-                                <select className="w-full bg-white border border-gray-300 text-xs rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="ALL">All Departments</option>
-                                    {filters.Departments.map(d => <option key={d}>{d}</option>)}
-                                </select>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* Refine Audience box intentionally removed as per requirements */}
         </div>
     );
 };

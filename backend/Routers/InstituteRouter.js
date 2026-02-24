@@ -4,7 +4,8 @@ import {
   loginSuperAdmin,
   getInstituteDetails,
   updateInstituteDetails,
-  updateInstituteBranding
+  updateInstituteBranding,
+  changeInstitutePassword
 } from "../Controllers/InstituteCtrl.js";
 import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 import { upload } from "../Helpers/cloudinaryHelper.js";
@@ -22,6 +23,9 @@ router.get("/profile", AuthMiddleware, isInstitute, getInstituteDetails);
 
 // Update Institute Details
 router.put("/profile", AuthMiddleware, isInstitute, updateInstituteDetails);
+
+// Change Institute Admin Password
+router.post("/change-password", AuthMiddleware, isInstitute, changeInstitutePassword);
 
 // Update Branding (Cloudinary Upload)
 router.put(

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const eligibilitySchema = new mongoose.Schema({
+    branchId: { type: mongoose.Schema.Types.ObjectId, ref: "Branch", required: false }, // Optional for backward compatibility
     class: { type: String, required: true },
     minAge: { type: Number, default: 0 },
     maxAge: { type: Number, default: 0 },

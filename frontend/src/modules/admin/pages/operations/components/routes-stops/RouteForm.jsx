@@ -2,8 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Truck, User, X } from 'lucide-react';
 import StopsManager from './StopsManager';
+import { useAdminStore } from '../../../../../../store/adminStore';
 
-const RouteForm = ({ route: initialRoute, isNew, onSave, onCancel }) => {
+const RouteForm = ({ route: initialRoute, isNew, branchId, academicYearId, onSave, onCancel }) => {
+
+    const { transportVehicles, transportDrivers } = useAdminStore();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -29,6 +32,20 @@ const RouteForm = ({ route: initialRoute, isNew, onSave, onCancel }) => {
         if (!formData.name) return alert("Route Name is required");
         onSave(formData);
     };
+
+    const filteredVehicles = transportVehicles.filter(v => {
+        if (!branchId) return true;
+        const matchesBranch = v.branchId === branchId;
+        const matchesYear = !academicYearId || v.academicYearId === academicYearId;
+        return matchesBranch && matchesYear;
+    });
+
+    const filteredDrivers = transportDrivers.filter(d => {
+        if (!branchId) return true;
+        const matchesBranch = d.branchId === branchId;
+        const matchesYear = !academicYearId || d.academicYearId === academicYearId;
+        return matchesBranch && matchesYear;
+    });
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
@@ -60,7 +77,7 @@ const RouteForm = ({ route: initialRoute, isNew, onSave, onCancel }) => {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="p-6 space-y-6">
 
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,9 +112,15 @@ const RouteForm = ({ route: initialRoute, isNew, onSave, onCancel }) => {
                             onChange={(e) => handleChange('vehicleNo', e.target.value)}
                             className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                         >
-                            <option value="">-- Select Bus --</option>
-                            <option value="BUS-101">BUS-101 (Tata Starbus)</option>
-                            <option value="VAN-202">VAN-202 (Force Traveller)</option>
+                            <option value="">-- Select Vehicle --</option>
+                            {filteredVehicles.map(v => (
+                                <option
+                                    key={v._id}
+                                    value={v.registrationNo || v.code}
+                                >
+                                    {v.code} {v.registrationNo ? `- ${v.registrationNo}` : ''} {v.model ? `(${v.model})` : ''}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -111,8 +134,9 @@ const RouteForm = ({ route: initialRoute, isNew, onSave, onCancel }) => {
                             className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                         >
                             <option value="">-- Select Driver --</option>
-                            <option value="Ramesh Kumar">Ramesh Kumar</option>
-                            <option value="Suresh Singh">Suresh Singh</option>
+                            {filteredDrivers.map(d => (
+                                <option key={d._id} value={d.name}>{d.name}</option>
+                            ))}
                         </select>
                     </div>
 

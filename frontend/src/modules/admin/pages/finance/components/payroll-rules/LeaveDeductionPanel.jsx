@@ -58,7 +58,7 @@ const LeaveDeductionPanel = ({ isLocked, data = {}, onChange }) => {
                 </div>
 
                 {/* Rules */}
-                <div className="space-y-4">
+                {/* <div className="space-y-4">
                     <label className="block text-sm font-semibold text-gray-700">Strict Attendance Policies</label>
 
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
@@ -100,7 +100,7 @@ const LeaveDeductionPanel = ({ isLocked, data = {}, onChange }) => {
                         <span>Changes up-to-date will affect payroll calculation for the CURRENT month onwards.</span>
                     </div>
 
-                </div>
+                </div> */}
 
             </div>
         </div>

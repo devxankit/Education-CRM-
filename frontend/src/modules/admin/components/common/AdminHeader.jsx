@@ -1,13 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Bell, Search, User, ChevronDown, LogOut, Settings, UserCircle, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Menu, Bell, Search, User, ChevronDown, LogOut, UserCircle, PanelLeftClose, PanelLeft, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAppStore } from '../../../../store/index';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 
 const AdminHeader = ({ onMenuToggle, onSidebarCollapseToggle, sidebarCollapsed }) => {
     const user = useAppStore(state => state.user);
     const logout = useAppStore(state => state.logout);
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const [showPasswords, setShowPasswords] = useState({ current: false, next: false, confirm: false });
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
+    const [changingPassword, setChangingPassword] = useState(false);
     const dropdownRef = useRef(null);
 
     // Close dropdown when clicking outside
@@ -25,6 +33,55 @@ const AdminHeader = ({ onMenuToggle, onSidebarCollapseToggle, sidebarCollapsed }
         if (window.confirm("Are you sure you want to logout?")) {
             logout();
             navigate('/admin/login');
+        }
+    };
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        setPasswordError('');
+        setPasswordSuccess('');
+
+        if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+            setPasswordError('Please fill all fields.');
+            return;
+        }
+        if (passwordForm.newPassword.length < 6) {
+            setPasswordError('New password must be at least 6 characters.');
+            return;
+        }
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            setPasswordError('New password and confirm password do not match.');
+            return;
+        }
+
+        try {
+            setChangingPassword(true);
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${API_URL}/institute/change-password`,
+                {
+                    currentPassword: passwordForm.currentPassword,
+                    newPassword: passwordForm.newPassword
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            if (response.data.success) {
+                setPasswordSuccess('Password updated successfully.');
+                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setTimeout(() => {
+                    setShowPasswordModal(false);
+                    setPasswordSuccess('');
+                }, 1200);
+            } else {
+                setPasswordError(response.data.message || 'Failed to update password.');
+            }
+        } catch (error) {
+            setPasswordError(error.response?.data?.message || 'Failed to update password.');
+        } finally {
+            setChangingPassword(false);
         }
     };
 
@@ -100,16 +157,16 @@ const AdminHeader = ({ onMenuToggle, onSidebarCollapseToggle, sidebarCollapsed }
                                     <p className="text-xs text-gray-500 truncate">{user?.email || 'admin@institution.com'}</p>
                                 </div>
                                 <button
-                                    onClick={() => { navigate('/admin/settings/profile'); setIsMenuOpen(false); }}
+                                    onClick={() => { navigate('/admin/institution/profile'); setIsMenuOpen(false); }}
                                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                                 >
-                                    <UserCircle size={18} /> Profile Settings
+                                    <UserCircle size={18} /> Profile
                                 </button>
                                 <button
-                                    onClick={() => { navigate('/admin/settings'); setIsMenuOpen(false); }}
+                                    onClick={() => { setIsMenuOpen(false); setShowPasswordModal(true); }}
                                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                                 >
-                                    <Settings size={18} /> System Settings
+                                    <Lock size={18} /> Change Password
                                 </button>
                                 <div className="h-px bg-gray-100 my-1"></div>
                                 <button
@@ -123,6 +180,110 @@ const AdminHeader = ({ onMenuToggle, onSidebarCollapseToggle, sidebarCollapsed }
                     </div>
                 </div>
             </div>
+
+            {/* Change Password Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <Lock size={18} /> Change Password
+                            </h2>
+                            <button
+                                onClick={() => !changingPassword && setShowPasswordModal(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form onSubmit={handlePasswordChange} className="space-y-4">
+                            {passwordError && (
+                                <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                    {passwordError}
+                                </div>
+                            )}
+                            {passwordSuccess && (
+                                <div className="text-sm text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                                    {passwordSuccess}
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Current Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPasswords.current ? 'text' : 'password'}
+                                        value={passwordForm.currentPassword}
+                                        onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1.5">New Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPasswords.next ? 'text' : 'password'}
+                                        value={passwordForm.newPassword}
+                                        onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswords(prev => ({ ...prev, next: !prev.next }))}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPasswords.next ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirm New Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPasswords.confirm ? 'text' : 'password'}
+                                        value={passwordForm.confirmPassword}
+                                        onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => !changingPassword && setShowPasswordModal(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={changingPassword}
+                                    className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-70"
+                                >
+                                    {changingPassword ? 'Updating...' : 'Update Password'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </header>
     );
 };

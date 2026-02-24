@@ -14,6 +14,7 @@ const AddHostel = () => {
     const user = useAppStore(state => state.user);
     const {
         branches, fetchBranches,
+        academicYears, fetchAcademicYears,
         fetchHostelConfig,
         createHostel,
         updateHostel, // <--- Added
@@ -26,6 +27,7 @@ const AddHostel = () => {
     const [uploading, setUploading] = useState(false);
     const [config, setConfig] = useState(null);
     const [selectedBranch, setSelectedBranch] = useState(user?.branchId === 'all' ? '' : user?.branchId);
+    const [academicYearId, setAcademicYearId] = useState('');
     const [activeFeeType, setActiveFeeType] = useState('Single'); // Local toggle for fee inputs
 
     // Form State
@@ -80,17 +82,28 @@ const AddHostel = () => {
     useEffect(() => {
         fetchBranches();
         fetchTeachers();
-        if (user?.branchId !== 'all') {
+        if (user?.branchId && user.branchId !== 'all') {
             fetchConfig(user.branchId);
+            fetchAcademicYears(user.branchId);
         }
-    }, []);
+    }, [fetchBranches, fetchTeachers, fetchAcademicYears, user?.branchId]);
 
     useEffect(() => {
         if (selectedBranch) {
             fetchConfig(selectedBranch);
+            fetchAcademicYears(selectedBranch);
             setFormData(prev => ({ ...prev, branchId: selectedBranch }));
+            setAcademicYearId('');
         }
-    }, [selectedBranch]);
+    }, [selectedBranch, fetchAcademicYears]);
+
+    // Default academic year when list loads
+    useEffect(() => {
+        if (academicYears.length > 0 && !academicYearId) {
+            const active = academicYears.find(ay => ay.status === 'active') || academicYears[0];
+            if (active) setAcademicYearId(active._id);
+        }
+    }, [academicYears, academicYearId]);
 
     // Update state when user loads
     useEffect(() => {
@@ -109,6 +122,7 @@ const AddHostel = () => {
                 const hostel = await fetchHostelById(id);
                 if (hostel) {
                     setSelectedBranch(hostel.branchId._id || hostel.branchId);
+                    setAcademicYearId(hostel.academicYearId?._id || hostel.academicYearId || '');
                     setFormData({
                         name: hostel.name,
                         type: hostel.type,
@@ -157,7 +171,8 @@ const AddHostel = () => {
                         },
                         safetyRules: hostel.safetyRules || {
                             emergencyContact: ''
-                        }
+                        },
+                        academicYearId: hostel.academicYearId?._id || hostel.academicYearId || ''
                     });
 
                     // Set active fee type based on existing values
@@ -301,6 +316,7 @@ const AddHostel = () => {
             const payload = {
                 ...formData,
                 branchId: selectedBranch,
+                academicYearId,
                 feeConfig: {
                     ...formData.feeConfig,
                     mode: config.feeLink?.feeBasis === 'room_type' ? 'Room Type' : 'Flat'
@@ -390,6 +406,19 @@ const AddHostel = () => {
                                         className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600"
                                     />
                                 )}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Academic Year</label>
+                                <select
+                                    value={academicYearId}
+                                    onChange={(e) => setAcademicYearId(e.target.value)}
+                                    className="w-full border border-gray-300 focus:border-indigo-500 rounded-lg px-3 py-2 outline-none text-sm bg-white"
+                                >
+                                    <option value="">Select Academic Year</option>
+                                    {academicYears.map(ay => (
+                                        <option key={ay._id} value={ay._id}>{ay.name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Hostel Name <span className="text-red-500">*</span></label>
