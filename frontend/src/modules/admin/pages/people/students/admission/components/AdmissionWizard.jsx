@@ -62,7 +62,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
 
         // 4 (Now 3)
         transportRequired: false, routeId: '', stopId: '',
-        hostelRequired: false, bedType: '', roomType: '',
+        hostelRequired: false, hostelId: '', bedType: '', roomType: '',
 
         // 5 (Now 4)
         documents: {},
@@ -140,7 +140,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
             case 'personal': return <Step1_Personal data={formData} onChange={setFormData} />;
             case 'parent': return <Step2_ParentGuardian data={formData} onChange={setFormData} />;
             case 'academic': return <Step3_Academic data={formData} onChange={setFormData} branchId={branchId} academicYearId={academicYearId} onBranchChange={onBranchChange} onAcademicYearChange={onAcademicYearChange} />;
-            case 'logistics': return <Step4_Rules data={formData} onChange={setFormData} />;
+            case 'logistics': return <Step4_Rules data={formData} onChange={setFormData} branchId={branchId} academicYearId={academicYearId} />;
             case 'docs': return <Step5_Documents data={formData} onChange={setFormData} />;
             case 'fee': return <Step5_AdmissionFee data={formData} onChange={setFormData} academicYearId={academicYearId} branchId={branchId} />;
             case 'review': return (

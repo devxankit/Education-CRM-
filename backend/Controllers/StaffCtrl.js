@@ -13,6 +13,7 @@ import AcademicYear from "../Models/AcademicYearModel.js";
 import PayrollRule from "../Models/PayrollRuleModel.js";
 import ExpenseCategory from "../Models/ExpenseCategoryModel.js";
 import Tax from "../Models/TaxModel.js";
+import Role from "../Models/RoleModel.js";
 import { generateToken, generateTempOtpToken, verifyTempOtpToken } from "../Helpers/generateToken.js";
 import { logSecurity, logUserActivity } from "../Helpers/logger.js";
 import { calculateTaxFromRules } from "../Helpers/calculateTax.js";
@@ -583,6 +584,67 @@ export const getStaffPayrollResources = async (req, res) => {
     }
 };
 
+// ================= GET STAFF TRANSPORT ROUTES =================
+export const getStaffTransportRoutes = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const staffBranchId = req.user.branchId;
+        const { branchId } = req.query;
+
+        const query = { instituteId };
+        if (branchId && branchId !== "all" && branchId.length === 24) {
+            query.branchId = branchId;
+        } else if (staffBranchId && staffBranchId !== "all") {
+            query.branchId = staffBranchId;
+        }
+
+        const routes = await TransportRoute.find(query).sort({ name: 1 }).lean();
+        res.status(200).json({ success: true, data: routes });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET STAFF TRANSPORT SUMMARY (for dashboard cards) =================
+export const getStaffTransportSummary = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const staffBranchId = req.user.branchId;
+        const { branchId } = req.query;
+
+        const query = { instituteId };
+        if (branchId && branchId !== "all" && branchId.length === 24) {
+            query.branchId = branchId;
+        } else if (staffBranchId && staffBranchId !== "all") {
+            query.branchId = staffBranchId;
+        }
+
+        const routes = await TransportRoute.find(query).lean();
+        const activeRoutes = routes.filter((r) => r.status === "Active").length;
+        const totalBuses = routes.length;
+        const studentsAssigned = routes.reduce((sum, r) => sum + (Number(r.studentsAssigned) || 0), 0);
+
+        const openIssues = await SupportTicket.countDocuments({
+            instituteId,
+            status: { $in: ["open", "pending"] },
+            $or: [{ category: "transport" }, { category: "Transport" }, { title: /transport/i }],
+        }).catch(() => 0);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                activeRoutes,
+                totalRoutes: routes.length,
+                totalBuses,
+                studentsAssigned,
+                openIssues: openIssues || 0,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= GET STAFF BRANCHES (for dropdowns e.g. attendance) =================
 export const getStaffBranches = async (req, res) => {
     try {
@@ -619,6 +681,92 @@ export const getStaffExpenseResources = async (req, res) => {
         res.status(200).json({
             success: true,
             data: { branches, categories, defaultBranchId }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET STUDENTS WITH TRANSPORT =================
+export const getStaffTransportStudents = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const staffBranchId = req.user.branchId;
+        const { branchId } = req.query;
+
+        const query = { instituteId, transportRequired: true };
+
+        const effectiveBranchId =
+            branchId && branchId !== "all"
+                ? branchId
+                : staffBranchId && staffBranchId !== "all"
+                    ? staffBranchId
+                    : null;
+
+        if (effectiveBranchId && effectiveBranchId.length === 24) {
+            query.branchId = effectiveBranchId;
+        }
+
+        const students = await Student.find(query)
+            .select("firstName lastName classId sectionId routeId stopId parentId address city")
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("parentId", "phone name")
+            .sort({ firstName: 1, lastName: 1 });
+
+        const mapped = students.map((s) => ({
+            id: s._id,
+            name: `${s.firstName} ${s.lastName}`.trim(),
+            class: s.classId?.name || "",
+            section: s.sectionId?.name || "",
+            routeId: s.routeId || "",
+            stopId: s.stopId || "",
+            contact: s.parentId?.phone || "",
+            parentName: s.parentId?.name || "",
+            address: s.address || s.city || "",
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: mapped,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= GET STAFF EMPLOYEES (for staff portal directory) =================
+export const getStaffEmployees = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const staffBranchId = req.user.branchId;
+        const { branchId, status } = req.query;
+
+        const query = { instituteId };
+
+        const effectiveBranchId =
+            branchId && branchId !== "all"
+                ? branchId
+                : staffBranchId && staffBranchId !== "all"
+                    ? staffBranchId
+                    : null;
+
+        if (effectiveBranchId && effectiveBranchId.length === 24) {
+            query.$or = [{ branchId: null }, { branchId: effectiveBranchId }];
+        }
+
+        if (status && status !== "all") {
+            query.status = status.toLowerCase();
+        }
+
+        const staff = await Staff.find(query)
+            .select("name phone status roleId branchId")
+            .populate("roleId", "name code")
+            .populate("branchId", "name");
+
+        res.status(200).json({
+            success: true,
+            data: staff,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

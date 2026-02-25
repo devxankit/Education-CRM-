@@ -13,6 +13,8 @@ const useStudentStore = create((set, get) => ({
         try {
             const data = await studentService.getDashboardData();
             set({ profile: data.studentProfile, loading: false });
+            // Best-effort FCM registration (silent if not configured)
+            studentService.registerFcmIfSupported();
         } catch (error) {
             set({ error: error.message, loading: false });
         }

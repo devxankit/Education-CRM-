@@ -1194,6 +1194,38 @@ export const useAdminStore = create(
                 }
             },
 
+            // Actions: Expenses (list & approve - same as staff view)
+            fetchExpenses: async (params = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const qs = new URLSearchParams(params).toString();
+                    const response = await axios.get(`${API_URL}/expense${qs ? `?${qs}` : ''}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) return response.data.data || [];
+                    return [];
+                } catch (error) {
+                    console.error('Error fetching expenses:', error);
+                    return [];
+                }
+            },
+            updateExpense: async (id, data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/expense/${id}`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Expense updated', 'success');
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error updating expense:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating expense', 'error');
+                    throw error;
+                }
+            },
+
             // Actions: Admission Rules
             fetchAdmissionRule: async (academicYearId) => {
                 try {
@@ -1338,27 +1370,90 @@ export const useAdminStore = create(
                 }
             },
 
-            // Local Master Data: Transport Vehicles & Drivers (UI-level, no backend yet)
+            // Transport Vehicles (API-backed)
             transportVehicles: [],
+            fetchTransportVehicles: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams();
+                    if (branchId && branchId !== 'all') params.set('branchId', branchId);
+                    const qs = params.toString();
+                    const url = qs ? `${API_URL}/transport-vehicle?${qs}` : `${API_URL}/transport-vehicle`;
+                    const response = await axios.get(url, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const vehicles = (response.data.data || []).map(v => ({
+                            id: v._id,
+                            ...v
+                        }));
+                        set({ transportVehicles: vehicles });
+                    }
+                } catch (error) {
+                    console.error('Error fetching transport vehicles:', error);
+                    get().addToast(error.response?.data?.message || 'Error fetching vehicles', 'error');
+                }
+            },
+            addTransportVehicle: async (vehicleData) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/transport-vehicle`, vehicleData, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const v = response.data.data;
+                        set((state) => ({
+                            transportVehicles: [{ id: v._id, ...v }, ...state.transportVehicles]
+                        }));
+                        get().addToast('Vehicle created', 'success');
+                        return v;
+                    }
+                } catch (error) {
+                    console.error('Error adding transport vehicle:', error);
+                    get().addToast(error.response?.data?.message || 'Error creating vehicle', 'error');
+                }
+            },
+            updateTransportVehicle: async (id, data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/transport-vehicle/${id}`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        const v = response.data.data;
+                        set((state) => ({
+                            transportVehicles: state.transportVehicles.map(veh =>
+                                veh.id === id ? { id: v._id, ...v } : veh
+                            )
+                        }));
+                        get().addToast('Vehicle updated', 'success');
+                        return v;
+                    }
+                } catch (error) {
+                    console.error('Error updating transport vehicle:', error);
+                    get().addToast(error.response?.data?.message || 'Error updating vehicle', 'error');
+                }
+            },
+            deleteTransportVehicle: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/transport-vehicle/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            transportVehicles: state.transportVehicles.filter(v => v.id !== id)
+                        }));
+                        get().addToast('Vehicle deleted', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting transport vehicle:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting vehicle', 'error');
+                }
+            },
+
+            // Local Drivers (kept for UI fallback; API-backed driver management lives elsewhere)
             transportDrivers: [],
-            addTransportVehicle: (vehicle) => {
-                set((state) => ({
-                    transportVehicles: [
-                        ...state.transportVehicles,
-                        { id: vehicle.id || `VEH-${Date.now()}`, ...vehicle }
-                    ]
-                }));
-            },
-            updateTransportVehicle: (id, data) => {
-                set((state) => ({
-                    transportVehicles: state.transportVehicles.map(v => (v.id === id ? { ...v, ...data } : v))
-                }));
-            },
-            deleteTransportVehicle: (id) => {
-                set((state) => ({
-                    transportVehicles: state.transportVehicles.filter(v => v.id !== id)
-                }));
-            },
             addTransportDriver: (driver) => {
                 set((state) => ({
                     transportDrivers: [
@@ -1873,10 +1968,16 @@ export const useAdminStore = create(
 
             // Actions: Hostels
             hostels: [],
-            fetchHostels: async (branchId) => {
+            fetchHostels: async (branchId = 'all') => {
                 try {
                     const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/hostel?branchId=${branchId}`, {
+                    const params = new URLSearchParams();
+                    if (branchId && branchId !== 'all' && branchId !== 'undefined' && branchId.length === 24) {
+                        params.set('branchId', branchId);
+                    }
+                    const qs = params.toString();
+                    const url = qs ? `${API_URL}/hostel?${qs}` : `${API_URL}/hostel`;
+                    const response = await axios.get(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.data.success) {

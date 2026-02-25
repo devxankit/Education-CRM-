@@ -151,6 +151,12 @@ const studentSchema = new mongoose.Schema(
         lastLogin: {
             type: Date,
         },
+        // Firebase device tokens for push notifications
+        fcmTokens: [
+            {
+                type: String,
+            }
+        ],
     },
     { timestamps: true }
 );

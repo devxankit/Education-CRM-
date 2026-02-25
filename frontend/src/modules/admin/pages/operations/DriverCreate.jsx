@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { User, Save, Loader2, Plus, X, Edit2, Trash2 } from 'lucide-react';
+import { User, Save, Loader2, Plus, X, Eye, Edit2, Trash2 } from 'lucide-react';
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 import { useAdminStore } from '../../../../store/adminStore';
 
 const DriverCreate = () => {
@@ -8,10 +10,6 @@ const DriverCreate = () => {
         fetchBranches,
         academicYears,
         fetchAcademicYears,
-        transportDrivers,
-        addTransportDriver,
-        updateTransportDriver,
-        deleteTransportDriver,
         addToast
     } = useAdminStore();
 
@@ -26,6 +24,8 @@ const DriverCreate = () => {
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [drivers, setDrivers] = useState([]);
+    const [loadingDrivers, setLoadingDrivers] = useState(false);
 
     useEffect(() => {
         fetchBranches();
@@ -50,6 +50,49 @@ const DriverCreate = () => {
         }
     }, [academicYears, academicYearId]);
 
+    const loadDrivers = async (branch) => {
+        try {
+            setLoadingDrivers(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setDrivers([]);
+                setLoadingDrivers(false);
+                return;
+            }
+            const params = {};
+            if (branch) params.branchId = branch;
+            const res = await axios.get(`${API_URL}/transport-driver`, {
+                headers: { Authorization: `Bearer ${token}` },
+                params
+            });
+            const list = res.data?.data || [];
+            const mapped = list.map(s => ({
+                id: s._id,
+                name: s.name,
+                mobile: s.mobile || '-',
+                branchId: s.branchId?._id || s.branchId,
+                branchName: s.branchId?.name || '-',
+                academicYearId: s.academicYearId?._id || s.academicYearId,
+                academicYearName: s.academicYearId?.name || '-',
+                licenseNo: s.licenseNo || '',
+                remarks: s.remarks || '',
+                routesAssigned: s.routesAssigned || 0
+            }));
+            setDrivers(mapped);
+        } catch (e) {
+            console.error('Failed to load drivers', e);
+            setDrivers([]);
+        } finally {
+            setLoadingDrivers(false);
+        }
+    };
+
+    useEffect(() => {
+        if (branchId) {
+            loadDrivers(branchId);
+        }
+    }, [branchId]);
+
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -71,35 +114,58 @@ const DriverCreate = () => {
             addToast('Mobile number is required.', 'error');
             return;
         }
-
         setSaving(true);
 
-        const payload = {
-            branchId,
-            academicYearId,
-            name: formData.name.trim(),
-            mobile: formData.mobile.trim(),
-            licenseNo: formData.licenseNo.trim(),
-            remarks: formData.remarks.trim()
+        const saveDriver = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    addToast('Admin token missing. Please login again.', 'error');
+                    return;
+                }
+                const payload = {
+                    branchId,
+                    academicYearId,
+                    name: formData.name.trim(),
+                    mobile: formData.mobile.trim(),
+                    licenseNo: formData.licenseNo.trim(),
+                    remarks: formData.remarks.trim()
+                };
+
+                let res;
+                if (editingId) {
+                    res = await axios.put(`${API_URL}/transport-driver/${editingId}`, payload, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                } else {
+                    res = await axios.post(`${API_URL}/transport-driver`, payload, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                }
+
+                if (res.data?.success) {
+                    addToast(editingId ? 'Driver updated successfully.' : 'Driver created successfully.', 'success');
+                    await loadDrivers(branchId);
+                } else {
+                    addToast(res.data?.message || 'Failed to save driver', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to save driver', e);
+                addToast(e.response?.data?.message || 'Failed to save driver', 'error');
+            } finally {
+                setSaving(false);
+                setFormData({
+                    name: '',
+                    mobile: '',
+                    licenseNo: '',
+                    remarks: ''
+                });
+                setEditingId(null);
+                setShowModal(false);
+            }
         };
 
-        if (editingId) {
-            updateTransportDriver(editingId, payload);
-            addToast('Driver updated locally. (Backend wiring pending)', 'success');
-        } else {
-            addTransportDriver(payload);
-            addToast('Driver added locally. (Backend wiring pending)', 'success');
-        }
-
-        setSaving(false);
-        setFormData({
-            name: '',
-            mobile: '',
-            licenseNo: '',
-            remarks: ''
-        });
-        setEditingId(null);
-        setShowModal(false);
+        saveDriver();
     };
 
     const handleEditDriver = (driver) => {
@@ -115,10 +181,26 @@ const DriverCreate = () => {
         setShowModal(true);
     };
 
-    const handleDeleteDriver = (driver) => {
-        if (window.confirm('Are you sure you want to delete this driver?')) {
-            deleteTransportDriver(driver.id);
-            addToast('Driver deleted locally. (Backend wiring pending)', 'success');
+    const handleDeleteDriver = async (driver) => {
+        if (!window.confirm('Are you sure you want to delete this driver?')) return;
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                addToast('Admin token missing. Please login again.', 'error');
+                return;
+            }
+            const res = await axios.delete(`${API_URL}/transport-driver/${driver.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data?.success) {
+                addToast('Driver deleted successfully.', 'success');
+                setDrivers(prev => prev.filter(d => d.id !== driver.id));
+            } else {
+                addToast(res.data?.message || 'Failed to delete driver', 'error');
+            }
+        } catch (e) {
+            console.error('Failed to delete driver', e);
+            addToast(e.response?.data?.message || 'Failed to delete driver', 'error');
         }
     };
 
@@ -166,10 +248,14 @@ const DriverCreate = () => {
 
             {/* Driver List */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                <h2 className="text-sm font-semibold text-gray-800 mb-3">Existing Drivers (local)</h2>
-                {transportDrivers.filter(d => !branchId || d.branchId === branchId).length === 0 ? (
+                <h2 className="text-sm font-semibold text-gray-800 mb-3">Existing Drivers</h2>
+                {loadingDrivers ? (
                     <div className="text-xs text-gray-400 py-6 text-center">
-                        No drivers added yet for this branch. Click <strong>Create Driver</strong> to add one.
+                        Loading drivers...
+                    </div>
+                ) : drivers.length === 0 ? (
+                    <div className="text-xs text-gray-400 py-6 text-center">
+                        No drivers found for this branch. Click <strong>Create Driver</strong> to add one.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -180,38 +266,45 @@ const DriverCreate = () => {
                                     <th className="px-3 py-2 text-left">Mobile</th>
                                     <th className="px-3 py-2 text-left">License No.</th>
                                     <th className="px-3 py-2 text-left">Academic Year</th>
+                                    <th className="px-3 py-2 text-left">Branch</th>
+                                    <th className="px-3 py-2 text-center">Routes</th>
                                     <th className="px-3 py-2 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {transportDrivers
-                                    .filter(d => !branchId || d.branchId === branchId)
-                                    .map(d => (
-                                        <tr key={d.id}>
-                                            <td className="px-3 py-2 text-gray-800">{d.name}</td>
-                                            <td className="px-3 py-2 text-gray-600">{d.mobile}</td>
-                                            <td className="px-3 py-2 text-gray-600">{d.licenseNo || '—'}</td>
-                                            <td className="px-3 py-2 text-gray-600">
-                                                {academicYears.find(ay => ay._id === d.academicYearId)?.name || '—'}
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleEditDriver(d)}
-                                                    className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 text-gray-500 hover:text-emerald-600 hover:border-emerald-300 mr-1"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDeleteDriver(d)}
-                                                    className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                {drivers.map(d => (
+                                    <tr key={d.id}>
+                                        <td className="px-3 py-2 text-gray-800">{d.name}</td>
+                                        <td className="px-3 py-2 text-gray-600">{d.mobile}</td>
+                                        <td className="px-3 py-2 text-gray-600">{d.licenseNo || '—'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{d.academicYearName || '—'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{d.branchName}</td>
+                                        <td className="px-3 py-2 text-center text-gray-700">
+                                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
+                                                <Eye size={12} className="text-indigo-500" />
+                                                {d.routesAssigned ?? 0}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-2 text-right space-x-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEditDriver(d)}
+                                                className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 text-gray-500 hover:text-emerald-600 hover:border-emerald-300"
+                                                title="Edit driver"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteDriver(d)}
+                                                className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300"
+                                                title="Delete driver"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -228,7 +321,7 @@ const DriverCreate = () => {
                                     <User size={18} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-900">Create Driver</h3>
+                                    <h3 className="text-sm font-bold text-gray-900">{editingId ? 'Update Driver' : 'Create Driver'}</h3>
                                     <p className="text-[11px] text-gray-500">
                                         Fill basic details and link to branch + academic year.
                                     </p>
@@ -348,7 +441,7 @@ const DriverCreate = () => {
                                 className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                {saving ? 'Saving...' : 'Save Driver'}
+                                {saving ? 'Saving...' : editingId ? 'Update Driver' : 'Save Driver'}
                             </button>
                         </div>
                     </div>

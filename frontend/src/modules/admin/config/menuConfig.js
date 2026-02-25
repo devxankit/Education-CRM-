@@ -94,6 +94,7 @@ export const adminMenuConfig = [
             { id: 'payroll-rules', label: 'Payroll Rules', path: '/admin/finance/payroll-rules' },
             { id: 'payroll', label: 'Payroll Management', path: '/admin/finance/payroll' },
             { id: 'expense-categories', label: 'Expense Categories', path: '/admin/finance/expense-categories' },
+            { id: 'expenses', label: 'Expenses', path: '/admin/finance/expenses' },
             { id: 'taxes', label: 'Tax & Deductions', path: '/admin/finance/taxes' }
         ]
     },
@@ -109,12 +110,12 @@ export const adminMenuConfig = [
             { id: 'driver-create', label: 'Drivers', path: '/admin/operations/drivers/create' },
             { id: 'routes', label: 'Routes & Stops', path: '/admin/operations/routes' },
             { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
+            { id: 'hostels', label: 'Hostel Management', path: '/admin/operations/hostels' },
           
             // { id: 'asset-rules', label: 'Asset Governance', path: '/admin/operations/asset-rules' },
             // { id: 'support-rules', label: 'Helpdesk Rules', path: '/admin/operations/support-rules' },
             // { id: 'inventory', label: 'Inventory Categories', path: '/admin/operations/inventory' },
             // { id: 'assets-master', label: 'Assets Master', path: '/admin/operations/inventory/assets' },
-            // { id: 'hostels', label: 'Hostel Management', path: '/admin/operations/hostels' },
             // { id: 'document-rules', label: 'Document Rules', path: '/admin/operations/document-rules' }
         ]
     },

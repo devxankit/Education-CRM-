@@ -1,18 +1,57 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Bus, Bed, FileText } from 'lucide-react';
 import { useAdminStore } from '../../../../../../../store/adminStore';
 
-const Step4_Rules = ({ data, onChange }) => {
+const Step4_Rules = ({ data, onChange, branchId, academicYearId }) => {
     const transportRoutes = useAdminStore(state => state.transportRoutes);
     const fetchTransportRoutes = useAdminStore(state => state.fetchTransportRoutes);
+    const fetchHostelConfig = useAdminStore(state => state.fetchHostelConfig);
+    const hostels = useAdminStore(state => state.hostels);
+    const fetchHostels = useAdminStore(state => state.fetchHostels);
+
+    const [hostelConfig, setHostelConfig] = useState(null);
 
     useEffect(() => {
-        fetchTransportRoutes('main');
-    }, [fetchTransportRoutes]);
+        const effectiveBranch = branchId || data.branchId || 'all';
+        fetchTransportRoutes(effectiveBranch === 'all' ? 'main' : effectiveBranch);
+
+        // Load hostel configuration + hostels for this branch
+        const loadHostelData = async () => {
+            const cfg = await fetchHostelConfig(effectiveBranch === 'all' ? 'main' : effectiveBranch);
+            setHostelConfig(cfg || null);
+            await fetchHostels(effectiveBranch);
+        };
+        loadHostelData();
+    }, [fetchTransportRoutes, fetchHostelConfig, fetchHostels, branchId, data.branchId]);
 
     const selectedRoute = transportRoutes.find(r => r._id === data.routeId);
     const stops = selectedRoute ? selectedRoute.stops : [];
+
+    const hostelsForBranch = useMemo(() => {
+        const effectiveBranch = branchId || data.branchId;
+        if (!effectiveBranch || effectiveBranch === 'all') return hostels;
+        return hostels.filter(h => (h.branchId?._id || h.branchId) === effectiveBranch);
+    }, [hostels, branchId, data.branchId]);
+
+    const selectedHostel = hostelsForBranch.find(h => h._id === data.hostelId);
+
+    // Derive hostel options from selected hostel (rooms + buildings)
+    const bedTypeOptions = useMemo(() => {
+        if (!selectedHostel?.rooms) return [];
+        const types = new Set(selectedHostel.rooms.map(r => r.type).filter(Boolean));
+        return Array.from(types);
+    }, [selectedHostel]);
+
+    const roomPreferenceOptions = useMemo(() => {
+        if (!selectedHostel?.buildings) return [];
+        const blocks = new Set(
+            selectedHostel.buildings
+                .map(b => b.name || b.code)
+                .filter(Boolean)
+        );
+        return Array.from(blocks);
+    }, [selectedHostel]);
 
     const handleChange = (field, value) => {
         onChange({ ...data, [field]: value });
@@ -20,6 +59,15 @@ const Step4_Rules = ({ data, onChange }) => {
 
     const handleRouteChange = (routeId) => {
         onChange({ ...data, routeId: routeId, stopId: '' });
+    };
+
+    const handleHostelChange = (hostelId) => {
+        onChange({
+            ...data,
+            hostelId,
+            bedType: '',
+            roomType: ''
+        });
     };
 
     return (
@@ -114,28 +162,56 @@ const Step4_Rules = ({ data, onChange }) => {
 
                 {data.hostelRequired && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2">
+                        {/* First select hostel */}
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Hostel</label>
+                            <select
+                                value={data.hostelId || ''}
+                                onChange={(e) => handleHostelChange(e.target.value)}
+                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                            >
+                                <option value="">{hostelsForBranch.length ? 'Select Hostel' : 'No hostels configured for this branch'}</option>
+                                {hostelsForBranch.map(h => (
+                                    <option key={h._id} value={h._id}>
+                                        {h.name} ({h.code})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Then bed type, based on selected hostel */}
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Bed Type</label>
                             <select
                                 value={data.bedType || ''}
                                 onChange={(e) => handleChange('bedType', e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                                disabled={!data.hostelId || bedTypeOptions.length === 0}
+                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
                             >
-                                <option value="">Select Bed</option>
-                                <option value="Single">Single Bed</option>
-                                <option value="Bunk">Bunk Bed</option>
+                                <option value="">{bedTypeOptions.length ? 'Select Bed Type' : (data.hostelId ? 'No room types found' : 'Select hostel first')}</option>
+                                {bedTypeOptions.map(type => (
+                                    <option key={type} value={type}>
+                                        {type}
+                                    </option>
+                                ))}
                             </select>
                         </div>
+
+                        {/* And room preference / block from hostel buildings */}
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Room Preference</label>
                             <select
                                 value={data.roomType || ''}
                                 onChange={(e) => handleChange('roomType', e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                                disabled={!data.hostelId || roomPreferenceOptions.length === 0}
+                                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
                             >
-                                <option value="">Select Room</option>
-                                <option value="AC">AC Room</option>
-                                <option value="Non-AC">Non-AC Room</option>
+                                <option value="">{roomPreferenceOptions.length ? 'Select Block' : (data.hostelId ? 'No blocks found' : 'Select hostel first')}</option>
+                                {roomPreferenceOptions.map(block => (
+                                    <option key={block} value={block}>
+                                        {block}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

@@ -29,6 +29,7 @@ import FeePolicies from './pages/finance/FeePolicies';
 import PayrollRules from './pages/finance/PayrollRules';
 import Payroll from './pages/finance/Payroll';
 import ExpenseCategories from './pages/finance/ExpenseCategories';
+import Expenses from './pages/finance/Expenses';
 import Taxes from './pages/finance/Taxes';
 
 // Academic Management Pages
@@ -160,6 +161,7 @@ const adminRoutes = [
                     { path: 'finance/payroll-rules', element: <PayrollRules /> },
                     { path: 'finance/payroll', element: <Payroll /> },
                     { path: 'finance/expense-categories', element: <ExpenseCategories /> },
+                    { path: 'finance/expenses', element: <Expenses /> },
                     { path: 'finance/taxes', element: <Taxes /> },
 
                     // 7. Operations Management

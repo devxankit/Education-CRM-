@@ -3,94 +3,38 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import {
-    ArrowLeft, User, Phone, MapPin, Briefcase, Clock,
-    FileText, CheckCircle, Shield, AlertCircle, Calendar, Truck
+    ArrowLeft, User, Phone, MapPin, Briefcase, Bus,
+    Shield, Calendar, Truck
 } from 'lucide-react';
-import RoleBasedSection from '../components/students/RoleBasedSection';
-
-// --- MOCK DATA (Multiple employees for filtering by ID) ---
-const MOCK_EMPLOYEES_DATA = [
-    {
-        id: 'EMP-2024-001',
-        name: 'Ramesh Singh',
-        employeeId: 'EMP-D-101',
-        doj: '2022-01-10',
-        type: 'Full-time',
-        status: 'Active',
-        designation: 'Senior Driver',
-        department: 'Transport',
-        contact: { phone: '9876543210', emergency: '9988776655', address: '12, Transport Nagar, Delhi' },
-        assignment: { bus: 'DL-1PC-4502', route: 'Route-A' },
-        payroll: { salary: 22000, type: 'Monthly', deductions: 500, status: 'Paid' },
-        documents: [
-            { name: 'Driving License', status: 'Verified' },
-            { name: 'Police Verification', status: 'Pending' },
-            { name: 'Aadhaar Card', status: 'Verified' }
-        ],
-        attendance: { present: 24, leave: 2, overtime: '8 hrs' }
-    },
-    {
-        id: 'EMP-2024-002',
-        name: 'Sunil Yadav',
-        employeeId: 'EMP-D-102',
-        doj: '2021-06-15',
-        type: 'Full-time',
-        status: 'Active',
-        designation: 'Helper',
-        department: 'Transport',
-        contact: { phone: '9876543220', emergency: '9988776600', address: '45, Saket, Delhi' },
-        assignment: { bus: 'DL-1PC-4503', route: 'Route-B' },
-        payroll: { salary: 15000, type: 'Monthly', deductions: 300, status: 'Paid' },
-        documents: [
-            { name: 'Aadhaar Card', status: 'Verified' }
-        ],
-        attendance: { present: 22, leave: 4, overtime: '4 hrs' }
-    },
-    {
-        id: 'EMP-2024-003',
-        name: 'Meera Devi',
-        employeeId: 'EMP-A-201',
-        doj: '2020-03-01',
-        type: 'Part-time',
-        status: 'Active',
-        designation: 'Sweeper',
-        department: 'Maintenance',
-        contact: { phone: '9876543230', emergency: '9988776611', address: '78, Janakpuri, Delhi' },
-        assignment: { bus: '-', route: '-' },
-        payroll: { salary: 12000, type: 'Monthly', deductions: 200, status: 'Pending' },
-        documents: [
-            { name: 'Aadhaar Card', status: 'Pending' }
-        ],
-        attendance: { present: 20, leave: 6, overtime: '0 hrs' }
-    }
-];
+import { fetchDriverDetails } from '../services/transport.api';
 
 const EmployeeDetail = () => {
     const { employeeId } = useParams();
     const navigate = useNavigate();
     const { user } = useStaffAuth();
 
-    const [employee, setEmployee] = useState(null);
+    const [driver, setDriver] = useState(null);
+    const [routes, setRoutes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const currentRole = user?.role || STAFF_ROLES.FRONT_DESK;
 
-    // Fetch employee data based on ID from URL
+    // Fetch driver + routes based on ID from URL
     useEffect(() => {
-        setLoading(true);
-        setError(null);
-
-        // Simulate API call - In real app, replace with actual API fetch
-        setTimeout(() => {
-            const foundEmployee = MOCK_EMPLOYEES_DATA.find(e => e.id === employeeId);
-            if (foundEmployee) {
-                setEmployee(foundEmployee);
+        const load = async () => {
+            setLoading(true);
+            setError(null);
+            const data = await fetchDriverDetails(employeeId);
+            if (data?.driver) {
+                setDriver(data.driver);
+                setRoutes(data.routes || []);
             } else {
-                setError('Employee not found');
+                setError('Driver not found');
             }
             setLoading(false);
-        }, 300);
+        };
+        load();
     }, [employeeId]);
 
     // Loading state
@@ -104,10 +48,10 @@ const EmployeeDetail = () => {
     }
 
     // Error state
-    if (error || !employee) {
+    if (error || !driver) {
         return (
             <div className="max-w-5xl mx-auto p-10 text-center">
-                <p className="text-red-600 font-bold">{error || 'Employee not found'}</p>
+                <p className="text-red-600 font-bold">{error || 'Driver not found'}</p>
                 <button
                     onClick={() => navigate('/staff/employees')}
                     className="mt-4 text-indigo-600 hover:underline"
@@ -118,7 +62,6 @@ const EmployeeDetail = () => {
         );
     }
 
-    // Helper for consistency
     const InfoField = ({ label, value, icon: Icon }) => (
         <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -136,109 +79,77 @@ const EmployeeDetail = () => {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1 min-w-0">
-                    <h1 className="text-lg font-bold text-gray-900 truncate">{employee.name}</h1>
+                    <h1 className="text-lg font-bold text-gray-900 truncate">{driver.name}</h1>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">{employee.employeeId}</span>
+                        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">{(driver._id || '').toString().slice(-6).toUpperCase()}</span>
                         <span>•</span>
-                        <span className={employee.status === 'Active' ? 'text-green-600 font-bold' : 'text-amber-600'}>{employee.status}</span>
+                        <span className="text-green-600 font-bold">Active</span>
                     </div>
                 </div>
             </div>
 
             <div className="p-4 md:p-6 space-y-6">
 
-                {/* 1. Basic Info (All Roles except Front Desk ideally, but simplified) */}
-                <RoleBasedSection
-                    title="Profile Overview"
-                    role={currentRole}
-                    allowedRoles={[STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ACCOUNTS, STAFF_ROLES.TRANSPORT, STAFF_ROLES.SUPPORT, STAFF_ROLES.ADMIN]}
-                    editable={currentRole === STAFF_ROLES.DATA_ENTRY}
-                >
-                    <InfoField label="Full Name" value={employee.name} icon={User} />
-                    <InfoField label="Employee ID" value={employee.employeeId} icon={Shield} />
-                    <InfoField label="Employment Type" value={employee.type} icon={Briefcase} />
-                    <InfoField label="Date of Joining" value={employee.doj} icon={Calendar} />
-                </RoleBasedSection>
+                {/* 1. Driver Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoField label="Driver Name" value={driver.name} icon={User} />
+                    <InfoField label="Mobile Number" value={driver.mobile} icon={Phone} />
+                    <InfoField label="Branch" value={driver.branchId?.name} icon={MapPin} />
+                    <InfoField label="Academic Year" value={driver.academicYearId?.name} icon={Calendar} />
+                    <InfoField label="License Number" value={driver.licenseNo} icon={Shield} />
+                    <InfoField label="Remarks / Notes" value={driver.remarks} icon={Briefcase} />
+                </div>
 
-                {/* 2. Department & Assignment */}
-                <RoleBasedSection
-                    title="Work Assignment"
-                    role={currentRole}
-                    allowedRoles={[STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.TRANSPORT, STAFF_ROLES.ADMIN]}
-                    editable={currentRole === STAFF_ROLES.DATA_ENTRY}
-                >
-                    <InfoField label="Department" value={employee.department} icon={Briefcase} />
-                    <InfoField label="Designation" value={employee.designation} icon={User} />
-                    {employee.department === 'Transport' && (
-                        <>
-                            <InfoField label="Assigned Bus" value={employee.assignment.bus} icon={Truck} />
-                            <InfoField label="Route" value={employee.assignment.route} icon={MapPin} />
-                        </>
-                    )}
-                </RoleBasedSection>
+                {/* 2. Assigned Routes & Stops */}
+                <div className="mt-6">
+                    <h2 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <Truck size={16} className="text-indigo-500" />
+                        Assigned Routes & Stops
+                    </h2>
 
-                {/* 3. Payroll Info (Accounts Only) */}
-                <RoleBasedSection
-                    title="Payroll & Compensation"
-                    role={currentRole}
-                    allowedRoles={[STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN]}
-                    editable={currentRole === STAFF_ROLES.ACCOUNTS}
-                >
-                    <InfoField label="Base Salary" value={`₹${employee.payroll.salary.toLocaleString()}`} icon={Briefcase} />
-                    <InfoField label="Payment Cycle" value={employee.payroll.type} icon={Clock} />
-                    <InfoField label="Deductions" value={`₹${employee.payroll.deductions}`} icon={AlertCircle} />
-
-                    <div className="md:col-span-2 pt-2 border-t border-gray-100 mt-2 flex justify-between items-center">
-                        <span className="text-xs font-bold text-gray-500">Last Pay Status: <span className="text-green-600">{employee.payroll.status}</span></span>
-                        <button className="text-indigo-600 text-xs font-bold hover:underline">View Payslips</button>
-                    </div>
-                </RoleBasedSection>
-
-                {/* 4. Attendance Summary (All View) */}
-                <RoleBasedSection
-                    title="Attendance Summary"
-                    role={currentRole}
-                    allowedRoles={[STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN, STAFF_ROLES.TRANSPORT]}
-                    editable={false}
-                >
-                    <div className="flex gap-4">
-                        <div className="text-center">
-                            <p className="text-xs text-gray-400 font-bold uppercase">Present</p>
-                            <p className="text-lg font-bold text-green-600">{employee.attendance.present}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-xs text-gray-400 font-bold uppercase">Leave</p>
-                            <p className="text-lg font-bold text-amber-600">{employee.attendance.leave}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-xs text-gray-400 font-bold uppercase">Overtime</p>
-                            <p className="text-lg font-bold text-indigo-600">{employee.attendance.overtime}</p>
-                        </div>
-                    </div>
-                </RoleBasedSection>
-
-                {/* 5. Documents */}
-                <RoleBasedSection
-                    title="Documents"
-                    role={currentRole}
-                    allowedRoles={[STAFF_ROLES.DATA_ENTRY, STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN]}
-                    editable={currentRole === STAFF_ROLES.DATA_ENTRY}
-                >
-                    <div className="col-span-1 md:col-span-2 space-y-3">
-                        {employee.documents.map((doc, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gray-50 rounded text-gray-500"><FileText size={16} /></div>
-                                    <span className="text-sm font-medium text-gray-800">{doc.name}</span>
+                    {routes.length === 0 ? (
+                        <p className="text-xs text-gray-500 bg-white border border-dashed border-gray-200 rounded-lg p-4">
+                            This driver is not assigned to any transport route yet.
+                        </p>
+                    ) : (
+                        <div className="space-y-3">
+                            {routes.map((route) => (
+                                <div key={route._id || route.code} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                <Bus size={14} className="text-indigo-500" />
+                                                {route.name || route.code}
+                                            </p>
+                                            <p className="text-[11px] text-gray-500">
+                                                Vehicle: <span className="font-mono font-semibold">{route.vehicleNo || 'Not set'}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3">
+                                        <p className="text-[11px] font-bold text-gray-500 uppercase mb-1">Route Stops</p>
+                                        {Array.isArray(route.stops) && route.stops.length > 0 ? (
+                                            <ul className="space-y-1 text-xs text-gray-700">
+                                                {route.stops.map((stop, idx) => (
+                                                    <li key={idx} className="flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                                        <span className="font-semibold">{stop.name}</span>
+                                                        <span className="text-[10px] text-gray-500">
+                                                            {stop.pickupTime ? `Pickup: ${stop.pickupTime}` : ''}
+                                                            {stop.dropTime ? `  •  Drop: ${stop.dropTime}` : ''}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-[11px] text-gray-400">No stops defined for this route.</p>
+                                        )}
+                                    </div>
                                 </div>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${doc.status === 'Verified' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                                    }`}>
-                                    {doc.status}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </RoleBasedSection>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
             </div>
         </div>

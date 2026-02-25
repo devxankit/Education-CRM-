@@ -14,22 +14,23 @@ const HostelList = () => {
     const user = useAppStore(state => state.user);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedBranch, setSelectedBranch] = useState(user?.branchId === 'all' ? 'all' : user?.branchId);
+    // Default to "All Branches"
+    const [selectedBranch, setSelectedBranch] = useState('all');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         // Initial fetch
         fetchBranches();
-    }, []);
+    }, [fetchBranches]);
 
     useEffect(() => {
         const loadHostels = async () => {
             setLoading(true);
-            await fetchHostels(selectedBranch === 'all' ? '' : selectedBranch);
+            await fetchHostels(selectedBranch);
             setLoading(false);
         };
         loadHostels();
-    }, [selectedBranch]);
+    }, [selectedBranch, fetchHostels]);
 
     // Filtering logic
     const filteredHostels = hostels?.filter(hostel => {

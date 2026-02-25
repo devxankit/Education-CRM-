@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Banknote, Filter, FileText, ChevronRight, RefreshCw } from 'lucide-react';
-import { getExpenses } from '../services/expenses.api';
+import { Search, Plus, Banknote, FileText, ChevronRight, RefreshCw } from 'lucide-react';
+import { getExpenses, getExpenseResources } from '../services/expenses.api';
 
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -12,19 +12,38 @@ const Expenses = () => {
     const navigate = useNavigate();
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [resources, setResources] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterCategory, setFilterCategory] = useState('All');
+    const [filterCategoryId, setFilterCategoryId] = useState('');
+    const [branchId, setBranchId] = useState('');
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
 
     const hasAccess = [STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN, STAFF_ROLES.TRANSPORT].includes(user?.role);
     const canAdd = [STAFF_ROLES.ACCOUNTS, STAFF_ROLES.ADMIN].includes(user?.role);
 
+    useEffect(() => {
+        const loadResources = async () => {
+            try {
+                const data = await getExpenseResources();
+                setResources(data || null);
+                if (data?.defaultBranchId) setBranchId(data.defaultBranchId);
+                else if (data?.branches?.[0]?._id) setBranchId(data.branches[0]._id);
+            } catch (e) {
+                console.error('Failed to fetch expense resources', e);
+            }
+        };
+        loadResources();
+    }, []);
+
     const fetchExpenseData = async () => {
         setLoading(true);
         try {
-            const data = await getExpenses({ month, year });
-            setExpenses(data || []);
+            const params = { month, year };
+            if (branchId) params.branchId = branchId;
+            if (filterCategoryId) params.categoryId = filterCategoryId;
+            const data = await getExpenses(params);
+            setExpenses(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Failed to fetch expenses', err);
             setExpenses([]);
@@ -34,23 +53,22 @@ const Expenses = () => {
     };
 
     useEffect(() => {
+        if (!hasAccess) return;
         fetchExpenseData();
-    }, [month, year]);
+    }, [month, year, branchId, filterCategoryId]);
 
-    const categoryList = [...new Set(expenses.map(e => e.categoryId?.name || e.category).filter(Boolean))];
+    const categories = resources?.categories || [];
+    const branches = resources?.branches || [];
+
     const filteredExpenses = expenses.filter(exp => {
         const title = (exp.title || '').toLowerCase();
         const vendor = (exp.vendorName || '').toLowerCase();
-        const cat = exp.categoryId?.name || exp.category || '';
-        const matchesSearch = title.includes(searchTerm.toLowerCase()) || vendor.includes(searchTerm.toLowerCase());
-        const matchesCat = filterCategory === 'All' || cat === filterCategory;
-        return matchesSearch && matchesCat;
+        const term = searchTerm.toLowerCase();
+        return !term || title.includes(term) || vendor.includes(term);
     });
 
     const totalExpense = filteredExpenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
     const pendingAmount = filteredExpenses.filter(e => e.status === 'Pending').reduce((acc, curr) => acc + (curr.amount || 0), 0);
-    const budgetCap = 500000;
-    const percentUsed = budgetCap > 0 ? Math.min(100, (totalExpense / budgetCap) * 100) : 0;
 
     if (!hasAccess) {
         return (
@@ -94,6 +112,16 @@ const Expenses = () => {
                         />
                     </div>
                     <select
+                        value={branchId}
+                        onChange={(e) => setBranchId(e.target.value)}
+                        className="px-3 py-2 bg-gray-100 text-sm font-bold text-gray-600 rounded-lg border-none"
+                    >
+                        <option value="">All Branches</option>
+                        {branches.map(b => (
+                            <option key={b._id} value={b._id}>{b.name || b.code || b._id}</option>
+                        ))}
+                    </select>
+                    <select
                         value={month}
                         onChange={(e) => setMonth(parseInt(e.target.value))}
                         className="px-3 py-2 bg-gray-100 text-sm font-bold text-gray-600 rounded-lg border-none"
@@ -112,13 +140,13 @@ const Expenses = () => {
                         ))}
                     </select>
                     <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
+                        value={filterCategoryId}
+                        onChange={(e) => setFilterCategoryId(e.target.value)}
                         className="px-3 py-2 bg-gray-100 text-sm font-bold text-gray-600 rounded-lg border-none"
                     >
-                        <option value="All">All Categories</option>
-                        {categoryList.map(c => (
-                            <option key={c} value={c}>{c}</option>
+                        <option value="">All Categories</option>
+                        {categories.map(c => (
+                            <option key={c._id} value={c._id}>{c.name || c.code || c._id}</option>
                         ))}
                     </select>
                     <button onClick={fetchExpenseData} disabled={loading} className="p-2 rounded-lg hover:bg-gray-100">
@@ -129,43 +157,25 @@ const Expenses = () => {
 
             <div className="p-4 md:p-6 space-y-6">
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                                 <Banknote size={20} />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900">Monthly Budget Usage</h2>
-                                <p className="text-xs text-gray-500">{MONTH_NAMES[month]} {year} • Cap: ₹{budgetCap.toLocaleString()}</p>
+                                <h2 className="text-lg font-bold text-gray-900">Summary — {MONTH_NAMES[month]} {year}</h2>
+                                <p className="text-xs text-gray-500">From expenses list (branch & category filters applied)</p>
                             </div>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex gap-6">
                             <div className="text-right">
-                                <p className="text-xs text-gray-400 font-bold uppercase">Spent</p>
+                                <p className="text-xs text-gray-400 font-bold uppercase">Total Spent</p>
                                 <p className="text-lg font-bold text-gray-900">₹{totalExpense.toLocaleString()}</p>
                             </div>
-                            <div className="hidden md:block w-px bg-gray-200"></div>
                             <div className="text-right">
-                                <p className="text-xs text-gray-400 font-bold uppercase">Remaining</p>
-                                <p className="text-lg font-bold text-green-600">₹{Math.max(0, budgetCap - totalExpense).toLocaleString()}</p>
+                                <p className="text-xs text-gray-400 font-bold uppercase">Pending Bills</p>
+                                <p className="text-lg font-bold text-red-600">₹{pendingAmount.toLocaleString()}</p>
                             </div>
-                        </div>
-                    </div>
-                    <div className="relative pt-1">
-                        <div className="flex mb-2 items-center justify-between">
-                            <span className="text-xs font-semibold text-indigo-600">{percentUsed.toFixed(1)}% Used</span>
-                        </div>
-                        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-indigo-50">
-                            <div
-                                style={{ width: `${percentUsed}%` }}
-                                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500 transition-all duration-500"
-                            />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-                        <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                            <p className="text-xs text-red-500 mb-1">Pending Bills</p>
-                            <p className="text-sm font-bold text-red-700">₹{pendingAmount.toLocaleString()}</p>
                         </div>
                     </div>
                 </div>

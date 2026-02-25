@@ -50,12 +50,16 @@ const AdminSidebar = ({ isOpen, onClose, collapsed = false, onCollapseToggle }) 
                     {!collapsed && (
                         <div className="min-w-0">
                             <h1 className="text-2xl font-bold font-['Poppins'] truncate">Admin Panel</h1>
-                            <p className="text-blue-200 text-sm mt-1 truncate">{user?.legalName || user?.shortName || 'Super Controller'}</p>
+                            <p className="text-blue-200 text-sm mt-1 truncate">
+                                {user?.instituteName || user?.name || user?.legalName || user?.shortName || 'Super Controller'}
+                            </p>
                         </div>
                     )}
                     {collapsed && (
                         <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white">
-                            {(user?.legalName || user?.shortName || 'A').charAt(0).toUpperCase()}
+                            {(user?.instituteName || user?.name || user?.legalName || user?.shortName || 'A')
+                                .charAt(0)
+                                .toUpperCase()}
                         </div>
                     )}
                     <div className="flex items-center gap-1">

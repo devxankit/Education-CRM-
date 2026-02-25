@@ -1,21 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
-import { Bus, Users, AlertTriangle, MapPin, ChevronRight, Activity, User } from 'lucide-react';
+import { Bus, Users, AlertTriangle, MapPin, ChevronRight, User, RefreshCw } from 'lucide-react';
+import { getTransportSummary } from '../services/transport.api';
 
 const Transport = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
+    const [summary, setSummary] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Access Check (Transport, Admin, Front Desk(View), Account(View))
     const hasAccess = [STAFF_ROLES.TRANSPORT, STAFF_ROLES.ADMIN, STAFF_ROLES.FRONT_DESK, STAFF_ROLES.ACCOUNTS, STAFF_ROLES.SUPPORT].includes(user?.role);
+
+    useEffect(() => {
+        if (!hasAccess) return;
+        const load = async () => {
+            setLoading(true);
+            const data = await getTransportSummary();
+            setSummary(data);
+            setLoading(false);
+        };
+        load();
+    }, [hasAccess]);
 
     if (!hasAccess) return <AccessDenied />;
 
+    const s = summary || {};
+    const activeRoutes = s.activeRoutes ?? '-';
+    const totalBuses = s.totalBuses ?? s.totalRoutes ?? '-';
+    const studentsAssigned = s.studentsAssigned ?? '-';
+    const openIssues = s.openIssues ?? '-';
+
     return (
         <div className="max-w-7xl mx-auto md:pb-6 pb-20 min-h-screen bg-gray-50">
-            {/* Header */}
             <div className="bg-white px-5 py-5 border-b border-gray-200">
                 <h1 className="text-xl font-bold text-gray-900">Transport Operations</h1>
                 <p className="text-xs text-gray-500">Fleet management & student logistics</p>
@@ -23,78 +41,61 @@ const Transport = () => {
 
             <div className="p-4 md:p-6 space-y-6">
 
-                {/* 1. Dashboard Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                     <DashboardCard
                         label="Active Routes"
-                        value="12"
+                        value={loading ? '...' : String(activeRoutes)}
                         icon={MapPin}
                         color="indigo"
                         onClick={() => navigate('/staff/transport/routes')}
                     />
                     <DashboardCard
                         label="Total Buses"
-                        value="14"
+                        value={loading ? '...' : String(totalBuses)}
                         icon={Bus}
                         color="blue"
                         onClick={() => navigate('/staff/transport/routes')}
                     />
                     <DashboardCard
                         label="Students Assigned"
-                        value="450"
+                        value={loading ? '...' : String(studentsAssigned)}
                         icon={Users}
                         color="green"
                         onClick={() => navigate('/staff/transport/students')}
                     />
                     <DashboardCard
                         label="Open Issues"
-                        value="3"
+                        value={loading ? '...' : String(openIssues)}
                         icon={AlertTriangle}
                         color="amber"
                         onClick={() => navigate('/staff/transport/issues')}
                     />
                 </div>
 
-                {/* 2. Quick Actions */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                    <ActionCard
-                        title="Manage Routes"
-                        desc="View routes & stops"
-                        icon={Bus}
-                        onClick={() => navigate('/staff/transport/routes')}
-                    />
-                    <ActionCard
-                        title="Student List"
-                        desc="View transport students"
-                        icon={Users}
-                        onClick={() => navigate('/staff/transport/students')}
-                    />
-                    <ActionCard
-                        title="Manage Drivers"
-                        desc="Staff & schedules"
-                        icon={User} // Need to import User
-                        onClick={() => navigate('/staff/employees')}
-                    />
-                    <ActionCard
-                        title="Issue Log"
-                        desc="Report delays"
-                        icon={AlertTriangle}
-                        onClick={() => navigate('/staff/transport/issues')}
-                    />
+                    <ActionCard title="Manage Routes" desc="View routes & stops" icon={Bus} onClick={() => navigate('/staff/transport/routes')} />
+                    <ActionCard title="Student List" desc="View transport students" icon={Users} onClick={() => navigate('/staff/transport/students')} />
+                    <ActionCard title="Manage Drivers" desc="Staff & schedules" icon={User} onClick={() => navigate('/staff/employees')} />
+                    <ActionCard title="Issue Log" desc="Report delays" icon={AlertTriangle} onClick={() => navigate('/staff/transport/issues')} />
                 </div>
 
-                {/* 3. Recent Alerts */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                         <h3 className="text-sm font-bold text-gray-900">Live Alerts</h3>
-                        <span className="text-xs font-bold text-red-600 animate-pulse">● Live</span>
+                        {openIssues > 0 ? <span className="text-xs font-bold text-red-600 animate-pulse">● Live</span> : <span className="text-xs text-gray-500">No open issues</span>}
                     </div>
                     <div className="divide-y divide-gray-100">
-                        <AlertRow title="Bus DL-1PC-402 Delayed" time="10 mins ago" type="delay" />
-                        <AlertRow title="Route 4 Breakdown reported" time="1 hour ago" type="breakdown" />
+                        {loading ? (
+                            <div className="p-4 flex items-center gap-2 text-gray-500">
+                                <RefreshCw size={16} className="animate-spin" /> Loading…
+                            </div>
+                        ) : Number(openIssues) > 0 ? (
+                            <AlertRow title={`${openIssues} transport-related ticket(s) open`} time="Check Issue Log" type="delay" />
+                        ) : (
+                            <div className="p-4 text-sm text-gray-500">No transport alerts at the moment.</div>
+                        )}
                     </div>
                 </div>
-
             </div>
         </div>
     );

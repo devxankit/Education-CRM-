@@ -175,32 +175,44 @@ const TicketDetail = () => {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50/50">
+        <div className="flex flex-col min-h-screen bg-gray-50/50">
             {/* Top Navigation */}
-            <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-40 sticky top-0">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/staff/support')} className="p-2 hover:bg-gray-50 rounded-xl text-gray-400 transition-colors">
+            <header className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 z-40 sticky top-0">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                    <button
+                        onClick={() => navigate('/staff/support')}
+                        className="p-2 hover:bg-gray-50 rounded-xl text-gray-500 transition-colors shrink-0"
+                    >
                         <ArrowLeft size={20} />
                     </button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-black text-gray-900 tracking-tight">{ticket.topic}</h1>
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h1 className="text-base sm:text-lg font-black text-gray-900 tracking-tight truncate max-w-[12rem] sm:max-w-xs">
+                                {ticket.topic}
+                            </h1>
+                            <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
                                 {ticket.category || 'General'}
                             </span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(ticket.status)}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider border ${getStatusColor(ticket.status)}`}>
                                 {ticket.status}
                             </span>
                         </div>
-                        <p className="text-[11px] text-gray-400 font-bold flex items-center gap-2 mt-0.5">
-                            REF: {ticketId.toUpperCase().slice(-10)}
-                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                            {new Date(ticket.createdAt).toLocaleString()}
+                        <p className="text-[10px] sm:text-[11px] text-gray-400 font-bold flex flex-wrap items-center gap-1 sm:gap-2 mt-0.5">
+                            <span>REF: {ticketId.toUpperCase().slice(-10)}</span>
+                            <span className="hidden sm:inline w-1 h-1 bg-gray-300 rounded-full" />
+                            <span className="truncate">{new Date(ticket.createdAt).toLocaleString()}</span>
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+                    <div className="flex sm:hidden items-center justify-between text-[10px] text-gray-500 font-semibold">
+                        <span className="uppercase tracking-widest">Priority</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-100">
+                            {getPriorityIcon(ticket.priority)}
+                            <span className="font-black uppercase">{ticket.priority}</span>
+                        </span>
+                    </div>
                     <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-gray-100 shadow-sm">
                         {getPriorityIcon(ticket.priority)}
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{ticket.priority} Priority</span>
@@ -208,7 +220,7 @@ const TicketDetail = () => {
                     {ticket.status !== 'Closed' && ticket.status !== 'Resolved' && (
                         <button
                             onClick={() => setShowResolveModal(true)}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-100 transition-all active:scale-95"
+                            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] sm:text-[11px] font-black uppercase tracking-widest px-4 sm:px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-100 transition-all active:scale-95"
                         >
                             Complete Ticket
                         </button>
@@ -218,19 +230,19 @@ const TicketDetail = () => {
 
             <main className="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-[1600px] mx-auto w-full">
                 {/* Formal Content Column */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-6">
 
                     {/* 1. Original Request Card */}
-                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="px-8 py-5 bg-indigo-50/30 border-b border-gray-50 flex items-center justify-between">
+                    <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="px-4 sm:px-8 py-4 sm:py-5 bg-indigo-50/30 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex items-center gap-2 text-indigo-600">
                                 <MessageSquare size={16} />
                                 <h2 className="text-xs font-black uppercase tracking-widest leading-none">Initial {ticket._ticketType === 'teacher' ? 'Teacher' : (ticket.raisedByType || 'Student')} Request</h2>
                             </div>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{new Date(ticket.createdAt).toLocaleTimeString()}</span>
                         </div>
-                        <div className="p-8">
-                            <div className="flex gap-4 mb-6">
+                        <div className="p-4 sm:p-8">
+                            <div className="flex gap-3 sm:gap-4 mb-4 sm:mb-6">
                                 <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 shrink-0">
                                     <User size={20} />
                                 </div>
@@ -244,16 +256,16 @@ const TicketDetail = () => {
                                     </p>
                                 </div>
                             </div>
-                            <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 italic">
-                                <p className="text-sm text-gray-700 leading-relaxed font-medium">"{ticket.details}"</p>
+                            <div className="bg-gray-50/50 p-4 sm:p-6 rounded-2xl border border-gray-100 italic">
+                                <p className="text-sm text-gray-700 leading-relaxed font-medium break-words">"{ticket.details}"</p>
                             </div>
                         </div>
                     </div>
 
                     {/* 2. Staff Responses / Thread Section */}
                     {ticket.response && (
-                        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-                            <div className="px-8 py-5 bg-emerald-50/30 border-b border-gray-50 flex items-center justify-between">
+                        <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+                            <div className="px-4 sm:px-8 py-4 sm:py-5 bg-emerald-50/30 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="flex items-center gap-2 text-emerald-600">
                                     <CheckCircle size={16} />
                                     <h2 className="text-xs font-black uppercase tracking-widest">Official Staff Response</h2>
@@ -262,8 +274,8 @@ const TicketDetail = () => {
                                     {ticket.respondedAt ? new Date(ticket.respondedAt).toLocaleTimeString() : '-'}
                                 </span>
                             </div>
-                            <div className="p-8">
-                                <div className="flex gap-4 mb-6">
+                            <div className="p-4 sm:p-8">
+                                <div className="flex gap-3 sm:gap-4 mb-4 sm:mb-6">
                                     <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
                                         <Lock size={18} />
                                     </div>
@@ -278,16 +290,16 @@ const TicketDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-inner">
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-inner">
                                     <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{ticket.response}</p>
                                     {ticket.responseAttachment && (
-                                        <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-between group">
+                                        <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-white rounded-lg border border-gray-100 flex items-center justify-center text-red-500 shadow-sm">
                                                     <Paperclip size={18} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{ticket.responseAttachmentName || 'Attached Document'}</p>
+                                                <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight break-all">{ticket.responseAttachmentName || 'Attached Document'}</p>
                                                     <p className="text-[9px] font-bold text-gray-400">PDF Document • Official</p>
                                                 </div>
                                             </div>
@@ -330,7 +342,7 @@ const TicketDetail = () => {
                                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                                     />
                                     {fileAttachment ? (
-                                        <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-xl mb-4">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl mb-4">
                                             <div className="flex items-center gap-3">
                                                 <Paperclip size={16} className="text-indigo-600" />
                                                 <span className="text-xs font-bold text-indigo-900">{fileAttachment.name}</span>
@@ -354,14 +366,14 @@ const TicketDetail = () => {
                                         </button>
                                     )}
                                 </div>
-                                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-                                    <p className="text-[10px] text-gray-400 font-bold max-w-[70%]">
+                                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-1 sm:px-2">
+                                    <p className="text-[10px] text-gray-400 font-bold w-full sm:max-w-[70%] text-center sm:text-left">
                                         Note: This response will be visible to the student immediately. Ensure language is professional and accurate.
                                     </p>
                                     <button
                                         type="submit"
                                         disabled={!newMessage.trim() || uploading}
-                                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 transition-all active:scale-95 disabled:shadow-none"
+                                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 text-white px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 transition-all active:scale-95 disabled:shadow-none"
                                     >
                                         {uploading ? 'Processing...' : 'Post Response'}
                                     </button>
@@ -385,8 +397,8 @@ const TicketDetail = () => {
                 </div>
 
                 {/* Sidebar - Simplified */}
-                <aside className="hidden lg:block w-[22rem] p-8 border-l border-gray-100 bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.02)] overflow-y-auto">
-                    <div className="space-y-8 sticky top-0">
+                <aside className="w-full lg:w-[22rem] p-4 sm:p-6 lg:p-8 border-t lg:border-t-0 lg:border-l border-gray-100 bg-white shadow-[0_-8px_24px_rgba(15,23,42,0.04)] lg:shadow-[-10px_0_30px_rgba(0,0,0,0.02)] overflow-y-auto">
+                    <div className="space-y-6 sm:space-y-8 lg:sticky lg:top-0">
                         {/* Subject Information - Student or Teacher */}
                         <section>
                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Subject Information</h3>

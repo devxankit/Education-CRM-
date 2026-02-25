@@ -1,74 +1,151 @@
-// transport.api.js - Staff Module Transport API Service
-// This service will be used for backend integration
+import axios from 'axios';
+import { API_URL } from '@/app/api';
 
-// Mock data for initial setup (will be replaced with actual API calls)
-const MOCK_ROUTES = [
-    { id: 'RT-001', name: 'Route 1: City Center', bus: 'DL-1PC-4502', driver: 'Ramesh Singh', status: 'Active', students: 25 },
-    { id: 'RT-002', name: 'Route 2: South Extension', bus: 'DL-1PC-4503', driver: 'Sunil Yadav', status: 'Active', students: 20 },
-    { id: 'RT-003', name: 'Route 3: West Delhi', bus: 'DL-1PC-4504', driver: 'Rajan Kumar', status: 'Inactive', students: 0 },
-];
-
-const MOCK_ASSETS = [
-    { id: 'AST-001', name: 'School Bus 01', type: 'Vehicle', code: 'BUS-01', status: 'Active', assignedTo: 'Ramesh Singh' },
-    { id: 'AST-002', name: 'School Bus 02', type: 'Vehicle', code: 'BUS-02', status: 'Active', assignedTo: 'Sunil Yadav' },
-    { id: 'AST-003', name: 'Projector - Room 101', type: 'Electronics', code: 'PROJ-101', status: 'Under Maintenance', assignedTo: 'IT Dept' },
-];
+const getAuthHeaders = () => {
+    try {
+        const staffUser = JSON.parse(localStorage.getItem('staff_user') || 'null');
+        if (staffUser && staffUser.token) {
+            return { headers: { Authorization: `Bearer ${staffUser.token}` } };
+        }
+    } catch (e) {
+        console.error('Error parsing staff_user for token', e);
+    }
+    return { headers: {} };
+};
 
 /**
- * Fetch all routes
+ * Fetch transport summary (active routes, buses, students, issues)
+ * @param {string} [branchId] - Optional branch filter
+ * @returns {Promise<{ activeRoutes, totalRoutes, totalBuses, studentsAssigned, openIssues }|null>}
+ */
+export const getTransportSummary = async (branchId) => {
+    try {
+        const params = branchId && branchId !== 'all' ? { branchId } : {};
+        const response = await axios.get(`${API_URL}/staff/transport/summary`, {
+            ...getAuthHeaders(),
+            params,
+        });
+        if (response.data.success) return response.data.data;
+        return null;
+    } catch (error) {
+        console.error('Error fetching transport summary:', error);
+        return null;
+    }
+};
+
+/**
+ * Fetch all transport routes
+ * @param {string} [branchId] - Optional branch filter
  * @returns {Promise<Array>} List of routes
  */
-export const fetchRoutes = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_ROUTES), 300);
-    });
+export const fetchRoutes = async (branchId) => {
+    try {
+        const params = branchId && branchId !== 'all' ? { branchId } : {};
+        const response = await axios.get(`${API_URL}/staff/transport/routes`, {
+            ...getAuthHeaders(),
+            params,
+        });
+        if (response.data.success) return response.data.data || [];
+        return [];
+    } catch (error) {
+        console.error('Error fetching transport routes:', error);
+        return [];
+    }
 };
 
 /**
- * Fetch route by ID
- * @param {string} routeId - Route ID
- * @returns {Promise<Object|null>} Route object or null
+ * Fetch single route by ID (from list or backend if you add GET :id later)
+ * @param {string} routeId
+ * @returns {Promise<Object|null>}
  */
 export const fetchRouteById = async (routeId) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const route = MOCK_ROUTES.find(r => r.id === routeId);
-            resolve(route || null);
-        }, 300);
-    });
+    try {
+        const list = await fetchRoutes();
+        const route = (list || []).find((r) => (r._id || r.id) === routeId);
+        return route || null;
+    } catch (error) {
+        console.error('Error fetching route by id:', error);
+        return null;
+    }
 };
 
 /**
- * Fetch all assets
- * @returns {Promise<Array>} List of assets
+ * Fetch branches for transport filter (reuse staff branches)
  */
-export const fetchAssets = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_ASSETS), 300);
-    });
+export const fetchBranches = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/staff/branches`, getAuthHeaders());
+        if (response.data.success && response.data.data?.branches) {
+            return response.data.data.branches;
+        }
+        return [];
+    } catch (error) {
+        console.error('Error fetching branches:', error);
+        return [];
+    }
 };
 
 /**
- * Fetch asset by ID
- * @param {string} assetId - Asset ID
- * @returns {Promise<Object|null>} Asset object or null
+ * Fetch students who have opted for transport
+ * @param {string} [branchId]
+ * @returns {Promise<Array>}
  */
-export const fetchAssetById = async (assetId) => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const asset = MOCK_ASSETS.find(a => a.id === assetId);
-            resolve(asset || null);
-        }, 300);
-    });
+export const fetchTransportStudents = async (branchId) => {
+    try {
+        const params = branchId && branchId !== 'all' ? { branchId } : {};
+        const response = await axios.get(`${API_URL}/staff/transport/students`, {
+            ...getAuthHeaders(),
+            params,
+        });
+        if (response.data.success) return response.data.data || [];
+        return [];
+    } catch (error) {
+        console.error('Error fetching transport students:', error);
+        return [];
+    }
+};
+/**
+ * Fetch transport drivers (for staff Drivers page)
+ * @param {string} [branchId] - Optional branch filter
+ * @returns {Promise<Array>} List of drivers
+ */
+export const fetchDrivers = async (branchId) => {
+    try {
+        const params = branchId && branchId !== 'all' ? { branchId } : {};
+        const response = await axios.get(`${API_URL}/transport-driver`, {
+            ...getAuthHeaders(),
+            params,
+        });
+        if (response.data.success) return response.data.data || [];
+        return [];
+    } catch (error) {
+        console.error('Error fetching transport drivers:', error);
+        return [];
+    }
+};
+
+/**
+ * Fetch single driver with assigned routes
+ * @param {string} driverId
+ * @returns {Promise<{driver: object, routes: Array}|null>}
+ */
+export const fetchDriverDetails = async (driverId) => {
+    try {
+        const response = await axios.get(`${API_URL}/transport-driver/${driverId}`, getAuthHeaders());
+        if (response.data.success) return response.data.data;
+        return null;
+    } catch (error) {
+        console.error('Error fetching driver details:', error);
+        return null;
+    }
 };
 
 export default {
+    getTransportSummary,
     fetchRoutes,
     fetchRouteById,
-    fetchAssets,
-    fetchAssetById,
+    fetchBranches,
+    fetchDrivers,
+    fetchDriverDetails,
+    fetchTransportStudents,
 };

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, CheckCircle, Bus, MapPin, Save, UserPlus, Filter, Phone, ChevronRight } from 'lucide-react';
+import { fetchTransportStudents } from '../services/transport.api';
 
 const StudentTransport = () => {
     const navigate = useNavigate();
@@ -11,14 +12,18 @@ const StudentTransport = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [transportStudents, setTransportStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // --- MOCK DATA ---
-    const TRANSPORT_STUDENTS = [
-        { id: 'S001', name: 'Aarav Patel', class: '10-A', route: 'Rt-1: City Center', stop: 'Sector 15 Market', contact: '9876543210' },
-        { id: 'S002', name: 'Zara Khan', class: '8-B', route: 'Rt-3: West End', stop: 'City Center Metro', contact: '9876543211' },
-        { id: 'S003', name: 'Ishaan Gupta', class: '5-C', route: 'Rt-1: City Center', stop: 'Golf Course Road', contact: '9876543212' },
-        { id: 'S004', name: 'Riya Singh', class: '12-A', route: 'Rt-2: North Camp', stop: 'Palm Avenue', contact: '9876543213' },
-    ];
+    useEffect(() => {
+        const load = async () => {
+            setLoading(true);
+            const data = await fetchTransportStudents();
+            setTransportStudents(data || []);
+            setLoading(false);
+        };
+        load();
+    }, []);
 
     const MockStudentsToAssign = [
         { id: 'S-NEW-01', name: 'Rohan Sharma', class: '9-A', address: 'Sector 15, City' },
@@ -83,53 +88,72 @@ const StudentTransport = () => {
 
                 {/* VIEW: LIST */}
                 {view === 'list' && (
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
-                                    <tr>
-                                        <th className="px-5 py-3">Student</th>
-                                        <th className="px-5 py-3">Route Info</th>
-                                        <th className="px-5 py-3">Pickup Point</th>
-                                        <th className="px-5 py-3">Contact</th>
-                                        <th className="px-5 py-3 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {TRANSPORT_STUDENTS.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map(student => (
-                                        <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-5 py-3">
+                    <div className="space-y-4">
+                        {loading ? (
+                            <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-10 text-center text-gray-400 text-sm">
+                                Loading transport students...
+                            </div>
+                        ) : transportStudents.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                            <div className="bg-white rounded-xl border border-dashed border-gray-200 py-10 text-center text-gray-400 text-sm">
+                                No students have opted for transport.
+                            </div>
+                        ) : (
+                            transportStudents
+                                .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(student => (
+                                    <div
+                                        key={student.id}
+                                        className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                                                {student.name.charAt(0)}
+                                            </div>
+                                            <div>
                                                 <p className="text-sm font-bold text-gray-900">{student.name}</p>
-                                                <p className="text-xs text-gray-500">Class {student.class}</p>
-                                            </td>
-                                            <td className="px-5 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Bus size={14} className="text-indigo-500" />
-                                                    <span className="text-sm font-medium text-gray-800">{student.route}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <MapPin size={14} className="text-gray-400" />
-                                                    <span className="text-sm text-gray-600">{student.stop}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Phone size={14} className="text-green-500" />
-                                                    <span className="text-sm font-medium text-gray-800">{student.contact}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-3 text-right">
-                                                <button className="text-gray-400 hover:text-indigo-600 transition-colors">
-                                                    <ChevronRight size={18} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                <p className="text-xs text-gray-500">
+                                                    Class {student.class}{student.section ? ` • ${student.section}` : ''}
+                                                </p>
+                                                {student.address && (
+                                                    <p className="text-[11px] text-gray-400 mt-1 line-clamp-1">
+                                                        {student.address}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 flex-1 md:max-w-lg">
+                                            <div className="bg-gray-50 rounded-lg px-3 py-2">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Route</p>
+                                                <p className="text-xs font-semibold text-gray-800 flex items-center gap-1">
+                                                    <Bus size={12} className="text-indigo-500" />
+                                                    {student.routeId || 'Not assigned'}
+                                                </p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-lg px-3 py-2">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Pickup Point</p>
+                                                <p className="text-xs font-semibold text-gray-800 flex items-center gap-1">
+                                                    <MapPin size={12} className="text-gray-400" />
+                                                    {student.stopId || 'Not assigned'}
+                                                </p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-lg px-3 py-2">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Contact</p>
+                                                <p className="text-xs font-semibold text-gray-800 flex items-center gap-1">
+                                                    <Phone size={12} className="text-green-500" />
+                                                    {student.contact || '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="self-end md:self-center">
+                                            <button className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-300">
+                                                <ChevronRight size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                        )}
                     </div>
                 )}
 

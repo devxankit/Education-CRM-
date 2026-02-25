@@ -23,6 +23,7 @@ import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import SupportTicket from "../Models/SupportTicketModel.js";
 import LearningMaterial from "../Models/LearningMaterialModel.js";
 import StudentNote from "../Models/StudentNoteModel.js";
+import StudentNotification from "../Models/StudentNotificationModel.js";
 import Role from "../Models/RoleModel.js";
 import { logFinancial, logUserActivity, logDataChange } from "../Helpers/logger.js";
 
@@ -1568,11 +1569,29 @@ export const getSupportTickets = async (req, res) => {
 // ================= GET STUDENT NOTIFICATIONS =================
 export const getStudentNotifications = async (req, res) => {
     try {
-        // For now returning empty array as Notification model is not implemented
-        // or can be linked to other models like Notices/Announcements in future
+        const studentId = req.user._id;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const list = await StudentNotification.find({
+            studentId,
+            instituteId,
+        })
+            .sort({ createdAt: -1 })
+            .limit(50)
+            .lean();
+
+        const mapped = list.map((n) => ({
+            id: n._id.toString(),
+            title: n.title,
+            message: n.message,
+            type: n.type || "general",
+            read: n.read || false,
+            time: n.createdAt,
+        }));
+
         res.status(200).json({
             success: true,
-            data: []
+            data: mapped,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -1666,6 +1685,34 @@ export const changeStudentPassword = async (req, res) => {
         await student.save();
 
         res.status(200).json({ success: true, message: "Password updated successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= REGISTER STUDENT FCM TOKEN =================
+export const registerStudentFcmToken = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ success: false, message: "Token is required" });
+        }
+
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const existing = Array.isArray(student.fcmTokens) ? student.fcmTokens : [];
+        if (!existing.includes(token)) {
+            existing.push(token);
+            student.fcmTokens = existing;
+            await student.save();
+        }
+
+        res.status(200).json({ success: true, message: "FCM token registered" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

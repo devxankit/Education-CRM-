@@ -26,7 +26,8 @@ import {
     createSupportTicket,
     getSupportTickets,
     updateStudentProfile,
-    changeStudentPassword
+    changeStudentPassword,
+    registerStudentFcmToken,
 } from "../Controllers/StudentCtrl.js";
 import { AuthMiddleware, isAdmin, isStudent } from "../Middlewares/AuthMiddleware.js";
 
@@ -46,6 +47,7 @@ router.get("/attendance", isStudent, getMyAttendance);
 router.get("/fees", isStudent, getStudentFees);
 router.get("/notices", isStudent, getMyNotices);
 router.get("/notifications", isStudent, getStudentNotifications);
+router.post("/register-fcm-token", isStudent, registerStudentFcmToken);
 // router.put("/notices/:noticeId/acknowledge", isStudent, acknowledgeNotice);
 router.get("/profile", isStudent, getStudentProfile);
 router.put("/profile", isStudent, updateStudentProfile);

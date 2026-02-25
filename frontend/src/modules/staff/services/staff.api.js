@@ -71,14 +71,24 @@ const MOCK_TEACHERS = [
 ];
 
 /**
- * Fetch all employees
+ * Fetch all employees (staff directory for staff portal)
+ * @param {Object} params - Optional filters { branchId, status }
  * @returns {Promise<Array>} List of employees
  */
-export const fetchEmployees = async () => {
-    // TODO: Replace with actual API call
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_EMPLOYEES), 300);
-    });
+export const fetchEmployees = async (params = {}) => {
+    try {
+        const response = await axios.get(`${API_URL}/staff/employees`, {
+            ...getAuthHeaders(),
+            params
+        });
+        if (response.data.success) {
+            return response.data.data || [];
+        }
+        return [];
+    } catch (error) {
+        console.error("Error fetching employees:", error);
+        return [];
+    }
 };
 
 /**

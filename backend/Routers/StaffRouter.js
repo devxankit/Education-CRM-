@@ -15,6 +15,10 @@ import {
     getStaffPayrollResources,
     getStaffExpenseResources,
     getStaffBranches,
+    getStaffTransportRoutes,
+    getStaffTransportSummary,
+    getStaffEmployees,
+    getStaffTransportStudents,
     changePassword,
     updateProfile
 } from "../Controllers/StaffCtrl.js";
@@ -51,6 +55,10 @@ router.post("/fees/collect", recordStaffFeePayment);
 router.get("/payroll/resources", getStaffPayrollResources);
 router.get("/expenses/resources", getStaffExpenseResources);
 router.get("/branches", getStaffBranches);
+router.get("/transport/routes", getStaffTransportRoutes);
+router.get("/transport/summary", getStaffTransportSummary);
+router.get("/transport/students", getStaffTransportStudents);
+router.get("/employees", getStaffEmployees);
 
 // Protected routes (Only Institute can manage staff)
 router.use(isInstitute);

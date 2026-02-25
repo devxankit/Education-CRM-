@@ -1,9 +1,11 @@
 import SupportTicket from "../Models/SupportTicketModel.js";
 import TeacherTicket from "../Models/TeacherTicketModel.js";
 import Student from "../Models/StudentModel.js";
+import StudentNotification from "../Models/StudentNotificationModel.js";
 import Class from "../Models/ClassModel.js";
 import AcademicYear from "../Models/AcademicYearModel.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
+import { sendPushToTokens } from "../Helpers/notificationHelper.js";
 
 // Create a new ticket (Staff side)
 export const createTicket = async (req, res) => {
@@ -37,6 +39,33 @@ export const createTicket = async (req, res) => {
 
         await ticket.save();
 
+        // Create in-app notification for student
+        try {
+            const studentDoc = await Student.findById(studentId);
+            if (studentDoc) {
+                await StudentNotification.create({
+                    instituteId,
+                    studentId: studentDoc._id,
+                    type: "info",
+                    title: "Support ticket created",
+                    message: `${ticket.topic} – your request has been received.`,
+                    meta: { ticketId: ticket._id.toString(), status: ticket.status },
+                });
+
+                // Push notification via Firebase (if tokens registered)
+                await sendPushToTokens(studentDoc.fcmTokens || [], {
+                    title: "Support ticket created",
+                    body: ticket.topic,
+                    data: {
+                        type: "support_ticket_created",
+                        ticketId: ticket._id.toString(),
+                    },
+                });
+            }
+        } catch (notifyErr) {
+            console.error("Error creating notification for support ticket:", notifyErr?.message || notifyErr);
+        }
+
         res.status(201).json({
             success: true,
             message: "Ticket created successfully",
@@ -61,10 +90,13 @@ export const getAllTickets = async (req, res) => {
             query.category = { $ne: "Documents" };
         }
 
-        const branchFilter = branchId || staffBranchId;
+        // If explicit branchId filter provided, respect it.
+        // Otherwise, do NOT restrict by branch so that staff can see
+        // all institute tickets by default.
+        const branchFilter = branchId && branchId !== "all" ? branchId : null;
         const ayFilter = academicYearId && academicYearId !== "all" ? academicYearId : null;
         const andParts = [];
-        if (branchFilter && branchFilter !== "all") {
+        if (branchFilter) {
             query.branchId = branchFilter;
         }
         if (ayFilter) {
@@ -173,6 +205,33 @@ export const respondToTicket = async (req, res) => {
             return res.status(404).json({ success: false, message: "Ticket not found" });
         }
 
+        // Notify student about response
+        try {
+            const studentDoc = await Student.findById(ticket.studentId);
+            if (studentDoc) {
+                await StudentNotification.create({
+                    instituteId: studentDoc.instituteId,
+                    studentId: studentDoc._id,
+                    type: status === "Closed" ? "success" : "info",
+                    title: status === "Closed" ? "Support ticket closed" : "New response on your ticket",
+                    message: ticket.topic,
+                    meta: { ticketId: ticket._id.toString(), status: ticket.status },
+                });
+
+                await sendPushToTokens(studentDoc.fcmTokens || [], {
+                    title: status === "Closed" ? "Ticket closed" : "Support response",
+                    body: ticket.topic,
+                    data: {
+                        type: "support_ticket_updated",
+                        ticketId: ticket._id.toString(),
+                        status: ticket.status || status || "Resolved",
+                    },
+                });
+            }
+        } catch (notifyErr) {
+            console.error("Error sending support-ticket notification:", notifyErr?.message || notifyErr);
+        }
+
         res.status(200).json({
             success: true,
             message: "Response sent successfully",
@@ -191,16 +250,17 @@ export const getTeacherTickets = async (req, res) => {
         const { branchId, academicYearId } = req.query;
 
         const query = { instituteId };
-        const branchFilter = branchId || staffBranchId;
+        // Only filter by branch when explicitly requested
+        const branchFilter = branchId && branchId !== "all" ? branchId : null;
         let ayFilter = academicYearId && academicYearId !== "all" ? academicYearId : null;
 
-        if (branchFilter && branchFilter !== "all") {
+        if (branchFilter) {
             query.branchId = branchFilter;
         }
-        if (!ayFilter && branchFilter) {
+        if (!ayFilter && (branchFilter || staffBranchId)) {
             const activeYear = await AcademicYear.findOne({
                 instituteId,
-                $or: [{ branchId: branchFilter }, { branchId: null }],
+                $or: [{ branchId: branchFilter || staffBranchId }, { branchId: null }],
                 status: "active"
             }).sort({ startDate: -1 });
             ayFilter = activeYear?._id;

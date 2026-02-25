@@ -123,7 +123,10 @@ export const getHostels = async (req, res) => {
         const { branchId, type } = req.query;
 
         let query = { instituteId };
-        if (branchId) query.branchId = branchId;
+        // If a valid branchId is provided, filter; otherwise return all branches
+        if (branchId && branchId !== 'all' && branchId !== 'undefined' && branchId.length === 24) {
+            query.branchId = branchId;
+        }
         if (type) query.type = type;
 
         const hostels = await Hostel.find(query)

@@ -1,58 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStaffAuth } from '../context/StaffAuthContext';
 import { STAFF_ROLES } from '../config/roles';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, User, Briefcase, MapPin, Filter, Truck, MoreVertical, ChevronRight } from 'lucide-react';
-
-// --- MOCK EMPLOYEE DATA ---
-const MOCK_EMPLOYEES = [
-    {
-        id: 'EMP-2024-001',
-        name: 'Ramesh Singh',
-        employeeId: 'EMP-D-101',
-        designation: 'Senior Driver',
-        department: 'Transport',
-        type: 'Full-time',
-        status: 'Active',
-        contact: '9876543210'
-    },
-    {
-        id: 'EMP-2024-002',
-        name: 'Sunita Sharma',
-        employeeId: 'EMP-O-202',
-        designation: 'Office Clerk',
-        department: 'Operations',
-        type: 'Full-time',
-        status: 'Active',
-        contact: '9876543211'
-    },
-    {
-        id: 'EMP-2024-003',
-        name: 'Mohan Lal',
-        employeeId: 'EMP-H-305',
-        designation: 'Helper',
-        department: 'Maintenance',
-        type: 'Contract',
-        status: 'On Leave',
-        contact: '9876543212'
-    },
-    {
-        id: 'EMP-2024-004',
-        name: 'Rajesh Gupta',
-        employeeId: 'EMP-S-401',
-        designation: 'Guard',
-        department: 'Security',
-        type: 'Full-time',
-        status: 'Active',
-        contact: '9876543213'
-    },
-];
+import { fetchDrivers } from '../services/transport.api';
 
 const Employees = () => {
     const { user } = useStaffAuth();
     const navigate = useNavigate();
 
-    // Filters State
+    const [employees, setEmployees] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [filterDept, setFilterDept] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
@@ -73,8 +32,32 @@ const Employees = () => {
 
     const canAddEmployee = user?.role === STAFF_ROLES.DATA_ENTRY;
 
+    useEffect(() => {
+        const load = async () => {
+            setLoading(true);
+            const data = await fetchDrivers();
+            const mapped = (data || []).map((d) => {
+                const status = 'active';
+
+                return {
+                    id: d._id,
+                    name: d.name,
+                    employeeId: (d._id || '').toString().slice(-6).toUpperCase(),
+                    designation: 'Driver',
+                    department: 'Transport',
+                    type: 'Full-time',
+                    status: status === 'active' ? 'Active' : status === 'suspended' ? 'On Leave' : 'Inactive',
+                    contact: d.mobile || '-'
+                };
+            });
+            setEmployees(mapped);
+            setLoading(false);
+        };
+        load();
+    }, []);
+
     // Filter Logic
-    const filteredEmployees = MOCK_EMPLOYEES.filter(emp => {
+    const filteredEmployees = employees.filter(emp => {
         const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesDept = filterDept === 'All' || emp.department === filterDept;
@@ -96,9 +79,9 @@ const Employees = () => {
             <div className="bg-white px-5 pt-5 pb-4 border-b border-gray-200">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900">Employee Directory</h1>
+                        <h1 className="text-xl font-bold text-gray-900">Drivers</h1>
                         <p className="text-xs text-gray-500 flex items-center gap-2">
-                            <Briefcase size={12} /> Non-teaching staff & operations team
+                            <Truck size={12} /> Transport drivers & fleet staff
                         </p>
                     </div>
                     {canAddEmployee && (
@@ -153,8 +136,14 @@ const Employees = () => {
                 </div>
             </div>
 
-            {/* Content Area */}
+                {/* Content Area */}
             <div className="p-4 md:p-6">
+
+                {loading && (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-4 p-6 text-center text-gray-500 text-sm">
+                        Loading employees...
+                    </div>
+                )}
 
                 {/* Desktop Table View (Hidden on Mobile) */}
                 <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

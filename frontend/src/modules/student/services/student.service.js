@@ -1,4 +1,5 @@
 import { API_URL } from '@/app/api';
+import { requestFcmToken } from '@/firebaseMessaging';
 import { homeworkData, homeworkStats } from '../data/homeworkData';
 import { notices } from '../data/noticesData';
 import { attendanceData } from '../data/attendanceData';
@@ -131,11 +132,44 @@ class StudentService {
         });
     }
 
-    // Notifications
+    // Notifications (real API-backed)
     async getNotifications() {
-        return new Promise((resolve) => {
-            setTimeout(() => resolve(notificationsData), 800);
-        });
+        try {
+            const token = localStorage.getItem('token');
+            const resp = await fetch(`${API_URL}/student/notifications`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const json = await resp.json();
+            if (json.success && Array.isArray(json.data)) {
+                return json.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            // Fallback to mock data so UI still works in demo
+            return notificationsData;
+        }
+    }
+
+    // Firebase push: register browser token with backend
+    async registerFcmIfSupported() {
+        try {
+            const token = await requestFcmToken();
+            if (!token) return;
+            const authToken = localStorage.getItem('token');
+            await fetch(`${API_URL}/student/register-fcm-token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ token })
+            });
+        } catch (error) {
+            console.error('Error registering FCM token:', error);
+        }
     }
 
     // Form Submissions (Mocking real logic)

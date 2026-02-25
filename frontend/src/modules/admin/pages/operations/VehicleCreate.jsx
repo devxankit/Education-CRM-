@@ -9,6 +9,7 @@ const VehicleCreate = () => {
         academicYears,
         fetchAcademicYears,
         transportVehicles,
+        fetchTransportVehicles,
         addTransportVehicle,
         updateTransportVehicle,
         deleteTransportVehicle,
@@ -41,8 +42,9 @@ const VehicleCreate = () => {
     useEffect(() => {
         if (branchId) {
             fetchAcademicYears(branchId);
+            fetchTransportVehicles(branchId);
         }
-    }, [branchId, fetchAcademicYears]);
+    }, [branchId, fetchAcademicYears, fetchTransportVehicles]);
 
     useEffect(() => {
         if (academicYears.length > 0 && !academicYearId) {
@@ -86,12 +88,9 @@ const VehicleCreate = () => {
         };
 
         if (editingId) {
-            updateTransportVehicle(editingId, payload);
-            addToast('Vehicle updated locally. (Backend wiring pending)', 'success');
+            await updateTransportVehicle(editingId, payload);
         } else {
-            // UI-level master list: store in adminStore.transportVehicles
-            addTransportVehicle(payload);
-            addToast('Vehicle added locally. (Backend wiring pending)', 'success');
+            await addTransportVehicle(payload);
         }
 
         setSaving(false);
@@ -110,8 +109,8 @@ const VehicleCreate = () => {
 
     const handleEditVehicle = (vehicle) => {
         setEditingId(vehicle.id);
-        setBranchId(vehicle.branchId);
-        setAcademicYearId(vehicle.academicYearId || '');
+        setBranchId(vehicle.branchId?._id || vehicle.branchId || '');
+        setAcademicYearId(vehicle.academicYearId?._id || vehicle.academicYearId || '');
         setFormData({
             code: vehicle.code || '',
             registrationNo: vehicle.registrationNo || '',
@@ -173,8 +172,8 @@ const VehicleCreate = () => {
 
             {/* Vehicle List */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                <h2 className="text-sm font-semibold text-gray-800 mb-3">Existing Vehicles (local)</h2>
-                {transportVehicles.filter(v => !branchId || v.branchId === branchId).length === 0 ? (
+                <h2 className="text-sm font-semibold text-gray-800 mb-3">Existing Vehicles</h2>
+                {transportVehicles.filter(v => !branchId || v.branchId === branchId || v.branchId?._id === branchId).length === 0 ? (
                     <div className="text-xs text-gray-400 py-6 text-center">
                         No vehicles added yet for this branch. Click <strong>Create Vehicle</strong> to add one.
                     </div>
@@ -193,7 +192,7 @@ const VehicleCreate = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {transportVehicles
-                                    .filter(v => !branchId || v.branchId === branchId)
+                                    .filter(v => !branchId || v.branchId === branchId || v.branchId?._id === branchId)
                                     .map(v => (
                                         <tr key={v.id}>
                                             <td className="px-3 py-2 font-mono text-[11px] text-gray-800">{v.code}</td>
@@ -201,7 +200,7 @@ const VehicleCreate = () => {
                                             <td className="px-3 py-2 text-gray-600">{v.model}</td>
                                             <td className="px-3 py-2 text-gray-600">{v.capacity}</td>
                                             <td className="px-3 py-2 text-gray-600">
-                                                {academicYears.find(ay => ay._id === v.academicYearId)?.name || '—'}
+                                                {academicYears.find(ay => ay._id === (v.academicYearId?._id || v.academicYearId))?.name || v.academicYearId?.name || '—'}
                                             </td>
                                             <td className="px-3 py-2 text-right">
                                                 <button
