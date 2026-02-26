@@ -5,6 +5,10 @@ import YearStatusBadge from './YearStatusBadge';
 
 const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmin, branches = [] }) => {
 
+    // Pagination: 5 records per page
+    const pageSize = 5;
+    const [page, setPage] = React.useState(1);
+
     // Sort logic: Active first, then Upcoming, then Closed (newest first)
     const sortedYears = [...years].sort((a, b) => {
         if (a.status === 'active') return -1;
@@ -13,6 +17,11 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
         if (b.status === 'upcoming' && a.status !== 'upcoming') return 1;
         return new Date(b.endDate) - new Date(a.endDate);
     });
+
+    const totalPages = Math.max(1, Math.ceil(sortedYears.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const startIndex = (currentPage - 1) * pageSize;
+    const pageItems = sortedYears.slice(startIndex, startIndex + pageSize);
 
     if (!years || years.length === 0) {
         return (
@@ -27,24 +36,24 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
     }
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[420px]">
+            <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
                         <tr>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Academic Session</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Branch</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100 w-32">Start Date</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100 w-32">End Date</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Status</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100">Created Metadata</th>
-                            <th className="px-6 py-4 font-medium border-b border-gray-100 text-right">Actions</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100">Academic Session</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100">Branch</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100 w-32">Start Date</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100 w-32">End Date</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100">Status</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100">Created Metadata</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
-                        {sortedYears.map((year) => (
+                        {pageItems.map((year) => (
                             <tr key={year._id || year.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-5">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                                             <Calendar size={18} />
@@ -53,28 +62,28 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                                     </div>
                                 </td>
 
-                                <td className="px-6 py-4 text-gray-600 text-sm">
+                                <td className="px-6 py-5 text-gray-600 text-sm">
                                     {year.branchName || (branches.find(b => b._id === year.branchId)?.name) || 'All Branches'}
                                 </td>
 
-                                <td className="px-6 py-4 text-gray-600 font-mono text-xs">
+                                <td className="px-6 py-5 text-gray-600 font-mono text-xs">
                                     {year.startDate}
                                 </td>
 
-                                <td className="px-6 py-4 text-gray-600 font-mono text-xs">
+                                <td className="px-6 py-5 text-gray-600 font-mono text-xs">
                                     {year.endDate}
                                 </td>
 
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-5">
                                     <YearStatusBadge status={year.status} />
                                 </td>
 
-                                <td className="px-6 py-4 text-xs text-gray-500">
+                                <td className="px-6 py-5 text-xs text-gray-500">
                                     <div>{year.createdOn}</div>
                                     <div className="text-[10px] text-gray-400">by {year.createdBy}</div>
                                 </td>
 
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-6 py-5 text-right">
                                     <div className="flex items-center justify-end gap-2">
 
                                         {/* Activate Button (Only for Upcoming + Super Admin) */}
@@ -112,9 +121,32 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                 </table>
             </div>
 
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex justify-between">
-                <span>Showing {years.length} Academic Years</span>
-                <span>System Time: Asia/Kolkata</span>
+            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span>
+                    Showing {pageItems.length} of {years.length} Academic Years
+                    {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                </span>
+                {totalPages > 1 && (
+                    <div className="inline-flex items-center gap-2">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-2.5 py-1 rounded border border-gray-200 bg-white text-[11px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                        >
+                            Prev
+                        </button>
+                        <span className="text-[11px] text-gray-500">
+                            {currentPage} / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-2.5 py-1 rounded border border-gray-200 bg-white text-[11px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -4,6 +4,10 @@ import { Building2, ChevronRight, MapPin, GraduationCap, UserCog, BookOpen } fro
 import BranchStatusBadge from './BranchStatusBadge';
 
 const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
+    // Pagination: 5 per page
+    const pageSize = 5;
+    const [page, setPage] = React.useState(1);
+
     if (!branches || branches.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-gray-300">
@@ -22,9 +26,14 @@ const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
         );
     }
 
+    const totalPages = Math.max(1, Math.ceil(branches.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const startIndex = (currentPage - 1) * pageSize;
+    const pageItems = branches.slice(startIndex, startIndex + pageSize);
+
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[420px]">
+            <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
                         <tr>
@@ -36,7 +45,7 @@ const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
-                        {branches.map((branch) => (
+                        {pageItems.map((branch) => (
                             <tr
                                 key={branch._id}
                                 onClick={() => onRowClick(branch)}
@@ -109,9 +118,32 @@ const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
                 </table>
             </div>
 
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex justify-between">
-                <span>Showing {branches.length} Campus Locations</span>
-                <span>Sorted by Creation Date</span>
+            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span>
+                    Showing {pageItems.length} of {branches.length} Campus Locations
+                    {totalPages > 1 && ` • Page ${currentPage} of ${totalPages}`}
+                </span>
+                {totalPages > 1 && (
+                    <div className="inline-flex items-center gap-2">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-2.5 py-1 rounded border border-gray-200 bg-white text-[11px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                        >
+                            Prev
+                        </button>
+                        <span className="text-[11px] text-gray-500">
+                            {currentPage} / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-2.5 py-1 rounded border border-gray-200 bg-white text-[11px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

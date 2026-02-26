@@ -151,7 +151,7 @@ const Branches = () => {
     });
 
     return (
-        <div className="h-full flex flex-col relative pb-10">
+        <div className="h-full flex flex-col relative pb-4">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
@@ -213,7 +213,7 @@ const Branches = () => {
             )}
 
             {/* Count Footer */}
-            <div className="mt-4 text-xs text-center text-gray-400">
+            <div className="mt-2 text-[11px] text-center text-gray-400">
                 Displaying {filteredBranches.length} of {branches.length} campuses
             </div>
 
