@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
 dbConnect();
 
 // ✅ CORS
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: allowedOrigins }));
 
 // ============================
 // ✅ Normal Middlewares AFTER webhook
