@@ -35,10 +35,14 @@ const studentSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
+        studentEmail: {
+            type: String,
+            lowercase: true,
+            trim: true,
+        },
         parentEmail: {
             type: String,
             required: true,
-            unique: true,
             lowercase: true,
             trim: true,
         },

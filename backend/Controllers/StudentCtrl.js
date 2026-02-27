@@ -10,7 +10,7 @@ import Timetable from "../Models/TimetableModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
-import { sendParentCredentialsEmail } from "../Helpers/SendMail.js";
+import { sendParentCredentialsEmail, sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
 import Notice from "../Models/NoticeModel.js";
 import Homework from "../Models/HomeworkModel.js";
 import Attendance from "../Models/AttendanceModel.js";
@@ -385,15 +385,7 @@ export const admitStudent = async (req, res) => {
             admissionData._isLateApplication = isLateApplication;
         }
 
-        // 1. Internal Unique Check (parentEmail)
-        if (admissionData.parentEmail) {
-            const existingStudent = await Student.findOne({ parentEmail: admissionData.parentEmail });
-            if (existingStudent) {
-                return res.status(400).json({ success: false, message: "Student with this parent email already exists" });
-            }
-        }
-
-        // 1.1 Capacity Check (skip if policy allowed waitlist)
+        // 1. Capacity Check (skip if policy allowed waitlist)
         if (classData && sectionData && !admissionData._forceStatus) {
             const studentCount = await Student.countDocuments({ sectionId: admissionData.sectionId, status: { $nin: ['withdrawn', 'alumni'] } });
             const studentCapacity = sectionData.capacity ?? classData.capacity ?? 40;
@@ -514,6 +506,8 @@ export const admitStudent = async (req, res) => {
             rollNo = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit random
         }
 
+        const studentPassword = admissionData.password || "12345678";
+
         const student = new Student({
             ...admissionData,
             rollNo,
@@ -522,7 +516,7 @@ export const admitStudent = async (req, res) => {
             branchId, // Use the resolved branchId
             academicYearId: resolvedAcademicYearId || undefined,
             parentId: admissionData.parentId || parentId,
-            password: admissionData.password || '12345678',
+            password: studentPassword,
             status: studentStatus,
             isLateApplication: isLate || false
         });
@@ -545,6 +539,22 @@ export const admitStudent = async (req, res) => {
                 console.log(`Credentials email sent to ${admissionData.parentEmail}`);
             }).catch(err => {
                 console.error(`Failed to send email to ${admissionData.parentEmail}:`, err);
+            });
+        }
+
+        // 7. Send credentials email to student (if email provided)
+        if (admissionData.studentEmail) {
+            const studentName = `${admissionData.firstName} ${admissionData.lastName || ""}`.trim();
+            sendLoginCredentialsEmail(
+                admissionData.studentEmail,
+                studentPassword,
+                studentName,
+                "Student"
+            ).catch((err) => {
+                console.error(
+                    `Failed to send student credentials email to ${admissionData.studentEmail}:`,
+                    err
+                );
             });
         }
 
@@ -879,10 +889,11 @@ export const loginStudent = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
-        // Search by admissionNo or parentEmail
+        // Search by admissionNo, studentEmail or parentEmail
         const student = await Student.findOne({
             $or: [
                 { admissionNo: identifier },
+                { studentEmail: identifier?.toLowerCase() },
                 { parentEmail: identifier?.toLowerCase() }
             ]
         });

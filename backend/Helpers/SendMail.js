@@ -84,7 +84,6 @@ export const sendLoginCredentialsEmail = async (to, password, fullName, role) =>
           <p>Hello <b>${fullName}</b>,</p>
           <p>Your <b>${role}</b> account has been created successfully. Below are your login credentials:</p>
           <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><b>Portal URL:</b> <a href="${process.env.FRONTEND_URL}/login">Login Here</a></p>
             <p style="margin: 5px 0;"><b>Email / User ID:</b> ${to}</p>
             <p style="margin: 5px 0;"><b>Temporary Password:</b> <span style="color: #e11d48; font-family: monospace; font-size: 18px;">${password}</span></p>
           </div>
@@ -177,7 +176,6 @@ export const sendParentCredentialsEmail = async (to, password, parentName, stude
             
             <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #10b981;">
               <h3 style="color: #065f46; margin-top: 0;">🔐 Your Login Credentials</h3>
-              <p style="margin: 8px 0; color: #374151;"><b>Portal URL:</b> <a href="${process.env.FRONTEND_URL}/parent/login" style="color: #4f46e5;">Login to Parent Portal</a></p>
               <p style="margin: 8px 0; color: #374151;"><b>Mobile Number:</b> (Your registered mobile)</p>
               <p style="margin: 8px 0; color: #374151;"><b>Password:</b> <span style="background: #4f46e5; color: white; padding: 5px 15px; border-radius: 5px; font-family: monospace; font-size: 18px;">${password}</span></p>
             </div>

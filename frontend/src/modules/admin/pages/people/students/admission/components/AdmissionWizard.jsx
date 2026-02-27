@@ -50,6 +50,7 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
         firstName: '', middleName: '', lastName: '',
         dob: '', gender: '', bloodGroup: '', nationality: 'Indian',
         category: 'General',
+        studentEmail: '',
         parentName: '', parentMobile: '', parentEmail: '',
         address: '', city: '', pincode: '',
 
@@ -86,17 +87,14 @@ const AdmissionWizard = ({ onComplete, onCancel, branchId, academicYearId, onBra
             }
         }
         if (currentStepKey === 'personal') {
-            if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.parentEmail) {
-                showError("Please fill all required fields (First Name, Last Name, DOB, Gender, and Parent Email).");
-                return;
-            }
-            if (!formData.parentMobile || String(formData.parentMobile).trim().length < 10) {
-                showError("Please enter a valid Parent Mobile number (at least 10 digits).");
+            // Only validate student core fields on Step 1
+            if (!formData.firstName || !formData.lastName || !formData.dob || !formData.gender || !formData.studentEmail) {
+                showError("Please fill all required fields (First Name, Last Name, DOB, Gender, and Student Email).");
                 return;
             }
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(formData.parentEmail)) {
-                showError("Please enter a valid Parent Email address.");
+            if (!emailRegex.test(formData.studentEmail)) {
+                showError("Please enter a valid Student Email address.");
                 return;
             }
         }
