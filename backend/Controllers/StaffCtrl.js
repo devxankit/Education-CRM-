@@ -18,7 +18,7 @@ import { generateToken, generateTempOtpToken, verifyTempOtpToken } from "../Help
 import { logSecurity, logUserActivity } from "../Helpers/logger.js";
 import { calculateTaxFromRules } from "../Helpers/calculateTax.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
-import { sendLoginCredentialsEmail, sendStaffOtpEmail } from "../Helpers/SendMail.js";
+import { sendLoginCredentialsEmail, sendStaffOtpEmail, sendStaffResetOtpEmail, sendParentFeeReminderEmail } from "../Helpers/SendMail.js";
 import OtpVerification from "../Models/OtpVerificationModel.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 
@@ -494,6 +494,144 @@ export const getStaffFeeOverview = async (req, res) => {
                     totalCollected
                 }
             }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= SEND FEE REMINDERS TO PARENTS =================
+export const sendFeeRemindersToParents = async (req, res) => {
+    try {
+        const staffId = req.user._id;
+        const instituteId = req.user.instituteId || staffId;
+        const branchId = req.user.branchId;
+
+        const minPending = Number(req.body.minPending || req.query.minPending || 1);
+        const maxEmails = Number(req.body.limit || req.query.limit || 200);
+
+        const queryScope = { instituteId, status: 'active' };
+        if (branchId && branchId !== "all") {
+            queryScope.branchId = branchId;
+        }
+
+        const students = await Student.find(queryScope)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("parentId", "name email")
+            .sort({ firstName: 1 });
+
+        if (!students.length) {
+            return res.status(200).json({
+                success: true,
+                message: "No active students found for fee reminders.",
+                data: { sent: 0, skipped: 0 }
+            });
+        }
+
+        const studentIds = students.map(s => s._id);
+
+        const paymentsByStudent = await FeePayment.aggregate([
+            { $match: { studentId: { $in: studentIds }, status: 'Success' } },
+            { $group: { _id: '$studentId', totalPaid: { $sum: '$amountPaid' } } }
+        ]);
+        const paymentMap = new Map(paymentsByStudent.map(p => [p._id.toString(), p.totalPaid]));
+
+        const feeStructures = await FeeStructure.find({
+            instituteId,
+            status: 'active'
+        }).lean();
+
+        const seen = new Set();
+        const branchIds = [];
+        students.forEach(s => {
+            const bid = s.branchId?.toString();
+            if (bid && !seen.has(bid)) {
+                seen.add(bid);
+                branchIds.push(s.branchId);
+            }
+        });
+
+        const taxesByBranch = {};
+        if (branchIds.length > 0) {
+            const allTaxes = await Tax.find({ branchId: { $in: branchIds }, isActive: true }).lean();
+            allTaxes.forEach(t => {
+                const bid = t.branchId?.toString();
+                if (!taxesByBranch[bid]) taxesByBranch[bid] = [];
+                taxesByBranch[bid].push(t);
+            });
+        }
+
+        const reminders = [];
+
+        students.forEach(student => {
+            const feeStructure = feeStructures.find(fs =>
+                !fs.applicableClasses?.length || fs.applicableClasses.some(c => c.toString() === (student.classId?._id || student.classId)?.toString())
+            );
+            if (!feeStructure) return;
+
+            const baseAmount = feeStructure.totalAmount || 0;
+            const branchKey = (feeStructure.branchId || student.branchId)?.toString();
+            const taxes = taxesByBranch[branchKey] || [];
+            const { totalTax } = calculateTaxFromRules(baseAmount, taxes, 'fee');
+            const totalFee = baseAmount + totalTax;
+            const totalPaid = paymentMap.get(student._id.toString()) || 0;
+            const pending = Math.max(0, totalFee - totalPaid);
+
+            if (pending < minPending || totalFee <= 0) return;
+
+            const parent = student.parentId;
+            if (!parent || !parent.email) return;
+
+            let nextDue = null;
+            if (Array.isArray(feeStructure.installments) && feeStructure.installments.length > 0) {
+                feeStructure.installments.forEach(inst => {
+                    if (!inst.dueDate) return;
+                    const due = new Date(inst.dueDate);
+                    if (!nextDue || due < nextDue) {
+                        nextDue = due;
+                    }
+                });
+            }
+
+            const fullName = [student.firstName, student.middleName, student.lastName].filter(Boolean).join(' ');
+
+            reminders.push({
+                to: parent.email,
+                parentName: parent.name || 'Parent',
+                studentName: fullName || 'Student',
+                pendingAmount: pending,
+                nextDueDate: nextDue
+            });
+        });
+
+        if (!reminders.length) {
+            return res.status(200).json({
+                success: true,
+                message: "No pending fees found for sending reminders.",
+                data: { sent: 0, skipped: 0 }
+            });
+        }
+
+        let sent = 0;
+        let skipped = 0;
+
+        for (const reminder of reminders.slice(0, maxEmails)) {
+            const ok = await sendParentFeeReminderEmail(
+                reminder.to,
+                reminder.parentName,
+                reminder.studentName,
+                reminder.pendingAmount,
+                reminder.nextDueDate
+            );
+            if (ok) sent += 1;
+            else skipped += 1;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Fee reminders processed. Sent: ${sent}, Skipped: ${skipped}.`,
+            data: { sent, skipped, totalCandidates: reminders.length }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -1192,6 +1330,71 @@ export const loginStaff = async (req, res) => {
             success: false,
             message: error.message,
         });
+    }
+};
+
+// ================= FORGOT PASSWORD (Send OTP) =================
+export const forgotStaffPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email || !email.trim()) {
+            return res.status(400).json({ success: false, message: "Please enter your email" });
+        }
+        const emailLower = email.trim().toLowerCase();
+        const staff = await Staff.findOne({ email: emailLower });
+        if (!staff) {
+            return res.status(404).json({ success: false, message: "No staff found with this email" });
+        }
+        if (staff.status !== 'active') {
+            return res.status(403).json({ success: false, message: "Account is not active. Contact administrator." });
+        }
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        await Staff.findByIdAndUpdate(staff._id, {
+            $set: { resetPasswordOtp: otp, resetPasswordOtpExpires: expiresAt }
+        });
+        const sent = await sendStaffResetOtpEmail(staff.email, otp, staff.name);
+        if (!sent) {
+            return res.status(500).json({ success: false, message: "Failed to send OTP. Try again later." });
+        }
+        res.status(200).json({
+            success: true,
+            message: "OTP sent to your registered email",
+            email: staff.email.replace(/(.{3}).*(@.*)/, "$1***$2")
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= RESET PASSWORD (Verify OTP + set new password) =================
+export const resetStaffPasswordWithOtp = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: "Email, OTP and new password are required" });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+        }
+        const emailLower = email.trim().toLowerCase();
+        const staff = await Staff.findOne({ email: emailLower });
+        if (!staff) {
+            return res.status(404).json({ success: false, message: "Staff not found" });
+        }
+        if (!staff.resetPasswordOtp || staff.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!staff.resetPasswordOtpExpires || new Date() > staff.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+        staff.password = newPassword;
+        staff.resetPasswordOtp = undefined;
+        staff.resetPasswordOtpExpires = undefined;
+        await staff.save();
+        res.status(200).json({ success: true, message: "Password reset successfully. You can now login." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 

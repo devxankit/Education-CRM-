@@ -62,6 +62,42 @@ export const useTeacherStore = create(
                 }
             },
 
+            requestPasswordReset: async (email) => {
+                try {
+                    const response = await axios.post(`${API_URL}/teacher/forgot-password`, { email: email?.trim() });
+                    if (response.data.success) {
+                        return { success: true, message: response.data.message, email: response.data.email };
+                    }
+                    return { success: false, message: response.data.message || 'Failed to send OTP' };
+                } catch (error) {
+                    console.error('Teacher Forgot Password Error:', error);
+                    return {
+                        success: false,
+                        message: error.response?.data?.message || 'Failed to send OTP'
+                    };
+                }
+            },
+
+            resetPasswordWithOtp: async (email, otp, newPassword) => {
+                try {
+                    const response = await axios.post(`${API_URL}/teacher/reset-password`, {
+                        email: email?.trim(),
+                        otp: String(otp).trim(),
+                        newPassword
+                    });
+                    if (response.data.success) {
+                        return { success: true, message: response.data.message };
+                    }
+                    return { success: false, message: response.data.message || 'Failed to reset password' };
+                } catch (error) {
+                    console.error('Teacher Reset Password Error:', error);
+                    return {
+                        success: false,
+                        message: error.response?.data?.message || 'Failed to reset password'
+                    };
+                }
+            },
+
             logout: () => {
                 localStorage.removeItem('token');
                 set({

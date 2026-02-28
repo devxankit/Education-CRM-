@@ -161,6 +161,9 @@ const studentSchema = new mongoose.Schema(
                 type: String,
             }
         ],
+        // Forgot password OTP (student login)
+        resetPasswordOtp: { type: String },
+        resetPasswordOtpExpires: { type: Date },
     },
     { timestamps: true }
 );

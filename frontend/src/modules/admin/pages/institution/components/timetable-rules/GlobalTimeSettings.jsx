@@ -30,7 +30,10 @@ const GlobalTimeSettings = ({ ruleData, onChange, isLocked }) => {
                         <input
                             type="time"
                             value={ruleData.startTime}
-                            onChange={(e) => onChange('startTime', e.target.value)}
+                            onChange={(e) => {
+                                onChange('startTime', e.target.value);
+                                e.target.blur();
+                            }}
                             disabled={isLocked}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                         />
@@ -40,7 +43,10 @@ const GlobalTimeSettings = ({ ruleData, onChange, isLocked }) => {
                         <input
                             type="time"
                             value={ruleData.endTime}
-                            onChange={(e) => onChange('endTime', e.target.value)}
+                            onChange={(e) => {
+                                onChange('endTime', e.target.value);
+                                e.target.blur();
+                            }}
                             disabled={isLocked}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                         />

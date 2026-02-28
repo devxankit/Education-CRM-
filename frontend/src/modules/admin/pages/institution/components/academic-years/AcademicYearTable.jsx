@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Calendar, PlayCircle, Lock, Eye, ChevronRight } from 'lucide-react';
+import { Calendar, PlayCircle, Lock, Eye, ChevronRight, Plus } from 'lucide-react';
 import YearStatusBadge from './YearStatusBadge';
 
-const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmin, branches = [] }) => {
+const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmin, branches = [], onCreateNew }) => {
 
-    // Pagination: 5 records per page
-    const pageSize = 5;
+    // Show all academic sessions on a single page for clarity
+    const pageSize = years && years.length > 0 ? years.length : 5;
     const [page, setPage] = React.useState(1);
 
     // Sort logic: Active first, then Upcoming, then Closed (newest first)
@@ -31,6 +31,16 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                 </div>
                 <h3 className="text-gray-900 font-medium">No Academic Years Found</h3>
                 <p className="text-gray-500 text-sm mt-1">Configure your first academic session to begin.</p>
+                {onCreateNew && (
+                    <button
+                        type="button"
+                        onClick={onCreateNew}
+                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold shadow-sm hover:bg-indigo-700 transition-colors"
+                    >
+                        <Plus size={16} />
+                        Add Academic Year
+                    </button>
+                )}
             </div>
         );
     }

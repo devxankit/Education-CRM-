@@ -10,7 +10,7 @@ import Timetable from "../Models/TimetableModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { uploadBase64ToCloudinary } from "../Helpers/cloudinaryHelper.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
-import { sendParentCredentialsEmail, sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
+import { sendParentCredentialsEmail, sendLoginCredentialsEmail, sendStudentResetOtpEmail } from "../Helpers/SendMail.js";
 import Notice from "../Models/NoticeModel.js";
 import Homework from "../Models/HomeworkModel.js";
 import Attendance from "../Models/AttendanceModel.js";
@@ -793,6 +793,28 @@ export const updateStudent = async (req, res) => {
     }
 };
 
+// ================= DELETE STUDENT =================
+export const deleteStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const student = await Student.findOneAndDelete({ _id: id, instituteId });
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        logUserActivity(req, { branchId: student.branchId, action: "student_deleted", entityType: "Student", entityId: id, description: "Student record deleted" });
+
+        const io = req.app.get('io');
+        if (io) io.emit('student_deleted', { studentId: id });
+
+        res.status(200).json({ success: true, message: "Student deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= CONFIRM ADMISSION (Workflow Policy) =================
 export const confirmAdmission = async (req, res) => {
     try {
@@ -889,13 +911,14 @@ export const loginStudent = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
-        // Search by admissionNo, studentEmail or parentEmail
+        // Login using student email only
+        const email = identifier?.toLowerCase().trim();
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: "Email and password are required" });
+        }
+
         const student = await Student.findOne({
-            $or: [
-                { admissionNo: identifier },
-                { studentEmail: identifier?.toLowerCase() },
-                { parentEmail: identifier?.toLowerCase() }
-            ]
+            studentEmail: email
         });
 
         if (!student) {
@@ -933,6 +956,91 @@ export const loginStudent = async (req, res) => {
             },
             token
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= FORGOT PASSWORD (Send OTP to email) =================
+export const forgotStudentPassword = async (req, res) => {
+    try {
+        const { identifier } = req.body; // studentEmail
+        if (!identifier || !identifier.trim()) {
+            return res.status(400).json({ success: false, message: "Please enter your email" });
+        }
+
+        const email = identifier.trim().toLowerCase();
+
+        const student = await Student.findOne({
+            studentEmail: email
+        });
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "No student found with this email" });
+        }
+
+        const emailToSend = student.studentEmail;
+        if (!emailToSend) {
+            return res.status(400).json({ success: false, message: "No student email linked to this account. Contact school admin." });
+        }
+
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await Student.findByIdAndUpdate(student._id, {
+            $set: { resetPasswordOtp: otp, resetPasswordOtpExpires: expiresAt }
+        });
+
+        const fullName = student.firstName && student.lastName ? `${student.firstName} ${student.lastName}` : student.name || "Student";
+        const sent = await sendStudentResetOtpEmail(emailToSend, otp, fullName);
+
+        if (!sent) {
+            return res.status(500).json({ success: false, message: "Failed to send OTP email. Try again later." });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "OTP sent to your registered email",
+            email: emailToSend.replace(/(.{3}).*(@.*)/, "$1***$2") // mask for display
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= RESET PASSWORD (Verify OTP + set new password) =================
+export const resetStudentPasswordWithOtp = async (req, res) => {
+    try {
+        const { identifier, otp, newPassword } = req.body;
+        if (!identifier || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: "Email, OTP and new password are required" });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+        }
+
+        const email = identifier.trim().toLowerCase();
+
+        const student = await Student.findOne({
+            studentEmail: email
+        });
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+        if (!student.resetPasswordOtp || student.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!student.resetPasswordOtpExpires || new Date() > student.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+
+        student.password = newPassword;
+        student.resetPasswordOtp = undefined;
+        student.resetPasswordOtpExpires = undefined;
+        await student.save();
+
+        res.status(200).json({ success: true, message: "Password reset successfully. You can now login." });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

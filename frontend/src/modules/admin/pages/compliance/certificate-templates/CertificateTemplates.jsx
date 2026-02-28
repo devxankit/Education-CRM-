@@ -179,6 +179,7 @@ const CertificateTemplates = () => {
                     templates={filteredTemplates}
                     onEdit={handleEdit}
                     onStatusChange={handleStatusChange}
+                    onCreateNew={handleCreate}
                 />
             )}
 

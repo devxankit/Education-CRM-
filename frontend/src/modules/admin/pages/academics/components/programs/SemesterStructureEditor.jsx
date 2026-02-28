@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layers, Calendar, Award, Book } from 'lucide-react';
 
 const SemesterStructureEditor = ({ program }) => {
 
+    const navigate = useNavigate();
     // Derived state for tabs based on totalSemesters
     const semesterCount = program.totalSemesters || 1;
     const [activeSem, setActiveSem] = useState(1);
@@ -90,7 +92,13 @@ const SemesterStructureEditor = ({ program }) => {
                         <p className="text-xs text-gray-500 max-w-[280px] my-2 leading-relaxed break-words">
                             To assign subjects to this semester, use the Subject Master or Curriculum Planner.
                         </p>
-                        <button type="button" className="text-xs text-indigo-600 font-medium hover:underline shrink-0">View Mapped Subjects</button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/admin/academics/subjects')}
+                            className="text-xs text-indigo-600 font-medium hover:underline shrink-0"
+                        >
+                            View Mapped Subjects
+                        </button>
                     </div>
 
                 </div>

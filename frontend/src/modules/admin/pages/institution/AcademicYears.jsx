@@ -198,6 +198,7 @@ const AcademicYears = () => {
                     onCloseYear={(year) => setClosureTarget(year)}
                     onView={handleViewDetails}
                     isSuperAdmin={isSuperAdmin}
+                    onCreateNew={() => setIsCreateOpen(true)}
                 />
             )}
 

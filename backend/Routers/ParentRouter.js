@@ -4,6 +4,8 @@ import {
     getParents,
     updateParent,
     loginParent,
+    forgotParentPassword,
+    resetParentPasswordWithOtp,
     getLinkedStudents,
     linkStudent,
     unlinkStudent,
@@ -23,7 +25,8 @@ import {
     payChildFee,
     changeParentPassword,
     getChildTickets,
-    createChildTicket
+    createChildTicket,
+    getParentInstituteInfo
 } from "../Controllers/ParentCtrl.js";
 import { AuthMiddleware, isAdmin, isParent } from "../Middlewares/AuthMiddleware.js";
 
@@ -33,6 +36,8 @@ const router = express.Router();
 // PUBLIC ROUTES
 // ====================================
 router.post("/login", loginParent);
+router.post("/forgot-password", forgotParentPassword);
+router.post("/reset-password", resetParentPasswordWithOtp);
 
 // ====================================
 // ADMIN/INSTITUTE ROUTES (for managing parents)
@@ -54,6 +59,7 @@ router.get("/portal/dashboard", AuthMiddleware, isParent, getParentDashboard);
 router.get("/portal/profile", AuthMiddleware, isParent, getParentProfile);
 router.put("/portal/profile", AuthMiddleware, isParent, updateParentProfile);
 router.get("/portal/notices", AuthMiddleware, isParent, getParentNotices);
+router.get("/portal/institute", AuthMiddleware, isParent, getParentInstituteInfo);
 
 // Child-specific routes
 router.get("/portal/child/:studentId/attendance", AuthMiddleware, isParent, getChildAttendance);

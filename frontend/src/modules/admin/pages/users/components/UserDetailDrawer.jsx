@@ -1,13 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { X, User, MapPin, Clock, Shield, LogOut, Lock } from 'lucide-react';
 import UserStatusBadge from './UserStatusBadge';
 
-const UserDetailDrawer = ({ isOpen, onClose, user, onChangeStatus, onChangeRole, isSuperAdmin }) => {
+const UserDetailDrawer = ({ isOpen, onClose, user, onChangeStatus, onChangeRole, onUpdateProfile, isSuperAdmin, loading }) => {
 
     if (!isOpen || !user) return null;
 
     const isActive = user.status === 'active';
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        name: user.name || '',
+        email: user.email || ''
+    });
 
     const handleStatusToggle = () => {
         const newStatus = isActive ? 'suspended' : 'active';
@@ -15,6 +20,24 @@ const UserDetailDrawer = ({ isOpen, onClose, user, onChangeStatus, onChangeRole,
         if (window.confirm(`Are you sure you want to ${action} this user?`)) {
             onChangeStatus(user.id, newStatus);
         }
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        if (!editForm.name || !editForm.email) {
+            alert('Name and email are required');
+            return;
+        }
+        onUpdateProfile && onUpdateProfile(user.id, {
+            name: editForm.name,
+            email: editForm.email
+        });
+        setIsEditing(false);
     };
 
     return (
@@ -46,6 +69,71 @@ const UserDetailDrawer = ({ isOpen, onClose, user, onChangeStatus, onChangeRole,
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
+                    {/* Personal Details / Edit */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 flex flex-col gap-3">
+                        {!isEditing ? (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <div className="text-left">
+                                        <p className="text-sm font-semibold text-gray-800">Personal Details</p>
+                                        <p className="text-xs text-gray-500">Name and contact email</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(true)}
+                                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                                <div className="text-sm text-gray-700">
+                                    <div className="mb-1"><span className="font-medium">Name:</span> {user.name}</div>
+                                    <div className="mb-1"><span className="font-medium">Email:</span> {user.email}</div>
+                                </div>
+                            </>
+                        ) : (
+                            <form onSubmit={handleEditSubmit} className="space-y-3">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit Personal Details</p>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={editForm.name}
+                                        onChange={handleEditChange}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={editForm.email}
+                                        onChange={handleEditChange}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsEditing(false); setEditForm({ name: user.name || '', email: user.email || '' }); }}
+                                        className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="px-4 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
 
                     {/* Info Card */}
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 flex flex-col gap-3">

@@ -54,7 +54,9 @@ const staffSchema = new mongoose.Schema(
         bannerPic: {
             type: String,
             default: "",
-        }
+        },
+        resetPasswordOtp: { type: String },
+        resetPasswordOtpExpires: { type: Date },
     },
     { timestamps: true }
 );

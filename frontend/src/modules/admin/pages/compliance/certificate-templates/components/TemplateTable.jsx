@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { FileText, MoreVertical, Edit, User, Users, Archive, CheckCircle, Clock } from 'lucide-react';
+import { FileText, MoreVertical, Edit, User, Users, Archive, CheckCircle, Clock, Plus } from 'lucide-react';
 
-const TemplateTable = ({ templates, onEdit, onStatusChange }) => {
+const TemplateTable = ({ templates, onEdit, onStatusChange, onCreateNew }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -29,9 +28,22 @@ const TemplateTable = ({ templates, onEdit, onStatusChange }) => {
                 <tbody className="divide-y divide-gray-200">
                     {templates.length === 0 ? (
                         <tr>
-                            <td colSpan="6" className="px-6 py-12 text-center text-gray-400">
-                                <FileText size={48} className="mx-auto mb-4 opacity-20" />
-                                <p>No templates found. Create your first certificate template.</p>
+                            <td colSpan="6" className="px-6 py-12 text-center">
+                                <div className="flex flex-col items-center justify-center">
+                                    <FileText size={48} className="mb-4 text-gray-300" />
+                                    <p className="text-gray-500 font-medium mb-1">No certificate templates yet</p>
+                                    <p className="text-gray-400 text-sm mb-6">Create your first template to generate certificates for students or employees.</p>
+                                    {onCreateNew && (
+                                        <button
+                                            type="button"
+                                            onClick={onCreateNew}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                                        >
+                                            <Plus size={18} />
+                                            Add Certificate Template
+                                        </button>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ) : (

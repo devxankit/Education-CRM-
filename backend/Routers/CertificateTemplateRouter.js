@@ -6,12 +6,12 @@ import {
     deleteCertificateTemplate,
     updateCertificateTemplateStatus,
 } from "../Controllers/CertificateTemplateCtrl.js";
-import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
+import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
+router.use(isAdmin);
 
 router.get("/", getCertificateTemplates);
 router.post("/", createCertificateTemplate);

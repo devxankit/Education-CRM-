@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useParentStore } from '../../../store/parentStore';
 import {
     ArrowLeft, User, Bell, Shield, Moon, Globe,
-    ChevronRight, LogOut, HelpCircle, Phone, Mail, Lock
+    ChevronRight, LogOut, HelpCircle, Phone, Mail, Lock, Building2, MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ParentSettingsPage = () => {
     const navigate = useNavigate();
     const user = useParentStore(state => state.user);
+    const instituteProfile = useParentStore(state => state.instituteProfile);
     const logout = useParentStore(state => state.logout);
     const changePassword = useParentStore(state => state.changePassword);
 
@@ -154,6 +155,41 @@ const ParentSettingsPage = () => {
                     />
                 </div>
             </div>
+
+            {/* Institute Details Section */}
+            {instituteProfile && (
+                <div className="mb-4">
+                    <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        <Building2 size={14} className="text-gray-400" /> Institute Details
+                    </p>
+                    <div className="bg-white border-y border-gray-200 divide-y divide-gray-100">
+                        <SettingItem
+                            icon={Building2}
+                            label={instituteProfile.shortName || instituteProfile.legalName || 'Institute'}
+                            description={instituteProfile.affiliations && instituteProfile.affiliations.length > 0
+                                ? instituteProfile.affiliations.join(', ')
+                                : 'Affiliation information'}
+                            rightContent={
+                                <span className="text-[11px] text-gray-400 font-mono">
+                                    {(instituteProfile.type || 'school').toUpperCase()}
+                                </span>
+                            }
+                        />
+                        <SettingItem
+                            icon={MapPin}
+                            label={instituteProfile.city || instituteProfile.state || 'Location'}
+                            description={instituteProfile.address}
+                            rightContent={
+                                instituteProfile.phone || instituteProfile.website ? (
+                                    <span className="text-[11px] text-indigo-600 font-medium truncate max-w-[140px]">
+                                        {instituteProfile.phone || instituteProfile.website}
+                                    </span>
+                                ) : null
+                            }
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Notifications Section */}
             <div className="mb-4">

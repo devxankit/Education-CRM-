@@ -14,8 +14,9 @@ import SupportTicket from "../Models/SupportTicketModel.js";
 import HomeworkSubmission from "../Models/HomeworkSubmissionModel.js";
 import NoticeAcknowledgment from "../Models/NoticeAcknowledgmentModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
+import Institute from "../Models/InstituteModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
-import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
+import { sendLoginCredentialsEmail, sendParentResetOtpEmail } from "../Helpers/SendMail.js";
 
 // ================= CREATE PARENT =================
 export const createParent = async (req, res) => {
@@ -231,6 +232,84 @@ export const loginParent = async (req, res) => {
     }
 };
 
+// ================= PARENT FORGOT PASSWORD (Send OTP) =================
+export const forgotParentPassword = async (req, res) => {
+    try {
+        const { identifier } = req.body; // mobile or email
+        if (!identifier || !identifier.trim()) {
+            return res.status(400).json({ success: false, message: "Please enter your mobile or email" });
+        }
+        const value = identifier.trim();
+        const parent = await Parent.findOne({
+            $or: [
+                { mobile: value },
+                { email: value.toLowerCase() }
+            ]
+        });
+        if (!parent) {
+            return res.status(404).json({ success: false, message: "No parent found with this mobile or email" });
+        }
+        if (parent.status !== 'Active') {
+            return res.status(403).json({ success: false, message: `Your account is ${parent.status}` });
+        }
+        if (!parent.email) {
+            return res.status(400).json({ success: false, message: "No email linked to this account. Contact school admin." });
+        }
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        await Parent.findByIdAndUpdate(parent._id, {
+            $set: { resetPasswordOtp: otp, resetPasswordOtpExpires: expiresAt }
+        });
+        const sent = await sendParentResetOtpEmail(parent.email, otp, parent.name || "Parent");
+        if (!sent) {
+            return res.status(500).json({ success: false, message: "Failed to send OTP. Try again later." });
+        }
+        res.status(200).json({
+            success: true,
+            message: "OTP sent to your registered email",
+            email: parent.email.replace(/(.{3}).*(@.*)/, "$1***$2")
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= PARENT RESET PASSWORD (Verify OTP + set new password) =================
+export const resetParentPasswordWithOtp = async (req, res) => {
+    try {
+        const { identifier, otp, newPassword } = req.body;
+        if (!identifier || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: "Mobile/Email, OTP and new password are required" });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+        }
+        const value = identifier.trim();
+        const parent = await Parent.findOne({
+            $or: [
+                { mobile: value },
+                { email: value.toLowerCase() }
+            ]
+        });
+        if (!parent) {
+            return res.status(404).json({ success: false, message: "Parent not found" });
+        }
+        if (!parent.resetPasswordOtp || parent.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!parent.resetPasswordOtpExpires || new Date() > parent.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+        parent.password = newPassword;
+        parent.resetPasswordOtp = undefined;
+        parent.resetPasswordOtpExpires = undefined;
+        await parent.save();
+        res.status(200).json({ success: true, message: "Password reset successfully. You can now login." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= GET LINKED STUDENTS =================
 export const getLinkedStudents = async (req, res) => {
     try {
@@ -363,6 +442,33 @@ export const unlinkStudent = async (req, res) => {
 // =================================================================================
 // ========================== PARENT PORTAL APIs ===================================
 // =================================================================================
+
+// ================= GET INSTITUTE INFO FOR PARENT PORTAL =================
+export const getParentInstituteInfo = async (req, res) => {
+    try {
+        const parentId = req.user._id;
+        const parent = await Parent.findById(parentId).select("instituteId");
+
+        if (!parent || !parent.instituteId) {
+            return res.status(404).json({ success: false, message: "Institute not linked to parent" });
+        }
+
+        const institute = await Institute.findById(parent.instituteId).select(
+            "legalName shortName type affiliations address city state phone website logo"
+        );
+
+        if (!institute) {
+            return res.status(404).json({ success: false, message: "Institute not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: institute
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // ================= GET PARENT DASHBOARD =================
 export const getParentDashboard = async (req, res) => {

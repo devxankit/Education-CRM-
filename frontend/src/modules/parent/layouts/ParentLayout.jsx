@@ -8,13 +8,17 @@ const ParentLayout = () => {
     const user = useParentStore(state => state.user);
     const children = useParentStore(state => state.children);
     const fetchDashboardData = useParentStore(state => state.fetchDashboardData);
+    const fetchInstituteProfile = useParentStore(state => state.fetchInstituteProfile);
 
     // Ensure linked children are loaded on any parent page (e.g. direct nav, refresh)
     useEffect(() => {
         if (user && (!children || children.length === 0)) {
             fetchDashboardData();
         }
-    }, [user, children, fetchDashboardData]);
+        if (user) {
+            fetchInstituteProfile();
+        }
+    }, [user, children, fetchDashboardData, fetchInstituteProfile]);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">

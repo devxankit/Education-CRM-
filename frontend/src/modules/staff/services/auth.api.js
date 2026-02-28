@@ -42,6 +42,48 @@ export const loginStaff = async (email, password, role) => {
     }
 };
 
+/**
+ * Request password reset OTP (forgot password)
+ * @param {string} email - Staff email
+ * @returns {Promise<{ success: boolean, message?: string, email?: string }>}
+ */
+export const requestStaffPasswordReset = async (email) => {
+    try {
+        const response = await axios.post(`${API_URL}/staff/forgot-password`, { email: email?.trim() });
+        if (response.data.success) {
+            return { success: true, message: response.data.message, email: response.data.email };
+        }
+        return { success: false, message: response.data.message || 'Failed to send OTP' };
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Failed to send OTP';
+        return { success: false, message: msg };
+    }
+};
+
+/**
+ * Reset staff password with OTP
+ * @param {string} email - Staff email
+ * @param {string} otp - 6-digit OTP
+ * @param {string} newPassword - New password
+ * @returns {Promise<{ success: boolean, message?: string }>}
+ */
+export const resetStaffPasswordWithOtp = async (email, otp, newPassword) => {
+    try {
+        const response = await axios.post(`${API_URL}/staff/reset-password`, {
+            email: email?.trim(),
+            otp: String(otp).trim(),
+            newPassword
+        });
+        if (response.data.success) {
+            return { success: true, message: response.data.message };
+        }
+        return { success: false, message: response.data.message || 'Failed to reset password' };
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Failed to reset password';
+        return { success: false, message: msg };
+    }
+};
+
 export const verifyOtpStaff = async (tempToken, otp, role) => {
     try {
         const response = await axios.post(`${API_URL}/staff/verify-otp`, {

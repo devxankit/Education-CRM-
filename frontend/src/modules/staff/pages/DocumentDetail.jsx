@@ -6,10 +6,11 @@ import {
     ArrowLeft, FileText, Upload, CheckCircle, XCircle,
     Eye, MoreHorizontal, Clock, ShieldCheck, Download,
     AlertCircle, ExternalLink, Trash2, CheckCircle2,
-    Calendar, User, Fingerprint, History, Info, Sparkles
+    Calendar, User, Fingerprint, History, Info, Sparkles, Pencil
 } from 'lucide-react';
 import { useStaffStore } from '../../../store/staffStore';
 import toast from 'react-hot-toast';
+import EditDocumentModal from '../components/documents/EditDocumentModal';
 
 const STATUS_MAP = {
     'approved': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', icon: CheckCircle2, label: 'Approved' },
@@ -50,6 +51,8 @@ const DocumentDetail = () => {
 
     const [loading, setLoading] = useState(false);
     const [entity, setEntity] = useState(null);
+    const [editModal, setEditModal] = useState({ open: false, docId: null, docLabel: '', doc: null });
+    const [editLoading, setEditLoading] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -136,6 +139,37 @@ const DocumentDetail = () => {
         } catch (error) {
             console.error(error);
             toast.error("Failed to update status", { id: loadingToast });
+        }
+    };
+
+    const handleEditDocument = (docId, docLabel, doc) => {
+        setEditModal({ open: true, docId, docLabel, doc });
+    };
+
+    const handleEditSave = async (payload, onSuccess) => {
+        if (!entity || !editModal.docId) return;
+        setEditLoading(true);
+        const loadingToast = toast.loading(editModal.doc ? 'Updating document...' : 'Uploading document...');
+        try {
+            const merged = { ...(entity.documents || {}) };
+            const current = merged[editModal.docId] || {};
+            merged[editModal.docId] = {
+                ...current,
+                name: current.name || editModal.docLabel,
+                status: current.status || 'in_review',
+                date: payload.date || current.date,
+                url: current.url,
+                ...(payload.base64 && { base64: payload.base64 }),
+            };
+            const updated = await useStaffStore.getState().updateStudent(entity._id, { documents: merged });
+            if (updated) setEntity(updated);
+            toast.success(editModal.doc ? 'Document updated.' : 'Document uploaded.', { id: loadingToast });
+            onSuccess?.();
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to save document.', { id: loadingToast });
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -262,6 +296,15 @@ const DocumentDetail = () => {
                                                     >
                                                         <Download size={18} />
                                                     </button>
+                                                    {canManage && (
+                                                        <button
+                                                            onClick={() => handleEditDocument(req.id, req.name, doc)}
+                                                            className="p-3 bg-gray-50 text-gray-600 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
+                                                            title="Edit document"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                    )}
                                                     {canManage && doc.status !== 'approved' && doc.status !== 'verified' && (
                                                         <div className="flex items-center gap-2 ml-2 pl-4 border-l border-gray-100">
                                                             <button
@@ -282,10 +325,15 @@ const DocumentDetail = () => {
                                                     )}
                                                 </>
                                             ) : (
-                                                <button className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 text-gray-400 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-gray-100 hover:bg-white hover:border-indigo-100 hover:text-indigo-600 transition-all shadow-sm active:scale-95">
-                                                    <Upload size={14} />
-                                                    Upload
-                                                </button>
+                                                canManage && (
+                                                    <button
+                                                        onClick={() => handleEditDocument(req.id, req.name, null)}
+                                                        className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 text-gray-400 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-gray-100 hover:bg-white hover:border-indigo-100 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
+                                                    >
+                                                        <Upload size={14} />
+                                                        Upload
+                                                    </button>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -337,6 +385,17 @@ const DocumentDetail = () => {
                     </div>
                 </div>
             </div>
+
+            <EditDocumentModal
+                isOpen={editModal.open}
+                onClose={() => setEditModal({ open: false, docId: null, docLabel: '', doc: null })}
+                docId={editModal.docId}
+                docLabel={editModal.docLabel}
+                doc={editModal.doc}
+                onSave={handleEditSave}
+                loading={editLoading}
+                isUpload={!editModal.doc}
+            />
         </div>
     );
 };

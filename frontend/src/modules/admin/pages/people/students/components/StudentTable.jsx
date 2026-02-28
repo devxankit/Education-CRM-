@@ -9,7 +9,10 @@ const PAGE_SIZE = 5;
 const StudentTable = () => {
     const navigate = useNavigate();
     const students = useAdminStore(state => state.students);
+    const fetchStudents = useAdminStore(state => state.fetchStudents);
+    const deleteStudent = useAdminStore(state => state.deleteStudent);
     const [currentPage, setCurrentPage] = useState(1);
+    const [openMenuId, setOpenMenuId] = useState(null);
 
     const totalPages = Math.ceil(students.length / PAGE_SIZE) || 1;
     const startIndex = (currentPage - 1) * PAGE_SIZE;
@@ -29,6 +32,16 @@ const StudentTable = () => {
             case 'inactive': return 'bg-gray-100 text-gray-600';
             default: return 'bg-green-100 text-green-700';
         }
+    };
+
+    const handleDelete = async (e, studentId, name) => {
+        e.stopPropagation();
+        setOpenMenuId(null);
+        if (!window.confirm(`Are you sure you want to delete student "${name}"? This cannot be undone.`)) return;
+        try {
+            await deleteStudent(studentId);
+            fetchStudents();
+        } catch (_) {}
     };
 
     return (
@@ -87,10 +100,40 @@ const StudentTable = () => {
                                             {student.status || 'Active'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right relative">
-                                        <button className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
-                                            <MoreVertical size={18} />
-                                        </button>
+                                    <td className="px-6 py-4 text-right relative" onClick={(e) => e.stopPropagation()}>
+                                        <div className="relative inline-block">
+                                            <button
+                                                onClick={() => setOpenMenuId(openMenuId === studentId ? null : studentId)}
+                                                className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                                            >
+                                                <MoreVertical size={18} />
+                                            </button>
+                                            {openMenuId === studentId && (
+                                                <>
+                                                    <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} aria-hidden="true" />
+                                                    <div className="absolute right-0 top-full mt-1 py-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                                                        <button
+                                                            onClick={() => { setOpenMenuId(null); navigate(`/admin/people/students/${studentId}`); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                                        >
+                                                            <Eye size={16} /> View
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setOpenMenuId(null); navigate(`/admin/people/students/${studentId}`); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                                        >
+                                                            <Edit size={16} /> Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => handleDelete(e, studentId, fullName)}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                                        >
+                                                            <Trash2 size={16} /> Delete
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             );

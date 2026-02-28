@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Settings, Printer, Lock, Download, Loader2, Copy, Trash2, Archive, TrendingUp, FileText, Calendar, Percent } from 'lucide-react';
+import { Plus, Settings, Printer, Lock, Download, Loader2, Copy, Trash2, Archive, TrendingUp, FileText, Calendar, Percent, Mail } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { useAppStore } from '../../../../store/index';
+import { API_URL } from '@/app/api';
 
 import FeeStructureList from './components/fee-structures/FeeStructureList';
 import FeeStructureForm from './components/fee-structures/FeeStructureForm';
@@ -23,6 +24,7 @@ const FeeStructures = () => {
     const [filter, setFilter] = useState({ year: '', status: '', branchId: '', search: '' });
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [structureToDelete, setStructureToDelete] = useState(null);
+    const [sendingReminders, setSendingReminders] = useState(false);
 
     // Fetch academic years and branches on mount
     useEffect(() => {
@@ -209,6 +211,35 @@ const FeeStructures = () => {
         }
     };
 
+    const handleSendReminders = async () => {
+        if (!window.confirm("Send fee reminder emails to parents for students with pending fees for this institute/branch?")) {
+            return;
+        }
+        setSendingReminders(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff/fees/send-reminders`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message || 'Fee reminders sent successfully.');
+            } else {
+                alert(data.message || 'Failed to send fee reminders.');
+            }
+        } catch (error) {
+            console.error('Error sending fee reminders:', error);
+            alert('An error occurred while sending fee reminders.');
+        } finally {
+            setSendingReminders(false);
+        }
+    };
+
     const handleUpdate = async (data) => {
         if (!selectedStructure) return;
         const result = await updateFeeStructure(selectedStructure._id || selectedStructure.id, data);
@@ -392,7 +423,24 @@ const FeeStructures = () => {
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Fee Structures</h1>
                     <p className="text-gray-500 text-sm">Define and manage fee policies for academic sessions.</p>
                 </div>
-                <div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                        onClick={handleSendReminders}
+                        disabled={sendingReminders}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-all font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        {sendingReminders ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                Sending Reminders...
+                            </>
+                        ) : (
+                            <>
+                                <Mail size={16} />
+                                Send Fee Reminders
+                            </>
+                        )}
+                    </button>
                     <button
                         onClick={() => { setIsCreating(true); setSelectedId(null); }}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all font-medium text-sm shadow-md hover:shadow-lg active:scale-95"

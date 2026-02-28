@@ -177,6 +177,49 @@ const StaffUsers = () => {
         }
     };
 
+    const handleUpdateProfile = async (userId, payload) => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('User details updated successfully');
+                const updated = result.data;
+                setUsers(prev => prev.map(u =>
+                    u._id === userId
+                        ? {
+                            ...u,
+                            name: updated.name,
+                            email: updated.email,
+                            branchScope: u.branchScope
+                        }
+                        : u
+                ));
+                setSelectedUser(prev => prev ? {
+                    ...prev,
+                    name: updated.name,
+                    email: updated.email
+                } : null);
+            } else {
+                alert(result.message || 'Failed to update user details');
+            }
+        } catch (error) {
+            console.error('Error updating user details:', error);
+            alert('An error occurred while updating user details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Filter & Pagination
     const filteredUsers = useMemo(() =>
         users.filter(u =>
@@ -316,6 +359,7 @@ const StaffUsers = () => {
                 onChangeStatus={handleStatusChange}
                 onChangeRole={() => setIsRoleChangeOpen(true)}
                 isSuperAdmin={isSuperAdmin}
+                onUpdateProfile={handleUpdateProfile}
                 loading={loading}
             />
 

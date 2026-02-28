@@ -2,7 +2,7 @@ import Teacher from "../Models/TeacherModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
 import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
-import { sendLoginCredentialsEmail } from "../Helpers/SendMail.js";
+import { sendLoginCredentialsEmail, sendTeacherResetOtpEmail } from "../Helpers/SendMail.js";
 import Section from "../Models/SectionModel.js";
 import Subject from "../Models/SubjectModel.js";
 import Class from "../Models/ClassModel.js";
@@ -362,6 +362,72 @@ export const loginTeacher = async (req, res) => {
             },
             token
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= TEACHER FORGOT PASSWORD (Send OTP) =================
+export const forgotTeacherPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email || !email.trim()) {
+            return res.status(400).json({ success: false, message: "Please enter your email" });
+        }
+        const emailLower = email.trim().toLowerCase();
+        const teacher = await Teacher.findOne({ email: emailLower });
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "No teacher found with this email" });
+        }
+        if (teacher.status !== 'active') {
+            return res.status(403).json({ success: false, message: `Your account is ${teacher.status}` });
+        }
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        await Teacher.findByIdAndUpdate(teacher._id, {
+            $set: { resetPasswordOtp: otp, resetPasswordOtpExpires: expiresAt }
+        });
+        const fullName = `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim() || "Teacher";
+        const sent = await sendTeacherResetOtpEmail(teacher.email, otp, fullName);
+        if (!sent) {
+            return res.status(500).json({ success: false, message: "Failed to send OTP. Try again later." });
+        }
+        res.status(200).json({
+            success: true,
+            message: "OTP sent to your registered email",
+            email: teacher.email.replace(/(.{3}).*(@.*)/, "$1***$2")
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= TEACHER RESET PASSWORD (Verify OTP + set new password) =================
+export const resetTeacherPasswordWithOtp = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: "Email, OTP and new password are required" });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+        }
+        const emailLower = email.trim().toLowerCase();
+        const teacher = await Teacher.findOne({ email: emailLower });
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "Teacher not found" });
+        }
+        if (!teacher.resetPasswordOtp || teacher.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!teacher.resetPasswordOtpExpires || new Date() > teacher.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+        teacher.password = newPassword;
+        teacher.resetPasswordOtp = undefined;
+        teacher.resetPasswordOtpExpires = undefined;
+        await teacher.save();
+        res.status(200).json({ success: true, message: "Password reset successfully. You can now login." });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

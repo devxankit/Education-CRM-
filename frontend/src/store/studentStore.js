@@ -90,6 +90,38 @@ export const useStudentStore = create(
                 }
             },
 
+            requestPasswordReset: async (identifier) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await axios.post(`${API_URL}/student/forgot-password`, { identifier: identifier?.trim() });
+                    set({ isLoading: false });
+                    return { success: response.data.success, message: response.data.message, email: response.data.email };
+                } catch (error) {
+                    const message = error.response?.data?.message || 'Failed to send OTP';
+                    set({ error: message, isLoading: false });
+                    return { success: false, message };
+                }
+            },
+
+            resetPasswordWithOtp: async (identifier, otp, newPassword) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await axios.post(`${API_URL}/student/reset-password`, {
+                        identifier: identifier?.trim(),
+                        otp: String(otp).trim(),
+                        newPassword
+                    });
+                    set({ isLoading: false });
+                    return { success: response.data.success, message: response.data.message };
+                } catch (error) {
+                    const message = error.response?.data?.message || 'Failed to reset password';
+                    set({ error: message, isLoading: false });
+                    return { success: false, message };
+                }
+            },
+
+            clearError: () => set({ error: null }),
+
             logout: () => {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');

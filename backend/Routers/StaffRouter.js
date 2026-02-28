@@ -6,6 +6,8 @@ import {
     deleteStaff,
     loginStaff,
     verifyOtpStaff,
+    forgotStaffPassword,
+    resetStaffPasswordWithOtp,
     getStaffPermissions,
     getStaffDashboard,
     getStaffReports,
@@ -20,7 +22,8 @@ import {
     getStaffEmployees,
     getStaffTransportStudents,
     changePassword,
-    updateProfile
+    updateProfile,
+    sendFeeRemindersToParents
 } from "../Controllers/StaffCtrl.js";
 import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 
@@ -29,6 +32,8 @@ const router = express.Router();
 // Public routes
 router.post("/login", loginStaff);
 router.post("/verify-otp", verifyOtpStaff);
+router.post("/forgot-password", forgotStaffPassword);
+router.post("/reset-password", resetStaffPasswordWithOtp);
 
 // Authenticated Routes
 router.use(AuthMiddleware);
@@ -52,6 +57,7 @@ router.get("/permissions", getStaffPermissions);
 // Get Fee Overview - Students with Paid/Due status (Staff/Accounts)
 router.get("/fees/overview", getStaffFeeOverview);
 router.post("/fees/collect", recordStaffFeePayment);
+router.post("/fees/send-reminders", sendFeeRemindersToParents);
 router.get("/payroll/resources", getStaffPayrollResources);
 router.get("/expenses/resources", getStaffExpenseResources);
 router.get("/branches", getStaffBranches);

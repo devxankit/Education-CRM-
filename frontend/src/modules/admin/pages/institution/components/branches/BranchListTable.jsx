@@ -4,8 +4,8 @@ import { Building2, ChevronRight, MapPin, GraduationCap, UserCog, BookOpen } fro
 import BranchStatusBadge from './BranchStatusBadge';
 
 const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
-    // Pagination: 5 per page
-    const pageSize = 5;
+    // Show all branches on a single page for better visibility
+    const pageSize = branches && branches.length > 0 ? branches.length : 5;
     const [page, setPage] = React.useState(1);
 
     if (!branches || branches.length === 0) {

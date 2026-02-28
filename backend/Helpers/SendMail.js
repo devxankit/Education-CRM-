@@ -1,5 +1,28 @@
 import nodemailer from "nodemailer";
 
+/** When true, emails are logged but not sent (no real SMTP). Set TEST_MODE=true or TEST_MODE=1 in .env */
+const isTestMode = () =>
+  process.env.TEST_MODE === "true" || process.env.TEST_MODE === "1";
+
+/** Base URL of the frontend app for password-reset links (e.g. https://crm.example.com). Set FRONTEND_URL in .env */
+const getResetLink = (path) => {
+  const base = (process.env.FRONTEND_URL || process.env.CLIENT_URL || "").replace(/\/$/, "");
+  return base ? `${base}${path.startsWith("/") ? path : "/" + path}` : null;
+};
+
+const sendOrSkip = async (transporter, mailOptions, successLog) => {
+  if (isTestMode()) {
+    console.log("[TEST MODE] Email skipped:", {
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+    });
+    if (successLog) console.log(successLog);
+    return;
+  }
+  await transporter.sendMail(mailOptions);
+  if (successLog) console.log(successLog);
+};
+
 export const sendManagerPasswordEmail = async (to, password, fullName) => {
   try {
     const transporter = nodemailer.createTransport({
@@ -25,8 +48,7 @@ export const sendManagerPasswordEmail = async (to, password, fullName) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log("Manager password email sent successfully");
+    await sendOrSkip(transporter, mailOptions, "Manager password email sent successfully");
   } catch (error) {
     console.log("Email Error:", error);
   }
@@ -56,8 +78,7 @@ export const sendEmployeePasswordEmail = async (to, password, fullName) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log("Manager password email sent successfully");
+    await sendOrSkip(transporter, mailOptions, "Manager password email sent successfully");
   } catch (error) {
     console.log("Email Error:", error);
   }
@@ -94,8 +115,7 @@ export const sendLoginCredentialsEmail = async (to, password, fullName, role) =>
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`${role} credentials email sent to ${to}`);
+    await sendOrSkip(transporter, mailOptions, `${role} credentials email sent to ${to}`);
   } catch (error) {
     console.log("Email Error:", error);
   }
@@ -133,11 +153,136 @@ export const sendStaffOtpEmail = async (to, otp, staffName) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`OTP email sent to ${to}`);
+    await sendOrSkip(transporter, mailOptions, `OTP email sent to ${to}`);
     return true;
   } catch (error) {
     console.log("OTP Email Error:", error);
+    return false;
+  }
+};
+
+// Send OTP for Staff Forgot Password
+export const sendStaffResetOtpEmail = async (to, otp, staffName) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const staffResetUrl = getResetLink("/staff/login?forgot=1");
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Password Reset OTP - Staff Portal`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5;">Staff Portal - Password Reset</h2>
+          <p>Hello <b>${staffName}</b>,</p>
+          <p>Use the following OTP to reset your password:</p>
+          <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          ${staffResetUrl ? `<p style="margin: 20px 0;"><a href="${staffResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
+        </div>
+      `,
+    };
+
+    await sendOrSkip(transporter, mailOptions, `Staff reset OTP email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.log("Staff reset OTP Email Error:", error);
+    return false;
+  }
+};
+
+// Send OTP for Teacher Forgot Password
+export const sendTeacherResetOtpEmail = async (to, otp, teacherName) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const teacherResetUrl = getResetLink("/teacher/login?forgot=1");
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Password Reset OTP - Teacher Portal`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5;">Teacher Portal - Password Reset</h2>
+          <p>Hello <b>${teacherName}</b>,</p>
+          <p>Use the following OTP to reset your password:</p>
+          <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          ${teacherResetUrl ? `<p style="margin: 20px 0;"><a href="${teacherResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
+        </div>
+      `,
+    };
+
+    await sendOrSkip(transporter, mailOptions, `Teacher reset OTP email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.log("Teacher reset OTP Email Error:", error);
+    return false;
+  }
+};
+
+// Send OTP for Student Forgot Password
+export const sendStudentResetOtpEmail = async (to, otp, studentName) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const studentResetUrl = getResetLink("/student/login?forgot=1");
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Password Reset OTP - Student Portal`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5;">Student Portal - Password Reset</h2>
+          <p>Hello <b>${studentName}</b>,</p>
+          <p>Use the following OTP to reset your password:</p>
+          <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          ${studentResetUrl ? `<p style="margin: 20px 0;"><a href="${studentResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
+        </div>
+      `,
+    };
+
+    await sendOrSkip(transporter, mailOptions, `Student reset OTP email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.log("Student reset OTP Email Error:", error);
     return false;
   }
 };
@@ -193,11 +338,123 @@ export const sendParentCredentialsEmail = async (to, password, parentName, stude
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Parent credentials email sent to ${to} for student ${studentName}`);
+    await sendOrSkip(transporter, mailOptions, `Parent credentials email sent to ${to} for student ${studentName}`);
     return true;
   } catch (error) {
     console.log("Email Error:", error);
+    return false;
+  }
+};
+
+// Send OTP for Parent Forgot Password
+export const sendParentResetOtpEmail = async (to, otp, parentName) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const parentResetUrl = getResetLink("/parent/login?forgot=1");
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Password Reset OTP - Parent Portal`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5;">Parent Portal - Password Reset</h2>
+          <p>Hello <b>${parentName}</b>,</p>
+          <p>Use the following OTP to reset your password for accessing your ward's details:</p>
+          <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          ${parentResetUrl ? `<p style="margin: 20px 0;"><a href="${parentResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
+        </div>
+      `,
+    };
+
+    await sendOrSkip(transporter, mailOptions, `Parent reset OTP email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.log("Parent reset OTP Email Error:", error);
+    return false;
+  }
+};
+
+// Send Fee Reminder Email to Parent
+export const sendParentFeeReminderEmail = async (to, parentName, studentName, pendingAmount, nextDueDate) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const formattedAmount = typeof pendingAmount === "number"
+      ? `₹${pendingAmount.toLocaleString("en-IN")}`
+      : pendingAmount;
+
+    const dueText = nextDueDate
+      ? new Date(nextDueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+      : "upcoming schedule";
+
+    const mailOptions = {
+      from: `"Education CRM" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `Fee Reminder - ${studentName}`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; background: #f9fafb;">
+          <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 24px 28px; border-radius: 16px 16px 0 0; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 22px;">Fee Reminder</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">For ward: <strong>${studentName}</strong></p>
+          </div>
+
+          <div style="background: #ffffff; padding: 24px 28px 20px; border-radius: 0 0 16px 16px; box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);">
+            <p style="font-size: 15px; color: #374151; margin: 0 0 12px;">Dear <b>${parentName}</b>,</p>
+            <p style="font-size: 14px; color: #4b5563; margin: 0 0 16px;">
+              This is a gentle reminder that there is an <b>outstanding fee balance</b> for your ward
+              <b>${studentName}</b> in the current academic session.
+            </p>
+
+            <div style="background: #f3f4ff; border-radius: 10px; padding: 16px 18px; margin-bottom: 18px; border: 1px solid #e0e7ff;">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #1f2937;">
+                <span style="font-weight: 600;">Pending Amount</span>
+                <span style="font-weight: 700; color: #ef4444;">${formattedAmount}</span>
+              </div>
+              <div style="margin-top: 6px; font-size: 12px; color: #6b7280;">
+                Next due date (if applicable): <b>${dueText}</b>
+              </div>
+            </div>
+
+            <p style="font-size: 13px; color: #4b5563; margin: 0 0 10px;">
+              Kindly clear the dues at the earliest as per the school&apos;s fee policy.
+              If you have already made the payment, please ignore this message.
+            </p>
+
+            <p style="font-size: 12px; color: #9ca3af; margin: 18px 0 0; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+              This is an automated reminder from <b>Education CRM</b>. For any discrepancy or clarification,
+              please contact the school accounts office.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    await sendOrSkip(transporter, mailOptions, `Parent fee reminder email sent to ${to} for student ${studentName}`);
+    return true;
+  } catch (error) {
+    console.log("Parent fee reminder Email Error:", error);
     return false;
   }
 };

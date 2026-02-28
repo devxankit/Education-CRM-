@@ -184,6 +184,27 @@ const WeeklyTimetable = () => {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     };
 
+    // Helper: subjects visible for current context (with safe fallback)
+    const getSubjectsForContext = () => {
+        if (!subjects || subjects.length === 0) return [];
+
+        const primary = subjects.filter(s => {
+            if (timetableMode === 'school') {
+                if (!selectedClassId) return true;
+                const ids = s.classIds || [];
+                if (!ids.length) return true;
+                return ids.some(cid => (cid._id || cid) === selectedClassId);
+            } else {
+                if (!selectedCourseId) return true;
+                const ids = s.courseIds || [];
+                if (!ids.length) return true;
+                return ids.some(cid => (cid._id || cid) === selectedCourseId);
+            }
+        });
+
+        return primary.length > 0 ? primary : subjects;
+    };
+
     const handleAddPeriod = () => {
         // Use timetable rules startTime as default, fallback to 09:00 if no rules
         let startTime = timetableRules?.startTime || '09:00';
@@ -819,23 +840,9 @@ const WeeklyTimetable = () => {
                                                 className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
                                             >
                                                 <option value="">Select Subject</option>
-                                                {subjects
-                                                    .filter(s => {
-                                                        // Filter subjects based on mode
-                                                        if (timetableMode === 'school') {
-                                                            // For school: show subjects assigned to selected class
-                                                            return !selectedClassId || (s.classIds || []).some(cid => 
-                                                                (cid._id || cid) === selectedClassId
-                                                            );
-                                                        } else {
-                                                            // For college: show subjects assigned to selected course
-                                                            return !selectedCourseId || (s.courseIds || []).some(cid => 
-                                                                (cid._id || cid) === selectedCourseId
-                                                            );
-                                                        }
-                                                    })
-                                                    .map(s => <option key={s._id} value={s._id}>{s.name}</option>)
-                                                }
+                                                {getSubjectsForContext().map(s => (
+                                                    <option key={s._id} value={s._id}>{s.name}</option>
+                                                ))}
                                             </select>
                                         </div>
 

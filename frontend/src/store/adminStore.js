@@ -33,6 +33,18 @@ export const useAdminStore = create(
             timetable: null,
             timetableRules: null,
             toasts: [],
+            testMode: false,
+
+            fetchAppConfig: async () => {
+                try {
+                    const res = await axios.get(`${API_URL}/config`);
+                    if (res.data && typeof res.data.testMode === 'boolean') {
+                        set({ testMode: res.data.testMode });
+                    }
+                } catch {
+                    set({ testMode: false });
+                }
+            },
             roles: [
                 { id: 1, name: 'Super Admin', code: 'ROLE_SUPER_ADMIN', type: 'system', description: 'Full access to all modules.', defaultDashboard: '/admin/dashboard', status: 'active', userCount: 2 },
                 { id: 2, name: 'Teacher', code: 'ROLE_TEACHER', type: 'system', description: 'Can manage classes, attendance, and marks.', defaultDashboard: '/staff/dashboard', status: 'active', userCount: 45 },
@@ -235,6 +247,25 @@ export const useAdminStore = create(
                 } catch (error) {
                     console.error('Error updating student:', error);
                     get().addToast(error.response?.data?.message || 'Error updating student', 'error');
+                    throw error;
+                }
+            },
+            deleteStudent: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/student/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            students: state.students.filter(s => (s._id !== id && s.id !== id))
+                        }));
+                        get().addToast('Student deleted successfully', 'success');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error deleting student:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting student', 'error');
                     throw error;
                 }
             },

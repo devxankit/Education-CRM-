@@ -43,6 +43,9 @@ export const useParentStore = create(
             })(),
             isLoading: false,
 
+            // Institute profile for Parent app (read-only)
+            instituteProfile: null,
+
             // Data
             notices: [],
             fees: null,
@@ -74,6 +77,42 @@ export const useParentStore = create(
                     return {
                         success: false,
                         message: error.response?.data?.message || 'Login failed'
+                    };
+                }
+            },
+
+            requestPasswordReset: async (identifier) => {
+                try {
+                    const response = await axios.post(`${API_URL}/parent/forgot-password`, { identifier: identifier?.trim() });
+                    if (response.data.success) {
+                        return { success: true, message: response.data.message, email: response.data.email };
+                    }
+                    return { success: false, message: response.data.message || 'Failed to send OTP' };
+                } catch (error) {
+                    console.error('Parent Forgot Password Error:', error);
+                    return {
+                        success: false,
+                        message: error.response?.data?.message || 'Failed to send OTP'
+                    };
+                }
+            },
+
+            resetPasswordWithOtp: async (identifier, otp, newPassword) => {
+                try {
+                    const response = await axios.post(`${API_URL}/parent/reset-password`, {
+                        identifier: identifier?.trim(),
+                        otp: String(otp).trim(),
+                        newPassword
+                    });
+                    if (response.data.success) {
+                        return { success: true, message: response.data.message };
+                    }
+                    return { success: false, message: response.data.message || 'Failed to reset password' };
+                } catch (error) {
+                    console.error('Parent Reset Password Error:', error);
+                    return {
+                        success: false,
+                        message: error.response?.data?.message || 'Failed to reset password'
                     };
                 }
             },
@@ -356,6 +395,21 @@ export const useParentStore = create(
                 } catch (error) {
                     console.error('Error fetching parent profile:', error);
                     set({ isLoading: false });
+                }
+            },
+
+            fetchInstituteProfile: async () => {
+                try {
+                    const token = get().token;
+                    if (!token) return;
+                    const response = await axios.get(`${API_URL}/parent/portal/institute`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ instituteProfile: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching institute profile for parent:', error);
                 }
             },
 

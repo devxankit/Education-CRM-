@@ -16,7 +16,7 @@ const WorkloadRules = ({ ruleData, onChange, isLocked }) => {
                     These rules prevent the auto-scheduler from assigning excessive workload to faculty members.
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                         <label className="text-sm font-medium text-gray-700 mb-1 block">Max Continuous Lectures</label>
                         <input

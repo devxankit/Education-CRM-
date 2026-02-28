@@ -54,6 +54,12 @@ import FAQRouter from "./Routers/FAQRouter.js";
 
 const router = Router();
 
+// Public config (no auth) – e.g. test mode for UI indicator
+router.get("/api/v1/config", (req, res) => {
+  const testMode = process.env.TEST_MODE === "true" || process.env.TEST_MODE === "1";
+  res.json({ testMode });
+});
+
 router.use("/api/v1/institute", InstituteRouter);
 router.use("/api/v1/branch", BranchRouter);
 router.use("/api/v1/academic-year", AcademicYearRouter);

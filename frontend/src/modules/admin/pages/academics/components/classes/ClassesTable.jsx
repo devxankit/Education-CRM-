@@ -14,8 +14,8 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, o
 
     const getBranchName = (branchId) => {
         if (!branchId || branchId === 'main') return 'Main Branch';
-        const b = branches.find((br) => (br._id || br.id) === branchId);
-        return b?.name || branchId;
+        const b = branches.find((br) => (br._id || br.id) === (branchId._id || branchId));
+        return b?.name || branchId?.name || branchId;
     };
 
     const getBoardLabel = (board) => {

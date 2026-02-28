@@ -6,7 +6,10 @@ import {
     getStudents,
     getStudentById,
     updateStudent,
+    deleteStudent,
     loginStudent,
+    forgotStudentPassword,
+    resetStudentPasswordWithOtp,
     getStudentDashboard,
     getStudentExams,
     getStudentResults,
@@ -33,8 +36,10 @@ import { AuthMiddleware, isAdmin, isStudent } from "../Middlewares/AuthMiddlewar
 
 const router = express.Router();
 
-// Public login
+// Public login & forgot password
 router.post("/login", loginStudent);
+router.post("/forgot-password", forgotStudentPassword);
+router.post("/reset-password", resetStudentPasswordWithOtp);
 
 // Protected routes
 router.use(AuthMiddleware);
@@ -71,5 +76,6 @@ router.post("/:id/record-fee", isAdmin, recordFeePayment);
 router.get("/", isAdmin, getStudents);
 router.get("/:id", isAdmin, getStudentById);
 router.put("/:id", isAdmin, updateStudent);
+router.delete("/:id", isAdmin, deleteStudent);
 
 export default router;

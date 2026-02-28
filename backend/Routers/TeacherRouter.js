@@ -4,6 +4,8 @@ import {
     getTeachers,
     updateTeacher,
     loginTeacher,
+    forgotTeacherPassword,
+    resetTeacherPasswordWithOtp,
     getTeacherProfile,
     updateTeacherProfile,
     getTeacherClasses,
@@ -50,6 +52,8 @@ const router = express.Router();
 
 // Public login
 router.post("/login", loginTeacher);
+router.post("/forgot-password", forgotTeacherPassword);
+router.post("/reset-password", resetTeacherPasswordWithOtp);
 
 // Protected routes
 router.use(AuthMiddleware);
