@@ -402,6 +402,30 @@ export const forgotTeacherPassword = async (req, res) => {
     }
 };
 
+// ================= VERIFY FORGOT OTP (validate OTP before showing password screen) =================
+export const verifyTeacherForgotOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, message: "Email and OTP are required" });
+        }
+        const emailLower = email.trim().toLowerCase();
+        const teacher = await Teacher.findOne({ email: emailLower });
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "Teacher not found" });
+        }
+        if (!teacher.resetPasswordOtp || teacher.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!teacher.resetPasswordOtpExpires || new Date() > teacher.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+        res.status(200).json({ success: true, message: "OTP verified. You can now set your new password." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= TEACHER RESET PASSWORD (Verify OTP + set new password) =================
 export const resetTeacherPasswordWithOtp = async (req, res) => {
     try {

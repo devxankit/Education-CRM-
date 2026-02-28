@@ -274,6 +274,35 @@ export const forgotParentPassword = async (req, res) => {
     }
 };
 
+// ================= VERIFY FORGOT OTP (validate OTP before showing password screen) =================
+export const verifyParentForgotOtp = async (req, res) => {
+    try {
+        const { identifier, otp } = req.body;
+        if (!identifier || !otp) {
+            return res.status(400).json({ success: false, message: "Mobile/Email and OTP are required" });
+        }
+        const value = identifier.trim();
+        const parent = await Parent.findOne({
+            $or: [
+                { mobile: value },
+                { email: value.toLowerCase() }
+            ]
+        });
+        if (!parent) {
+            return res.status(404).json({ success: false, message: "Parent not found" });
+        }
+        if (!parent.resetPasswordOtp || parent.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!parent.resetPasswordOtpExpires || new Date() > parent.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+        res.status(200).json({ success: true, message: "OTP verified. You can now set your new password." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= PARENT RESET PASSWORD (Verify OTP + set new password) =================
 export const resetParentPasswordWithOtp = async (req, res) => {
     try {

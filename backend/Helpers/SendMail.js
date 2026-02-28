@@ -4,12 +4,6 @@ import nodemailer from "nodemailer";
 const isTestMode = () =>
   process.env.TEST_MODE === "true" || process.env.TEST_MODE === "1";
 
-/** Base URL of the frontend app for password-reset links (e.g. https://crm.example.com). Set FRONTEND_URL in .env */
-const getResetLink = (path) => {
-  const base = (process.env.FRONTEND_URL || process.env.CLIENT_URL || "").replace(/\/$/, "");
-  return base ? `${base}${path.startsWith("/") ? path : "/" + path}` : null;
-};
-
 const sendOrSkip = async (transporter, mailOptions, successLog) => {
   if (isTestMode()) {
     console.log("[TEST MODE] Email skipped:", {
@@ -174,7 +168,6 @@ export const sendStaffResetOtpEmail = async (to, otp, staffName) => {
       },
     });
 
-    const staffResetUrl = getResetLink("/staff/login?forgot=1");
     const mailOptions = {
       from: `"Education CRM" <${process.env.EMAIL_USER}>`,
       to,
@@ -188,7 +181,6 @@ export const sendStaffResetOtpEmail = async (to, otp, staffName) => {
             <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
           </div>
           <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-          ${staffResetUrl ? `<p style="margin: 20px 0;"><a href="${staffResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
         </div>
@@ -216,7 +208,6 @@ export const sendTeacherResetOtpEmail = async (to, otp, teacherName) => {
       },
     });
 
-    const teacherResetUrl = getResetLink("/teacher/login?forgot=1");
     const mailOptions = {
       from: `"Education CRM" <${process.env.EMAIL_USER}>`,
       to,
@@ -230,7 +221,6 @@ export const sendTeacherResetOtpEmail = async (to, otp, teacherName) => {
             <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
           </div>
           <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-          ${teacherResetUrl ? `<p style="margin: 20px 0;"><a href="${teacherResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
         </div>
@@ -258,7 +248,6 @@ export const sendStudentResetOtpEmail = async (to, otp, studentName) => {
       },
     });
 
-    const studentResetUrl = getResetLink("/student/login?forgot=1");
     const mailOptions = {
       from: `"Education CRM" <${process.env.EMAIL_USER}>`,
       to,
@@ -272,7 +261,6 @@ export const sendStudentResetOtpEmail = async (to, otp, studentName) => {
             <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
           </div>
           <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-          ${studentResetUrl ? `<p style="margin: 20px 0;"><a href="${studentResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
         </div>
@@ -359,7 +347,6 @@ export const sendParentResetOtpEmail = async (to, otp, parentName) => {
       },
     });
 
-    const parentResetUrl = getResetLink("/parent/login?forgot=1");
     const mailOptions = {
       from: `"Education CRM" <${process.env.EMAIL_USER}>`,
       to,
@@ -373,7 +360,6 @@ export const sendParentResetOtpEmail = async (to, otp, parentName) => {
             <span style="font-size: 28px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
           </div>
           <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-          ${parentResetUrl ? `<p style="margin: 20px 0;"><a href="${parentResetUrl}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Open reset page</a></p>` : ""}
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #9ca3af;">This is an automated message, please do not reply.</p>
         </div>

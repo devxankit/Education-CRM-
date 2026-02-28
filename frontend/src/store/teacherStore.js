@@ -78,6 +78,19 @@ export const useTeacherStore = create(
                 }
             },
 
+            verifyForgotOtp: async (email, otp) => {
+                try {
+                    const response = await axios.post(`${API_URL}/teacher/verify-forgot-otp`, {
+                        email: email?.trim(),
+                        otp: String(otp).trim()
+                    });
+                    if (response.data.success) return { success: true, message: response.data.message };
+                    return { success: false, message: response.data.message || 'Invalid OTP' };
+                } catch (error) {
+                    return { success: false, message: error.response?.data?.message || 'Invalid or expired OTP' };
+                }
+            },
+
             resetPasswordWithOtp: async (email, otp, newPassword) => {
                 try {
                     const response = await axios.post(`${API_URL}/teacher/reset-password`, {

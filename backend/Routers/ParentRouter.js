@@ -5,6 +5,7 @@ import {
     updateParent,
     loginParent,
     forgotParentPassword,
+    verifyParentForgotOtp,
     resetParentPasswordWithOtp,
     getLinkedStudents,
     linkStudent,
@@ -37,6 +38,7 @@ const router = express.Router();
 // ====================================
 router.post("/login", loginParent);
 router.post("/forgot-password", forgotParentPassword);
+router.post("/verify-forgot-otp", verifyParentForgotOtp);
 router.post("/reset-password", resetParentPasswordWithOtp);
 
 // ====================================

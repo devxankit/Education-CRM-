@@ -9,6 +9,7 @@ import {
     deleteStudent,
     loginStudent,
     forgotStudentPassword,
+    verifyStudentForgotOtp,
     resetStudentPasswordWithOtp,
     getStudentDashboard,
     getStudentExams,
@@ -39,6 +40,7 @@ const router = express.Router();
 // Public login & forgot password
 router.post("/login", loginStudent);
 router.post("/forgot-password", forgotStudentPassword);
+router.post("/verify-forgot-otp", verifyStudentForgotOtp);
 router.post("/reset-password", resetStudentPasswordWithOtp);
 
 // Protected routes

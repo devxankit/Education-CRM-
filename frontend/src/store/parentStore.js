@@ -97,6 +97,19 @@ export const useParentStore = create(
                 }
             },
 
+            verifyForgotOtp: async (identifier, otp) => {
+                try {
+                    const response = await axios.post(`${API_URL}/parent/verify-forgot-otp`, {
+                        identifier: identifier?.trim(),
+                        otp: String(otp).trim()
+                    });
+                    if (response.data.success) return { success: true, message: response.data.message };
+                    return { success: false, message: response.data.message || 'Invalid OTP' };
+                } catch (error) {
+                    return { success: false, message: error.response?.data?.message || 'Invalid or expired OTP' };
+                }
+            },
+
             resetPasswordWithOtp: async (identifier, otp, newPassword) => {
                 try {
                     const response = await axios.post(`${API_URL}/parent/reset-password`, {

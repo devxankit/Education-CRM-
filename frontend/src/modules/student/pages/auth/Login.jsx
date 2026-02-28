@@ -8,6 +8,7 @@ const StudentLogin = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const login = useStudentStore(state => state.login);
     const requestPasswordReset = useStudentStore(state => state.requestPasswordReset);
+    const verifyForgotOtp = useStudentStore(state => state.verifyForgotOtp);
     const resetPasswordWithOtp = useStudentStore(state => state.resetPasswordWithOtp);
     const clearError = useStudentStore(state => state.clearError);
     const isLoading = useStudentStore(state => state.isLoading);
@@ -78,20 +79,21 @@ const StudentLogin = () => {
         }
     };
 
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         setLocalError('');
         setLocalSuccess('');
-        if (!forgotOtp.trim()) {
+        if (!forgotOtp.trim() || forgotOtp.trim().length < 4) {
             setLocalError('Enter the OTP received on your email');
             return;
         }
-        if (forgotOtp.trim().length < 4) {
-            setLocalError('Enter a valid OTP');
-            return;
+        const result = await verifyForgotOtp(forgotIdentifier, forgotOtp);
+        if (result.success) {
+            setLocalSuccess('OTP verified. Please set your new password.');
+            setForgotStep(3);
+        } else {
+            setLocalError(result.message || 'Invalid or expired OTP');
         }
-        setLocalSuccess('OTP verified. Please set your new password.');
-        setForgotStep(3);
     };
 
     const handleResetPassword = async (e) => {

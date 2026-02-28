@@ -7,6 +7,7 @@ import {
     loginStaff,
     verifyOtpStaff,
     forgotStaffPassword,
+    verifyStaffForgotOtp,
     resetStaffPasswordWithOtp,
     getStaffPermissions,
     getStaffDashboard,
@@ -33,6 +34,7 @@ const router = express.Router();
 router.post("/login", loginStaff);
 router.post("/verify-otp", verifyOtpStaff);
 router.post("/forgot-password", forgotStaffPassword);
+router.post("/verify-forgot-otp", verifyStaffForgotOtp);
 router.post("/reset-password", resetStaffPasswordWithOtp);
 
 // Authenticated Routes

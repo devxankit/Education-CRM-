@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, User, Briefcase, Eye, EyeOff, Shield, Mail, KeyRound } from 'lucide-react';
 import { STAFF_ROLES } from '../../config/roles';
 import { useStaffAuth } from '../../context/StaffAuthContext';
-import { loginStaff, verifyOtpStaff, getPublicRoles, requestStaffPasswordReset, resetStaffPasswordWithOtp } from '../../services/auth.api';
+import { loginStaff, verifyOtpStaff, getPublicRoles, requestStaffPasswordReset, verifyStaffForgotOtp, resetStaffPasswordWithOtp } from '../../services/auth.api';
 
 const StaffLogin = () => {
     const navigate = useNavigate();
@@ -159,7 +159,7 @@ const StaffLogin = () => {
         }
     };
 
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         setError('');
         setSuccessMsg('');
@@ -167,8 +167,15 @@ const StaffLogin = () => {
             setError('Enter the OTP received on your email');
             return;
         }
-        setSuccessMsg('OTP verified. Please set your new password.');
-        setForgotStep(3);
+        setIsLoading(true);
+        const result = await verifyStaffForgotOtp(forgotEmail, forgotOtp);
+        setIsLoading(false);
+        if (result.success) {
+            setSuccessMsg('OTP verified. Please set your new password.');
+            setForgotStep(3);
+        } else {
+            setError(result.message || 'Invalid or expired OTP');
+        }
     };
 
     const handleResetPassword = async (e) => {
@@ -268,8 +275,8 @@ const StaffLogin = () => {
                                         />
                                     </div>
                                     {error && <div className="rounded-md bg-red-50 p-4 border border-red-100"><h3 className="text-sm font-medium text-red-800">{error}</h3></div>}
-                                    <button type="submit" className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700">
-                                        Verify OTP
+                                    <button type="submit" disabled={isLoading} className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70">
+                                        {isLoading ? 'Verifying...' : 'Verify OTP'}
                                     </button>
                                 </form>
                             )}

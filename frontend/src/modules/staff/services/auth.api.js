@@ -61,6 +61,28 @@ export const requestStaffPasswordReset = async (email) => {
 };
 
 /**
+ * Verify forgot-password OTP (before showing new password screen)
+ * @param {string} email - Staff email
+ * @param {string} otp - 6-digit OTP
+ * @returns {Promise<{ success: boolean, message?: string }>}
+ */
+export const verifyStaffForgotOtp = async (email, otp) => {
+    try {
+        const response = await axios.post(`${API_URL}/staff/verify-forgot-otp`, {
+            email: email?.trim(),
+            otp: String(otp).trim()
+        });
+        if (response.data.success) {
+            return { success: true, message: response.data.message };
+        }
+        return { success: false, message: response.data.message || 'Invalid OTP' };
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Invalid or expired OTP';
+        return { success: false, message: msg };
+    }
+};
+
+/**
  * Reset staff password with OTP
  * @param {string} email - Staff email
  * @param {string} otp - 6-digit OTP

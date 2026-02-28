@@ -103,6 +103,23 @@ export const useStudentStore = create(
                 }
             },
 
+            verifyForgotOtp: async (identifier, otp) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await axios.post(`${API_URL}/student/verify-forgot-otp`, {
+                        identifier: identifier?.trim(),
+                        otp: String(otp).trim()
+                    });
+                    set({ isLoading: false });
+                    if (response.data.success) return { success: true, message: response.data.message };
+                    return { success: false, message: response.data.message || 'Invalid OTP' };
+                } catch (error) {
+                    const message = error.response?.data?.message || 'Invalid or expired OTP';
+                    set({ error: message, isLoading: false });
+                    return { success: false, message };
+                }
+            },
+
             resetPasswordWithOtp: async (identifier, otp, newPassword) => {
                 set({ isLoading: true, error: null });
                 try {

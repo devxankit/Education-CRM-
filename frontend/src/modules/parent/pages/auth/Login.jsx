@@ -9,6 +9,7 @@ const ParentLogin = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const login = useParentStore(state => state.login);
     const requestPasswordReset = useParentStore(state => state.requestPasswordReset);
+    const verifyForgotOtp = useParentStore(state => state.verifyForgotOtp);
     const resetPasswordWithOtp = useParentStore(state => state.resetPasswordWithOtp);
     const isAuthenticated = useParentStore(state => state.isAuthenticated);
 
@@ -89,7 +90,7 @@ const ParentLogin = () => {
         }
     };
 
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         setError('');
         setInfoMsg('');
@@ -97,8 +98,15 @@ const ParentLogin = () => {
             setError('Enter the OTP received on your email');
             return;
         }
-        setInfoMsg('OTP verified. Please set your new password.');
-        setForgotStep(3);
+        setIsLoading(true);
+        const result = await verifyForgotOtp(forgotIdentifier, forgotOtp);
+        setIsLoading(false);
+        if (result.success) {
+            setInfoMsg('OTP verified. Please set your new password.');
+            setForgotStep(3);
+        } else {
+            setError(result.message || 'Invalid or expired OTP');
+        }
     };
 
     const handleResetPassword = async (e) => {
@@ -316,9 +324,10 @@ const ParentLogin = () => {
                                     )}
                                     <button
                                         type="submit"
-                                        className="w-full relative flex items-center justify-center py-4 px-4 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:shadow-indigo-200 active:scale-[0.98] transition-all"
+                                        disabled={isLoading}
+                                        className="w-full relative flex items-center justify-center py-4 px-4 bg-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:shadow-indigo-200 active:scale-[0.98] transition-all disabled:opacity-70"
                                     >
-                                        Verify OTP
+                                        {isLoading ? 'Verifying...' : 'Verify OTP'}
                                     </button>
                                 </form>
                             )}

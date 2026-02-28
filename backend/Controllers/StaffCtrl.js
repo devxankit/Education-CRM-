@@ -1367,6 +1367,30 @@ export const forgotStaffPassword = async (req, res) => {
     }
 };
 
+// ================= VERIFY FORGOT OTP (validate OTP before showing password screen) =================
+export const verifyStaffForgotOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, message: "Email and OTP are required" });
+        }
+        const emailLower = email.trim().toLowerCase();
+        const staff = await Staff.findOne({ email: emailLower });
+        if (!staff) {
+            return res.status(404).json({ success: false, message: "Staff not found" });
+        }
+        if (!staff.resetPasswordOtp || staff.resetPasswordOtp !== String(otp).trim()) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+        if (!staff.resetPasswordOtpExpires || new Date() > staff.resetPasswordOtpExpires) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+        res.status(200).json({ success: true, message: "OTP verified. You can now set your new password." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= RESET PASSWORD (Verify OTP + set new password) =================
 export const resetStaffPasswordWithOtp = async (req, res) => {
     try {

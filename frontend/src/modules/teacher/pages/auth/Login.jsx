@@ -10,6 +10,7 @@ const TeacherLogin = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const login = useTeacherStore(state => state.login);
     const requestPasswordReset = useTeacherStore(state => state.requestPasswordReset);
+    const verifyForgotOtp = useTeacherStore(state => state.verifyForgotOtp);
     const resetPasswordWithOtp = useTeacherStore(state => state.resetPasswordWithOtp);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -87,20 +88,23 @@ const TeacherLogin = () => {
         }
     };
 
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         setLocalError('');
         setLocalSuccess('');
-        if (!forgotOtp.trim()) {
+        if (!forgotOtp.trim() || forgotOtp.trim().length < 4) {
             setLocalError('Enter the OTP received on your email');
             return;
         }
-        if (forgotOtp.trim().length < 4) {
-            setLocalError('Enter a valid OTP');
-            return;
+        setIsLoading(true);
+        const result = await verifyForgotOtp(forgotEmail, forgotOtp);
+        setIsLoading(false);
+        if (result.success) {
+            setLocalSuccess('OTP verified. Please set your new password.');
+            setForgotStep(3);
+        } else {
+            setLocalError(result.message || 'Invalid or expired OTP');
         }
-        setLocalSuccess('OTP verified. Please set your new password.');
-        setForgotStep(3);
     };
 
     const handleResetPassword = async (e) => {
@@ -298,9 +302,10 @@ const TeacherLogin = () => {
                                     )}
                                     <button
                                         type="submit"
-                                        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700"
+                                        disabled={isLoading}
+                                        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70"
                                     >
-                                        Verify OTP
+                                        {isLoading ? 'Verifying...' : 'Verify OTP'}
                                     </button>
                                 </form>
                             )}

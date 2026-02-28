@@ -5,6 +5,7 @@ import {
     updateTeacher,
     loginTeacher,
     forgotTeacherPassword,
+    verifyTeacherForgotOtp,
     resetTeacherPasswordWithOtp,
     getTeacherProfile,
     updateTeacherProfile,
@@ -53,6 +54,7 @@ const router = express.Router();
 // Public login
 router.post("/login", loginTeacher);
 router.post("/forgot-password", forgotTeacherPassword);
+router.post("/verify-forgot-otp", verifyTeacherForgotOtp);
 router.post("/reset-password", resetTeacherPasswordWithOtp);
 
 // Protected routes
