@@ -1,16 +1,27 @@
 
 import React from 'react';
 
-const TemplatePreview = ({ template, variables }) => {
+const TemplatePreview = ({ template, institute, variables }) => {
 
-    // Mock Data Replacement
+    const schoolName =
+        institute?.shortName ||
+        institute?.legalName ||
+        'Your School Name';
+
+    const schoolAddress = [
+        institute?.address,
+        [institute?.city, institute?.state].filter(Boolean).join(', ')
+    ]
+        .filter(Boolean)
+        .join(', ') || 'School address line';
+
     const mockData = {
         '{{student_name}}': 'Rahul Sharma',
         '{{admission_no}}': 'ADM-2023-001',
         '{{class}}': 'X',
         '{{section}}': 'A',
         '{{academic_year}}': '2025-26',
-        '{{school_name}}': 'Sunshine International School',
+        '{{school_name}}': schoolName,
         '{{issue_date}}': '26 Jan 2026',
         '{{father_name}}': 'Mr. Rajesh Sharma',
         '{{dob}}': '15 Aug 2010',
@@ -48,11 +59,30 @@ const TemplatePreview = ({ template, variables }) => {
             >
                 {/* Header (Logo & School Name) */}
                 <div className="text-center border-b-2 border-indigo-900 pb-6 mb-8">
-                    <div className="w-20 h-20 bg-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center text-indigo-700 font-bold text-2xl">
-                        LOGO
+                    <div className="w-20 h-20 bg-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                        {institute?.logo || institute?.logoLight || institute?.logoDark ? (
+                            <img
+                                src={institute.logo || institute.logoLight || institute.logoDark}
+                                alt="Institute Logo"
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <span className="text-indigo-700 font-bold text-2xl">
+                                {schoolName
+                                    .split(' ')
+                                    .map(word => word.charAt(0))
+                                    .join('')
+                                    .toUpperCase()
+                                    .slice(0, 3)}
+                            </span>
+                        )}
                     </div>
-                    <h1 className="text-3xl font-bold text-indigo-900 uppercase tracking-wide">Sunshine International School</h1>
-                    <p className="text-gray-500 mt-2 text-sm">123, Knowledge Park, Pune, Maharashtra - 411057</p>
+                    <h1 className="text-3xl font-bold text-indigo-900 uppercase tracking-wide">
+                        {schoolName}
+                    </h1>
+                    <p className="text-gray-500 mt-2 text-sm">
+                        {schoolAddress}
+                    </p>
                 </div>
 
                 {/* Certificate Title */}

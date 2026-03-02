@@ -18,6 +18,8 @@ const StaffUsers = () => {
 
     // UI States
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [formMode, setFormMode] = useState('create'); // 'create' | 'edit'
+    const [editingUser, setEditingUser] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [isRoleChangeOpen, setIsRoleChangeOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -55,8 +57,10 @@ const StaffUsers = () => {
                     _id: u._id,
                     name: u.name,
                     email: u.email,
+                    phone: u.phone,
                     roleId: u.roleId?._id || u.roleId,
                     roleName: u.roleId?.name || 'No Role',
+                    branchId: u.branchId?._id || u.branchId || null,
                     branchScope: u.branchId?.name || (u.branchId === 'all' || !u.branchId ? 'All Branches' : 'Single Branch'),
                     status: u.status,
                     lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never logged in'
@@ -142,6 +146,35 @@ const StaffUsers = () => {
         } catch (error) {
             console.error('Error updating status:', error);
             alert('An error occurred while updating status');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (user) => {
+        if (!user || !window.confirm(`Are you sure you want to DELETE "${user.name}"? This action cannot be undone.`)) {
+            return;
+        }
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/staff/${user.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Staff user deleted successfully');
+                setUsers(prev => prev.filter(u => u.id !== user.id));
+                setSelectedUser(prev => (prev && prev.id === user.id ? null : prev));
+            } else {
+                alert(result.message || 'Failed to delete staff user');
+            }
+        } catch (error) {
+            console.error('Error deleting staff:', error);
+            alert('An error occurred while deleting staff user');
         } finally {
             setLoading(false);
         }
@@ -292,6 +325,19 @@ const StaffUsers = () => {
                     <StaffUsersTable
                         users={paginatedUsers}
                         onRowClick={(u) => setSelectedUser(u)}
+                        onEdit={(u) => {
+                            setFormMode('edit');
+                            setEditingUser(u);
+                            setIsCreateOpen(true);
+                        }}
+                        onToggleStatus={(u) => {
+                            const nextStatus = u.status === 'active' ? 'suspended' : 'active';
+                            const action = nextStatus === 'active' ? 'ACTIVATE' : 'SUSPEND';
+                            if (window.confirm(`Are you sure you want to ${action} this user?`)) {
+                                handleStatusChange(u.id, nextStatus);
+                            }
+                        }}
+                        onDelete={handleDelete}
                     />
                     {/* Pagination */}
                     {filteredUsers.length > 0 && (
@@ -345,8 +391,61 @@ const StaffUsers = () => {
             {/* Modals */}
             <CreateStaffUserModal
                 isOpen={isCreateOpen}
-                onClose={() => setIsCreateOpen(false)}
-                onCreate={handleCreate}
+                onClose={() => {
+                    setIsCreateOpen(false);
+                    setEditingUser(null);
+                    setFormMode('create');
+                }}
+                mode={formMode}
+                initialData={editingUser}
+                onSubmit={formMode === 'create'
+                    ? async (payload) => {
+                        await handleCreate(payload);
+                        setIsCreateOpen(false);
+                    }
+                    : async (payload) => {
+                        if (!editingUser) return;
+                        setLoading(true);
+                        try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch(`${API_URL}/staff/${editingUser.id}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                alert('Staff user updated successfully');
+                                const updated = result.data;
+                                setUsers(prev => prev.map(u =>
+                                    u.id === editingUser.id
+                                        ? {
+                                            ...u,
+                                            name: updated.name,
+                                            email: updated.email,
+                                            phone: updated.phone,
+                                            roleId: updated.roleId,
+                                            roleName: updated.roleId?.name || u.roleName,
+                                            branchId: updated.branchId || null,
+                                            branchScope: updated.branchId?.name || u.branchScope
+                                        }
+                                        : u
+                                ));
+                                setEditingUser(null);
+                                setIsCreateOpen(false);
+                            } else {
+                                alert(result.message || 'Failed to update staff user');
+                            }
+                        } catch (error) {
+                            console.error('Error updating staff user:', error);
+                            alert('An error occurred while updating staff user');
+                        } finally {
+                            setLoading(false);
+                        }
+                    }}
                 activeRoles={activeRoles}
                 branches={branches}
                 loading={loading}

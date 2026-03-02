@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Eye, Layout, Type, Edit3, CheckCircle } from 'lucide-react';
 import VariableSelector from './VariableSelector';
 import TemplatePreview from './TemplatePreview';
+import { API_URL } from '@/app/api';
 
 const TemplateEditorDrawer = ({ isOpen, onClose, template, onSave }) => {
 
@@ -19,6 +20,7 @@ const TemplateEditorDrawer = ({ isOpen, onClose, template, onSave }) => {
     });
 
     const [viewMode, setViewMode] = useState('EDIT'); // EDIT, PREVIEW
+    const [instituteProfile, setInstituteProfile] = useState(null);
 
     // Load template data on open
     useEffect(() => {
@@ -40,6 +42,28 @@ const TemplateEditorDrawer = ({ isOpen, onClose, template, onSave }) => {
             });
         }
     }, [template]);
+
+    // Fetch institute profile for header (name, address, logo) in preview
+    useEffect(() => {
+        const fetchInstitute = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await fetch(`${API_URL}/institute/profile`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data?.success) {
+                    setInstituteProfile(data.data);
+                }
+            } catch (e) {
+                console.error('Failed to load institute profile for certificate preview', e);
+            }
+        };
+        if (isOpen) {
+            fetchInstitute();
+        }
+    }, [isOpen]);
 
     // Handlers
     const handleChange = (field, value) => {
@@ -198,6 +222,7 @@ const TemplateEditorDrawer = ({ isOpen, onClose, template, onSave }) => {
                     {/* Preview Component */}
                     <TemplatePreview
                         template={formData}
+                        institute={instituteProfile}
                     />
 
                 </div>

@@ -1,16 +1,35 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, X, Lock, Building } from 'lucide-react';
 
-const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches = [] }) => {
+const EMPTY_FORM = {
+    name: '',
+    email: '',
+    mobile: '',
+    roleId: '',
+    branchScope: 'all', // 'all' or specific branchId
+};
 
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        mobile: '',
-        roleId: '',
-        branchScope: 'all', // 'all' or ['branchId']
-    });
+const CreateStaffUserModal = ({ isOpen, onClose, mode = 'create', initialData, onSubmit, activeRoles, branches = [], loading }) => {
+
+    const [formData, setFormData] = useState(EMPTY_FORM);
+
+    const isEdit = mode === 'edit';
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (isEdit && initialData) {
+            setFormData({
+                name: initialData.name || '',
+                email: initialData.email || '',
+                mobile: initialData.phone || initialData.mobile || '',
+                roleId: initialData.roleId || '',
+                branchScope: initialData.branchId || 'all',
+            });
+        } else {
+            setFormData(EMPTY_FORM);
+        }
+    }, [isOpen, isEdit, initialData]);
 
     if (!isOpen) return null;
 
@@ -29,9 +48,7 @@ const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches
             ...formData,
             branchId: formData.branchScope === 'all' ? null : formData.branchScope
         };
-        onCreate(submissionData);
-        onClose();
-        // Reset Logic would be here
+        onSubmit && onSubmit(submissionData);
     };
 
     return (
@@ -42,7 +59,7 @@ const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches
                 {/* Header */}
                 <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
                     <h3 className="text-lg font-bold flex items-center gap-2">
-                        <UserPlus size={20} /> Create Staff User
+                        <UserPlus size={20} /> {isEdit ? 'Edit Staff User' : 'Create Staff User'}
                     </h3>
                     <button onClick={onClose} className="hover:bg-indigo-700 p-1 rounded transition-colors"><X size={20} /></button>
                 </div>
@@ -122,9 +139,10 @@ const CreateStaffUserModal = ({ isOpen, onClose, onCreate, activeRoles, branches
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm"
+                            disabled={loading}
+                            className="px-6 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-60"
                         >
-                            Create Account
+                            {loading ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Create Account')}
                         </button>
                     </div>
 

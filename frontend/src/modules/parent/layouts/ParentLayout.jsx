@@ -10,15 +10,18 @@ const ParentLayout = () => {
     const fetchDashboardData = useParentStore(state => state.fetchDashboardData);
     const fetchInstituteProfile = useParentStore(state => state.fetchInstituteProfile);
 
-    // Ensure linked children are loaded on any parent page (e.g. direct nav, refresh)
+    // Ensure linked children + institute profile loaded when parent logs in (avoid continuous re-fetch)
     useEffect(() => {
-        if (user && (!children || children.length === 0)) {
+        if (!user) return;
+
+        if (!children || children.length === 0) {
             fetchDashboardData();
         }
-        if (user) {
-            fetchInstituteProfile();
-        }
-    }, [user, children, fetchDashboardData, fetchInstituteProfile]);
+
+        fetchInstituteProfile();
+        // dependency only on user so this runs once per login, not on every state change
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">

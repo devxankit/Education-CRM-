@@ -156,37 +156,80 @@ const ParentSettingsPage = () => {
                 </div>
             </div>
 
-            {/* Institute Details Section */}
+            {/* Institute Details Card */}
             {instituteProfile && (
-                <div className="mb-4">
-                    <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                        <Building2 size={14} className="text-gray-400" /> Institute Details
-                    </p>
-                    <div className="bg-white border-y border-gray-200 divide-y divide-gray-100">
-                        <SettingItem
-                            icon={Building2}
-                            label={instituteProfile.shortName || instituteProfile.legalName || 'Institute'}
-                            description={instituteProfile.affiliations && instituteProfile.affiliations.length > 0
-                                ? instituteProfile.affiliations.join(', ')
-                                : 'Affiliation information'}
-                            rightContent={
-                                <span className="text-[11px] text-gray-400 font-mono">
-                                    {(instituteProfile.type || 'school').toUpperCase()}
-                                </span>
-                            }
-                        />
-                        <SettingItem
-                            icon={MapPin}
-                            label={instituteProfile.city || instituteProfile.state || 'Location'}
-                            description={instituteProfile.address}
-                            rightContent={
-                                instituteProfile.phone || instituteProfile.website ? (
-                                    <span className="text-[11px] text-indigo-600 font-medium truncate max-w-[140px]">
-                                        {instituteProfile.phone || instituteProfile.website}
-                                    </span>
-                                ) : null
-                            }
-                        />
+                <div className="px-4 mb-5">
+                    <div className="bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-100/70 rounded-2xl shadow-sm overflow-hidden">
+                        <div className="px-4 pt-4 flex items-center justify-between">
+                            <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-[0.18em] flex items-center gap-2">
+                                <Building2 size={14} className="text-indigo-400" />
+                                Institute Details
+                            </p>
+                            <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
+                                {(instituteProfile.type || 'school').toUpperCase()}
+                            </span>
+                        </div>
+
+                        <div className="px-4 pb-4 pt-3 flex gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold shrink-0">
+                                {(instituteProfile.shortName || instituteProfile.legalName || 'I')
+                                    .toString()
+                                    .charAt(0)
+                                    .toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-semibold text-gray-900 truncate">
+                                    {instituteProfile.legalName || instituteProfile.shortName || 'Institute'}
+                                </h3>
+                                {instituteProfile.shortName && instituteProfile.legalName && (
+                                    <p className="text-xs text-gray-500 truncate">
+                                        Short name: {instituteProfile.shortName}
+                                    </p>
+                                )}
+                                {instituteProfile.affiliations && instituteProfile.affiliations.length > 0 && (
+                                    <p className="mt-1 text-[11px] text-gray-500 leading-snug line-clamp-2">
+                                        Affiliations: {instituteProfile.affiliations.join(', ')}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="px-4 pb-4 space-y-2 border-t border-indigo-100/60 bg-white/60">
+                            <div className="flex items-start gap-2">
+                                <MapPin size={14} className="mt-0.5 text-gray-400 shrink-0" />
+                                <div className="text-xs text-gray-700 leading-snug">
+                                    {instituteProfile.address && (
+                                        <p className="font-medium">{instituteProfile.address}</p>
+                                    )}
+                                    {(instituteProfile.city || instituteProfile.state) && (
+                                        <p className="text-gray-500">
+                                            {[instituteProfile.city, instituteProfile.state]
+                                                .filter(Boolean)
+                                                .join(', ')}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {(instituteProfile.phone || instituteProfile.website) && (
+                                <div className="flex items-center justify-between text-[11px] text-gray-600 pt-1">
+                                    {instituteProfile.phone && (
+                                        <span className="flex items-center gap-1">
+                                            <Phone size={12} className="text-indigo-500" />
+                                            <span className="font-medium">{instituteProfile.phone}</span>
+                                        </span>
+                                    )}
+                                    {instituteProfile.website && (
+                                        <span className="flex items-center gap-1 truncate max-w-[150px] justify-end">
+                                            <Mail size={12} className="text-indigo-500" />
+                                            <span className="text-indigo-600 font-medium truncate">
+                                                {instituteProfile.website}
+                                            </span>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

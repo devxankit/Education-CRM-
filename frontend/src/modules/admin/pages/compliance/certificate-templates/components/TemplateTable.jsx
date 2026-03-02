@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileText, MoreVertical, Edit, User, Users, Archive, CheckCircle, Clock, Plus } from 'lucide-react';
+import { FileText, Edit, Users, Archive, CheckCircle, Clock, Plus, Trash2 } from 'lucide-react';
 
-const TemplateTable = ({ templates, onEdit, onStatusChange, onCreateNew }) => {
+const TemplateTable = ({ templates, onEdit, onStatusChange, onDelete, onCreateNew }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -57,10 +57,18 @@ const TemplateTable = ({ templates, onEdit, onStatusChange, onCreateNew }) => {
                                             <FileText size={20} />
                                         </div>
                                         <div>
-                                            <h4 className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors cursor-pointer" onClick={() => onEdit(template)}>
+                                            <h4
+                                                className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors cursor-pointer"
+                                                onClick={() => onEdit(template)}
+                                            >
                                                 {template.name}
                                             </h4>
                                             <p className="text-xs text-gray-500 mt-0.5">{template.code}</p>
+                                            {template.purpose && (
+                                                <p className="mt-1 text-[11px] text-gray-400 line-clamp-1">
+                                                    {template.purpose}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </td>
@@ -127,6 +135,16 @@ const TemplateTable = ({ templates, onEdit, onStatusChange, onCreateNew }) => {
                                                 title="Activate Template"
                                             >
                                                 <CheckCircle size={16} />
+                                            </button>
+                                        )}
+
+                                        {onDelete && (
+                                            <button
+                                                onClick={() => onDelete(template.id, template.name)}
+                                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete Template"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         )}
                                     </div>

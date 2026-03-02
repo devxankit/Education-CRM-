@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, Filter, FileText } from 'lucide-react';
 import { useAdminStore } from '@/store/adminStore';
 import TemplateTable from './components/TemplateTable';
@@ -12,10 +12,13 @@ const CertificateTemplates = () => {
         createCertificateTemplate,
         updateCertificateTemplate,
         updateCertificateTemplateStatus,
+        deleteCertificateTemplate,
     } = useAdminStore();
 
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [typeFilter, setTypeFilter] = useState('ALL'); // ALL | STUDENT | EMPLOYEE
+    const [statusFilter, setStatusFilter] = useState('ALL'); // ALL | ACTIVE | DRAFT | ARCHIVED
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -39,7 +42,11 @@ const CertificateTemplates = () => {
                     (Array.isArray(data) ? data : []).map((t) => ({
                         ...t,
                         id: t._id,
-                        updatedAt: t.updatedAt ? (typeof t.updatedAt === 'string' ? t.updatedAt : new Date(t.updatedAt).toLocaleDateString()) : '—',
+                        updatedAt: t.updatedAt
+                            ? (typeof t.updatedAt === 'string'
+                                ? t.updatedAt
+                                : new Date(t.updatedAt).toLocaleDateString())
+                            : '—',
                     }))
                 );
             } finally {
@@ -85,7 +92,11 @@ const CertificateTemplates = () => {
                 (Array.isArray(data) ? data : []).map((t) => ({
                     ...t,
                     id: t._id,
-                    updatedAt: t.updatedAt ? (typeof t.updatedAt === 'string' ? t.updatedAt : new Date(t.updatedAt).toLocaleDateString()) : '—',
+                    updatedAt: t.updatedAt
+                        ? (typeof t.updatedAt === 'string'
+                            ? t.updatedAt
+                            : new Date(t.updatedAt).toLocaleDateString())
+                        : '—',
                 }))
             );
             setIsEditorOpen(false);
@@ -102,17 +113,59 @@ const CertificateTemplates = () => {
                 (Array.isArray(data) ? data : []).map((t) => ({
                     ...t,
                     id: t._id,
-                    updatedAt: t.updatedAt ? (typeof t.updatedAt === 'string' ? t.updatedAt : new Date(t.updatedAt).toLocaleDateString()) : '—',
+                    updatedAt: t.updatedAt
+                        ? (typeof t.updatedAt === 'string'
+                            ? t.updatedAt
+                            : new Date(t.updatedAt).toLocaleDateString())
+                        : '—',
                 }))
             );
         } catch (_) {}
     };
 
-    const filteredTemplates = templates.filter(
-        (t) =>
-            (t.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (t.type || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleDeleteTemplate = async (id, name) => {
+        if (!window.confirm(`Delete template "${name}"? This cannot be undone.`)) return;
+        setLoading(true);
+        try {
+            await deleteCertificateTemplate(id);
+            const data = await fetchCertificateTemplates(selectedBranchId);
+            setTemplates(
+                (Array.isArray(data) ? data : []).map((t) => ({
+                    ...t,
+                    id: t._id,
+                    updatedAt: t.updatedAt
+                        ? (typeof t.updatedAt === 'string'
+                            ? t.updatedAt
+                            : new Date(t.updatedAt).toLocaleDateString())
+                        : '—',
+                }))
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredTemplates = useMemo(() => {
+        const term = searchTerm.toLowerCase();
+        return templates.filter((t) => {
+            const matchesSearch =
+                (t.name || '').toLowerCase().includes(term) ||
+                (t.type || '').toLowerCase().includes(term);
+            const matchesType =
+                typeFilter === 'ALL' || (t.type || '').toUpperCase() === typeFilter;
+            const matchesStatus =
+                statusFilter === 'ALL' || (t.status || '').toUpperCase() === statusFilter;
+            return matchesSearch && matchesType && matchesStatus;
+        });
+    }, [templates, searchTerm, typeFilter, statusFilter]);
+
+    const summary = useMemo(() => {
+        const total = templates.length;
+        const active = templates.filter(t => t.status === 'ACTIVE').length;
+        const draft = templates.filter(t => t.status === 'DRAFT').length;
+        const archived = templates.filter(t => t.status === 'ARCHIVED').length;
+        return { total, active, draft, archived };
+    }, [templates]);
 
     return (
         <div className="pb-20 relative min-h-screen bg-gray-50/50">
@@ -120,6 +173,12 @@ const CertificateTemplates = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Certificate Templates</h1>
                     <p className="text-gray-500 text-sm">Design and manage official document templates for students and employees.</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                        Total: <span className="font-semibold text-gray-700">{summary.total}</span> •
+                        Active: <span className="font-semibold text-emerald-600">{summary.active}</span> •
+                        Draft: <span className="font-semibold text-amber-600">{summary.draft}</span> •
+                        Archived: <span className="font-semibold text-gray-500">{summary.archived}</span>
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
                     {branches.length > 1 && (
@@ -155,16 +214,24 @@ const CertificateTemplates = () => {
                     />
                 </div>
                 <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                    <select className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option>All Types</option>
-                        <option>Student</option>
-                        <option>Employee</option>
+                    <select
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="ALL">All Types</option>
+                        <option value="STUDENT">Student</option>
+                        <option value="EMPLOYEE">Employee</option>
                     </select>
-                    <select className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option>All Status</option>
-                        <option>Active</option>
-                        <option>Draft</option>
-                        <option>Archived</option>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="ALL">All Status</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="DRAFT">Draft</option>
+                        <option value="ARCHIVED">Archived</option>
                     </select>
                 </div>
             </div>
@@ -179,6 +246,7 @@ const CertificateTemplates = () => {
                     templates={filteredTemplates}
                     onEdit={handleEdit}
                     onStatusChange={handleStatusChange}
+                    onDelete={handleDeleteTemplate}
                     onCreateNew={handleCreate}
                 />
             )}
