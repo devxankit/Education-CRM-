@@ -2,7 +2,6 @@
 export const getApiBaseUrl = () => {
     console.log('[API_URL] getApiBaseUrl called');
 
-
     if (typeof window === 'undefined') {
         // Fallback for non-browser environments
         console.log('[API_URL] window is undefined – returning empty string');
