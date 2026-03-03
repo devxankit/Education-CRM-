@@ -109,7 +109,7 @@ export const adminMenuConfig = [
             { id: 'vehicle-create', label: 'Vehicles', path: '/admin/operations/vehicles/create' },
             { id: 'driver-create', label: 'Drivers', path: '/admin/operations/drivers/create' },
             { id: 'routes', label: 'Routes & Stops', path: '/admin/operations/routes' },
-            { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
+            // { id: 'hostel', label: 'Hostel Setup (Optional)', path: '/admin/operations/hostel-config' },
             { id: 'hostels', label: 'Hostel Management', path: '/admin/operations/hostels' },
           
             // { id: 'asset-rules', label: 'Asset Governance', path: '/admin/operations/asset-rules' },
@@ -144,14 +144,11 @@ export const adminMenuConfig = [
     },
     {
         id: 'reports',
-        label: 'Reports & Analytics',
+        label: 'Reports',
         icon: BarChart3,
         path: '/admin/reports',
-        subItems: [
-            { id: 'academic', label: 'Academic Reports', path: '/admin/reports/academic' },
-            { id: 'finance', label: 'Finance Reports', path: '/admin/reports/finance' },
-            { id: 'operations', label: 'Operations Reports', path: '/admin/reports/operations' }
-        ]
+        // Keep reports simple – single consolidated reports page
+        subItems: []
     },
     {
         id: 'settings',

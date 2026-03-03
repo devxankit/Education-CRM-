@@ -49,25 +49,28 @@ const ClassCard = ({ classData, subjectId, subjectName }) => {
                     <h4 className="text-sm font-bold text-gray-900">{classData.name}</h4>
                     <p className="text-[10px] text-gray-500 font-medium mt-0.5">{classData.schedule}</p>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg border border-gray-200 text-xs font-semibold text-gray-600">
-                    <Users size={12} />
-                    {classData.students}
+                <div className="flex items-center gap-2">
+                    {completionClassData && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowCompletionModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-semibold"
+                            title="Mark Completion"
+                        >
+                            <CheckCircle size={12} />
+                            <span>Done</span>
+                        </button>
+                    )}
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg border border-gray-200 text-xs font-semibold text-gray-600">
+                        <Users size={12} />
+                        {classData.students}
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-2 pt-3 border-t border-gray-200/50">
-                {completionClassData && (
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setShowCompletionModal(true);
-                        }}
-                        className="flex flex-col items-center gap-1 p-1 hover:bg-gray-100 rounded-lg transition-colors" title="Mark Completion"
-                    >
-                        <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-md"><CheckCircle size={14} /></div>
-                        <span className="text-[9px] font-medium text-gray-500">Done</span>
-                    </button>
-                )}
+            <div className="grid grid-cols-4 gap-2 pt-3 border-t border-gray-200/50">
                 <button
                     onClick={(e) => { e.stopPropagation(); navigate('/teacher/attendance'); }}
                     className="flex flex-col items-center gap-1 p-1 hover:bg-gray-100 rounded-lg transition-colors" title="Mark Attendance"

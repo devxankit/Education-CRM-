@@ -265,7 +265,7 @@ const SubjectMarksModal = ({ isOpen, onClose, classData, subjectId, subjectName 
                 className="relative w-full max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl h-[90vh] flex flex-col"
             >
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 rounded-t-2xl shrink-0">
+                <div className="sticky top-0 bg-white border-b border-gray-100 pt-5 pb-3 px-4 flex items-center justify-between z-10 rounded-t-2xl shrink-0">
                     <div className="flex-1">
                         <h2 className="text-lg font-bold text-gray-900">{subjectName} - Marks Entry</h2>
                         <p className="text-xs text-gray-500 font-medium">{classData.classSection || classData.name}</p>
@@ -377,7 +377,7 @@ const SubjectMarksModal = ({ isOpen, onClose, classData, subjectId, subjectName 
                 </div>
 
                 {/* Table Body */}
-                <div className="flex-1 overflow-y-auto p-4 bg-gray-50/30">
+                <div className="flex-1 overflow-y-auto p-4 pb-24 bg-gray-50/30">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
                             <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -391,32 +391,42 @@ const SubjectMarksModal = ({ isOpen, onClose, classData, subjectId, subjectName 
                     ) : (
                         <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
                             {students.map((student, index) => (
-                                <div key={student._id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center justify-between p-3 border-b border-gray-50" onClick={(e) => e.stopPropagation()}>
+                                <div
+                                    key={student._id}
+                                    className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition hover:shadow-md"
+                                >
+                                    {/* Top row: avatar + info + marks */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border-b border-gray-50">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            {/* Serial Number */}
+                                            {/* Serial */}
                                             <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
-                                                <span className="text-xs font-bold text-gray-600">{index + 1}</span>
+                                                <span className="text-xs font-bold text-gray-600">
+                                                    {index + 1}
+                                                </span>
                                             </div>
-                                            {/* Student Avatar */}
+                                            {/* Avatar */}
                                             <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center font-bold text-indigo-600 shrink-0">
                                                 {student.photo ? (
-                                                    <img src={student.photo} alt={`${student.firstName} ${student.lastName}`} className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={student.photo}
+                                                        alt={`${student.firstName} ${student.lastName}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 ) : (
-                                                    <span className="text-base">{student.firstName?.charAt(0) || 'S'}</span>
+                                                    <span className="text-base">
+                                                        {student.firstName?.charAt(0) || 'S'}
+                                                    </span>
                                                 )}
                                             </div>
-                                            {/* Student Info */}
+                                            {/* Info */}
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="text-sm font-bold text-gray-900 leading-tight uppercase truncate">
                                                     {student.firstName} {student.lastName}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                    {student.rollNo && (
-                                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                                                            Roll: {student.rollNo}
-                                                        </span>
-                                                    )}
+                                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                        Roll: {student.rollNo || '-'}
+                                                    </span>
                                                     {student.admissionNo && (
                                                         <span className="text-[10px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
                                                             Adm: {student.admissionNo}
@@ -426,33 +436,50 @@ const SubjectMarksModal = ({ isOpen, onClose, classData, subjectId, subjectName 
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        {/* Marks + status */}
+                                        <div className="flex items-center justify-end gap-2 sm:self-auto">
                                             <input
                                                 type="text"
                                                 inputMode="decimal"
                                                 placeholder="-"
                                                 value={marksData[student._id] || ''}
                                                 onChange={(e) => handleMarkChange(student._id, e.target.value)}
-                                                onClick={(e) => e.stopPropagation()} // Prevent click from bubbling
-                                                onFocus={(e) => e.stopPropagation()} // Prevent focus from bubbling
-                                                className={`w-20 h-10 text-center text-sm font-bold border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all ${marksData[student._id] ? 'bg-white border-gray-200 text-gray-900' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onFocus={(e) => e.stopPropagation()}
+                                                className={`w-16 h-10 text-center text-sm font-bold border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all ${
+                                                    marksData[student._id]
+                                                        ? 'bg-white border-gray-200 text-gray-900'
+                                                        : 'bg-gray-50 border-gray-100 text-gray-400'
+                                                }`}
                                             />
-                                            <div className={`p-2 rounded-xl ${parseFloat(marksData[student._id]) >= passingMarks ? 'bg-green-50 text-green-600' : (marksData[student._id] !== '' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-300')}`}>
+                                            <div
+                                                className={`p-2 rounded-xl ${
+                                                    parseFloat(marksData[student._id]) >= passingMarks
+                                                        ? 'bg-green-50 text-green-600'
+                                                        : marksData[student._id] !== ''
+                                                        ? 'bg-red-50 text-red-600'
+                                                        : 'bg-gray-50 text-gray-300'
+                                                }`}
+                                            >
                                                 {marksData[student._id] !== ''
-                                                    ? (parseFloat(marksData[student._id]) >= passingMarks ? <CheckCircle size={20} /> : <AlertCircle size={20} />)
-                                                    : <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-dashed"></div>}
+                                                    ? parseFloat(marksData[student._id]) >= passingMarks
+                                                        ? <CheckCircle size={20} />
+                                                        : <AlertCircle size={20} />
+                                                    : <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-dashed" />}
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Remarks */}
                                     <div className="p-3 bg-gray-50/50">
                                         <input
                                             type="text"
                                             placeholder="Remarks (Optional)..."
                                             value={remarksData[student._id] || ''}
                                             onChange={(e) => handleRemarkChange(student._id, e.target.value)}
-                                            onClick={(e) => e.stopPropagation()} // Prevent click from bubbling
-                                            onFocus={(e) => e.stopPropagation()} // Prevent focus from bubbling
-                                            className="w-full bg-transparent border-none p-0 text-[11px] font-medium text-gray-500 focus:ring-0 outline-none"
+                                            onClick={(e) => e.stopPropagation()}
+                                            onFocus={(e) => e.stopPropagation()}
+                                            className="w-full text-xs text-gray-600 bg-gray-50 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                                         />
                                     </div>
                                 </div>

@@ -103,7 +103,7 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
                 className="relative w-full max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl h-[90vh] flex flex-col"
             >
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 rounded-t-2xl shrink-0">
+                <div className="sticky top-0 bg-white border-b border-gray-100 pt-5 pb-3 px-4 flex items-center justify-between z-10 rounded-t-2xl shrink-0">
                     <div>
                         <h2 className="text-lg font-bold text-gray-900">{subject.subjectName} - Marks</h2>
                         <p className="text-xs text-gray-500 font-medium">{exam.examName || exam.title} • Max Marks: {subject.maxMarks}</p>
@@ -114,7 +114,7 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
                 </div>
 
                 {/* Table Body */}
-                <div className="flex-1 overflow-y-auto p-4 bg-gray-50/30">
+                <div className="flex-1 overflow-y-auto p-4 pb-24 bg-gray-50/30">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
                             <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -137,7 +137,7 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
                             )}
                             {students.map((student, index) => (
                                 <div key={student._id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                    <div className="flex items-center justify-between p-3 border-b border-gray-50">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border-b border-gray-50">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             {/* Serial Number */}
                                             <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
@@ -176,7 +176,8 @@ const MarksEntryTable = ({ exam, subject, isOpen, onClose }) => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        {/* Marks & Status */}
+                                        <div className="flex items-center justify-end gap-2 sm:self-auto">
                                             <input
                                                 type="text"
                                                 inputMode="decimal"

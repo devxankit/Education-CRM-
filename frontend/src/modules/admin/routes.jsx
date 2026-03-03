@@ -195,7 +195,8 @@ const adminRoutes = [
                     { path: 'communication/templates', element: <MessageTemplates /> },
                     { path: 'communication/notification-rules', element: <NotificationRules /> },
 
-                    // 10. Reports & Analytics
+                    // 10. Reports – only Academic Reports enabled for now
+                    { path: 'reports', element: <AcademicReports /> },
                     { path: 'reports/academic', element: <AcademicReports /> },
                     { path: 'reports/finance', element: <FinanceReports /> },
                     { path: 'reports/hr', element: <HRReports /> },

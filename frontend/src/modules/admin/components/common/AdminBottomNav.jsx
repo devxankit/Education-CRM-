@@ -10,7 +10,7 @@ const AdminBottomNav = () => {
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
         { id: 'users', label: 'Users', icon: Users, path: '/admin/users/admins' },
         { id: 'academics', label: 'Academic', icon: GraduationCap, path: '/admin/academics/classes' },
-        { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports/academic' },
+        { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
         { id: 'settings', label: 'Settings', icon: Cog, path: '/admin/settings/general' }
     ];
 
