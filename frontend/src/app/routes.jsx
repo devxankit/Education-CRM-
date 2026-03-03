@@ -14,14 +14,16 @@ const router = createBrowserRouter([
         element: <App />,
         errorElement: <ErrorBoundary />,
         children: [
-            { index: true, element: <Navigate to="/staff/login" replace /> },
-            { path: 'login', element: <Navigate to="/staff/login" replace /> },
+            // Default: open admin login when hitting root or /login
+            { index: true, element: <Navigate to="/admin/login" replace /> },
+            { path: 'login', element: <Navigate to="/admin/login" replace /> },
             ...studentRoutes,
             ...teacherRoutes,
             ...parentRoutes,
             ...staffRoutes,
             ...adminRoutes,
-            { path: '*', element: <Navigate to="/staff/login" replace /> },
+            // Fallback: send unknown routes to admin login
+            { path: '*', element: <Navigate to="/admin/login" replace /> },
         ],
     },
 ]);
