@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API URL Generator</title>
+</head>
+<body>
+
+    <h2>Enter Domain</h2>
+    <input type="text" id="domainInput" placeholder="Enter domain e.g. crm.cloudedata.in" style="width:300px;padding:8px;">
+    <button onclick="generateApiUrl()" style="padding:8px;">Generate API URL</button>
+
+    <div id="result" style="margin-top:20px;"></div>
+
+<script>
+function generateApiUrl() {
+  let inputDomain = document.getElementById("domainInput").value.trim();
+
+  if (!inputDomain) {
+    alert("Please enter a domain name");
+    return;
+  }
+
+  // Remove protocol if user enters full URL
+  inputDomain = inputDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+  console.log("Input Domain:", inputDomain);
+
+  const parts = inputDomain.split('.');
+  console.log("Parts:", parts);
+
+  let newHost;
+
+  if (parts.length > 2) {
+    // Has subdomain → remove first part
+    const rootDomain = parts.slice(1).join('.');
+    newHost = `api.${rootDomain}`;
+  } else {
+    // No subdomain → add api.
+    newHost = `api.${inputDomain}`;
+  }
+
+  const finalUrl = `https://${newHost}`;
+
+  console.log("Generated API URL:", finalUrl);
+
+  document.getElementById("result").innerHTML = `
+    <h3>Generated API Base URL:</h3>
+    <p style="color:green;font-weight:bold;">${finalUrl}</p>
+  `;
+}
+</script>
+
+</body>
+</html>
