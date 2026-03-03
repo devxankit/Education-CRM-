@@ -2,11 +2,11 @@
 export const getApiBaseUrl = () => {
     console.log('[API_URL] getApiBaseUrl called');
 
-    // If explicit env is set, always prefer that (for staging/override)
-    if (import.meta.env.VITE_API_URL) {
-        console.log('[API_URL] Using VITE_API_URL from env:', import.meta.env.VITE_API_URL);
-        return import.meta.env.VITE_API_URL;
-    }
+    // // If explicit env is set, always prefer that (for staging/override)
+    // if (import.meta.env.VITE_API_URL) {
+    //     console.log('[API_URL] Using VITE_API_URL from env:', import.meta.env.VITE_API_URL);
+    //     return import.meta.env.VITE_API_URL;
+    // }
 
     if (typeof window === 'undefined') {
         // Fallback for non-browser environments
