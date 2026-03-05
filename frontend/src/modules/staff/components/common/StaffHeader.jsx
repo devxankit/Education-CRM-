@@ -32,7 +32,7 @@ const StaffHeader = () => {
                     className="flex items-center gap-3 cursor-pointer group"
                     onClick={() => navigate('/staff/profile')}
                 >
-                    <div className="text-right hidden md:block">
+                    <div className="hidden md:flex flex-col justify-center text-right">
                         <p className="text-sm font-bold text-gray-700 group-hover:text-indigo-600 transition-colors uppercase">
                             {user?.name || 'Staff Member'}
                         </p>

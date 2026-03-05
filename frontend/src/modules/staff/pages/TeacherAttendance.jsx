@@ -526,8 +526,8 @@ const TeacherAttendance = () => {
                                 onClick={() => isToday && handleMarkAttendance(employee)}
                             >
                                 <div className="relative z-10">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="flex items-center gap-4">
+                                    <div className="flex flex-wrap justify-between items-start gap-3 mb-6">
+                                        <div className="flex items-center gap-4 min-w-0">
                                             <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 p-1 group-hover:border-indigo-200 transition-colors">
                                                 <div className={`w-full h-full rounded-xl flex items-center justify-center ${
                                                     employeeType === 'staff' ? 'bg-purple-50 text-purple-400' : 'bg-indigo-50 text-indigo-400'
@@ -551,7 +551,7 @@ const TeacherAttendance = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <span className={`px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm ${STATUS_COLORS[status] || STATUS_COLORS.Pending}`}>
+                                        <span className={`px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm flex-shrink-0 ${STATUS_COLORS[status] || STATUS_COLORS.Pending}`}>
                                             {status}
                                         </span>
                                     </div>
@@ -644,7 +644,7 @@ const AttendanceModal = ({ teacher, currentAttendance, onClose, onSave, saving, 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
+            <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-100">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-indigo-50">
                     <div className="flex items-center gap-2">

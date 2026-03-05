@@ -225,7 +225,7 @@ const StaffDashboard = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 md:pb-12 min-h-screen bg-gray-50/50">
             {/* High-End Greeting Banner */}
             <div className="relative overflow-hidden bg-white mt-6 mb-8 rounded-[2rem] border border-gray-100 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div className="relative z-10 text-center sm:text-left">
+                <div className="relative z-10 text-center sm:text-left flex flex-col justify-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-black uppercase tracking-widest mb-4">
                         <TrendingUp size={12} />
                         Welcome Back

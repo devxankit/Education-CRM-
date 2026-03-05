@@ -30,7 +30,7 @@ const Header = ({ user }) => {
                             className="w-10 h-10 rounded-full bg-indigo-50 object-cover"
                         />
                     </div>
-                    <div>
+                    <div className="flex flex-col justify-center">
                         <p className="text-xs text-gray-500 font-medium">Good Morning,</p>
                         <h1 className="text-lg font-bold text-gray-900 leading-tight">
                             {displayName}

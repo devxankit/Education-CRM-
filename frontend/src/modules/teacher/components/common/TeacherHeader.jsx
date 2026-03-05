@@ -46,7 +46,7 @@ const TeacherHeader = ({ user }) => {
                         />
                         <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
                     </div>
-                    <div>
+                    <div className="flex flex-col justify-center">
                         <p className="text-xs text-gray-500 font-medium">{getGreeting()},</p>
                         <h1 className="text-sm font-bold text-gray-900 leading-tight">
                             {displayName}

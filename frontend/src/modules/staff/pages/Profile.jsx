@@ -186,9 +186,9 @@ const Profile = () => {
                 </div>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="px-6 pt-6 pb-10 space-y-6">
                 {/* ID & System Info */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm group">
+                <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm group">
                     <h3 className="text-xs font-black text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Briefcase size={14} /> Employment & System Details
                     </h3>
@@ -201,7 +201,7 @@ const Profile = () => {
                 </div>
 
                 {/* Account Security Section */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-xs font-black text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Lock size={14} /> Security & Privacy
                     </h3>
@@ -225,7 +225,7 @@ const Profile = () => {
                 </div>
 
                 {/* Institute Info */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-xs font-black text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <MapPin size={14} /> My Institution
                     </h3>
@@ -258,7 +258,7 @@ const Profile = () => {
                 </div>
 
                 {/* Personal Information */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-xs font-black text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <User size={14} /> Personal Contact
                     </h3>
@@ -272,7 +272,7 @@ const Profile = () => {
                 </div>
 
                 {/* Access & Permissions */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xs font-black text-indigo-600 uppercase tracking-wider flex items-center gap-2">
                             <Shield size={14} /> My Module Permissions
@@ -293,13 +293,13 @@ const Profile = () => {
                 </div>
 
                 {/* Stats / Timing */}
-                <div className="grid grid-cols-2 gap-3 mb-10">
-                    <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm text-center">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm text-center">
                         <Clock size={16} className="mx-auto mb-1 text-gray-400" />
                         <p className="text-[10px] font-black text-gray-400 uppercase">System Status</p>
                         <p className="text-xs font-bold text-green-600 uppercase">{profile.status}</p>
                     </div>
-                    <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm text-center">
+                    <div className="bg-white px-5 py-4 rounded-2xl border border-gray-200 shadow-sm text-center">
                         <CheckCircle size={16} className="mx-auto mb-1 text-gray-400" />
                         <p className="text-[10px] font-black text-gray-400 uppercase">Verified User</p>
                         <p className="text-xs font-bold text-blue-600 uppercase">Yes</p>
