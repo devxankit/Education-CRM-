@@ -4,12 +4,13 @@ import { API_URL } from '@/app/api';
 import { useStaffAuth } from '../context/StaffAuthContext';
 
 const STATUS_COLORS = {
-    'Present': 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    'Absent': 'bg-rose-50 text-rose-700 border-rose-100',
-    'Late': 'bg-amber-50 text-amber-700 border-amber-100',
+    Present: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    Absent: 'bg-rose-50 text-rose-700 border-rose-100',
+    Late: 'bg-amber-50 text-amber-700 border-amber-100',
     'Half-Day': 'bg-blue-50 text-blue-700 border-blue-100',
-    'Leave': 'bg-purple-50 text-purple-700 border-purple-100',
-    'Pending': 'bg-gray-50 text-gray-500 border-gray-100'
+    Leave: 'bg-purple-50 text-purple-700 border-purple-100',
+    Pending: 'bg-gray-50 text-gray-500 border-gray-100',
+    'Not Marked': 'bg-gray-50 text-gray-500 border-gray-100'
 };
 
 const TeacherAttendance = () => {
@@ -350,7 +351,8 @@ const TeacherAttendance = () => {
 
     const getAttendanceStatus = (teacherId) => {
         const att = attendance[teacherId];
-        return att?.status || 'Pending';
+        // If no status yet, show more meaningful label
+        return att?.status || 'Not Marked';
     };
 
     const markedCount = Object.values(attendance).filter(a => a.status).length;
@@ -514,11 +516,19 @@ const TeacherAttendance = () => {
                         const status = getAttendanceStatus(employeeId);
                         const employeeName = employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A';
                         const employeeType = employee.type || 'teacher';
+                        const employeeCode = (employee.employeeId || 'N/A').toUpperCase();
+                        const primaryRoleLabel = employee.department || employee.designation || 'N/A';
+                        const secondaryRoleLabel =
+                            employee.department &&
+                            employee.designation &&
+                            employee.department !== employee.designation
+                                ? employee.designation
+                                : null;
 
                         return (
                             <div
                                 key={employeeId}
-                                className={`group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all duration-300 relative overflow-hidden ${
+                                className={`group bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm transition-all duration-300 relative overflow-hidden ${
                                     isToday 
                                         ? 'hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 cursor-pointer active:scale-[0.98]' 
                                         : 'opacity-75 cursor-not-allowed'
@@ -526,45 +536,64 @@ const TeacherAttendance = () => {
                                 onClick={() => isToday && handleMarkAttendance(employee)}
                             >
                                 <div className="relative z-10">
-                                    <div className="flex flex-wrap justify-between items-start gap-3 mb-6">
-                                        <div className="flex items-center gap-4 min-w-0">
-                                            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 p-1 group-hover:border-indigo-200 transition-colors">
-                                                <div className={`w-full h-full rounded-xl flex items-center justify-center ${
-                                                    employeeType === 'staff' ? 'bg-purple-50 text-purple-400' : 'bg-indigo-50 text-indigo-400'
-                                                }`}>
-                                                    <User size={24} />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h3 className="font-black text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">
-                                                    {employeeName}
-                                                </h3>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 uppercase tracking-wider">{employee.employeeId || 'N/A'}</span>
-                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider ${
-                                                        employeeType === 'staff' 
-                                                            ? 'bg-purple-50 text-purple-600 border-purple-100' 
-                                                            : 'bg-blue-50 text-blue-600 border-blue-100'
-                                                    }`}>
-                                                        {employeeType === 'staff' ? 'Staff' : 'Teacher'}
-                                                    </span>
-                                                </div>
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 p-1 group-hover:border-indigo-200 transition-colors shrink-0">
+                                            <div
+                                                className={`w-full h-full rounded-xl flex items-center justify-center ${
+                                                    employeeType === 'staff'
+                                                        ? 'bg-purple-50 text-purple-400'
+                                                        : 'bg-indigo-50 text-indigo-400'
+                                                }`}
+                                            >
+                                                <User size={24} />
                                             </div>
                                         </div>
-                                        <span className={`px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm flex-shrink-0 ${STATUS_COLORS[status] || STATUS_COLORS.Pending}`}>
-                                            {status}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <div className="flex justify-between items-end mb-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                                    <Sparkles size={10} className="text-amber-400" />
-                                                    {employeeType === 'staff' ? 'Role' : 'Department'}
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-black text-gray-900 text-sm leading-tight group-hover:text-indigo-600 transition-colors">
+                                                {employeeName}
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 uppercase tracking-wider">
+                                                    {employeeCode}
+                                                </span>
+                                                <span
+                                                    className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider ${
+                                                        employeeType === 'staff'
+                                                            ? 'bg-purple-50 text-purple-600 border-purple-100'
+                                                            : 'bg-blue-50 text-blue-600 border-blue-100'
+                                                    }`}
+                                                >
+                                                    {employeeType === 'staff' ? 'Staff' : 'Teacher'}
                                                 </span>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-700">{employee.department || employee.designation || 'N/A'}</p>
+                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                                <span
+                                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm ${
+                                                        STATUS_COLORS[status] || STATUS_COLORS.Pending
+                                                    }`}
+                                                >
+                                                    {status}
+                                                </span>
+                                                {status !== 'Not Marked' && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-100">
+                                                        <CheckCircle2 size={10} className="text-emerald-500" />
+                                                        Marked
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                        <div className="space-y-3">
+                                        <div>
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                                                <Sparkles size={10} className="text-amber-400" />
+                                                {employeeType === 'staff' ? 'Role' : 'Department'}
+                                            </span>
+                                            <p className="text-sm font-bold text-gray-700">{primaryRoleLabel}</p>
+                                            {secondaryRoleLabel && (
+                                                <p className="text-xs text-gray-500 mt-0.5">{secondaryRoleLabel}</p>
+                                            )}
                                         </div>
 
                                         {currentAttendance.remarks && (
@@ -574,14 +603,7 @@ const TeacherAttendance = () => {
                                         )}
 
                                         <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
-                                            <div className="flex gap-2">
-                                                {status !== 'Pending' && (
-                                                    <div className="px-2 py-1 bg-emerald-50 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                                                        <CheckCircle2 size={12} className="text-emerald-500" />
-                                                        <span className="text-[10px] font-black text-emerald-700">Marked</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <div className="flex gap-1.5" />
                                             {isToday ? (
                                                 <div className="flex items-center gap-1 text-indigo-600 group-hover:translate-x-1 transition-transform">
                                                     <span className="text-[10px] font-black uppercase tracking-widest">Mark</span>

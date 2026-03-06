@@ -50,6 +50,7 @@ export const useParentStore = create(
             notices: [],
             fees: null,
             attendance: [],
+            upcomingHolidays: [],
             homework: [],
             homeworkDetails: null,
             teachers: [],
@@ -197,6 +198,16 @@ export const useParentStore = create(
                         const summary = data?.summary || {};
                         const history = data?.history || [];
                         const monthly = data?.monthly || [];
+                        const mappedHistory = history.map(h => {
+                            const rawDate = h.date;
+                            return {
+                                date: new Date(rawDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                                status: h.status,
+                                type: h.type || 'Regular',
+                                rawDate
+                            };
+                        });
+
                         set({
                             attendance: {
                                 summary: {
@@ -206,11 +217,7 @@ export const useParentStore = create(
                                     presentDays: summary?.presentDays || 0,
                                     absentDays: summary?.absentDays || 0,
                                 },
-                                history: history.map(h => ({
-                                    date: new Date(h.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                                    status: h.status,
-                                    type: h.type || 'Regular'
-                                })),
+                                history: mappedHistory,
                                 monthly: monthly.map(m => ({
                                     month: m.month,
                                     percentage: m.percentage,
@@ -225,6 +232,45 @@ export const useParentStore = create(
                 } catch (error) {
                     console.error('Error fetching child attendance:', error);
                     set({ isLoading: false });
+                }
+            },
+
+            // Fetch student-visible holidays for the selected child and include ongoing ranges
+            fetchUpcomingHolidays: async () => {
+                try {
+                    const token = get().token;
+                    const today = new Date();
+                    const startOfToday = new Date(today.toDateString());
+                    const response = await axios.get(`${API_URL}/holiday`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    });
+
+                    if (response.data?.success) {
+                        const upcoming = (response.data.data || [])
+                            .filter((holiday) => {
+                                const startDate = new Date(holiday.startDate || holiday.date);
+                                const endDate = new Date(holiday.endDate || holiday.startDate || holiday.date);
+                                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return false;
+                                return endDate >= startOfToday;
+                            })
+                            .map((holiday) => ({
+                                id: holiday._id || holiday.id,
+                                name: holiday.name || 'Holiday',
+                                startDate: holiday.startDate || holiday.date,
+                                endDate: holiday.endDate || holiday.startDate || holiday.date,
+                                type: holiday.type || 'Holiday',
+                                isRange: Boolean(holiday.isRange),
+                            }))
+                            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+                            .slice(0, 5);
+
+                        set({ upcomingHolidays: upcoming });
+                    } else {
+                        set({ upcomingHolidays: [] });
+                    }
+                } catch (error) {
+                    console.error('Error fetching upcoming holidays for parent:', error);
+                    set({ upcomingHolidays: [] });
                 }
             },
 

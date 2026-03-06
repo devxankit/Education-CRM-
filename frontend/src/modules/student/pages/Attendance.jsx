@@ -15,17 +15,38 @@ import EmptyState from '../components/Attendance/EmptyState';
 
 // Data
 import { useStudentStore } from '../../../store/studentStore';
+import { Calendar } from 'lucide-react';
 
 const AttendancePage = () => {
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const data = useStudentStore(state => state.attendance);
+    const upcomingHolidays = useStudentStore(state => state.upcomingHolidays);
     const fetchAttendance = useStudentStore(state => state.fetchAttendance);
+    const fetchUpcomingHolidays = useStudentStore(state => state.fetchUpcomingHolidays);
     const [loading, setLoading] = useState(!data || Object.keys(data).length === 0);
 
+    const formatHolidayDate = (holiday) => {
+        const start = new Date(holiday.startDate);
+        const end = new Date(holiday.endDate || holiday.startDate);
+        if (holiday.isRange && !isNaN(end.getTime()) && start.toDateString() !== end.toDateString()) {
+            return `${start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+        }
+        return start.toLocaleDateString('en-IN', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+        });
+    };
+
     useEffect(() => {
-        fetchAttendance().finally(() => setLoading(false));
-    }, [fetchAttendance]);
+        const init = async () => {
+            await fetchAttendance();
+            await fetchUpcomingHolidays();
+            setLoading(false);
+        };
+        init();
+    }, [fetchAttendance, fetchUpcomingHolidays]);
 
     return (
         <div ref={containerRef} className="min-h-screen bg-white md:bg-gray-50 pb-24">
@@ -92,6 +113,41 @@ const AttendancePage = () => {
                             <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
                                 <OverallAttendanceCard attendance={data.overall} />
                             </motion.div>
+
+                            {/* 2.5 Upcoming Holidays */}
+                            {upcomingHolidays && (
+                                <motion.div
+                                    className="mt-4"
+                                    variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
+                                >
+                                    <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3">
+                                        <div className="mt-0.5">
+                                            <Calendar size={18} className="text-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                                                Upcoming Holidays
+                                            </h2>
+                                            {upcomingHolidays.length > 0 ? (
+                                                <div className="mt-2 space-y-1.5">
+                                                    {upcomingHolidays.map((h) => (
+                                                        <div key={h._id || h.id} className="flex items-center justify-between text-[11px]">
+                                                            <span className="font-semibold text-gray-900">{h.name}</span>
+                                                            <span className="text-gray-700">
+                                                                {formatHolidayDate(h)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="mt-2 text-[11px] text-indigo-900/70">
+                                                    No upcoming holidays recorded yet.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
 
                             {/* 3. Eligibility Status */}
                             <motion.div

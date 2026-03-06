@@ -10,10 +10,9 @@ import { AuthMiddleware, isInstitute } from "../Middlewares/AuthMiddleware.js";
 const router = express.Router();
 
 router.use(AuthMiddleware);
-router.use(isInstitute);
-
-router.post("/", createHoliday);
 router.get("/", getHolidays);
+router.use(isInstitute);
+router.post("/", createHoliday);
 router.put("/:id", updateHoliday);
 router.delete("/:id", deleteHoliday);
 

@@ -42,17 +42,32 @@ export const createHoliday = async (req, res) => {
 // ================= GET ALL HOLIDAYS =================
 export const getHolidays = async (req, res) => {
     try {
-        const instituteId = req.user._id;
-        const { branchId, academicYearId, year } = req.query;
+        const instituteId = req.role === "institute" ? req.user._id : req.user.instituteId;
+        const { branchId, academicYearId, year, applicableTo } = req.query;
 
         let query = { instituteId };
 
-        if (branchId && branchId !== "all") {
+        if (req.role !== "institute") {
+            const userBranchId = req.user.branchId ? String(req.user.branchId) : null;
+            if (userBranchId) {
+                query.$or = [{ branchId: "all" }, { branchId: userBranchId }];
+            }
+        } else if (branchId && branchId !== "all") {
             query.$or = [{ branchId: "all" }, { branchId }];
         }
 
         if (academicYearId && academicYearId !== "all" && mongoose.Types.ObjectId.isValid(academicYearId)) {
             query.academicYearId = { $in: [new mongoose.Types.ObjectId(academicYearId), null] };
+        }
+
+        if (req.role === "student" || req.role === "parent") {
+            query.applicableTo = "students";
+        } else if (req.role === "teacher") {
+            query.applicableTo = "teachers";
+        } else if (req.role === "staff") {
+            query.applicableTo = "staff";
+        } else if (applicableTo) {
+            query.applicableTo = applicableTo;
         }
 
         if (year) {

@@ -15,12 +15,27 @@ const ParentAttendancePage = () => {
     const scrollRef = useRef(null);
 
     const attendance = useParentStore(state => state.attendance);
+    const upcomingHolidays = useParentStore(state => state.upcomingHolidays);
     const fetchAttendance = useParentStore(state => state.fetchAttendance);
+    const fetchUpcomingHolidays = useParentStore(state => state.fetchUpcomingHolidays);
     const isLoading = useParentStore(state => state.isLoading);
     const selectedChildIdStore = useParentStore(state => state.selectedChildId);
 
     const [selectedMonth, setSelectedMonth] = useState('Oct');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+
+    const formatHolidayDate = (holiday) => {
+        const start = new Date(holiday.startDate);
+        const end = new Date(holiday.endDate || holiday.startDate);
+        if (holiday.isRange && !isNaN(end.getTime()) && start.toDateString() !== end.toDateString()) {
+            return `${start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+        }
+        return start.toLocaleDateString('en-IN', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+        });
+    };
 
     // 1. Entry Check & Scrolling
     useEffect(() => {
@@ -29,12 +44,14 @@ const ParentAttendancePage = () => {
             fetchAttendance(idToUse);
         }
 
+        fetchUpcomingHolidays();
+
         if (highlightLowAttendance && scrollRef.current) {
             setTimeout(() => {
                 scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
         }
-    }, [childId, selectedChildIdStore, highlightLowAttendance, fetchAttendance]);
+    }, [childId, selectedChildIdStore, highlightLowAttendance, fetchAttendance, fetchUpcomingHolidays]);
 
     // Update selected month when attendance data arrives
     useEffect(() => {
@@ -110,6 +127,36 @@ const ParentAttendancePage = () => {
 
                 {/* 2. Overview Card */}
                 <AttendanceOverview data={attendance.summary} />
+
+                {/* 2.5 Upcoming Holidays */}
+                {upcomingHolidays && (
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-start gap-3">
+                        <div className="mt-0.5">
+                            <Calendar size={18} className="text-indigo-500" />
+                        </div>
+                        <div>
+                            <h2 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                                Upcoming Holidays for Your Child
+                            </h2>
+                            {upcomingHolidays.length > 0 ? (
+                                <div className="mt-2 space-y-1.5">
+                                    {upcomingHolidays.map((h) => (
+                                        <div key={h._id || h.id} className="flex items-center justify-between text-[11px]">
+                                            <span className="font-semibold text-gray-900">{h.name}</span>
+                                            <span className="text-gray-700">
+                                                {formatHolidayDate(h)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="mt-2 text-[11px] text-indigo-900/70">
+                                    No upcoming holidays recorded yet.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* 6. Low Attendance Warning */}
                 {(attendance.summary.overall < attendance.summary.required || highlightLowAttendance) && (

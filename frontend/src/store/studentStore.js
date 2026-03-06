@@ -36,6 +36,7 @@ export const useStudentStore = create(
             })(),
             dashboard: null,
             attendance: [],
+            upcomingHolidays: [],
             fees: null,
             exams: [],
             examsError: null,
@@ -366,6 +367,45 @@ export const useStudentStore = create(
                 } catch (error) {
                     console.error('Error fetching attendance:', error);
                     set({ isLoading: false });
+                }
+            },
+
+            // Fetch student-visible holidays from backend and include ongoing ranges
+            fetchUpcomingHolidays: async () => {
+                try {
+                    const token = get().token;
+                    const today = new Date();
+                    const startOfToday = new Date(today.toDateString());
+                    const response = await axios.get(`${API_URL}/holiday`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    });
+
+                    if (response.data?.success) {
+                        const upcoming = (response.data.data || [])
+                            .filter((holiday) => {
+                                const startDate = new Date(holiday.startDate || holiday.date);
+                                const endDate = new Date(holiday.endDate || holiday.startDate || holiday.date);
+                                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return false;
+                                return endDate >= startOfToday;
+                            })
+                            .map((holiday) => ({
+                                id: holiday._id || holiday.id,
+                                name: holiday.name || 'Holiday',
+                                startDate: holiday.startDate || holiday.date,
+                                endDate: holiday.endDate || holiday.startDate || holiday.date,
+                                type: holiday.type || 'Holiday',
+                                isRange: Boolean(holiday.isRange),
+                            }))
+                            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+                            .slice(0, 5);
+
+                        set({ upcomingHolidays: upcoming });
+                    } else {
+                        set({ upcomingHolidays: [] });
+                    }
+                } catch (error) {
+                    console.error('Error fetching upcoming holidays for student:', error);
+                    set({ upcomingHolidays: [] });
                 }
             },
 

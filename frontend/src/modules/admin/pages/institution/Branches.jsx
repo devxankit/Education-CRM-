@@ -4,7 +4,8 @@ import {
     Plus,
     Search,
     Filter,
-    Download
+    Download,
+    Trash2
 } from 'lucide-react';
 import BranchListTable from './components/branches/BranchListTable';
 import BranchDetailDrawer from './components/branches/BranchDetailDrawer';
@@ -138,6 +139,38 @@ const Branches = () => {
         }
     };
 
+    const handleDeleteBranch = async (branch) => {
+        if (!branch?._id) return;
+        const confirmed = window.confirm(`Are you sure you want to delete branch "${branch.name}"? This action cannot be undone.`);
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/branch/${branch._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Branch deleted successfully');
+                fetchBranches();
+                if (selectedBranch && selectedBranch._id === branch._id) {
+                    handleCloseDrawer();
+                }
+            } else {
+                alert(data.message || 'Failed to delete branch');
+            }
+        } catch (error) {
+            console.error('Error deleting branch:', error);
+            alert('An error occurred while deleting branch');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Derived State
     const filteredBranches = branches.filter(b => {
         const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -209,6 +242,7 @@ const Branches = () => {
                     branches={filteredBranches}
                     onRowClick={handleRowClick}
                     onToggleStatus={handleToggleStatus}
+                    onDelete={handleDeleteBranch}
                 />
             )}
 

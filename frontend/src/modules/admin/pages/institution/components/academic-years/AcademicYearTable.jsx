@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Calendar, PlayCircle, Lock, Eye, ChevronRight, Plus } from 'lucide-react';
+import { Calendar, PlayCircle, Lock, Plus, Trash2 } from 'lucide-react';
 import YearStatusBadge from './YearStatusBadge';
 
-const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmin, branches = [], onCreateNew }) => {
+const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, onDelete, isSuperAdmin, branches = [], onCreateNew }) => {
 
     // Show all academic sessions on a single page for clarity
     const pageSize = years && years.length > 0 ? years.length : 5;
@@ -57,7 +57,7 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                             <th className="px-6 py-5 font-medium border-b border-gray-100 w-32">End Date</th>
                             <th className="px-6 py-5 font-medium border-b border-gray-100">Status</th>
                             <th className="px-6 py-5 font-medium border-b border-gray-100">Created Metadata</th>
-                            <th className="px-6 py-5 font-medium border-b border-gray-100 text-right">Actions</th>
+                            <th className="px-6 py-5 font-medium border-b border-gray-100 text-right w-40">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
@@ -116,13 +116,16 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, isSuperAdmi
                                             </button>
                                         )}
 
-                                        <button
-                                            onClick={() => onView(year)}
-                                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                            title="View Details"
-                                        >
-                                            <ChevronRight size={18} />
-                                        </button>
+                                        {onDelete && isSuperAdmin && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onDelete(year)}
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                title="Delete academic year"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, CalendarPlus, Check, Info, Loader2 } from 'lucide-react';
+import { API_URL } from '@/app/api';
 
 const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branches = [], academicYears = [], selectedBranchId = 'all', selectedAcademicYearId = 'all' }) => {
     const getDefaultForm = () => ({
@@ -15,6 +16,7 @@ const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branc
     });
 
     const [formData, setFormData] = useState(getDefaultForm());
+    const [branchAcademicYears, setBranchAcademicYears] = useState(academicYears);
 
     useEffect(() => {
         if (initialData) {
@@ -30,12 +32,47 @@ const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branc
         }
     }, [initialData, isOpen, selectedBranchId, selectedAcademicYearId]);
 
+    useEffect(() => {
+        setBranchAcademicYears(academicYears);
+    }, [academicYears]);
+
+    useEffect(() => {
+        const fetchAcademicYearsForBranch = async () => {
+            if (!isOpen) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams();
+                if (formData.branchId && formData.branchId !== 'all') {
+                    params.set('branchId', formData.branchId);
+                }
+                const qs = params.toString();
+                const url = qs ? `${API_URL}/academic-year?${qs}` : `${API_URL}/academic-year`;
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setBranchAcademicYears(data.data || []);
+                } else {
+                    setBranchAcademicYears([]);
+                }
+            } catch (error) {
+                console.error('Error fetching academic years for holiday modal:', error);
+                setBranchAcademicYears([]);
+            }
+        };
+
+        fetchAcademicYearsForBranch();
+    }, [isOpen, formData.branchId]);
+
     if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
+            ...(name === 'branchId' ? { academicYearId: '' } : null),
             [name]: type === 'checkbox' ? checked : value
         }));
     };
@@ -104,7 +141,7 @@ const HolidayFormModal = ({ isOpen, onClose, onSave, initialData, loading, branc
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm"
                         >
                             <option value="">All Years (Global)</option>
-                            {academicYears.map(ay => (
+                            {branchAcademicYears.map(ay => (
                                 <option key={ay._id} value={ay._id}>{ay.name} {ay.status === 'active' ? '(active)' : ''}</option>
                             ))}
                         </select>

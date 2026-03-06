@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Building2, ChevronRight, MapPin, GraduationCap, UserCog, BookOpen } from 'lucide-react';
+import { Building2, ChevronRight, MapPin, GraduationCap, UserCog, BookOpen, Pencil, Trash2 } from 'lucide-react';
 import BranchStatusBadge from './BranchStatusBadge';
 
-const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
+const BranchListTable = ({ branches, onRowClick, onToggleStatus, onDelete }) => {
     // Show all branches on a single page for better visibility
     const pageSize = branches && branches.length > 0 ? branches.length : 5;
     const [page, setPage] = React.useState(1);
@@ -41,7 +41,7 @@ const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
                             <th className="px-6 py-3 font-medium border-b border-gray-100">Details</th>
                             <th className="px-6 py-3 font-medium border-b border-gray-100">Status</th>
                             <th className="px-6 py-3 font-medium border-b border-gray-100 text-right">Metrics</th>
-                            <th className="px-4 py-3 border-b border-gray-100 w-10"></th>
+                            <th className="px-4 py-3 font-medium border-b border-gray-100 text-right w-24">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
@@ -110,7 +110,33 @@ const BranchListTable = ({ branches, onRowClick, onToggleStatus }) => {
                                 </td>
 
                                 <td className="px-4 py-4 text-gray-400">
-                                    <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onRowClick(branch);
+                                            }}
+                                            className="p-1.5 rounded-full hover:bg-indigo-50 text-indigo-600 transition-colors"
+                                            title="Edit branch"
+                                        >
+                                            <Pencil size={16} />
+                                        </button>
+                                        {onDelete && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDelete(branch);
+                                                }}
+                                                className="p-1.5 rounded-full hover:bg-red-50 text-red-600 transition-colors"
+                                                title="Delete branch"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                        <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
                                 </td>
                             </tr>
                         ))}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, History } from 'lucide-react';
+import { Plus, History, Trash2, Pencil } from 'lucide-react';
 import AcademicYearTable from './components/academic-years/AcademicYearTable';
 import CreateYearModal from './components/academic-years/CreateYearModal';
 import ActivateYearModal from './components/academic-years/ActivateYearModal';
@@ -160,6 +160,35 @@ const AcademicYears = () => {
         alert(`View Details for ${year.name} (Metrics & Reports)`);
     };
 
+    const handleDeleteYear = async (year) => {
+        if (!year?._id && !year?.id) return;
+        const confirmed = window.confirm(`Are you sure you want to delete academic year "${year.name}"? This action cannot be undone.`);
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/academic-year/${year._id || year.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Academic Year deleted successfully');
+                fetchAcademicYears();
+            } else {
+                alert(result.message || 'Failed to delete academic year');
+            }
+        } catch (error) {
+            console.error('Error deleting academic year:', error);
+            alert('An error occurred while deleting academic year');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="h-full flex flex-col relative pb-4">
             {/* Header */}
@@ -197,6 +226,7 @@ const AcademicYears = () => {
                     onActivate={(year) => setActivationTarget(year)}
                     onCloseYear={(year) => setClosureTarget(year)}
                     onView={handleViewDetails}
+                    onDelete={handleDeleteYear}
                     isSuperAdmin={isSuperAdmin}
                     onCreateNew={() => setIsCreateOpen(true)}
                 />
