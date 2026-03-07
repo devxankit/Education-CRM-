@@ -1,10 +1,10 @@
 
 import React, { useEffect } from 'react';
-import { GraduationCap, Archive, ArchiveRestore, HelpCircle, Building2 } from 'lucide-react';
+import { GraduationCap, Archive, ArchiveRestore, HelpCircle, Building2, Pencil, Trash2 } from 'lucide-react';
 import { useAdminStore } from '../../../../../../store/adminStore';
 import AcademicLevelBadge from './AcademicLevelBadge';
 
-const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, onUnarchive, hideFooter = false }) => {
+const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onDelete, onArchive, onUnarchive, hideFooter = false }) => {
     const branches = useAdminStore((state) => state.branches);
     const fetchBranches = useAdminStore((state) => state.fetchBranches);
 
@@ -97,35 +97,61 @@ const ClassesTable = ({ classes, selectedClassId, onSelect, onEdit, onArchive, o
                                         </span>
                                     </td>
                                     <td className="px-4 py-4 text-right">
-                                        {cls.status === 'archived' ? (
-                                            onUnarchive ? (
+                                        <div className="flex items-center justify-end gap-2">
+                                            {onEdit && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onUnarchive(cls);
+                                                        onEdit(cls);
                                                     }}
-                                                    className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                                                    title="Unarchive Class"
+                                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                    title="Edit Class"
                                                 >
-                                                    <ArchiveRestore size={14} /> Unarchive
+                                                    <Pencil size={16} />
                                                 </button>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                    <Archive size={12} /> Archived
-                                                </span>
-                                            )
-                                        ) : onArchive ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onArchive(cls);
-                                                }}
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                                title="Archive Class"
-                                            >
-                                                <Archive size={16} />
-                                            </button>
-                                        ) : null}
+                                            )}
+                                            {onDelete && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDelete(cls);
+                                                    }}
+                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Delete Class"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                            {cls.status === 'archived' ? (
+                                                onUnarchive ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onUnarchive(cls);
+                                                        }}
+                                                        className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                        title="Unarchive Class"
+                                                    >
+                                                        <ArchiveRestore size={14} /> Unarchive
+                                                    </button>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                        <Archive size={12} /> Archived
+                                                    </span>
+                                                )
+                                            ) : onArchive ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onArchive(cls);
+                                                    }}
+                                                    className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                                                    title="Archive Class"
+                                                >
+                                                    <Archive size={16} />
+                                                </button>
+                                            ) : null}
+                                        </div>
                                     </td>
                                 </tr>
                             );

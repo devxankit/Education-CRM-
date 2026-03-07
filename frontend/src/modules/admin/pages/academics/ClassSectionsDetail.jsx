@@ -16,6 +16,7 @@ const ClassSectionsDetail = () => {
     const fetchSections = useAdminStore(state => state.fetchSections);
     const addSection = useAdminStore(state => state.addSection);
     const updateSection = useAdminStore(state => state.updateSection);
+    const deleteSection = useAdminStore(state => state.deleteSection);
     const user = useAppStore(state => state.user);
 
     const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
@@ -46,6 +47,17 @@ const ClassSectionsDetail = () => {
 
     const handleReactivateSection = (section) => {
         updateSection(section._id, classId, { status: 'active' });
+    };
+
+    const handleDeleteSection = async (section) => {
+        const confirmed = window.confirm(`Delete Section '${section.name}'? This action cannot be undone.`);
+        if (!confirmed) return;
+
+        const success = await deleteSection(section._id || section.id, classId);
+        if (success && editingSection && (editingSection._id || editingSection.id) === (section._id || section.id)) {
+            setEditingSection(null);
+            setIsSectionModalOpen(false);
+        }
     };
 
     const handleAddOrUpdate = (clsId, data) => {
@@ -111,6 +123,7 @@ const ClassSectionsDetail = () => {
                         sections={displayedSections}
                         onAdd={() => setIsSectionModalOpen(true)}
                         onEdit={handleEditSection}
+                        onDelete={handleDeleteSection}
                         onDeactivate={handleDeactivateSection}
                         onReactivate={handleReactivateSection}
                     />

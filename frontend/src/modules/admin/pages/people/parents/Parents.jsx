@@ -8,7 +8,7 @@ import ParentsTable from './components/ParentsTable';
 import ParentDetailDrawer from './components/ParentDetailDrawer';
 
 const Parents = () => {
-    const { parents, fetchParents, addParent, updateParent, syncLinksByEmail, branches, fetchBranches } = useAdminStore();
+    const { parents, fetchParents, addParent, updateParent, deleteParent, syncLinksByEmail, branches, fetchBranches } = useAdminStore();
 
     useEffect(() => {
         fetchParents();
@@ -43,6 +43,11 @@ const Parents = () => {
         setIsDrawerOpen(true);
     };
 
+    const handleEdit = (parent) => {
+        setViewingParent(parent);
+        setIsDrawerOpen(true);
+    };
+
     const handleSave = async (parentData) => {
         try {
             if (parentData._id) {
@@ -58,6 +63,21 @@ const Parents = () => {
             fetchParents();
         } catch (error) {
             console.error('Error saving parent:', error);
+        }
+    };
+
+    const handleDelete = async (parent) => {
+        const parentName = parent?.name || 'this parent';
+        const confirmed = window.confirm(`Are you sure you want to delete ${parentName}?`);
+        if (!confirmed) return;
+
+        const deleted = await deleteParent(parent._id || parent.id);
+        if (deleted) {
+            if ((viewingParent?._id || viewingParent?.id) === (parent._id || parent.id)) {
+                setIsDrawerOpen(false);
+                setViewingParent(null);
+            }
+            fetchParents();
         }
     };
 
@@ -165,6 +185,8 @@ const Parents = () => {
             <ParentsTable
                 parents={filteredParents}
                 onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
                 searchQuery={searchQuery}
             />
 

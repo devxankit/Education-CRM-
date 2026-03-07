@@ -81,6 +81,11 @@ const Teachers = () => {
         setSelectedTeacher(null);
     };
 
+    const handleOpenEdit = (teacher) => {
+        setSelectedTeacher(teacher);
+        setIsEditModalOpen(true);
+    };
+
     const handleCreateTeacher = async (formData) => {
         setLoading(true);
         try {
@@ -135,6 +140,41 @@ const Teachers = () => {
         } catch (error) {
             console.error('Error updating teacher:', error);
             alert('An error occurred while updating teacher');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteTeacher = async (teacher) => {
+        const teacherName = teacher?.name || `${teacher?.firstName || ''} ${teacher?.lastName || ''}`.trim() || 'this teacher';
+        const confirmed = window.confirm(`Are you sure you want to delete ${teacherName}?`);
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/teacher/${teacher.id || teacher._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Teacher deleted successfully!');
+                if ((selectedTeacher?.id || selectedTeacher?._id) === (teacher.id || teacher._id)) {
+                    setIsDrawerOpen(false);
+                    setIsEditModalOpen(false);
+                    setSelectedTeacher(null);
+                }
+                fetchAllData();
+            } else {
+                alert(data.message || 'Failed to delete teacher');
+            }
+        } catch (error) {
+            console.error('Error deleting teacher:', error);
+            alert('An error occurred while deleting teacher');
         } finally {
             setLoading(false);
         }
@@ -249,6 +289,8 @@ const Teachers = () => {
             <TeacherTable
                 teachers={filteredTeachers}
                 onView={handleView}
+                onEdit={handleOpenEdit}
+                onDelete={handleDeleteTeacher}
                 searchQuery={searchQuery}
             />
 
@@ -276,10 +318,7 @@ const Teachers = () => {
                 isOpen={isDrawerOpen}
                 onClose={handleClose}
                 teacher={selectedTeacher}
-                onEdit={(teacher) => {
-                    setSelectedTeacher(teacher);
-                    setIsEditModalOpen(true);
-                }}
+                onEdit={handleOpenEdit}
             />
 
         </div>

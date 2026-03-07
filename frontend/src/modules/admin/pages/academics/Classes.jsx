@@ -15,9 +15,11 @@ const Classes = () => {
     const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
     const addClass = useAdminStore(state => state.addClass);
     const updateClass = useAdminStore(state => state.updateClass);
+    const deleteClass = useAdminStore(state => state.deleteClass);
     const user = useAppStore(state => state.user);
 
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+    const [editingClass, setEditingClass] = useState(null);
     const [selectedBranchId, setSelectedBranchId] = useState('main');
     const [selectedAcademicYearId, setSelectedAcademicYearId] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -71,6 +73,12 @@ const Classes = () => {
         fetchClasses(selectedBranchId || 'main', true, selectedAcademicYearId || undefined);
     };
 
+    const handleEditClass = async (id, data) => {
+        await updateClass(id, data);
+        fetchClasses(selectedBranchId || 'main', true, selectedAcademicYearId || undefined);
+        setEditingClass(null);
+    };
+
     const handleArchiveClass = (cls) => {
         if (window.confirm(`Archive ${cls.name}? It will be hidden from new admissions.`)) {
             updateClass(cls._id, { status: 'archived' });
@@ -80,6 +88,20 @@ const Classes = () => {
     const handleUnarchiveClass = (cls) => {
         if (window.confirm(`Unarchive ${cls.name}? It will be available for new admissions.`)) {
             updateClass(cls._id, { status: 'active' });
+        }
+    };
+
+    const handleDeleteClass = async (cls) => {
+        const confirmed = window.confirm(`Delete ${cls.name}? This action cannot be undone.`);
+        if (!confirmed) return;
+
+        const success = await deleteClass(cls._id || cls.id);
+        if (success) {
+            fetchClasses(selectedBranchId || 'main', true, selectedAcademicYearId || undefined);
+            if (editingClass && (editingClass._id || editingClass.id) === (cls._id || cls.id)) {
+                setEditingClass(null);
+                setIsClassModalOpen(false);
+            }
         }
     };
 
@@ -140,6 +162,11 @@ const Classes = () => {
                 <div className="bg-white rounded-t-xl border border-gray-200 shadow-sm overflow-hidden flex-1">
                     <ClassesTable
                         classes={paginatedClasses}
+                        onEdit={(cls) => {
+                            setEditingClass(cls);
+                            setIsClassModalOpen(true);
+                        }}
+                        onDelete={handleDeleteClass}
                         onArchive={handleArchiveClass}
                         onUnarchive={handleUnarchiveClass}
                         onSelect={() => {}}
@@ -177,8 +204,13 @@ const Classes = () => {
             {/* Modal */}
             <ClassFormModal
                 isOpen={isClassModalOpen}
-                onClose={() => setIsClassModalOpen(false)}
+                onClose={() => {
+                    setIsClassModalOpen(false);
+                    setEditingClass(null);
+                }}
                 onCreate={handleAddClass}
+                onUpdate={handleEditClass}
+                initialData={editingClass}
                 defaultBranchId={selectedBranchId === 'main' ? (branches[0]?._id || '') : selectedBranchId}
                 defaultAcademicYearId={selectedAcademicYearId}
                 academicYears={academicYears}

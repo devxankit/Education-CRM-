@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Users, User, Edit, Ban, ArchiveRestore } from 'lucide-react';
+import { Users, User, Edit, Ban, ArchiveRestore, Trash2 } from 'lucide-react';
 
-const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate, onReactivate }) => {
+const SectionsTable = ({ sections, className, onAdd, onEdit, onDelete, onDeactivate, onReactivate }) => {
 
     if (!sections || sections.length === 0) {
         return (
@@ -97,6 +97,15 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDeactivate, onRea
                                         >
                                             <Edit size={16} />
                                         </button>
+                                        {onDelete && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation?.(); onDelete(sec); }}
+                                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete Section"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                         {sec.status === 'active' ? (
                                             onDeactivate && (
                                                 <button

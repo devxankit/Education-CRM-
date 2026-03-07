@@ -359,6 +359,26 @@ export const useAdminStore = create(
                     get().addToast(error.response?.data?.message || 'Error updating parent', 'error');
                 }
             },
+            deleteParent: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/parent/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            parents: state.parents.filter((p) => p._id !== id)
+                        }));
+                        get().addToast('Parent deleted successfully', 'success');
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error deleting parent:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting parent', 'error');
+                    return false;
+                }
+            },
             syncLinksByEmail: async () => {
                 try {
                     const token = localStorage.getItem('token');
@@ -545,9 +565,26 @@ export const useAdminStore = create(
                     get().addToast(error.response?.data?.message || 'Error updating class', 'error');
                 }
             },
-            deleteClass: (id) => set((state) => ({
-                classes: state.classes.filter(c => c._id !== id)
-            })),
+            deleteClass: async (id) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/class/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            classes: state.classes.filter(c => c._id !== id)
+                        }));
+                        get().addToast('Class deleted successfully', 'success');
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error deleting class:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting class', 'error');
+                    return false;
+                }
+            },
 
             // Actions: Taxes
             setTaxes: (taxes) => set({ taxes }),
@@ -688,6 +725,32 @@ export const useAdminStore = create(
                     console.error('Error updating section:', error);
                     get().addToast(error.response?.data?.message || 'Error updating section', 'error');
                     throw error;
+                }
+            },
+            deleteSection: async (sectionId, classId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/class/section/${sectionId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set((state) => {
+                            const classSections = state.sections[classId] || [];
+                            return {
+                                sections: {
+                                    ...state.sections,
+                                    [classId]: classSections.filter(s => (s._id || s.id) !== sectionId)
+                                }
+                            };
+                        });
+                        get().addToast('Section deleted successfully', 'success');
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error deleting section:', error);
+                    get().addToast(error.response?.data?.message || 'Error deleting section', 'error');
+                    return false;
                 }
             },
             fetchSectionsForClassTeacher: async (branchId, academicYearId) => {

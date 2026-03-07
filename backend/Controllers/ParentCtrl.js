@@ -182,6 +182,37 @@ export const updateParent = async (req, res) => {
     }
 };
 
+// ================= DELETE PARENT =================
+export const deleteParent = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const parent = await Parent.findById(id);
+        if (!parent) {
+            return res.status(404).json({ success: false, message: "Parent not found" });
+        }
+
+        await Student.updateMany(
+            {
+                $or: [
+                    { parentId: id },
+                    { parentId: parent._id }
+                ]
+            },
+            { $unset: { parentId: "" } }
+        );
+
+        await Parent.findByIdAndDelete(id);
+
+        res.status(200).json({
+            success: true,
+            message: "Parent deleted successfully"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= PARENT LOGIN =================
 export const loginParent = async (req, res) => {
     try {

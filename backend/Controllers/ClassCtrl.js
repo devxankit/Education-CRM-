@@ -93,6 +93,48 @@ export const updateClass = async (req, res) => {
     }
 };
 
+export const deleteClass = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const sectionCount = await Section.countDocuments({ instituteId, classId: id });
+        if (sectionCount > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot delete class with linked sections"
+            });
+        }
+
+        const studentCount = await Student.countDocuments({
+            instituteId,
+            classId: id,
+            status: { $nin: ["withdrawn", "alumni"] }
+        });
+        if (studentCount > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot delete class with enrolled students"
+            });
+        }
+
+        const deletedClass = await Class.findByIdAndDelete(id);
+        if (!deletedClass) {
+            return res.status(404).json({
+                success: false,
+                message: "Class not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Class deleted successfully"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // ================= SECTION CONTROLLERS =================
 
 export const createSection = async (req, res) => {
@@ -181,6 +223,41 @@ export const updateSection = async (req, res) => {
             success: true,
             message: "Section updated successfully",
             data: updatedSection,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const deleteSection = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instituteId = req.user.instituteId || req.user._id;
+
+        const studentCount = await Student.countDocuments({
+            instituteId,
+            sectionId: id,
+            status: { $nin: ["withdrawn", "alumni"] }
+        });
+
+        if (studentCount > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot delete section with enrolled students"
+            });
+        }
+
+        const deletedSection = await Section.findByIdAndDelete(id);
+        if (!deletedSection) {
+            return res.status(404).json({
+                success: false,
+                message: "Section not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Section deleted successfully"
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

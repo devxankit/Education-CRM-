@@ -3,6 +3,7 @@ import {
     createTeacher,
     getTeachers,
     updateTeacher,
+    deleteTeacher,
     loginTeacher,
     forgotTeacherPassword,
     verifyTeacherForgotOtp,
@@ -107,6 +108,7 @@ router.get("/today-classes", isTeacher, getTodayClassesWithCompletion);
 router.post("/", isAdmin, createTeacher);
 router.get("/", isAdmin, getTeachers);
 router.put("/:id", isAdmin, updateTeacher);
+router.delete("/:id", isAdmin, deleteTeacher);
 
 // Eligible Subjects Management
 router.get("/:teacherId/eligible-subjects", isAdmin, getEligibleSubjects);

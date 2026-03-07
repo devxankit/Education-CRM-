@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Eye, Phone, Mail, Users, UserPlus } from 'lucide-react';
+import { Pencil, Phone, Mail, Users, UserPlus, Trash2 } from 'lucide-react';
 import ParentStatusBadge from './ParentStatusBadge';
 
 const PAGE_SIZE = 5;
 
-const ParentsTable = ({ parents = [], onView, searchQuery = '' }) => {
+const ParentsTable = ({ parents = [], onView, onEdit, onDelete, searchQuery = '' }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.ceil(parents.length / PAGE_SIZE) || 1;
     const startIndex = (currentPage - 1) * PAGE_SIZE;
@@ -72,17 +72,28 @@ const ParentsTable = ({ parents = [], onView, searchQuery = '' }) => {
                     <ParentStatusBadge status={parent.status || 'Active'} />
                 </td>
                 <td className="px-4 py-2.5 align-middle text-right whitespace-nowrap">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onView(parent);
-                        }}
-                        className="inline-flex items-center gap-0.5 text-gray-500 hover:text-teal-600 px-1 py-0.5 rounded hover:bg-teal-50 transition-colors"
-                        title="View Details"
-                    >
-                        <Eye size={12} />
-                        <span className="text-[9px] font-medium">View</span>
-                    </button>
+                    <div className="inline-flex items-center gap-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit?.(parent);
+                            }}
+                            className="inline-flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            title="Edit Parent"
+                        >
+                            <Pencil size={14} />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete?.(parent);
+                            }}
+                            className="inline-flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Delete Parent"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
                 </td>
             </tr>
         );
@@ -108,15 +119,28 @@ const ParentsTable = ({ parents = [], onView, searchQuery = '' }) => {
                         </div>
                     </div>
                 </div>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onView(parent);
-                    }}
-                    className="p-2 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 shrink-0"
-                >
-                    <Eye size={18} />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit?.(parent);
+                        }}
+                        className="p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50"
+                        title="Edit Parent"
+                    >
+                        <Pencil size={18} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete?.(parent);
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50"
+                        title="Delete Parent"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                </div>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -140,17 +164,17 @@ const ParentsTable = ({ parents = [], onView, searchQuery = '' }) => {
     return (
         <>
             {/* Desktop Table */}
-            <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden mb-4 hidden md:block min-h-[320px]">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-4 hidden md:block min-h-[360px]">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-[11px]">
+                    <table className="w-full text-left text-xs">
                         <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th className="px-4 py-2.5 font-semibold text-[9px] text-gray-600 uppercase tracking-wider">Parent Name</th>
-                                <th className="px-4 py-2.5 font-semibold text-[9px] text-gray-600 uppercase tracking-wider">Relationship</th>
-                                <th className="px-4 py-2.5 font-semibold text-[9px] text-gray-600 uppercase tracking-wider">Contact</th>
-                                <th className="px-4 py-2.5 font-semibold text-[9px] text-gray-600 uppercase tracking-wider">Linked Students</th>
-                                <th className="px-4 py-2.5 font-semibold text-[9px] text-gray-600 uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-2.5 font-semibold text-[9px] text-gray-600 uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-4 py-2.5 font-semibold text-[10px] text-gray-600 uppercase tracking-wider">Parent Name</th>
+                                <th className="px-4 py-2.5 font-semibold text-[10px] text-gray-600 uppercase tracking-wider">Relationship</th>
+                                <th className="px-4 py-2.5 font-semibold text-[10px] text-gray-600 uppercase tracking-wider">Contact</th>
+                                <th className="px-4 py-2.5 font-semibold text-[10px] text-gray-600 uppercase tracking-wider">Linked Students</th>
+                                <th className="px-4 py-2.5 font-semibold text-[10px] text-gray-600 uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-2.5 font-semibold text-[10px] text-gray-600 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -162,37 +186,31 @@ const ParentsTable = ({ parents = [], onView, searchQuery = '' }) => {
                 </div>
 
                 {parents.length > 0 && (
-                    <div className="px-4 py-2.5 border-t border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-2 text-[10px] text-gray-600">
-                        <span className="font-medium">
-                            Showing {startIndex + 1}–{Math.min(startIndex + PAGE_SIZE, parents.length)} of {parents.length} parents
+                    <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
+                        <span>
+                            Showing {startIndex + 1} to {Math.min(startIndex + PAGE_SIZE, parents.length)} of {parents.length}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex gap-2">
                             <button
                                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                 disabled={currentPage <= 1}
-                                className="px-2.5 py-1 border border-gray-200 rounded hover:bg-white hover:border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] font-medium"
+                                className="px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Previous
                             </button>
-                            <span className="text-gray-400 text-sm">|</span>
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                                 <button
                                     key={p}
                                     onClick={() => setCurrentPage(p)}
-                                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
-                                        currentPage === p
-                                            ? 'bg-indigo-600 text-white border border-indigo-600'
-                                            : 'border border-gray-200 hover:bg-white hover:border-indigo-200'
-                                    }`}
+                                    className={`px-2 py-1 border rounded ${currentPage === p ? 'bg-indigo-100 text-indigo-700 font-semibold border-indigo-200' : 'hover:bg-gray-50'}`}
                                 >
                                     {p}
                                 </button>
                             ))}
-                            <span className="text-gray-400 text-sm">|</span>
                             <button
                                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={currentPage >= totalPages}
-                                className="px-2.5 py-1 border border-gray-200 rounded hover:bg-white hover:border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] font-medium"
+                                className="px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Next
                             </button>

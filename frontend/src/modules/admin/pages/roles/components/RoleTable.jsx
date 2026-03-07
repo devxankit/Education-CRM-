@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Shield, ChevronRight, Users, MapPin } from 'lucide-react';
+import { Shield, ChevronRight, Users, MapPin, Pencil, Trash2 } from 'lucide-react';
 import RoleStatusBadge from './RoleStatusBadge';
 
-const RoleTable = ({ roles, onRowClick }) => {
+const RoleTable = ({ roles, onRowClick, onDelete }) => {
 
     if (!roles || roles.length === 0) {
         return (
@@ -28,7 +28,7 @@ const RoleTable = ({ roles, onRowClick }) => {
                         <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Permissions</th>
                         <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Assigned Users</th>
                         <th className="px-6 py-4 text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-4 w-12 text-right"></th>
+                        <th className="px-4 py-4 w-28 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm bg-white">
@@ -80,7 +80,33 @@ const RoleTable = ({ roles, onRowClick }) => {
                             </td>
 
                             <td className="px-4 py-4 text-right align-middle">
-                                <ChevronRight size={18} className="text-gray-300 group-hover:text-indigo-500 transition-colors inline-block" />
+                                <div className="flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onRowClick(role);
+                                        }}
+                                        className="p-1.5 rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                        title="Edit role"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                    {onDelete && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDelete(role);
+                                            }}
+                                            className="p-1.5 rounded-full text-red-600 hover:bg-red-50 transition-colors"
+                                            title="Delete role"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                    <ChevronRight size={18} className="text-gray-300 group-hover:text-indigo-500 transition-colors inline-block" />
+                                </div>
                             </td>
                         </tr>
                     ))}

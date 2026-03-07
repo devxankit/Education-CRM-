@@ -164,6 +164,48 @@ const RolesList = () => {
         }
     };
 
+    const handleDeleteRole = async (role) => {
+        if (!role?._id && !role?.id) return;
+
+        if (role.type === 'system') {
+            alert('System roles cannot be deleted');
+            return;
+        }
+
+        if ((role.userCount ?? 0) > 0) {
+            alert('Please reassign users before deleting this role');
+            return;
+        }
+
+        const confirmed = window.confirm(`Are you sure you want to delete role "${role.name}"?`);
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/role/${role._id || role.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Role deleted successfully');
+                setRoles(prev => prev.filter(r => (r._id || r.id) !== (role._id || role.id)));
+                setSelectedRole(prev => ((prev?._id || prev?.id) === (role._id || role.id) ? null : prev));
+            } else {
+                alert(result.message || 'Failed to delete role');
+            }
+        } catch (error) {
+            console.error('Error deleting role:', error);
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const filteredRoles = useMemo(() =>
         roles.filter(r =>
             (r.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -250,6 +292,7 @@ const RolesList = () => {
                             <RoleTable
                                 roles={paginatedRoles}
                                 onRowClick={(role) => setSelectedRole(role)}
+                                onDelete={handleDeleteRole}
                             />
                         </div>
                     </div>

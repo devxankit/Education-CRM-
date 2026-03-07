@@ -20,6 +20,7 @@ const SubjectsMaster = () => {
     const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
     const addSubject = useAdminStore(state => state.addSubject);
     const updateSubject = useAdminStore(state => state.updateSubject);
+    const deleteSubject = useAdminStore(state => state.deleteSubject);
     const user = useAppStore(state => state.user);
 
     const [selectedBranchId, setSelectedBranchId] = useState(null);
@@ -95,6 +96,14 @@ const SubjectsMaster = () => {
 
     const handleReactivate = (sub) => {
         updateSubject(sub._id, { status: 'active' });
+    };
+
+    const handleDelete = async (sub) => {
+        const confirmed = window.confirm(`Delete subject '${sub.name}'? This action cannot be undone.`);
+        if (!confirmed) return;
+        await deleteSubject(sub._id || sub.id);
+        const branchId = selectedBranchId || 'main';
+        fetchSubjects(branchId);
     };
 
     const handleClose = () => {
@@ -235,6 +244,7 @@ const SubjectsMaster = () => {
                     allClasses={classes}
                     allCourses={courses}
                     onEdit={handleEditClick}
+                    onDelete={handleDelete}
                     onDeactivate={handleDeactivate}
                     onReactivate={handleReactivate}
                 />

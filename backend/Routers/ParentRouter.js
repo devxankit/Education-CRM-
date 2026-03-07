@@ -3,6 +3,7 @@ import {
     createParent,
     getParents,
     updateParent,
+    deleteParent,
     loginParent,
     forgotParentPassword,
     verifyParentForgotOtp,
@@ -47,6 +48,7 @@ router.post("/reset-password", resetParentPasswordWithOtp);
 router.post("/", AuthMiddleware, isAdmin, createParent);
 router.get("/", AuthMiddleware, isAdmin, getParents);
 router.put("/:id", AuthMiddleware, isAdmin, updateParent);
+router.delete("/:id", AuthMiddleware, isAdmin, deleteParent);
 router.post("/sync-by-email", AuthMiddleware, isAdmin, syncLinksByEmail);
 
 // Student Linking (Admin & Parent)

@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Book, Edit, Ban, ArchiveRestore } from 'lucide-react';
+import { Book, Edit, Ban, ArchiveRestore, Trash2 } from 'lucide-react';
 import SubjectStatusBadge from './SubjectStatusBadge';
 
-const SubjectsTable = ({ subjects, allClasses = [], allCourses = [], onEdit, onDeactivate, onReactivate }) => {
+const SubjectsTable = ({ subjects, allClasses = [], allCourses = [], onEdit, onDelete, onDeactivate, onReactivate }) => {
 
     const getClassName = (cls) => {
         if (typeof cls === 'object' && cls.name) return cls.name;
@@ -106,6 +106,15 @@ const SubjectsTable = ({ subjects, allClasses = [], allCourses = [], onEdit, onD
                                         >
                                             <Edit size={16} />
                                         </button>
+                                        {onDelete && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onDelete(sub); }}
+                                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete Subject"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                         {sub.status === 'active' ? (
                                             onDeactivate && (
                                                 <button

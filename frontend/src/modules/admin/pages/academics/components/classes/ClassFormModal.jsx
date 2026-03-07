@@ -2,15 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { X, GraduationCap, Calendar, MapPin } from 'lucide-react';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
-const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defaultAcademicYearId = '', academicYears = [] }) => {
-    const [formData, setFormData] = useState({
-        branchId: '',
-        academicYearId: '',
-        name: '',
-        level: 'primary',
-        board: 'CBSE',
-        capacity: 40
-    });
+const EMPTY_FORM = {
+    branchId: '',
+    academicYearId: '',
+    name: '',
+    level: 'primary',
+    board: 'CBSE',
+    capacity: 40
+};
+
+const ClassFormModal = ({ isOpen, onClose, onCreate, onUpdate, initialData = null, defaultBranchId = '', defaultAcademicYearId = '', academicYears = [] }) => {
+    const [formData, setFormData] = useState(EMPTY_FORM);
+    const isEditMode = Boolean(initialData?._id || initialData?.id);
+    const targetClassId = initialData?._id || initialData?.id;
+    const [submitting, setSubmitting] = useState(false);
+
+    const [formInitialized, setFormInitialized] = useState(false);
     const branches = useAdminStore(state => state.branches);
     const fetchBranches = useAdminStore(state => state.fetchBranches);
     const fetchAcademicYears = useAdminStore(state => state.fetchAcademicYears);
@@ -20,15 +27,27 @@ const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defau
     }, [isOpen, branches, fetchBranches]);
 
     useEffect(() => {
-        if (isOpen) {
+        if (!isOpen) return;
+
+        if (isEditMode && initialData) {
+            setFormData({
+                branchId: initialData.branchId?._id || initialData.branchId || '',
+                academicYearId: initialData.academicYearId?._id || initialData.academicYearId || '',
+                name: initialData.name || '',
+                level: initialData.level || 'primary',
+                board: initialData.board || 'CBSE',
+                capacity: initialData.capacity ?? 40
+            });
+        } else {
             const bid = defaultBranchId || branches[0]?._id || '';
-            setFormData(prev => ({
-                ...prev,
+            setFormData({
+                ...EMPTY_FORM,
                 branchId: bid,
                 academicYearId: defaultAcademicYearId || ''
-            }));
+            });
         }
-    }, [isOpen, defaultBranchId, defaultAcademicYearId, branches]);
+        setFormInitialized(false);
+    }, [isOpen, isEditMode, initialData, defaultBranchId, defaultAcademicYearId, branches]);
 
     // Fetch academic years when branch changes - only show years for selected branch
     useEffect(() => {
@@ -38,11 +57,12 @@ const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defau
     }, [isOpen, formData.branchId, fetchAcademicYears]);
 
     useEffect(() => {
-        if (isOpen && formData.branchId && academicYears.length > 0 && !formData.academicYearId) {
+        if (isOpen && formData.branchId && academicYears.length > 0 && !formData.academicYearId && !formInitialized) {
             const active = academicYears.find(y => y.status === 'active') || academicYears[0];
             setFormData(prev => ({ ...prev, academicYearId: active?._id || '' }));
         }
-    }, [isOpen, formData.branchId, academicYears]);
+        if (isOpen) setFormInitialized(true);
+    }, [isOpen, formData.branchId, academicYears, formData.academicYearId, formInitialized]);
 
     const yearsToShow = formData.branchId ? academicYears : [];
 
@@ -55,7 +75,7 @@ const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defau
         setFormData(next);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.academicYearId) {
             alert('Please select an Academic Year.');
@@ -65,9 +85,18 @@ const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defau
             alert('Please select a Branch.');
             return;
         }
-        onCreate(formData);
-        onClose();
-        setFormData({ branchId: '', academicYearId: '', name: '', level: 'primary', board: 'CBSE', capacity: 40 });
+        setSubmitting(true);
+        try {
+            if (isEditMode && onUpdate) {
+                await onUpdate(targetClassId, formData);
+            } else {
+                await onCreate(formData);
+            }
+            onClose();
+            setFormData(EMPTY_FORM);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -77,7 +106,7 @@ const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defau
             <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in">
                 <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
                     <h3 className="text-lg font-bold flex items-center gap-2">
-                        <GraduationCap size={20} /> Add Class
+                        <GraduationCap size={20} /> {isEditMode ? 'Edit Class' : 'Add Class'}
                     </h3>
                     <button onClick={onClose} className="hover:bg-indigo-700 p-1 rounded transition-colors"><X size={20} /></button>
                 </div>
@@ -169,7 +198,9 @@ const ClassFormModal = ({ isOpen, onClose, onCreate, defaultBranchId = '', defau
 
                     <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                        <button type="submit" className="px-6 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm">Create Class</button>
+                        <button type="submit" disabled={submitting} className="px-6 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50">
+                            {submitting ? 'Saving...' : isEditMode ? 'Update Class' : 'Create Class'}
+                        </button>
                     </div>
 
                 </form>

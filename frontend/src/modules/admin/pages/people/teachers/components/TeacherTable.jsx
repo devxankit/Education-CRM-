@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Eye, School, UserPlus } from 'lucide-react';
+import { Pencil, School, Trash2, UserPlus } from 'lucide-react';
 import TeacherStatusBadge from './TeacherStatusBadge';
 
 const PAGE_SIZE = 5;
 
-const TeacherTable = ({ teachers, onView, searchQuery = '' }) => {
+const TeacherTable = ({ teachers, onView, onEdit, onDelete, searchQuery = '' }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.ceil(teachers.length / PAGE_SIZE) || 1;
     const startIndex = (currentPage - 1) * PAGE_SIZE;
@@ -26,7 +26,7 @@ const TeacherTable = ({ teachers, onView, searchQuery = '' }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden min-h-[360px]">
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -77,17 +77,28 @@ const TeacherTable = ({ teachers, onView, searchQuery = '' }) => {
                                     <TeacherStatusBadge status={teacher.teachingStatus || teacher.status || 'Active'} />
                                 </td>
                                 <td className="px-4 py-2.5 align-middle text-right whitespace-nowrap">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onView(teacher);
-                                        }}
-                                        className="inline-flex items-center gap-1 text-gray-500 hover:text-indigo-600 px-1.5 py-1 rounded hover:bg-indigo-50 transition-colors"
-                                        title="View Details"
-                                    >
-                                        <Eye size={14} />
-                                        <span className="text-[10px] font-medium">View</span>
-                                    </button>
+                                    <div className="inline-flex items-center gap-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEdit?.(teacher);
+                                            }}
+                                            className="inline-flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                            title="Edit Teacher"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDelete?.(teacher);
+                                            }}
+                                            className="inline-flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                            title="Delete Teacher"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -96,7 +107,7 @@ const TeacherTable = ({ teachers, onView, searchQuery = '' }) => {
             </div>
 
             {teachers.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
+                <div className="px-4 py-3.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
                     <span>
                         Showing {startIndex + 1} to {Math.min(startIndex + PAGE_SIZE, teachers.length)} of {teachers.length}
                     </span>
