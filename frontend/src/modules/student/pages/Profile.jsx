@@ -215,19 +215,37 @@ const ProfilePage = () => {
         linkedAccount: !!student.parentId
     };
 
-    const docsArray = student.documents ? Object.keys(student.documents)
-        .filter(key => key !== 'photo' && student.documents[key]?.url)
-        .map(key => ({
-            id: key,
-            name: key === 'birthCert' ? 'Birth Certificate' :
-                key === 'transferCert' ? 'Transfer Certificate' :
-                    key === 'aadhar' ? 'Aadhar Card' :
-                        key === 'prevMarksheet' ? 'Previous Marksheet' : 'Document',
-            type: 'PDF/Image',
-            size: student.documents[key]?.date || 'Uploaded',
-            status: student.documents[key]?.status || 'Uploaded',
-            url: student.documents[key]?.url
-        })) : [];
+    const docsArray = student.documents
+        ? Object.entries(student.documents).flatMap(([key, value]) => {
+            if (key === 'photo') return [];
+            if (key === 'otherDocuments' && Array.isArray(value)) {
+                return value
+                    .filter(doc => doc?.url)
+                    .map((doc, index) => ({
+                        id: `other-${index}`,
+                        name: doc.name || 'Other Document',
+                        type: 'PDF/Image',
+                        size: doc.date || 'Uploaded',
+                        status: doc.status || 'Uploaded',
+                        url: doc.url
+                    }));
+            }
+
+            if (!value?.url) return [];
+
+            return [{
+                id: key,
+                name: key === 'birthCert' ? 'Birth Certificate' :
+                    key === 'transferCert' ? 'Transfer Certificate' :
+                        key === 'aadhar' ? 'Aadhar Card' :
+                            key === 'prevMarksheet' ? 'Previous Marksheet' : (value.name || 'Document'),
+                type: 'PDF/Image',
+                size: value.date || 'Uploaded',
+                status: value.status || 'Uploaded',
+                url: value.url
+            }];
+        })
+        : [];
 
     return (
         <div ref={containerRef} className="min-h-screen bg-gray-50/50 pb-24">

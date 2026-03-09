@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Users, Clock, AlertCircle, Edit, CheckCircle } from 'lucide-react';
+import { FileText, Users, Clock, Edit, CheckCircle, Eye, Trash2 } from 'lucide-react';
 
 const NoticeTable = ({ notices, onAction }) => {
 
@@ -32,7 +32,7 @@ const NoticeTable = ({ notices, onAction }) => {
                         <th className="px-6 py-4">Target Audience</th>
                         <th className="px-6 py-4">Delivery</th>
                         <th className="px-6 py-4 text-center">Status</th>
-                        <th className="px-6 py-4 text-right">Action</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -113,13 +113,27 @@ const NoticeTable = ({ notices, onAction }) => {
 
                                 {/* 6. Actions */}
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            onClick={() => onAction('VIEW', notice)}
+                                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                            title="View Notice"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
                                         <button
                                             onClick={() => onAction('EDIT', notice)}
                                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Edit Notice"
                                         >
                                             <Edit size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => onAction('DELETE', notice)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete Notice"
+                                        >
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
                                 </td>

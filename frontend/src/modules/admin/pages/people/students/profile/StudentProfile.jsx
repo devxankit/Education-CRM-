@@ -72,6 +72,22 @@ const StudentProfile = () => {
         { id: 'documents', label: 'Documents', icon: FileText },
         { id: 'activity', label: 'Activity Log', icon: Activity },
     ];
+    const documentLinks = student?.documents
+        ? Object.entries(student.documents).flatMap(([key, value]) => {
+            if (key === 'otherDocuments' && Array.isArray(value)) {
+                return value.filter(doc => doc?.url).map((doc, index) => ({
+                    id: `other-${index}`,
+                    name: doc.name || 'Other Document',
+                    url: doc.url
+                }));
+            }
+            return value?.url ? [{
+                id: key,
+                name: value.name || key,
+                url: value.url
+            }] : [];
+        })
+        : [];
 
     // Loading state
     if (loading) {
@@ -141,12 +157,12 @@ const StudentProfile = () => {
                     <div className="bg-white p-10 rounded-xl border border-dashed border-gray-300 text-center text-gray-400">
                         <FileText size={48} className="mx-auto mb-4 opacity-50" />
                         <h3 className="text-lg font-bold text-gray-600">Documents Repository</h3>
-                        <p className="text-sm">Birth Certificate, TC, and Photos are stored here.</p>
+                        <p className="text-sm">Required and other uploaded documents are stored here.</p>
                         <div className="mt-6 flex flex-wrap gap-4 justify-center">
-                            {student.documents && Object.keys(student.documents).map(key => student.documents[key].url && (
-                                <a key={key} href={student.documents[key].url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+                            {documentLinks.map((doc) => (
+                                <a key={doc.id} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all">
                                     <FileText size={24} className="text-indigo-600 mb-2" />
-                                    <span className="text-xs font-bold text-gray-700">{student.documents[key].name || key}</span>
+                                    <span className="text-xs font-bold text-gray-700">{doc.name}</span>
                                 </a>
                             ))}
                         </div>

@@ -200,6 +200,82 @@ const NewAdmission = () => {
         reader.readAsDataURL(file);
     };
 
+    const handleOtherDocumentNameChange = (index, value) => {
+        setFormData(prev => {
+            const otherDocuments = [...(prev.documents.otherDocuments || [])];
+            otherDocuments[index] = {
+                ...otherDocuments[index],
+                label: value,
+                name: value
+            };
+            return {
+                ...prev,
+                documents: {
+                    ...prev.documents,
+                    otherDocuments
+                }
+            };
+        });
+    };
+
+    const handleOtherDocumentFileChange = (e, index) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File size should be less than 2MB');
+            return;
+        }
+
+        const currentDoc = formData.documents.otherDocuments?.[index];
+        if (!currentDoc?.label?.trim()) {
+            alert('Please enter the document name first.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFormData(prev => {
+                const otherDocuments = [...(prev.documents.otherDocuments || [])];
+                otherDocuments[index] = {
+                    ...otherDocuments[index],
+                    name: otherDocuments[index].label.trim(),
+                    status: 'in_review',
+                    date: new Date().toLocaleDateString(),
+                    base64: reader.result
+                };
+                return {
+                    ...prev,
+                    documents: {
+                        ...prev.documents,
+                        otherDocuments
+                    }
+                };
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const addOtherDocument = () => {
+        setFormData(prev => ({
+            ...prev,
+            documents: {
+                ...prev.documents,
+                otherDocuments: [...(prev.documents.otherDocuments || []), { label: '', name: '', status: '' }]
+            }
+        }));
+    };
+
+    const removeOtherDocument = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            documents: {
+                ...prev.documents,
+                otherDocuments: (prev.documents.otherDocuments || []).filter((_, i) => i !== index)
+            }
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -959,6 +1035,70 @@ const NewAdmission = () => {
                                     </div>
                                 </div>
                             ))}
+
+                            <div className="pt-2 border-t border-gray-100 space-y-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Other Documents</p>
+                                        <p className="text-xs text-gray-500 mt-1">Add custom files for certificates or supporting documents not listed above.</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={addOtherDocument}
+                                        className="px-3 py-2 text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-all"
+                                    >
+                                        Add Other
+                                    </button>
+                                </div>
+
+                                {(formData.documents.otherDocuments || []).map((doc, index) => (
+                                    <div key={`other-doc-${index}`} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/60 space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Document Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={doc.label || doc.name || ''}
+                                                    onChange={(e) => handleOtherDocumentNameChange(index, e.target.value)}
+                                                    className="mt-2 w-full p-3 rounded-xl border border-gray-100 bg-white text-xs font-bold focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
+                                                    placeholder="e.g. Migration Certificate"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeOtherDocument(index)}
+                                                className="mt-5 px-3 py-3 text-red-500 bg-red-50 rounded-xl border border-red-100 hover:bg-red-100 transition-all"
+                                            >
+                                                X
+                                            </button>
+                                        </div>
+
+                                        <div className="relative group overflow-hidden bg-white border-2 border-dashed border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 rounded-2xl transition-all cursor-pointer">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleOtherDocumentFileChange(e, index)}
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                accept=".pdf,.doc,.docx,image/*"
+                                            />
+                                            <div className="p-4 flex items-center gap-4">
+                                                {doc.base64 || doc.url ? (
+                                                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shrink-0">
+                                                        <CheckCircle size={20} />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 border border-gray-100 shrink-0">
+                                                        <Upload size={18} />
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-black text-gray-700 truncate">{doc.name || doc.label || 'Click to upload custom document'}</p>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase">{doc.base64 || doc.url ? 'Ready for Cloud' : 'Max size 2MB'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 border-dashed">

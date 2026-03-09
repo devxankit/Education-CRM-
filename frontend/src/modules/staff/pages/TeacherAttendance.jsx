@@ -359,7 +359,7 @@ const TeacherAttendance = () => {
     const totalCount = filteredTeachers.length;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 md:pb-12 pt-6 min-h-screen bg-gray-50/50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-24 md:pb-12 pt-6 min-h-screen bg-gray-50/50">
             {/* Premium Header Container */}
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-6 sm:p-8 mb-8 overflow-hidden relative">
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl"></div>
@@ -493,7 +493,7 @@ const TeacherAttendance = () => {
 
             {/* Premium Cards Grid - hidden on holiday; timetable rules apply for working days */}
             {!isHoliday && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {loading ? (
                     <div className="col-span-full py-24 text-center bg-white rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
@@ -528,7 +528,7 @@ const TeacherAttendance = () => {
                         return (
                             <div
                                 key={employeeId}
-                                className={`group bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm transition-all duration-300 relative overflow-hidden ${
+                                className={`group bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm transition-all duration-300 relative overflow-hidden ${
                                     isToday 
                                         ? 'hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 cursor-pointer active:scale-[0.98]' 
                                         : 'opacity-75 cursor-not-allowed'
@@ -536,8 +536,8 @@ const TeacherAttendance = () => {
                                 onClick={() => isToday && handleMarkAttendance(employee)}
                             >
                                 <div className="relative z-10">
-                                    <div className="flex items-start gap-3 mb-4">
-                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 p-1 group-hover:border-indigo-200 transition-colors shrink-0">
+                                    <div className="flex items-start gap-3.5 mb-4">
+                                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 p-1 group-hover:border-indigo-200 transition-colors shrink-0">
                                             <div
                                                 className={`w-full h-full rounded-xl flex items-center justify-center ${
                                                     employeeType === 'staff'
@@ -545,19 +545,22 @@ const TeacherAttendance = () => {
                                                         : 'bg-indigo-50 text-indigo-400'
                                                 }`}
                                             >
-                                                <User size={24} />
+                                                <User size={26} />
                                             </div>
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="font-black text-gray-900 text-sm leading-tight group-hover:text-indigo-600 transition-colors">
+                                            <h3 className="font-black text-gray-900 text-[15px] leading-tight group-hover:text-indigo-600 transition-colors">
                                                 {employeeName}
                                             </h3>
-                                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                                <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 uppercase tracking-wider">
+                                            <div className="mt-1 flex min-w-0 items-center gap-1 flex-nowrap">
+                                                <span
+                                                    title={employeeCode}
+                                                    className="max-w-[128px] shrink truncate text-[9px] font-black text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100 uppercase tracking-normal"
+                                                >
                                                     {employeeCode}
                                                 </span>
                                                 <span
-                                                    className={`text-[10px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider ${
+                                                    className={`shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-normal ${
                                                         employeeType === 'staff'
                                                             ? 'bg-purple-50 text-purple-600 border-purple-100'
                                                             : 'bg-blue-50 text-blue-600 border-blue-100'
@@ -566,21 +569,17 @@ const TeacherAttendance = () => {
                                                     {employeeType === 'staff' ? 'Staff' : 'Teacher'}
                                                 </span>
                                             </div>
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                                <span
-                                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm ${
-                                                        STATUS_COLORS[status] || STATUS_COLORS.Pending
-                                                    }`}
-                                                >
-                                                    {status}
-                                                </span>
-                                                {status !== 'Not Marked' && (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-100">
-                                                        <CheckCircle2 size={10} className="text-emerald-500" />
-                                                        Marked
+                                            {status === 'Not Marked' && (
+                                                <div className="mt-2">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-normal border ${
+                                                            STATUS_COLORS['Not Marked']
+                                                        }`}
+                                                    >
+                                                        Not Marked
                                                     </span>
-                                                )}
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -590,9 +589,9 @@ const TeacherAttendance = () => {
                                                 <Sparkles size={10} className="text-amber-400" />
                                                 {employeeType === 'staff' ? 'Role' : 'Department'}
                                             </span>
-                                            <p className="text-sm font-bold text-gray-700">{primaryRoleLabel}</p>
+                                            <p className="text-[15px] font-bold text-gray-700 leading-snug">{primaryRoleLabel}</p>
                                             {secondaryRoleLabel && (
-                                                <p className="text-xs text-gray-500 mt-0.5">{secondaryRoleLabel}</p>
+                                                <p className="text-[13px] text-gray-500 mt-0.5">{secondaryRoleLabel}</p>
                                             )}
                                         </div>
 
@@ -602,13 +601,41 @@ const TeacherAttendance = () => {
                                             </div>
                                         )}
 
-                                        <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
-                                            <div className="flex gap-1.5" />
+                                        <div
+                                            className={`pt-4 border-t border-gray-50 flex items-center gap-3 ${
+                                                isToday
+                                                    ? status !== 'Not Marked'
+                                                        ? 'justify-center'
+                                                        : 'justify-end'
+                                                    : 'justify-between'
+                                            }`}
+                                        >
                                             {isToday ? (
-                                                <div className="flex items-center gap-1 text-indigo-600 group-hover:translate-x-1 transition-transform">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">Mark</span>
-                                                    <ArrowRight size={14} />
-                                                </div>
+                                                status !== 'Not Marked' ? (
+                                                    <div className="flex flex-wrap items-center justify-center gap-5">
+                                                        <span
+                                                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                                status === 'Absent'
+                                                                    ? STATUS_COLORS['Not Marked']
+                                                                    : (STATUS_COLORS[status] || STATUS_COLORS.Pending)
+                                                            }`}
+                                                        >
+                                                            {status}
+                                                        </span>
+                                                        <span
+                                                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${STATUS_COLORS['Not Marked']}`}
+                                                        >
+                                                            <span>Marked</span>
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-center gap-1 text-indigo-600 group-hover:translate-x-1 transition-transform">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">Mark</span>
+                                                            <ArrowRight size={14} />
+                                                        </div>
+                                                    </>
+                                                )
                                             ) : (
                                                 <div className="flex items-center gap-1 text-gray-400">
                                                     <span className="text-[10px] font-black uppercase tracking-widest">

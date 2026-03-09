@@ -45,7 +45,12 @@ const RequiredDocumentsRules = () => {
                 if (data) {
                     setRuleId(data._id);
                     setRuleStatus(data.isLocked ? 'LOCKED' : 'DRAFT');
-                    const list = selectedEntity === 'employee' ? (data.staffRules || []) : (data.studentRules || []);
+                    const list =
+                        selectedEntity === 'employee'
+                            ? (data.staffRules || [])
+                            : selectedEntity === 'parent'
+                                ? (data.parentRules || [])
+                                : (data.studentRules || []);
                     setRules(list.map((r, i) => ({
                         id: r._id || `r-${i}`,
                         name: r.name,
@@ -92,7 +97,11 @@ const RequiredDocumentsRules = () => {
         stage: STAGE_BACKEND[r.stage] || 'admission',
         gracePeriodDays: Number(r.gracePeriodDays) || 0,
         enforcement: ENFORCEMENT_BACKEND[r.enforcement] || 'hard_block',
-        ...(selectedEntity === 'employee' ? { type: r.condition === 'All' ? 'all' : 'teaching' } : { verifier: 'admin' })
+        ...(selectedEntity === 'employee'
+            ? { type: r.condition === 'All' ? 'all' : 'teaching' }
+            : selectedEntity === 'student'
+                ? { verifier: 'admin' }
+                : {})
     }));
 
     const handleSaveDraft = async () => {
@@ -110,7 +119,8 @@ const RequiredDocumentsRules = () => {
                 },
                 overrideRoles: governancePolicies.overrideRoles,
                 studentRules: selectedEntity === 'student' ? buildBackendRules() : (data?.studentRules || []),
-                staffRules: selectedEntity === 'employee' ? buildBackendRules() : (data?.staffRules || [])
+                staffRules: selectedEntity === 'employee' ? buildBackendRules() : (data?.staffRules || []),
+                parentRules: selectedEntity === 'parent' ? buildBackendRules() : (data?.parentRules || [])
             };
             await saveDocumentRule(payload);
             setRuleStatus('ACTIVE');

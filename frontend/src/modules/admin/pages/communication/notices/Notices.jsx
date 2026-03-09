@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Mail, FileText, Filter, Users } from 'lucide-react';
+import { Plus, Search, Mail, FileText, Filter, Users, X, CalendarDays, BellRing } from 'lucide-react';
 import NoticeTable from './components/NoticeTable';
 import NoticeFormSimple from './components/NoticeFormSimple';
 import { API_URL } from '@/app/api';
@@ -11,6 +11,7 @@ const Notices = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [notices, setNotices] = useState([]);
     const [editingNotice, setEditingNotice] = useState(null);
+    const [viewingNotice, setViewingNotice] = useState(null);
     const [branches, setBranches] = useState([]);
     const [selectedBranchId, setSelectedBranchId] = useState('');
     const [academicYears, setAcademicYears] = useState([]);
@@ -190,6 +191,7 @@ const Notices = () => {
     }, [selectedBranchId, selectedAcademicYearId]);
 
     const handleCreate = () => {
+        setViewingNotice(null);
         setEditingNotice(null);
         setIsFormOpen(true);
     };
@@ -220,10 +222,49 @@ const Notices = () => {
     };
 
     const handleAction = (type, notice) => {
+        const raw = notices.find(n => (n._id || n.noticeId) === notice.id) || null;
+
+        if (type === 'VIEW') {
+            setViewingNotice(raw);
+            return;
+        }
+
         if (type === 'EDIT') {
-            const raw = notices.find(n => (n._id || n.noticeId) === notice.id);
+            setViewingNotice(null);
             setEditingNotice(raw || null);
             setIsFormOpen(true);
+            return;
+        }
+
+        if (type === 'DELETE' && raw?._id) {
+            handleDelete(raw);
+        }
+    };
+
+    const handleDelete = async (notice) => {
+        const confirmed = window.confirm(`Are you sure you want to delete "${notice.title || 'this notice'}"?`);
+        if (!confirmed) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.delete(`${API_URL}/notice/${notice._id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data.success) {
+                setNotices(prev => prev.filter(n => n._id !== notice._id));
+                if (viewingNotice?._id === notice._id) {
+                    setViewingNotice(null);
+                }
+                if (editingNotice?._id === notice._id) {
+                    setEditingNotice(null);
+                    setIsFormOpen(false);
+                }
+                fetchStats();
+            }
+        } catch (err) {
+            console.error('Error deleting notice:', err);
+            alert(err.response?.data?.message || 'Failed to delete notice');
         }
     };
 
@@ -379,6 +420,136 @@ const Notices = () => {
                 />
             )}
 
+            {viewingNotice && (
+                <NoticeViewModal
+                    notice={viewingNotice}
+                    branches={branches}
+                    onClose={() => setViewingNotice(null)}
+                    onEdit={() => {
+                        setViewingNotice(null);
+                        setEditingNotice(viewingNotice);
+                        setIsFormOpen(true);
+                    }}
+                    onDelete={() => handleDelete(viewingNotice)}
+                />
+            )}
+
+        </div>
+    );
+};
+
+const NoticeViewModal = ({ notice, branches, onClose, onEdit, onDelete }) => {
+    const branchName = branches.find((branch) => branch._id === notice?.branchId)?.name || 'N/A';
+    const publishDate = notice?.publishDate ? new Date(notice.publishDate).toLocaleString() : 'N/A';
+    const channels = Array.isArray(notice?.channels) ? notice.channels : [];
+    const audiences = Array.isArray(notice?.audiences) ? notice.audiences : [];
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between gap-4">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-black uppercase tracking-widest mb-3">
+                            <BellRing size={12} />
+                            Notice Preview
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">{notice?.title || 'Notice'}</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Priority</p>
+                            <p className="text-sm font-bold text-gray-900">{notice?.priority || 'N/A'}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Status</p>
+                            <p className="text-sm font-bold text-gray-900">{notice?.status || 'N/A'}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category</p>
+                            <p className="text-sm font-bold text-gray-900">{notice?.category || 'GENERAL'}</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Branch</p>
+                            <p className="text-sm font-bold text-gray-900">{branchName}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <CalendarDays size={12} />
+                                Published On
+                            </p>
+                            <p className="text-sm font-bold text-gray-900">{publishDate}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Target Audience</p>
+                        <div className="flex flex-wrap gap-2">
+                            {audiences.length > 0 ? audiences.map((audience) => (
+                                <span key={audience} className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">
+                                    {audience}
+                                </span>
+                            )) : (
+                                <span className="text-sm text-gray-500">No audience selected</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Channels</p>
+                        <div className="flex flex-wrap gap-2">
+                            {channels.length > 0 ? channels.map((channel) => (
+                                <span key={channel} className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold border border-gray-200 uppercase">
+                                    {channel}
+                                </span>
+                            )) : (
+                                <span className="text-sm text-gray-500">No channels configured</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Notice Content</p>
+                        <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-6">
+                                {notice?.content || 'No content available.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50"
+                        >
+                            Close
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onEdit}
+                            className="flex-1 py-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100"
+                        >
+                            Edit Notice
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="flex-1 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 font-bold hover:bg-red-100"
+                        >
+                            Delete Notice
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

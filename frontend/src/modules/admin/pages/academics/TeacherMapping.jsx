@@ -235,9 +235,9 @@ const TeacherMapping = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex flex-wrap gap-4 items-start">
                     {/* Branch - First */}
-                    <div>
+                    <div className="flex min-w-[150px] flex-col">
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                             <MapPin size={12} />
                             Branch
@@ -253,10 +253,11 @@ const TeacherMapping = () => {
                                 <option key={b._id} value={b._id}>{b.name}</option>
                             ))}
                         </select>
+                        <div className="mt-0.5 h-4" aria-hidden="true"></div>
                     </div>
 
                     {/* Academic Year - filtered by branch */}
-                    <div>
+                    <div className="flex min-w-[200px] flex-col">
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
                         <select
                             value={selectedYearId}
@@ -269,13 +270,15 @@ const TeacherMapping = () => {
                                 <option key={year._id} value={year._id}>{year.name} {year.status === 'active' ? '(Active)' : ''}</option>
                             ))}
                         </select>
-                        {selectedBranchId && <p className="text-[10px] text-gray-400 mt-0.5">For selected branch</p>}
+                        <p className="mt-0.5 h-4 text-[10px] text-gray-400">
+                            {selectedBranchId ? 'For selected branch' : ''}
+                        </p>
                     </div>
 
                     {/* School Mode: Class & Section */}
                     {mappingMode === 'school' && (
                         <>
-                            <div>
+                            <div className="flex min-w-[150px] flex-col">
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                     <School size={12} />
                                     Class
@@ -291,9 +294,10 @@ const TeacherMapping = () => {
                                         <option key={cls._id} value={cls._id}>{cls.name}</option>
                                     ))}
                                 </select>
+                                <div className="mt-0.5 h-4" aria-hidden="true"></div>
                             </div>
 
-                            <div>
+                            <div className="flex min-w-[150px] flex-col">
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Section</label>
                                 <select
                                     value={selectedSectionId}
@@ -306,13 +310,14 @@ const TeacherMapping = () => {
                                         <option key={sec._id} value={sec._id}>{sec.name}</option>
                                     ))}
                                 </select>
+                                <div className="mt-0.5 h-4" aria-hidden="true"></div>
                             </div>
                         </>
                     )}
 
                     {/* College Mode: Course Selection */}
                     {mappingMode === 'college' && (
-                        <div>
+                        <div className="flex min-w-[200px] flex-col">
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                 <GraduationCap size={12} />
                                 Course/Program
@@ -330,6 +335,7 @@ const TeacherMapping = () => {
                                     </option>
                                 ))}
                             </select>
+                            <div className="mt-0.5 h-4" aria-hidden="true"></div>
                         </div>
                     )}
 

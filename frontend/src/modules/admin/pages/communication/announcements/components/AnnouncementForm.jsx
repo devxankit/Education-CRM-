@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Send } from 'lucide-react';
+import { X, Send, Save } from 'lucide-react';
 import AudienceSelector from './AudienceSelector';
 import ChannelSelector from './ChannelSelector';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
-const AnnouncementForm = ({ onClose, onPublish }) => {
+const AnnouncementForm = ({ onClose, onPublish, initialAnnouncement = null }) => {
 
     const {
         branches,
@@ -25,6 +25,7 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
         branchId: '',
         academicYearId: ''
     });
+    const isEdit = Boolean(initialAnnouncement?._id);
 
     // Load branches and default academic years
     useEffect(() => {
@@ -32,11 +33,39 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
     }, [fetchBranches]);
 
     useEffect(() => {
+        if (initialAnnouncement) {
+            setFormData({
+                title: initialAnnouncement.title || '',
+                category: initialAnnouncement.category || 'GENERAL',
+                content: initialAnnouncement.content || '',
+                audiences: Array.isArray(initialAnnouncement.audiences) ? initialAnnouncement.audiences : [],
+                channels: Array.isArray(initialAnnouncement.channels) && initialAnnouncement.channels.length > 0 ? initialAnnouncement.channels : ['APP'],
+                isEmergency: initialAnnouncement.category === 'EMERGENCY',
+                branchId: initialAnnouncement.branchId || '',
+                academicYearId: initialAnnouncement.academicYearId || ''
+            });
+        } else {
+            setFormData({
+                title: '',
+                category: 'GENERAL',
+                content: '',
+                audiences: [],
+                channels: ['APP'],
+                isEmergency: false,
+                branchId: '',
+                academicYearId: ''
+            });
+        }
+    }, [initialAnnouncement]);
+
+    useEffect(() => {
         if (formData.branchId) {
             fetchAcademicYears(formData.branchId);
-            setFormData(prev => ({ ...prev, academicYearId: '' }));
+            if (!isEdit) {
+                setFormData(prev => ({ ...prev, academicYearId: '' }));
+            }
         }
-    }, [formData.branchId, fetchAcademicYears]);
+    }, [formData.branchId, fetchAcademicYears, isEdit]);
 
     // Auto-select active academic year for selected branch
     useEffect(() => {
@@ -78,7 +107,7 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
 
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
-                    <h2 className="text-lg font-bold text-gray-900">New Announcement</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Announcement' : 'New Announcement'}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <X size={24} />
                     </button>
@@ -183,14 +212,15 @@ const AnnouncementForm = ({ onClose, onPublish }) => {
 
                 {/* Footer */}
                 <div className="p-4 border-t border-gray-200 bg-white flex justify-end gap-3 shrink-0">
-                    <button onClick={() => handleSubmit('DRAFT')} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                        Save as Draft
+                    <button onClick={() => handleSubmit('DRAFT')} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2">
+                        <Save size={16} />
+                        {isEdit ? 'Save Draft' : 'Save as Draft'}
                     </button>
                     <button
                         onClick={() => handleSubmit('PUBLISHED')}
                         className="px-6 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center gap-2"
                     >
-                        <Send size={16} /> Broadcast Now
+                        <Send size={16} /> {isEdit ? 'Update Announcement' : 'Broadcast Now'}
                     </button>
                 </div>
 

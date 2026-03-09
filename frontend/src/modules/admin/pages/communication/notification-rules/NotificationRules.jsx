@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, X, BellRing, Clock3 } from 'lucide-react';
 import RuleTable from './components/RuleTable';
 import RuleFormStepper from './components/RuleFormStepper';
 import axios from 'axios';
@@ -14,77 +14,106 @@ const NotificationRules = () => {
     const [isStepperOpen, setIsStepperOpen] = useState(false);
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('ALL');
+    const [editingRule, setEditingRule] = useState(null);
+    const [viewingRule, setViewingRule] = useState(null);
 
-    // Data State (Mock)
+    // Data State
     const [rules, setRules] = useState([]);
 
-    // Mock Load
     useEffect(() => {
+        fetchRules();
+    }, [activeTab]);
+
+    const fetchRules = async () => {
         setLoading(true);
-        setTimeout(() => {
-            setRules([
-                {
-                    id: 1,
-                    name: 'Auto Fee Reminder (7 Days)',
-                    module: 'FEES',
-                    trigger: 'Fee Overdue',
-                    condition: 'Overdue > 7 Days',
-                    audience: ['PARENTS'],
-                    channels: ['SMS', 'EMAIL'],
-                    status: 'ACTIVE'
-                },
-                {
-                    id: 2,
-                    name: 'Absent Alert - Immediate',
-                    module: 'ATTENDANCE',
-                    trigger: 'Student Marked Absent',
-                    condition: 'Daily Run @ 11:00 AM',
-                    audience: ['PARENTS'],
-                    channels: ['APP'],
-                    status: 'ACTIVE'
-                },
-                {
-                    id: 3,
-                    name: 'Exam Result Notification',
-                    module: 'EXAMS',
-                    trigger: 'Result Published',
-                    condition: 'Instant',
-                    audience: ['STUDENTS', 'PARENTS'],
-                    channels: ['APP', 'EMAIL'],
-                    status: 'DISABLED'
-                }
-            ]);
+        try {
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams();
+            if (activeTab && activeTab !== 'ALL') params.append('status', activeTab);
+            if (searchTerm.trim()) params.append('search', searchTerm.trim());
+
+            const response = await axios.get(`${API_URL}/notification/rules?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data.success) {
+                setRules(response.data.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching notification rules:', error);
+            setRules([]);
+        } finally {
             setLoading(false);
-        }, 800);
-    }, []);
+        }
+    };
 
     // Handlers
     const handleCreate = () => {
+        setViewingRule(null);
+        setEditingRule(null);
         setIsStepperOpen(true);
     };
 
-    const handleSaveRule = (formData) => {
-        const newRule = {
-            id: Date.now(),
-            ...formData,
-            condition: formData.conditionVal ? `Wait ${formData.conditionVal} Days` : 'Instant'
-        };
-        setRules(prev => [newRule, ...prev]);
-        setIsStepperOpen(false);
+    const handleSaveRule = async (formData) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (editingRule?._id) {
+                const response = await axios.put(`${API_URL}/notification/rules/${editingRule._id}`, formData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    setRules(prev => prev.map(rule => rule._id === editingRule._id ? response.data.data : rule));
+                }
+            } else {
+                const response = await axios.post(`${API_URL}/notification/rules`, formData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    setRules(prev => [response.data.data, ...prev]);
+                }
+            }
+            setEditingRule(null);
+            setIsStepperOpen(false);
+        } catch (error) {
+            console.error('Error saving notification rule:', error);
+            alert(error.response?.data?.message || 'Failed to save notification rule');
+        }
     };
 
-    const handleAction = (type, rule) => {
+    const handleAction = async (type, rule) => {
+        const raw = rules.find(r => (r._id || r.id) === (rule._id || rule.id)) || null;
+
+        if (type === 'VIEW') {
+            setViewingRule(raw);
+            return;
+        }
+
         if (type === 'EDIT') {
-            alert(`Edit rule logic for: ${rule.name}`); // Placeholder
+            setViewingRule(null);
+            setEditingRule(raw);
+            setIsStepperOpen(true);
+            return;
         }
-        if (type === 'ACTIVATE') {
-            if (window.confirm('Activate this automation rule?')) {
-                setRules(prev => prev.map(r => r.id === rule.id ? { ...r, status: 'ACTIVE' } : r));
-            }
-        }
-        if (type === 'DISABLE') {
-            if (window.confirm('Disable this active rule? Triggers will stop firing.')) {
-                setRules(prev => prev.map(r => r.id === rule.id ? { ...r, status: 'DISABLED' } : r));
+
+        if (type === 'DELETE' && raw?._id) {
+            if (!window.confirm(`Delete notification rule "${raw.name}"?`)) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.delete(`${API_URL}/notification/rules/${raw._id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    setRules(prev => prev.filter(r => r._id !== raw._id));
+                    if (viewingRule?._id === raw._id) setViewingRule(null);
+                    if (editingRule?._id === raw._id) {
+                        setEditingRule(null);
+                        setIsStepperOpen(false);
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting notification rule:', error);
+                alert(error.response?.data?.message || 'Failed to delete notification rule');
             }
         }
     };
@@ -203,8 +232,25 @@ const NotificationRules = () => {
             {/* Wizard */}
             {isStepperOpen && (
                 <RuleFormStepper
-                    onClose={() => setIsStepperOpen(false)}
+                    onClose={() => {
+                        setEditingRule(null);
+                        setIsStepperOpen(false);
+                    }}
                     onSave={handleSaveRule}
+                    initialRule={editingRule}
+                />
+            )}
+
+            {viewingRule && (
+                <RuleViewModal
+                    rule={viewingRule}
+                    onClose={() => setViewingRule(null)}
+                    onEdit={() => {
+                        setViewingRule(null);
+                        setEditingRule(viewingRule);
+                        setIsStepperOpen(true);
+                    }}
+                    onDelete={() => handleAction('DELETE', viewingRule)}
                 />
             )}
 
@@ -284,5 +330,99 @@ const NotificationRules = () => {
         </div>
     );
 };
+
+const RuleViewModal = ({ rule, onClose, onEdit, onDelete }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between gap-4">
+                <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-black uppercase tracking-widest mb-3">
+                        <BellRing size={12} />
+                        Rule Preview
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">{rule?.name || 'Notification Rule'}</h2>
+                </div>
+                <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                    <X size={20} />
+                </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Module</p>
+                        <p className="text-sm font-bold text-gray-900">{rule?.module || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Trigger</p>
+                        <p className="text-sm font-bold text-gray-900">{rule?.trigger || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Status</p>
+                        <p className="text-sm font-bold text-gray-900">{rule?.status || 'N/A'}</p>
+                    </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <Clock3 size={12} />
+                        Condition
+                    </p>
+                    <p className="text-sm font-bold text-gray-900">{rule?.condition || 'Instant'}</p>
+                </div>
+
+                <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Target Audience</p>
+                    <div className="flex flex-wrap gap-2">
+                        {(rule?.audience || []).length > 0 ? rule.audience.map((audience) => (
+                            <span key={audience} className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">
+                                {audience}
+                            </span>
+                        )) : (
+                            <span className="text-sm text-gray-500">No audience selected</span>
+                        )}
+                    </div>
+                </div>
+
+                <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Channels</p>
+                    <div className="flex flex-wrap gap-2">
+                        {(rule?.channels || []).length > 0 ? rule.channels.map((channel) => (
+                            <span key={channel} className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold border border-gray-200 uppercase">
+                                {channel}
+                            </span>
+                        )) : (
+                            <span className="text-sm text-gray-500">No channels configured</span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50"
+                    >
+                        Close
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onEdit}
+                        className="flex-1 py-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100"
+                    >
+                        Edit Rule
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onDelete}
+                        className="flex-1 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 font-bold hover:bg-red-100"
+                    >
+                        Delete Rule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+);
 
 export default NotificationRules;

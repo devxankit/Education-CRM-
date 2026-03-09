@@ -33,19 +33,30 @@ const RouteForm = ({ route: initialRoute, isNew, branchId, academicYearId, onSav
         onSave(formData);
     };
 
-    const filteredVehicles = transportVehicles.filter(v => {
-        if (!branchId) return true;
-        const matchesBranch = v.branchId === branchId;
-        const matchesYear = !academicYearId || v.academicYearId === academicYearId;
-        return matchesBranch && matchesYear;
-    });
+    const getEntityId = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        return value._id || value.id || '';
+    };
 
-    const filteredDrivers = transportDrivers.filter(d => {
-        if (!branchId) return true;
-        const matchesBranch = d.branchId === branchId;
-        const matchesYear = !academicYearId || d.academicYearId === academicYearId;
-        return matchesBranch && matchesYear;
-    });
+    const filterByBranchAndYear = (items = []) => {
+        if (!branchId) return items;
+
+        const branchMatched = items.filter((item) => getEntityId(item.branchId) === branchId);
+        if (!academicYearId) return branchMatched;
+
+        const yearMatched = branchMatched.filter((item) => {
+            const itemYearId = getEntityId(item.academicYearId);
+            return itemYearId === academicYearId || !itemYearId;
+        });
+
+        // If nothing matches the selected academic year, still show branch records
+        // so admins can assign existing vehicles/drivers instead of seeing an empty dropdown.
+        return yearMatched.length > 0 ? yearMatched : branchMatched;
+    };
+
+    const filteredVehicles = filterByBranchAndYear(transportVehicles);
+    const filteredDrivers = filterByBranchAndYear(transportDrivers);
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
@@ -115,10 +126,10 @@ const RouteForm = ({ route: initialRoute, isNew, branchId, academicYearId, onSav
                             <option value="">-- Select Vehicle --</option>
                             {filteredVehicles.map(v => (
                                 <option
-                                    key={v._id}
+                                    key={v.id || v._id}
                                     value={v.registrationNo || v.code}
                                 >
-                                    {v.code} {v.registrationNo ? `- ${v.registrationNo}` : ''} {v.model ? `(${v.model})` : ''}
+                                    {[v.code, v.registrationNo, v.model && `(${v.model})`].filter(Boolean).join(' ') || 'Unnamed Vehicle'}
                                 </option>
                             ))}
                         </select>
@@ -135,7 +146,9 @@ const RouteForm = ({ route: initialRoute, isNew, branchId, academicYearId, onSav
                         >
                             <option value="">-- Select Driver --</option>
                             {filteredDrivers.map(d => (
-                                <option key={d._id} value={d.name}>{d.name}</option>
+                                <option key={d.id || d._id} value={d.name}>
+                                    {d.name || d.mobile || 'Unnamed Driver'}
+                                </option>
                             ))}
                         </select>
                     </div>

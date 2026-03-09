@@ -1479,7 +1479,9 @@ export const useAdminStore = create(
                     if (response.data.success) {
                         const vehicles = (response.data.data || []).map(v => ({
                             id: v._id,
-                            ...v
+                            ...v,
+                            branchId: v.branchId?._id || v.branchId || '',
+                            academicYearId: v.academicYearId?._id || v.academicYearId || ''
                         }));
                         set({ transportVehicles: vehicles });
                     }
@@ -1546,8 +1548,31 @@ export const useAdminStore = create(
                 }
             },
 
-            // Local Drivers (kept for UI fallback; API-backed driver management lives elsewhere)
+            // Transport Drivers (API-backed)
             transportDrivers: [],
+            fetchTransportDrivers: async (branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = {};
+                    if (branchId && branchId !== 'all') params.branchId = branchId;
+                    const response = await axios.get(`${API_URL}/transport-driver`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        params
+                    });
+                    if (response.data.success) {
+                        const drivers = (response.data.data || []).map((d) => ({
+                            id: d._id,
+                            ...d,
+                            branchId: d.branchId?._id || d.branchId || '',
+                            academicYearId: d.academicYearId?._id || d.academicYearId || ''
+                        }));
+                        set({ transportDrivers: drivers });
+                    }
+                } catch (error) {
+                    console.error('Error fetching transport drivers:', error);
+                    get().addToast(error.response?.data?.message || 'Error fetching drivers', 'error');
+                }
+            },
             addTransportDriver: (driver) => {
                 set((state) => ({
                     transportDrivers: [

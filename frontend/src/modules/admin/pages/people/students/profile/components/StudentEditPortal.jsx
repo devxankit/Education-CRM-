@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, BookOpen, Truck, ShieldCheck, FileText, Loader2, Camera, MapPin, School, Calendar, Mail, Flag } from 'lucide-react';
+import { X, Save, User, BookOpen, Truck, ShieldCheck, FileText, Loader2, Camera, MapPin, School, Calendar, Mail, Flag, Plus, Trash2 } from 'lucide-react';
 import { useAdminStore } from '@/store/adminStore';
 
 const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
@@ -98,6 +98,77 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleOtherDocumentNameChange = (index, value) => {
+        setFormData(prev => {
+            const otherDocuments = [...(prev.documents?.otherDocuments || [])];
+            otherDocuments[index] = {
+                ...otherDocuments[index],
+                label: value,
+                name: value
+            };
+            return {
+                ...prev,
+                documents: {
+                    ...prev.documents,
+                    otherDocuments
+                }
+            };
+        });
+    };
+
+    const handleOtherDocumentUpload = (index, e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const currentDoc = formData.documents?.otherDocuments?.[index];
+        if (!currentDoc?.label?.trim()) {
+            alert('Please enter the document name first.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFormData(prev => {
+                const otherDocuments = [...(prev.documents?.otherDocuments || [])];
+                otherDocuments[index] = {
+                    ...otherDocuments[index],
+                    name: otherDocuments[index].label.trim(),
+                    base64: reader.result,
+                    status: 'Uploaded',
+                    date: new Date().toLocaleDateString()
+                };
+                return {
+                    ...prev,
+                    documents: {
+                        ...prev.documents,
+                        otherDocuments
+                    }
+                };
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const addOtherDocument = () => {
+        setFormData(prev => ({
+            ...prev,
+            documents: {
+                ...prev.documents,
+                otherDocuments: [...(prev.documents?.otherDocuments || []), { label: '', name: '', status: '' }]
+            }
+        }));
+    };
+
+    const removeOtherDocument = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            documents: {
+                ...prev.documents,
+                otherDocuments: (prev.documents?.otherDocuments || []).filter((_, i) => i !== index)
+            }
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -426,6 +497,51 @@ const StudentEditPortal = ({ student, isOpen, onClose, onSave }) => {
                                             <input type="file" onChange={(e) => handleFileUpload(doc.id, e)} className="text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer max-w-[120px]" />
                                         </div>
                                     ))}
+
+                                    <div className="pt-2 border-t border-gray-100 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="block text-[10px] font-black uppercase text-gray-400 tracking-wider">Other Documents</label>
+                                            <button
+                                                type="button"
+                                                onClick={addOtherDocument}
+                                                className="inline-flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all"
+                                            >
+                                                <Plus size={12} />
+                                                Add Other
+                                            </button>
+                                        </div>
+
+                                        {(formData.documents?.otherDocuments || []).map((doc, index) => (
+                                            <div key={`other-doc-${index}`} className="p-3 border border-gray-200 rounded-2xl bg-white space-y-3">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="text"
+                                                        value={doc.label || doc.name || ''}
+                                                        onChange={(e) => handleOtherDocumentNameChange(index, e.target.value)}
+                                                        placeholder="e.g. Migration Certificate"
+                                                        className="flex-1 text-xs font-medium border border-gray-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-100"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeOtherDocument(index)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span className="text-[10px] text-gray-500 truncate">
+                                                        {doc.url || doc.base64 ? `${doc.name || doc.label} uploaded` : 'Upload custom supporting document'}
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        onChange={(e) => handleOtherDocumentUpload(index, e)}
+                                                        className="text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer max-w-[140px]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}

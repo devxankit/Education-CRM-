@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Megaphone, Bell } from 'lucide-react';
+import { Plus, Search, Megaphone, Bell, X, CalendarDays, Users2 } from 'lucide-react';
 import AnnouncementTable from './components/AnnouncementTable';
 import AnnouncementForm from './components/AnnouncementForm';
 import { API_URL } from '@/app/api';
@@ -13,6 +13,8 @@ const Announcements = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('ALL');
+    const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+    const [viewingAnnouncement, setViewingAnnouncement] = useState(null);
 
     // Data State (from backend)
     const [announcements, setAnnouncements] = useState([]);
@@ -68,7 +70,7 @@ const Announcements = () => {
         fetchAnnouncements();
     }, [selectedBranchId, activeTab]);
 
-    // Create / publish announcement
+    // Create / update announcement
     const handlePublish = async (formData) => {
         const finalBranchId = formData.branchId || selectedBranchId;
         if (!finalBranchId) {
@@ -82,44 +84,68 @@ const Announcements = () => {
                 ...formData,
                 branchId: finalBranchId
             };
-            const response = await axios.post(`${API_URL}/announcement`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                const created = response.data.data;
-                setAnnouncements(prev => [created, ...prev]);
-                setIsFormOpen(false);
-            }
-        } catch (error) {
-            console.error('Error creating announcement:', error);
-            alert(error.response?.data?.message || 'Failed to create announcement');
-        }
-    };
-
-    const handleAction = async (type, item) => {
-        if (type === 'ARCHIVE') {
-            if (!item.dbId && !item._id) {
-                console.warn('Announcement identifier missing for archive action');
-                return;
-            }
-            if (!window.confirm('Archive this announcement?')) return;
-            const id = item.dbId || item._id;
-            try {
-                const token = localStorage.getItem('token');
-                const response = await axios.put(`${API_URL}/announcement/${id}`, { status: 'ARCHIVED' }, {
+            if (editingAnnouncement?._id) {
+                const response = await axios.put(`${API_URL}/announcement/${editingAnnouncement._id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.data.success) {
                     const updated = response.data.data;
                     setAnnouncements(prev => prev.map(a => (a._id === updated._id ? updated : a)));
+                    setEditingAnnouncement(null);
+                    setIsFormOpen(false);
+                }
+            } else {
+                const response = await axios.post(`${API_URL}/announcement`, payload, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    const created = response.data.data;
+                    setAnnouncements(prev => [created, ...prev]);
+                    setIsFormOpen(false);
+                }
+            }
+        } catch (error) {
+            console.error('Error saving announcement:', error);
+            alert(error.response?.data?.message || 'Failed to save announcement');
+        }
+    };
+
+    const handleAction = async (type, item) => {
+        const raw = announcements.find(a => (a._id || a.announcementId) === (item.dbId || item._id || item.id)) || null;
+
+        if (type === 'VIEW') {
+            setViewingAnnouncement(raw);
+            return;
+        }
+
+        if (type === 'EDIT') {
+            setViewingAnnouncement(null);
+            setEditingAnnouncement(raw);
+            setIsFormOpen(true);
+            return;
+        }
+
+        if (type === 'DELETE' && raw?._id) {
+            const confirmed = window.confirm(`Are you sure you want to delete "${raw.title || 'this announcement'}"?`);
+            if (!confirmed) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.delete(`${API_URL}/announcement/${raw._id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.data.success) {
+                    setAnnouncements(prev => prev.filter(a => a._id !== raw._id));
+                    if (viewingAnnouncement?._id === raw._id) setViewingAnnouncement(null);
+                    if (editingAnnouncement?._id === raw._id) {
+                        setEditingAnnouncement(null);
+                        setIsFormOpen(false);
+                    }
                 }
             } catch (error) {
-                console.error('Error archiving announcement:', error);
-                alert(error.response?.data?.message || 'Failed to archive announcement');
+                console.error('Error deleting announcement:', error);
+                alert(error.response?.data?.message || 'Failed to delete announcement');
             }
-        } else {
-            // VIEW / EDIT / STATS can be wired later
-            alert(`${type} action clicked for: ${item.title}`);
         }
     };
 
@@ -156,7 +182,11 @@ const Announcements = () => {
                 </div>
 
                 <button
-                    onClick={() => setIsFormOpen(true)}
+                    onClick={() => {
+                        setEditingAnnouncement(null);
+                        setViewingAnnouncement(null);
+                        setIsFormOpen(true);
+                    }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5"
                 >
                     <Plus size={20} />
@@ -244,11 +274,142 @@ const Announcements = () => {
             {/* Create Drawer */}
             {isFormOpen && (
                 <AnnouncementForm
-                    onClose={() => setIsFormOpen(false)}
+                    onClose={() => {
+                        setEditingAnnouncement(null);
+                        setIsFormOpen(false);
+                    }}
                     onPublish={handlePublish}
+                    initialAnnouncement={editingAnnouncement}
                 />
             )}
 
+            {viewingAnnouncement && (
+                <AnnouncementViewModal
+                    announcement={viewingAnnouncement}
+                    branches={branches}
+                    onClose={() => setViewingAnnouncement(null)}
+                    onEdit={() => {
+                        setViewingAnnouncement(null);
+                        setEditingAnnouncement(viewingAnnouncement);
+                        setIsFormOpen(true);
+                    }}
+                    onDelete={() => handleAction('DELETE', viewingAnnouncement)}
+                />
+            )}
+
+        </div>
+    );
+};
+
+const AnnouncementViewModal = ({ announcement, branches, onClose, onEdit, onDelete }) => {
+    const branchName = branches.find((branch) => branch._id === announcement?.branchId)?.name || 'N/A';
+    const publishDate = announcement?.publishDate ? new Date(announcement.publishDate).toLocaleString() : 'N/A';
+    const audiences = Array.isArray(announcement?.audiences) ? announcement.audiences : [];
+    const channels = Array.isArray(announcement?.channels) ? announcement.channels : [];
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between gap-4">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 border border-pink-100 text-[10px] font-black uppercase tracking-widest mb-3">
+                            <Megaphone size={12} />
+                            Announcement Preview
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">{announcement?.title || 'Announcement'}</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category</p>
+                            <p className="text-sm font-bold text-gray-900">{announcement?.category || 'GENERAL'}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Status</p>
+                            <p className="text-sm font-bold text-gray-900">{announcement?.status || 'N/A'}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Branch</p>
+                            <p className="text-sm font-bold text-gray-900">{branchName}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                            <CalendarDays size={12} />
+                            Published On
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">{publishDate}</p>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                            <Users2 size={12} />
+                            Target Audience
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {audiences.length > 0 ? audiences.map((audience) => (
+                                <span key={audience} className="px-3 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-semibold border border-pink-100">
+                                    {audience}
+                                </span>
+                            )) : (
+                                <span className="text-sm text-gray-500">No audience selected</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Channels</p>
+                        <div className="flex flex-wrap gap-2">
+                            {channels.length > 0 ? channels.map((channel) => (
+                                <span key={channel} className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold border border-gray-200 uppercase">
+                                    {channel}
+                                </span>
+                            )) : (
+                                <span className="text-sm text-gray-500">No channels configured</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Announcement Content</p>
+                        <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-6">
+                                {announcement?.content || 'No content available.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50"
+                        >
+                            Close
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onEdit}
+                            className="flex-1 py-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100"
+                        >
+                            Edit Announcement
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="flex-1 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 font-bold hover:bg-red-100"
+                        >
+                            Delete Announcement
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

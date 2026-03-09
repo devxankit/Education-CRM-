@@ -22,13 +22,21 @@ export const getDocumentRule = async (req, res) => {
             { name: 'Previous Marksheet', category: 'Academic', stage: 'admission', mandatory: true, gracePeriodDays: 0, enforcement: 'hard_block', verifier: 'admin' },
             { name: 'Residence Proof', category: 'Address', stage: 'admission', mandatory: true, gracePeriodDays: 15, enforcement: 'soft_warning', verifier: 'admin' },
             { name: 'Transport Application', category: 'Optional', stage: 'post-admission', mandatory: false, gracePeriodDays: 5, enforcement: 'info_only', verifier: 'admin' },
-            { name: 'Medical Fitness Certificate', category: 'Health', stage: 'joining', mandatory: false, gracePeriodDays: 10, enforcement: 'soft_warning', verifier: 'admin' }
+            { name: 'Medical Fitness Certificate', category: 'Health', stage: 'joining', mandatory: false, gracePeriodDays: 10, enforcement: 'soft_warning', verifier: 'admin' },
+            { name: 'Other Document', category: 'Other', stage: 'post-admission', mandatory: false, gracePeriodDays: 0, enforcement: 'info_only', verifier: 'admin' }
         ];
         const defaultStaffRules = [
             { name: 'Identity Proof (PAN/Aadhaar)', category: 'Identity', type: 'all', stage: 'joining', mandatory: true, gracePeriodDays: 7, enforcement: 'hard_block' },
             { name: 'Qualification Degrees', category: 'Academic', type: 'teaching', stage: 'joining', mandatory: true, gracePeriodDays: 0, enforcement: 'hard_block' },
             { name: 'Experience Letters', category: 'Professional', type: 'teaching', stage: 'interview', mandatory: true, gracePeriodDays: 0, enforcement: 'soft_warning' },
-            { name: 'Police Verification', category: 'Legal', type: 'all', stage: 'joining', mandatory: true, gracePeriodDays: 45, enforcement: 'hard_block' }
+            { name: 'Police Verification', category: 'Legal', type: 'all', stage: 'joining', mandatory: true, gracePeriodDays: 45, enforcement: 'hard_block' },
+            { name: 'Other Document', category: 'Other', type: 'all', stage: 'joining', mandatory: false, gracePeriodDays: 0, enforcement: 'info_only' }
+        ];
+        const defaultParentRules = [
+            { name: 'Parent Identity Proof', category: 'Identity', stage: 'admission', mandatory: true, gracePeriodDays: 7, enforcement: 'hard_block' },
+            { name: 'Address Proof', category: 'Address', stage: 'admission', mandatory: false, gracePeriodDays: 15, enforcement: 'soft_warning' },
+            { name: 'Relationship Proof', category: 'Guardian', stage: 'admission', mandatory: false, gracePeriodDays: 15, enforcement: 'soft_warning' },
+            { name: 'Other Document', category: 'Other', stage: 'post-admission', mandatory: false, gracePeriodDays: 0, enforcement: 'info_only' }
         ];
         if (branchId === 'main' || branchId.length !== 24) {
             return res.status(200).json({
@@ -47,7 +55,8 @@ export const getDocumentRule = async (req, res) => {
                     provisionalAdmission: defaultGovernance.provisionalAdmission,
                     overrideRoles: defaultGovernance.overrideRoles,
                     studentRules: defaultStudentRules,
-                    staffRules: defaultStaffRules
+                    staffRules: defaultStaffRules,
+                    parentRules: defaultParentRules
                 }
             });
         }
@@ -71,14 +80,26 @@ export const getDocumentRule = async (req, res) => {
                     provisionalAdmission: defaultGovernance.provisionalAdmission,
                     overrideRoles: defaultGovernance.overrideRoles,
                     studentRules: defaultStudentRules,
-                    staffRules: defaultStaffRules
+                    staffRules: defaultStaffRules,
+                    parentRules: defaultParentRules
                 }
             });
         }
 
+        const normalizedRule = rule.toObject();
+        if (!Array.isArray(normalizedRule.studentRules) || normalizedRule.studentRules.length === 0) {
+            normalizedRule.studentRules = defaultStudentRules;
+        }
+        if (!Array.isArray(normalizedRule.staffRules) || normalizedRule.staffRules.length === 0) {
+            normalizedRule.staffRules = defaultStaffRules;
+        }
+        if (!Array.isArray(normalizedRule.parentRules) || normalizedRule.parentRules.length === 0) {
+            normalizedRule.parentRules = defaultParentRules;
+        }
+
         res.status(200).json({
             success: true,
-            data: rule,
+            data: normalizedRule,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

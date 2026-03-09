@@ -211,27 +211,55 @@ const StudentDetail = () => {
                     editable={currentRole === STAFF_ROLES.DATA_ENTRY}
                     onEdit={() => navigate(`/staff/students/${studentId}/edit`)}
                 >
-                    {student.documents && Object.entries(student.documents).map(([key, doc]) => (
-                        <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg border border-gray-200 text-gray-400">
-                                    <FileText size={18} />
+                    {student.documents && Object.entries(student.documents).flatMap(([key, doc]) => {
+                        if (key === 'otherDocuments' && Array.isArray(doc)) {
+                            return doc.map((extraDoc, index) => (
+                                <div key={`other-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg border border-gray-200 text-gray-400">
+                                            <FileText size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900 uppercase">Other Document</p>
+                                            <p className="text-[10px] text-gray-500">{extraDoc.name || 'document'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <StatusBadge status={extraDoc.status} />
+                                        {extraDoc.url && (
+                                            <a href={extraDoc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded">
+                                                <Upload size={14} />
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-900 uppercase">{key}</p>
-                                    <p className="text-[10px] text-gray-500">{doc.name || 'document'}</p>
+                            ));
+                        }
+
+                        if (!doc) return [];
+
+                        return (
+                            <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-lg border border-gray-200 text-gray-400">
+                                        <FileText size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-900 uppercase">{key}</p>
+                                        <p className="text-[10px] text-gray-500">{doc.name || 'document'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <StatusBadge status={doc.status} />
+                                    {doc.url && (
+                                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded">
+                                            <Upload size={14} />
+                                        </a>
+                                    )}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <StatusBadge status={doc.status} />
-                                {doc.url && (
-                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded">
-                                        <Upload size={14} />
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                     {!student.documents && <p className="text-sm text-gray-500 italic">No documents uploaded</p>}
                 </RoleBasedSection>
             </div>

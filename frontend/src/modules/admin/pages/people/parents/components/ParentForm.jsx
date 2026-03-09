@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, User, Phone, MapPin, Briefcase, Building2, GraduationCap } from 'lucide-react';
+import { Save, User, Phone, MapPin, Briefcase, Building2, GraduationCap, FileText, Plus, Trash2, Upload } from 'lucide-react';
 import StudentLinkPanel from './StudentLinkPanel';
 import { useAdminStore } from '../../../../../../store/adminStore';
+import { API_URL } from '@/app/api';
 
 const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
     const branches = useAdminStore(state => state.branches);
@@ -19,13 +20,16 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
         status: 'Active',
         branchId: '',
         academicYearId: '',
+        documents: [],
         linkedStudents: []
     });
+    const [docUploading, setDocUploading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
             setFormData(prev => ({
                 ...initialData,
+                documents: initialData.documents || [],
                 linkedStudents: initialData.linkedStudents || prev.linkedStudents
             }));
         } else if (branches.length > 0) {
@@ -41,6 +45,46 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleDocumentUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setDocUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('folder', 'parents/documents');
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/upload/single`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: fd
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+                setFormData(prev => ({
+                    ...prev,
+                    documents: [...(prev.documents || []), { name: file.name, url: data.url, status: 'Pending' }]
+                }));
+            } else {
+                alert(data.message || 'Document upload failed');
+            }
+        } catch (error) {
+            console.error('Parent document upload failed:', error);
+            alert('Document upload failed');
+        } finally {
+            setDocUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const removeDocument = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            documents: (prev.documents || []).filter((_, i) => i !== index)
+        }));
     };
 
     const handleSubmit = (e) => {
@@ -192,6 +236,51 @@ const ParentForm = ({ parent: initialData, onSave, onCancel }) => {
                                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                             ></textarea>
                         </div>
+                    </div>
+                </div>
+
+                <hr className="border-gray-100" />
+
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase flex items-center gap-2">
+                            <FileText size={14} /> Certificates & Documents
+                        </h4>
+                        <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-colors ${docUploading ? 'opacity-60 pointer-events-none border-gray-200 text-gray-400' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50 cursor-pointer'}`}>
+                            {docUploading ? <Upload size={14} /> : <Plus size={14} />}
+                            {docUploading ? 'Uploading...' : 'Add Other'}
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,image/*" onChange={handleDocumentUpload} />
+                        </label>
+                    </div>
+
+                    <div className="space-y-2">
+                        {(formData.documents || []).map((doc, index) => (
+                            <div key={`${doc.url || doc.name}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="p-2 bg-white rounded-lg border border-gray-200 text-indigo-500">
+                                        <FileText size={16} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-indigo-600 truncate hover:underline">
+                                            {doc.name}
+                                        </a>
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wide">{doc.status || 'Pending'}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removeDocument(index)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        ))}
+                        {(!formData.documents || formData.documents.length === 0) && (
+                            <div className="p-4 rounded-lg border border-dashed border-gray-200 text-xs text-gray-400 text-center">
+                                No documents added yet.
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -15,6 +15,8 @@ const TransportRoutes = ({ startInCreateMode = false }) => {
         fetchAcademicYears,
         transportRoutes,
         fetchTransportRoutes,
+        fetchTransportVehicles,
+        fetchTransportDrivers,
         addTransportRoute,
         updateTransportRoute,
         deleteTransportRoute
@@ -43,11 +45,15 @@ const TransportRoutes = ({ startInCreateMode = false }) => {
         const loadRoutes = async () => {
             if (!branchId) return;
             setLoading(true);
-            await fetchTransportRoutes(branchId);
+            await Promise.all([
+                fetchTransportRoutes(branchId),
+                fetchTransportVehicles(branchId),
+                fetchTransportDrivers(branchId)
+            ]);
             setLoading(false);
         };
         loadRoutes();
-    }, [branchId, fetchTransportRoutes]);
+    }, [branchId, fetchTransportRoutes, fetchTransportVehicles, fetchTransportDrivers]);
 
     // Load academic years for selected branch and pick default
     useEffect(() => {

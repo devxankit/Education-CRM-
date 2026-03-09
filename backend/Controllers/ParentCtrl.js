@@ -21,7 +21,7 @@ import { sendLoginCredentialsEmail, sendParentResetOtpEmail } from "../Helpers/S
 // ================= CREATE PARENT =================
 export const createParent = async (req, res) => {
     try {
-        const { name, mobile, email, relationship, branchId, address, occupation, studentIds } = req.body;
+        const { name, mobile, email, relationship, branchId, address, occupation, studentIds, documents } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
 
         if (!email || !email.trim()) {
@@ -53,6 +53,7 @@ export const createParent = async (req, res) => {
             relationship,
             address,
             occupation,
+            documents: Array.isArray(documents) ? documents : [],
             code: parentCode,
             password: "123456" // Default password
         });
@@ -1246,6 +1247,21 @@ export const getChildDocuments = async (req, res) => {
         const docs = [];
         if (student.documents) {
             Object.entries(student.documents).forEach(([key, value]) => {
+                if (key === 'otherDocuments' && Array.isArray(value)) {
+                    value.forEach((doc, index) => {
+                        if (!doc) return;
+                        docs.push({
+                            id: `other-${index}`,
+                            name: doc.name || 'Other Document',
+                            url: doc.url,
+                            type: 'Document',
+                            date: doc.date || student.updatedAt,
+                            status: doc.url ? 'Available' : 'Pending Upload'
+                        });
+                    });
+                    return;
+                }
+
                 // Determine status for frontend
                 let status = "Not Generated";
                 if (value.url) {

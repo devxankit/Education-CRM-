@@ -50,6 +50,23 @@ const staffRequirementSchema = new mongoose.Schema({
     }
 });
 
+const parentRequirementSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    category: { type: String, default: "General" },
+    stage: {
+        type: String,
+        enum: ["admission", "post-admission", "joining", "exam"],
+        default: "admission"
+    },
+    mandatory: { type: Boolean, default: false },
+    gracePeriodDays: { type: Number, default: 0 },
+    enforcement: {
+        type: String,
+        enum: ["hard_block", "soft_warning", "info_only"],
+        default: "soft_warning"
+    }
+});
+
 const documentRuleSchema = new mongoose.Schema(
     {
         instituteId: {
@@ -90,6 +107,7 @@ const documentRuleSchema = new mongoose.Schema(
         },
         studentRules: [studentRequirementSchema],
         staffRules: [staffRequirementSchema],
+        parentRules: [parentRequirementSchema],
     },
     { timestamps: true }
 );

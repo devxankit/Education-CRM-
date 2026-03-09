@@ -250,7 +250,7 @@ const StaffDashboard = () => {
 
                 <div className="relative shrink-0 flex items-center justify-center">
                     <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full scale-150 animate-pulse"></div>
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] bg-indigo-600 p-1.5 shadow-2xl rotate-3">
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] bg-indigo-600 p-1.5 shadow-2xl">
                         <div className="w-full h-full rounded-[1.7rem] bg-white overflow-hidden flex items-center justify-center">
                             {user.profilePic ? (
                                 <img src={user.profilePic} alt="Profile" className="w-full h-full object-cover" />

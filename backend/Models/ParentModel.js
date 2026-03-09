@@ -48,6 +48,15 @@ const parentSchema = new mongoose.Schema(
         occupation: {
             type: String,
         },
+        documents: [{
+            name: String,
+            url: String,
+            status: {
+                type: String,
+                enum: ["Pending", "Verified", "Rejected"],
+                default: "Pending"
+            }
+        }],
         status: {
             type: String,
             enum: ["Active", "Inactive"],

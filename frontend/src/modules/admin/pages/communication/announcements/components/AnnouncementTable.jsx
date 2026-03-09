@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Megaphone, Users, Clock, Edit, Eye, Archive, BarChart2 } from 'lucide-react';
+import { Megaphone, Users, Clock, Edit, Eye, Trash2 } from 'lucide-react';
 
 const AnnouncementTable = ({ announcements, onAction }) => {
 
@@ -34,7 +34,7 @@ const AnnouncementTable = ({ announcements, onAction }) => {
                         <th className="px-6 py-4">Target Audience</th>
                         <th className="px-6 py-4">Channels</th>
                         <th className="px-6 py-4 text-center">Status</th>
-                        <th className="px-6 py-4 text-right">Action</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -107,7 +107,7 @@ const AnnouncementTable = ({ announcements, onAction }) => {
 
                                 {/* 6. Actions */}
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-2">
                                         <button
                                             onClick={() => onAction('VIEW', item)}
                                             className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -115,33 +115,20 @@ const AnnouncementTable = ({ announcements, onAction }) => {
                                         >
                                             <Eye size={18} />
                                         </button>
-                                        {item.status === 'DRAFT' && (
-                                            <button
-                                                onClick={() => onAction('EDIT', item)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Edit Announcement"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                        )}
-                                        {item.status !== 'DRAFT' && (
-                                            <button
-                                                onClick={() => onAction('STATS', item)}
-                                                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                title="View Delivery Stats"
-                                            >
-                                                <BarChart2 size={18} />
-                                            </button>
-                                        )}
-                                        {item.status === 'PUBLISHED' && (
-                                            <button
-                                                onClick={() => onAction('ARCHIVE', item)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Archive"
-                                            >
-                                                <Archive size={18} />
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => onAction('EDIT', item)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit Announcement"
+                                        >
+                                            <Edit size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => onAction('DELETE', item)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete Announcement"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </td>
 

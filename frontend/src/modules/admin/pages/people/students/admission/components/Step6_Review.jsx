@@ -20,6 +20,14 @@ const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, sho
 
     const routeObj = transportRoutes.find(r => r._id === data.routeId);
     const stopObj = routeObj?.stops?.find(s => s._id === data.stopId);
+    const uploadedDocuments = data.documents
+        ? Object.entries(data.documents).flatMap(([key, value]) => {
+            if (key === 'otherDocuments' && Array.isArray(value)) {
+                return value.filter(doc => doc?.name);
+            }
+            return value?.name ? [value] : [];
+        })
+        : [];
 
     const Section = ({ title, step, children }) => (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-4">
@@ -91,12 +99,12 @@ const Step6_Review = ({ data, onEditStep, stepNumbers = {}, showDocs = true, sho
                 {showDocs && docs > 0 && (
                     <Section title="4. Documents" step={docs}>
                         <div className="flex gap-2 flex-wrap">
-                            {data.documents && Object.keys(data.documents).map(key => (
-                                <span key={key} className="bg-green-50 text-green-700 border border-green-100 px-2 py-1 rounded text-xs font-bold">
-                                    {data.documents[key].name}
+                            {uploadedDocuments.map((doc, index) => (
+                                <span key={`${doc.name}-${index}`} className="bg-green-50 text-green-700 border border-green-100 px-2 py-1 rounded text-xs font-bold">
+                                    {doc.name}
                                 </span>
                             ))}
-                            {(!data.documents || Object.keys(data.documents).length === 0) && <span className="text-gray-400 italic">No documents uploaded</span>}
+                            {uploadedDocuments.length === 0 && <span className="text-gray-400 italic">No documents uploaded</span>}
                         </div>
                     </Section>
                 )}

@@ -126,6 +126,13 @@ const studentSchema = new mongoose.Schema(
             transferCert: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
             aadhar: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
             prevMarksheet: { name: String, status: { type: String, default: "in_review" }, date: String, url: String },
+            otherDocuments: [{
+                name: String,
+                status: { type: String, default: "in_review" },
+                date: String,
+                url: String,
+                reason: String,
+            }],
         },
         address: {
             type: String,

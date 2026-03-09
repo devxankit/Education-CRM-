@@ -1,27 +1,29 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronRight, ChevronLeft, Save, Zap, Users, Sliders, CheckCircle } from 'lucide-react';
 
-const RuleFormStepper = ({ onClose, onSave }) => {
-    const [step, setStep] = useState(1);
-
-    // Mocks
-    const triggers = {
+const TRIGGERS = {
         'ATTENDANCE': ['Student Marked Absent', 'Late Arrival'],
         'FEES': ['Fee Invoice Generated', 'Payment Overdue'],
         'EXAMS': ['Result Published', 'Exam Schedule Updated'],
         'SYSTEM': ['New Login from Unknown Device', 'Password Changed']
-    };
+};
 
-    const [formData, setFormData] = useState({
-        name: '',
-        module: 'FEES',
-        trigger: 'Payment Overdue',
-        conditionVal: 3, // e.g. 3 days overdue
-        audience: ['PARENTS'],
-        channels: ['SMS', 'EMAIL'],
-        status: 'DRAFT'
-    });
+const RuleFormStepper = ({ onClose, onSave, initialRule = null }) => {
+    const [step, setStep] = useState(1);
+    const isEdit = Boolean(initialRule?.id || initialRule?._id);
+
+    const initialFormData = useMemo(() => ({
+        name: initialRule?.name || '',
+        module: initialRule?.module || 'FEES',
+        trigger: initialRule?.trigger || 'Payment Overdue',
+        conditionVal: initialRule?.conditionVal ?? 3,
+        audience: Array.isArray(initialRule?.audience) ? initialRule.audience : ['PARENTS'],
+        channels: Array.isArray(initialRule?.channels) ? initialRule.channels : ['SMS', 'EMAIL'],
+        status: initialRule?.status || 'DRAFT'
+    }), [initialRule]);
+
+    const [formData, setFormData] = useState(initialFormData);
 
     const updateField = (f, v) => setFormData(p => ({ ...p, [f]: v }));
 
@@ -29,7 +31,13 @@ const RuleFormStepper = ({ onClose, onSave }) => {
     const prevStep = () => setStep(p => p - 1);
 
     const handleSubmit = () => {
-        onSave({ ...formData, status: 'ACTIVE' });
+        onSave({
+            ...(initialRule || {}),
+            ...formData,
+            conditionVal: Number(formData.conditionVal) || 0,
+            condition: Number(formData.conditionVal) > 0 ? `Wait ${Number(formData.conditionVal)} Days` : 'Instant',
+            status: 'ACTIVE'
+        });
     };
 
     return (
@@ -42,7 +50,7 @@ const RuleFormStepper = ({ onClose, onSave }) => {
                 <div className="px-8 py-5 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
                     <div>
                         <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Automation Engine</div>
-                        <h2 className="text-xl font-bold text-gray-900">Configure Notification Rule</h2>
+                        <h2 className="text-xl font-bold text-gray-900">{isEdit ? 'Edit Notification Rule' : 'Configure Notification Rule'}</h2>
                     </div>
 
                     {/* Steps Indicator */}
@@ -88,7 +96,7 @@ const RuleFormStepper = ({ onClose, onSave }) => {
                                             onChange={(e) => updateField('module', e.target.value)}
                                             className="w-full rounded-lg border-gray-300 shadow-sm p-2.5"
                                         >
-                                            {Object.keys(triggers).map(m => <option key={m} value={m}>{m}</option>)}
+                                            {Object.keys(TRIGGERS).map(m => <option key={m} value={m}>{m}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -98,7 +106,7 @@ const RuleFormStepper = ({ onClose, onSave }) => {
                                             onChange={(e) => updateField('trigger', e.target.value)}
                                             className="w-full rounded-lg border-gray-300 shadow-sm p-2.5"
                                         >
-                                            {triggers[formData.module]?.map(t => <option key={t} value={t}>{t}</option>)}
+                                            {TRIGGERS[formData.module]?.map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
                                     </div>
                                 </div>

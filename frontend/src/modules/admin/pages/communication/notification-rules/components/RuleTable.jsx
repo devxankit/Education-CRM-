@@ -4,13 +4,10 @@ import {
     Zap, // Trigger icon
     Bell, // Rules icon
     Clock,
-    MoreVertical,
-    Power, // Enable/Disable
     Edit,
     Eye,
-    CheckCircle,
-    XCircle,
-    PauseCircle
+    PauseCircle,
+    Trash2
 } from 'lucide-react';
 
 const RuleTable = ({ rules, onAction }) => {
@@ -124,7 +121,14 @@ const RuleTable = ({ rules, onAction }) => {
 
                                 {/* Actions */}
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            onClick={() => onAction('VIEW', rule)}
+                                            className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                            title="View Rule"
+                                        >
+                                            <Eye size={16} />
+                                        </button>
 
                                         <button
                                             onClick={() => onAction('EDIT', rule)}
@@ -134,23 +138,13 @@ const RuleTable = ({ rules, onAction }) => {
                                             <Edit size={16} />
                                         </button>
 
-                                        {rule.status === 'ACTIVE' ? (
-                                            <button
-                                                onClick={() => onAction('DISABLE', rule)}
-                                                className="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
-                                                title="Disable Rule"
-                                            >
-                                                <Power size={16} />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => onAction('ACTIVATE', rule)}
-                                                className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                title="Activate Rule"
-                                            >
-                                                <CheckCircle size={16} />
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => onAction('DELETE', rule)}
+                                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                            title="Delete Rule"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
 
                                     </div>
                                 </td>

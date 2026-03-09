@@ -419,11 +419,33 @@ export const admitStudent = async (req, res) => {
             const keys = Object.keys(admissionData.documents);
             for (const key of keys) {
                 const doc = admissionData.documents[key];
+
+                if (key === 'otherDocuments' && Array.isArray(doc)) {
+                    for (const extraDoc of doc) {
+                        if (!extraDoc) continue;
+                        extraDoc.status = extraDoc.status || defaultDocStatus;
+                        extraDoc.date = extraDoc.date || new Date().toISOString();
+
+                        if (extraDoc.base64) {
+                            try {
+                                const cloudinaryUrl = await uploadBase64ToCloudinary(extraDoc.base64, `students/documents/${instituteId}`);
+                                extraDoc.url = cloudinaryUrl;
+                                delete extraDoc.base64;
+                            } catch (uploadError) {
+                                console.error(`Error uploading custom document to Cloudinary:`, uploadError);
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                if (!doc || Array.isArray(doc)) continue;
+
                 // Set default status based on who's creating the record
                 doc.status = defaultDocStatus;
                 doc.date = new Date().toISOString();
 
-                if (doc && doc.base64) {
+                if (doc.base64) {
                     try {
                         const cloudinaryUrl = await uploadBase64ToCloudinary(doc.base64, `students/documents/${instituteId}`);
                         doc.url = cloudinaryUrl;
@@ -742,7 +764,23 @@ export const updateStudent = async (req, res) => {
             const instituteId = req.user.instituteId || req.user._id;
             const uploadPromises = Object.keys(updateData.documents).map(async (key) => {
                 const doc = updateData.documents[key];
-                if (doc && doc.base64) {
+
+                if (key === 'otherDocuments' && Array.isArray(doc)) {
+                    await Promise.all(doc.map(async (extraDoc) => {
+                        if (extraDoc && extraDoc.base64) {
+                            try {
+                                const cloudinaryUrl = await uploadBase64ToCloudinary(extraDoc.base64, `students/documents/${instituteId}`);
+                                extraDoc.url = cloudinaryUrl;
+                                delete extraDoc.base64;
+                            } catch (uploadError) {
+                                console.error('Error uploading updated custom document to Cloudinary:', uploadError);
+                            }
+                        }
+                    }));
+                    return;
+                }
+
+                if (doc && !Array.isArray(doc) && doc.base64) {
                     try {
                         const cloudinaryUrl = await uploadBase64ToCloudinary(doc.base64, `students/documents/${instituteId}`);
                         doc.url = cloudinaryUrl;
