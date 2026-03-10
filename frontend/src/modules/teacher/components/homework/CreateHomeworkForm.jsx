@@ -63,8 +63,8 @@ const CreateHomeworkForm = ({ isOpen, onClose, classes }) => {
             instructions,
             dueDate,
             status: asDraft ? 'draft' : 'published',
-            academicYearId: profile?.currentAcademicYear || profile?.academicYearId || "65af736f987654edcba98765",
-            branchId: profile?.branchId?._id || profile?.branchId || "65af736f987654edcba12345",
+            academicYearId: profile?.currentAcademicYear || profile?.academicYearId,
+            branchId: profile?.branchId?._id || profile?.branchId,
             attachments
         };
 

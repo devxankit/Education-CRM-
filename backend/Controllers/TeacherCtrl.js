@@ -816,6 +816,43 @@ export const createHomework = async (req, res) => {
         } = req.body;
         const teacherId = req.user._id;
         const instituteId = req.user.instituteId || req.user._id;
+        const teacher = await Teacher.findById(teacherId).select("branchId");
+
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "Teacher not found" });
+        }
+
+        const mapping = await TeacherMapping.findOne({
+            teacherId,
+            classId,
+            sectionId,
+            subjectId,
+            status: "active"
+        }).select("academicYearId");
+
+        if (!mapping) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not assigned to teach this class/section/subject"
+            });
+        }
+
+        const resolvedAcademicYearId = mapping.academicYearId?._id || mapping.academicYearId || academicYearId;
+        const resolvedBranchId = teacher.branchId?._id || teacher.branchId || branchId;
+
+        if (!resolvedAcademicYearId) {
+            return res.status(400).json({
+                success: false,
+                message: "Academic year is required for homework assignment"
+            });
+        }
+
+        if (!resolvedBranchId) {
+            return res.status(400).json({
+                success: false,
+                message: "Branch is required for homework assignment"
+            });
+        }
 
         let uploadedAttachments = [];
         if (attachments && attachments.length > 0) {
@@ -835,7 +872,7 @@ export const createHomework = async (req, res) => {
 
         const homework = new Homework({
             instituteId,
-            branchId,
+            branchId: resolvedBranchId,
             teacherId,
             classId,
             sectionId,
@@ -845,7 +882,7 @@ export const createHomework = async (req, res) => {
             dueDate,
             attachments: uploadedAttachments,
             status: status || "published",
-            academicYearId
+            academicYearId: resolvedAcademicYearId
         });
 
         await homework.save();

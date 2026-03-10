@@ -48,11 +48,12 @@ export const getStudentDashboard = async (req, res) => {
         // 2. Get Homework for this student's class/section (only if student is active)
         let homework = [];
         if (student.status === 'active') {
-            const homeworkQuery = {
+            const baseHomeworkQuery = {
                 classId,
                 sectionId,
                 status: "published"
             };
+            const homeworkQuery = { ...baseHomeworkQuery };
 
             // Filter by academic year if student has one assigned
             if (student.academicYearId) {
@@ -69,6 +70,15 @@ export const getStudentDashboard = async (req, res) => {
                 .populate("teacherId", "firstName lastName")
                 .sort({ createdAt: -1 })
                 .limit(5);
+
+            // Fallback: if strict filters hide valid homework, fall back to class/section match.
+            if (homework.length === 0) {
+                homework = await Homework.find(baseHomeworkQuery)
+                    .populate("subjectId", "name code")
+                    .populate("teacherId", "firstName lastName")
+                    .sort({ createdAt: -1 })
+                    .limit(5);
+            }
         }
 
         // 3. Get Recent Notices
@@ -1462,11 +1472,12 @@ export const getStudentHomework = async (req, res) => {
         }
 
         // Build homework query with proper filters
-        const homeworkQuery = {
+        const baseHomeworkQuery = {
             classId: student.classId,
             sectionId: student.sectionId,
             status: "published"
         };
+        const homeworkQuery = { ...baseHomeworkQuery };
 
         // Filter by academic year if student has one assigned
         if (student.academicYearId) {
@@ -1479,10 +1490,18 @@ export const getStudentHomework = async (req, res) => {
             homeworkQuery.createdAt = { $gte: student.admissionDate };
         }
 
-        const homework = await Homework.find(homeworkQuery)
+        let homework = await Homework.find(homeworkQuery)
             .populate("subjectId", "name code")
             .populate("teacherId", "firstName lastName")
             .sort({ dueDate: 1 });
+
+        // Fallback: if academic year or admission date filters are too strict, still show class homework.
+        if (homework.length === 0) {
+            homework = await Homework.find(baseHomeworkQuery)
+                .populate("subjectId", "name code")
+                .populate("teacherId", "firstName lastName")
+                .sort({ dueDate: 1 });
+        }
 
         // Check submission status for each homework
         const homeworkWithStatus = await Promise.all(homework.map(async (hw) => {
