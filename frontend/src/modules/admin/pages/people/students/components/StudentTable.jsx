@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../../../../../../store/adminStore';
 
@@ -12,8 +12,6 @@ const StudentTable = () => {
     const fetchStudents = useAdminStore(state => state.fetchStudents);
     const deleteStudent = useAdminStore(state => state.deleteStudent);
     const [currentPage, setCurrentPage] = useState(1);
-    const [openMenuId, setOpenMenuId] = useState(null);
-
     const totalPages = Math.ceil(students.length / PAGE_SIZE) || 1;
     const startIndex = (currentPage - 1) * PAGE_SIZE;
 
@@ -36,7 +34,6 @@ const StudentTable = () => {
 
     const handleDelete = async (e, studentId, name) => {
         e.stopPropagation();
-        setOpenMenuId(null);
         if (!window.confirm(`Are you sure you want to delete student "${name}"? This cannot be undone.`)) return;
         try {
             await deleteStudent(studentId);
@@ -45,7 +42,7 @@ const StudentTable = () => {
     };
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-visible">
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase">
@@ -100,39 +97,32 @@ const StudentTable = () => {
                                             {student.status || 'Active'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right relative" onClick={(e) => e.stopPropagation()}>
-                                        <div className="relative inline-block">
+                                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                        <div className="inline-flex items-center justify-end gap-2">
                                             <button
-                                                onClick={() => setOpenMenuId(openMenuId === studentId ? null : studentId)}
-                                                className="text-gray-400 hover:text-indigo-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                                                type="button"
+                                                title="View"
+                                                onClick={() => navigate(`/admin/people/students/${studentId}`)}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
                                             >
-                                                <MoreVertical size={18} />
+                                                <Eye size={16} />
                                             </button>
-                                            {openMenuId === studentId && (
-                                                <>
-                                                    <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} aria-hidden="true" />
-                                                    <div className="absolute right-0 top-full mt-1 py-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                                                        <button
-                                                            onClick={() => { setOpenMenuId(null); navigate(`/admin/people/students/${studentId}`); }}
-                                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                                                        >
-                                                            <Eye size={16} /> View
-                                                        </button>
-                                                        <button
-                                                            onClick={() => { setOpenMenuId(null); navigate(`/admin/people/students/${studentId}`); }}
-                                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                                                        >
-                                                            <Edit size={16} /> Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => handleDelete(e, studentId, fullName)}
-                                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                                                        >
-                                                            <Trash2 size={16} /> Delete
-                                                        </button>
-                                                    </div>
-                                                </>
-                                            )}
+                                            <button
+                                                type="button"
+                                                title="Edit"
+                                                onClick={() => navigate(`/admin/people/students/${studentId}?edit=1`)}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                title="Delete"
+                                                onClick={(e) => handleDelete(e, studentId, fullName)}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>

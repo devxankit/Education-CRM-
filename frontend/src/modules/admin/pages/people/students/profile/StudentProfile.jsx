@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CreditCard, Clock, FileText, Activity } from 'lucide-react';
 import { useAdminStore } from '@/store/adminStore';
 
@@ -14,6 +14,7 @@ const StudentProfile = () => {
 
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const fetchStudentById = useAdminStore(state => state.fetchStudentById);
     const updateStudent = useAdminStore(state => state.updateStudent);
     const confirmAdmission = useAdminStore(state => state.confirmAdmission);
@@ -43,6 +44,12 @@ const StudentProfile = () => {
             loadStudent();
         }
     }, [id, fetchStudentById]);
+
+    useEffect(() => {
+        if (searchParams.get('edit') === '1') {
+            setIsEditOpen(true);
+        }
+    }, [searchParams]);
 
     const handleConfirmAdmission = async (studentId) => {
         if (!window.confirm("Confirm admission as per workflow policy? (Docs verified, fee paid, approval role required)")) return;
@@ -127,7 +134,18 @@ const StudentProfile = () => {
             </div>
 
             {/* Profile Header */}
-            <ProfileHeader student={student} onEdit={() => setIsEditOpen(true)} onConfirmAdmission={handleConfirmAdmission} />
+            <ProfileHeader
+                student={student}
+                onEdit={() => {
+                    setIsEditOpen(true);
+                    setSearchParams((params) => {
+                        const nextParams = new URLSearchParams(params);
+                        nextParams.set('edit', '1');
+                        return nextParams;
+                    });
+                }}
+                onConfirmAdmission={handleConfirmAdmission}
+            />
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-6 bg-white rounded-t-xl px-2">
@@ -182,7 +200,14 @@ const StudentProfile = () => {
             <StudentEditPortal
                 isOpen={isEditOpen}
                 student={student}
-                onClose={() => setIsEditOpen(false)}
+                onClose={() => {
+                    setIsEditOpen(false);
+                    setSearchParams((params) => {
+                        const nextParams = new URLSearchParams(params);
+                        nextParams.delete('edit');
+                        return nextParams;
+                    });
+                }}
                 onSave={handleUpdateSave}
             />
 
