@@ -1138,7 +1138,7 @@ export const verifyOtpStaff = async (req, res) => {
         }
 
         const token = generateToken(staff._id, "Staff", "30d");
-
+    
         staff.lastLogin = new Date();
         await staff.save();
 

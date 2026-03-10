@@ -6,9 +6,8 @@ import { useAdminStore } from '../../../../../../store/adminStore';
 
 const PAGE_SIZE = 5;
 
-const StudentTable = () => {
+const StudentTable = ({ students = [] }) => {
     const navigate = useNavigate();
-    const students = useAdminStore(state => state.students);
     const fetchStudents = useAdminStore(state => state.fetchStudents);
     const deleteStudent = useAdminStore(state => state.deleteStudent);
     const [currentPage, setCurrentPage] = useState(1);
@@ -56,6 +55,13 @@ const StudentTable = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
+                        {DISPLAY_STUDENTS.length === 0 && (
+                            <tr>
+                                <td colSpan="6" className="px-6 py-12 text-center text-sm text-gray-500">
+                                    No students match the selected filters.
+                                </td>
+                            </tr>
+                        )}
                         {DISPLAY_STUDENTS.map((student) => {
                             const fullName = student.name || `${student.firstName} ${student.lastName}`;
                             const studentId = student._id || student.id;

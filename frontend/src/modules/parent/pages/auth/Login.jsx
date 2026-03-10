@@ -30,8 +30,8 @@ const ParentLogin = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        mobile: 'parent@gmail.com',
-        password: '123456' // Set default as requested earlier
+        mobile: '',
+        password: '' // Set default as requested earlier
     });
 
     useEffect(() => {

@@ -14,8 +14,8 @@ const AdminLogin = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        adminId: 'institute@gmail.com',
-        password: '123'
+        adminId: '',
+        password: ''
     });
 
 

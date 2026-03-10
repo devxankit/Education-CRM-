@@ -29,8 +29,8 @@ const TeacherLogin = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        teacherId: 'teacher@gmail.com', // This will be used as email for login
-        password: '123456'
+        teacherId: '', // This will be used as email for login
+        password: ''
     });
 
     useEffect(() => {
