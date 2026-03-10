@@ -46,7 +46,7 @@ const TeacherAuthGuard = () => {
         
         // Fallback to localStorage directly (for Flutter WebView)
         if (!hasToken && typeof window !== 'undefined') {
-            hasToken = !!localStorage.getItem('token');
+            hasToken = !!localStorage.getItem('teacher_token') || !!localStorage.getItem('token');
         }
         
         // Also check persisted Zustand storage

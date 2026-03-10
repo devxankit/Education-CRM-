@@ -6,43 +6,64 @@ import { queriesData } from '../modules/teacher/data/supportData';
 import { examsData } from '../modules/teacher/data/examsData';
 import { submissionsData } from '../modules/teacher/data/submissionsData';
 
+const getTeacherPersistedState = () => {
+    try {
+        const stored = localStorage.getItem('teacher-storage');
+        return stored ? JSON.parse(stored)?.state || null : null;
+    } catch {
+        return null;
+    }
+};
+
+const getTeacherStoredUser = () => {
+    try {
+        const persistedState = getTeacherPersistedState();
+        if (persistedState?.user) return persistedState.user;
+
+        const teacherUser = localStorage.getItem('teacher_user');
+        if (teacherUser) return JSON.parse(teacherUser);
+
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
+    } catch {
+        try {
+            const teacherUser = localStorage.getItem('teacher_user');
+            if (teacherUser) return JSON.parse(teacherUser);
+
+            const user = localStorage.getItem('user');
+            return user ? JSON.parse(user) : null;
+        } catch {
+            return null;
+        }
+    }
+};
+
+const getTeacherStoredToken = () => {
+    try {
+        const persistedState = getTeacherPersistedState();
+        if (persistedState?.token) return persistedState.token;
+
+        return localStorage.getItem('teacher_token') || localStorage.getItem('token') || null;
+    } catch {
+        return localStorage.getItem('teacher_token') || localStorage.getItem('token') || null;
+    }
+};
+
 export const useTeacherStore = create(
     persist(
         (set, get) => ({
             // Auth State (Initialize from localStorage to prevent flash of unauthenticated)
-            user: (() => {
-                try {
-                    const stored = localStorage.getItem('teacher-storage');
-                    if (stored) return JSON.parse(stored)?.state?.user || null;
-                    const user = localStorage.getItem('user');
-                    return user ? JSON.parse(user) : null;
-                } catch (e) {
-                    try {
-                        const user = localStorage.getItem('user');
-                        return user ? JSON.parse(user) : null;
-                    } catch { return null; }
-                }
-            })(),
-            token: (() => {
-                try {
-                    const stored = localStorage.getItem('teacher-storage');
-                    if (stored) return JSON.parse(stored)?.state?.token || null;
-                    return localStorage.getItem('token') || null;
-                } catch (e) { return localStorage.getItem('token') || null; }
-            })(),
-            isAuthenticated: (() => {
-                try {
-                    const stored = localStorage.getItem('teacher-storage');
-                    const hasPersistedToken = stored ? !!JSON.parse(stored)?.state?.token : false;
-                    return hasPersistedToken || !!localStorage.getItem('token');
-                } catch (e) { return !!localStorage.getItem('token'); }
-            })(),
+            user: getTeacherStoredUser(),
+            token: getTeacherStoredToken(),
+            isAuthenticated: !!getTeacherStoredToken(),
 
             login: async (email, password) => {
                 try {
                     const response = await axios.post(`${API_URL}/teacher/login`, { email, password });
                     if (response.data.success) {
                         const { data, token } = response.data;
+                        localStorage.setItem('teacher_token', token);
+                        localStorage.setItem('teacher_user', JSON.stringify(data));
                         localStorage.setItem('token', token);
                         set({
                             user: data,
@@ -112,6 +133,8 @@ export const useTeacherStore = create(
             },
 
             logout: () => {
+                localStorage.removeItem('teacher_token');
+                localStorage.removeItem('teacher_user');
                 localStorage.removeItem('token');
                 set({
                     user: null,
@@ -235,7 +258,7 @@ export const useTeacherStore = create(
 
                 set({ isFetchingProfile: true });
                 try {
-                    const token = get().token;
+                    const token = get().token || getTeacherStoredToken();
                     const response = await axios.get(`${API_URL}/teacher/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

@@ -55,7 +55,7 @@ const TeacherLogin = () => {
             const result = await login(formData.teacherId, formData.password);
 
             if (result?.success) {
-                axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
+                axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('teacher_token') || localStorage.getItem('token')}`;
                 navigate('/teacher/dashboard', { replace: true });
             } else {
                 setLocalError(result?.message || 'Login failed. Please check your credentials.');
