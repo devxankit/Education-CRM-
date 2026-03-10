@@ -1137,11 +1137,7 @@ export const verifyOtpStaff = async (req, res) => {
             }
         }
 
-        const branchId = staff.branchId || null;
-        let policies = await AccessControl.findOne({ instituteId: staff.instituteId, branchId }).lean();
-        if (!policies) policies = await AccessControl.findOne({ instituteId: staff.instituteId, branchId: null }).lean();
-        const sessionMinutes = policies ? (Number(policies.sessionTimeout) || 30) : 30;
-        const token = generateToken(staff._id, "Staff", `${sessionMinutes}m`);
+        const token = generateToken(staff._id, "Staff", "30d");
 
         staff.lastLogin = new Date();
         await staff.save();
@@ -1310,8 +1306,7 @@ export const loginStaff = async (req, res) => {
             }
         }
 
-        const sessionMinutes = Number(policies.sessionTimeout) || 30;
-        const token = generateToken(staff._id, "Staff", `${sessionMinutes}m`);
+        const token = generateToken(staff._id, "Staff", "30d");
 
         staff.lastLogin = new Date();
         await staff.save();

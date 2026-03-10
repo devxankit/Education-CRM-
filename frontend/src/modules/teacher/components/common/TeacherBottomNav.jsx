@@ -29,7 +29,7 @@ const TeacherBottomNav = () => {
                             className="flex flex-col items-center gap-1 w-16"
                         >
                             <div
-                                className={`p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-gray-900 text-white -translate-y-2 shadow-lg shadow-gray-200' : 'text-gray-400 hover:bg-gray-50'}`}
+                                className={`mt-1 p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-400 hover:bg-gray-50'}`}
                             >
                                 <Icon size={20} className={isActive ? 'fill-current' : ''} />
                             </div>

@@ -367,7 +367,7 @@ export const loginTeacher = async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        const token = generateToken(teacher._id, "Teacher");
+        const token = generateToken(teacher._id, "Teacher", "30d");
 
         teacher.lastLogin = new Date();
         await teacher.save();

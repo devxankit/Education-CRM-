@@ -975,7 +975,7 @@ export const loginStudent = async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        const token = generateToken(student._id, "Student");
+        const token = generateToken(student._id, "Student", "30d");
 
         // Use findByIdAndUpdate to avoid triggering validation on other fields (like parentId empty strings)
         await Student.findByIdAndUpdate(student._id, {

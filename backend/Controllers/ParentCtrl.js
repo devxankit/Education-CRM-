@@ -243,7 +243,7 @@ export const loginParent = async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        const token = generateToken(parent._id, "Parent");
+        const token = generateToken(parent._id, "Parent", "30d");
 
         parent.lastLogin = new Date();
         await parent.save();

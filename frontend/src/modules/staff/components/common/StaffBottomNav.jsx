@@ -89,7 +89,7 @@ const StaffBottomNav = () => {
                                 className={`flex flex-col items-center justify-center w-full h-full transition-all duration-300 group ${active ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
                                     }`}
                             >
-                                <div className={`relative p-2 rounded-xl transition-all duration-300 ${active ? 'bg-indigo-50 shadow-sm -translate-y-1' : 'group-hover:bg-gray-50'}`}>
+                                <div className={`relative mt-1 p-2 rounded-xl transition-all duration-300 ${active ? 'bg-indigo-50 shadow-sm' : 'group-hover:bg-gray-50'}`}>
                                     <Icon
                                         size={22}
                                         strokeWidth={active ? 2.5 : 2}
@@ -110,7 +110,7 @@ const StaffBottomNav = () => {
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className={`flex flex-col items-center justify-center w-full h-full transition-all duration-300 group ${isMenuOpen ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            <div className={`p-2 rounded-xl transition-all duration-300 ${isMenuOpen ? 'bg-indigo-50 shadow-sm -translate-y-1' : 'group-hover:bg-gray-50'}`}>
+                            <div className={`mt-1 p-2 rounded-xl transition-all duration-300 ${isMenuOpen ? 'bg-indigo-50 shadow-sm' : 'group-hover:bg-gray-50'}`}>
                                 <Menu size={22} strokeWidth={isMenuOpen ? 2.5 : 2} />
                             </div>
                             <span className={`mt-1 text-[10px] font-bold tracking-wide transition-all duration-300 ${isMenuOpen ? 'text-indigo-700' : 'text-gray-500'}`}>
