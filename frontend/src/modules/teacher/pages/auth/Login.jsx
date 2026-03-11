@@ -12,6 +12,7 @@ const TeacherLogin = () => {
     const requestPasswordReset = useTeacherStore(state => state.requestPasswordReset);
     const verifyForgotOtp = useTeacherStore(state => state.verifyForgotOtp);
     const resetPasswordWithOtp = useTeacherStore(state => state.resetPasswordWithOtp);
+    const isAuthenticated = useTeacherStore(state => state.isAuthenticated);
 
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +33,12 @@ const TeacherLogin = () => {
         teacherId: '', // This will be used as email for login
         password: ''
     });
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/teacher/dashboard', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     useEffect(() => {
         const forgot = searchParams.get('forgot');

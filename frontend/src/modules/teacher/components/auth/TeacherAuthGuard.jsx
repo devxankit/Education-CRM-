@@ -46,7 +46,23 @@ const TeacherAuthGuard = () => {
         
         // Fallback to localStorage directly (for Flutter WebView)
         if (!hasToken && typeof window !== 'undefined') {
-            hasToken = !!localStorage.getItem('teacher_token') || !!localStorage.getItem('token');
+            hasToken =
+                !!localStorage.getItem('teacher_token') ||
+                !!localStorage.getItem('token') ||
+                !!localStorage.getItem('auth_token');
+        }
+
+        // Also check shared persisted auth storage (some wrappers keep token here)
+        if (!hasToken && typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem('auth-storage');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    hasToken = !!parsed?.state?.topLevelToken || !!parsed?.state?.token;
+                }
+            } catch (e) {
+                // Ignore parse errors
+            }
         }
         
         // Also check persisted Zustand storage

@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
 import { API_URL } from '@/app/api';
-import { queriesData } from '../modules/teacher/data/supportData';
-import { examsData } from '../modules/teacher/data/examsData';
 import { submissionsData } from '../modules/teacher/data/submissionsData';
 
 const getTeacherPersistedState = () => {
@@ -43,9 +41,32 @@ const getTeacherStoredToken = () => {
         const persistedState = getTeacherPersistedState();
         if (persistedState?.token) return persistedState.token;
 
-        return localStorage.getItem('teacher_token') || localStorage.getItem('token') || null;
+        // Fallback order:
+        // - teacher scoped token
+        // - legacy/shared token
+        // - wrapper/global auth token keys
+        return (
+            localStorage.getItem('teacher_token') ||
+            localStorage.getItem('token') ||
+            localStorage.getItem('auth_token') ||
+            (() => {
+                try {
+                    const stored = localStorage.getItem('auth-storage');
+                    if (!stored) return null;
+                    const parsed = JSON.parse(stored);
+                    return parsed?.state?.topLevelToken || parsed?.state?.token || null;
+                } catch {
+                    return null;
+                }
+            })()
+        );
     } catch {
-        return localStorage.getItem('teacher_token') || localStorage.getItem('token') || null;
+        return (
+            localStorage.getItem('teacher_token') ||
+            localStorage.getItem('token') ||
+            localStorage.getItem('auth_token') ||
+            null
+        );
     }
 };
 
@@ -65,6 +86,8 @@ export const useTeacherStore = create(
                         localStorage.setItem('teacher_token', token);
                         localStorage.setItem('teacher_user', JSON.stringify(data));
                         localStorage.setItem('token', token);
+                        // Some wrappers / shared shells use this key
+                        localStorage.setItem('auth_token', token);
                         set({
                             user: data,
                             token,
@@ -136,6 +159,7 @@ export const useTeacherStore = create(
                 localStorage.removeItem('teacher_token');
                 localStorage.removeItem('teacher_user');
                 localStorage.removeItem('token');
+                localStorage.removeItem('auth_token');
                 set({
                     user: null,
                     token: null,
@@ -683,7 +707,6 @@ export const useTeacherStore = create(
             })),
 
             // Submissions
-            submissions: [],
             isFetchingSubmissions: false,
             fetchHomeworkSubmissions: async (homeworkId) => {
                 set({ isFetchingSubmissions: true });

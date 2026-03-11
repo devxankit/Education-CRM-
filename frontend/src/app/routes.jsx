@@ -18,7 +18,20 @@ const getPersistedToken = (storageKey, tokenKey = 'token') => {
     } catch {
         // Ignore malformed storage
     }
-    return localStorage.getItem(tokenKey);
+    return (
+        localStorage.getItem(tokenKey) ||
+        localStorage.getItem('auth_token') ||
+        (() => {
+            try {
+                const stored = localStorage.getItem('auth-storage');
+                if (!stored) return null;
+                const parsed = JSON.parse(stored);
+                return parsed?.state?.topLevelToken || parsed?.state?.token || null;
+            } catch {
+                return null;
+            }
+        })()
+    );
 };
 
 const getInitialRoute = () => {
