@@ -16,6 +16,7 @@ import NoticeAcknowledgment from "../Models/NoticeAcknowledgmentModel.js";
 import TeacherMapping from "../Models/TeacherMappingModel.js";
 import Institute from "../Models/InstituteModel.js";
 import { generateToken } from "../Helpers/generateToken.js";
+import { generateRandomPassword } from "../Helpers/generateRandomPassword.js";
 import { sendLoginCredentialsEmail, sendParentResetOtpEmail } from "../Helpers/SendMail.js";
 
 // ================= CREATE PARENT =================
@@ -44,6 +45,9 @@ export const createParent = async (req, res) => {
 
         const parentCode = `PRT-${Date.now().toString().slice(-6)}`;
 
+        // Generate random 6-digit password for parent
+        const parentPassword = generateRandomPassword();
+
         const parent = new Parent({
             instituteId,
             branchId,
@@ -55,14 +59,14 @@ export const createParent = async (req, res) => {
             occupation,
             documents: Array.isArray(documents) ? documents : [],
             code: parentCode,
-            password: "123456" // Default password
+            password: parentPassword
         });
 
         await parent.save();
 
         // Send Email if email is provided
         if (email) {
-            await sendLoginCredentialsEmail(email, "123456", name, "Parent");
+            await sendLoginCredentialsEmail(email, parentPassword, name, "Parent");
         }
 
         // If linking students during creation

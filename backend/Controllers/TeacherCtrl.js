@@ -200,9 +200,8 @@ export const createTeacher = async (req, res) => {
             });
         }
 
-        // Generate Random Password
-        // const generatedPassword = generateRandomPassword();
-        const generatedPassword = "123456"
+        // Generate random 6-digit password
+        const generatedPassword = generateRandomPassword();
 
         const teacherData = {
             instituteId,

@@ -1,9 +1,5 @@
 export const generateRandomPassword = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let password = '';
-    for (let i = 0; i < 8; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        password += characters.charAt(randomIndex);
-    }
-    return password;
+    // Generate a random 6-digit numeric password (000000–999999)
+    const num = Math.floor(Math.random() * 1000000);
+    return String(num).padStart(6, "0");
 };

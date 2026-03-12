@@ -933,9 +933,8 @@ export const createStaff = async (req, res) => {
             });
         }
 
-        // Generate Random Password
-        const generatedPassword = "123456"
-        // const generatedPassword = generateRandomPassword();
+        // Generate random 6-digit password
+        const generatedPassword = generateRandomPassword();
 
         const staff = new Staff({
             instituteId,

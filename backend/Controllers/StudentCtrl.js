@@ -487,7 +487,7 @@ export const admitStudent = async (req, res) => {
 
             if (!parent) {
                 const parentMobile = mobile && mobile.length >= 10 ? mobile : (email ? email.split('@')[0] + '000' : '0000000000');
-                parentPassword = "123456";
+                parentPassword = generateRandomPassword();
                 const parentCode = `PRT-${Date.now().toString().slice(-6)}`;
 
                 parent = new Parent({
@@ -538,7 +538,7 @@ export const admitStudent = async (req, res) => {
             rollNo = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit random
         }
 
-        const studentPassword = admissionData.password || "12345678";
+        const studentPassword = admissionData.password || generateRandomPassword();
 
         const student = new Student({
             ...admissionData,
