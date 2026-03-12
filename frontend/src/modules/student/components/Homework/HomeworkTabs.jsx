@@ -5,12 +5,12 @@ const HomeworkTabs = ({ tabs, activeTab, setActiveTab, counts }) => {
     return (
         <div className="flex space-x-2 bg-white p-1 rounded-xl border border-gray-100 shadow-sm mb-6 overflow-x-auto hide-scrollbar">
             {tabs.map((tab) => {
-                const count = counts ? counts[tab.toLowerCase()] : 0;
+                const count = counts ? counts[tab] : 0;
                 return (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`relative flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all focus:outline-none whitespace-nowrap flex-1`}
+                        className={`relative flex items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all focus:outline-none whitespace-nowrap shrink-0`}
                         style={{
                             WebkitTapHighlightColor: 'transparent',
                         }}
