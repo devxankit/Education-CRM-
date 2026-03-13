@@ -63,12 +63,14 @@ const AcademicYearTable = ({ years, onActivate, onCloseYear, onView, onDelete, i
                     <tbody className="divide-y divide-gray-100 text-sm">
                         {pageItems.map((year) => (
                             <tr key={year._id || year.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                <td className="px-6 py-5 align-top">
+                                    <div className="inline-flex items-start gap-2 px-3 py-2 rounded-lg bg-indigo-50/60">
+                                        <div className="mt-0.5 flex-shrink-0 text-indigo-600">
                                             <Calendar size={18} />
                                         </div>
-                                        <span className="font-semibold text-gray-900 text-md">{year.name}</span>
+                                        <span className="font-semibold text-gray-900 text-sm leading-snug break-words max-w-xs sm:max-w-sm md:max-w-md">
+                                            {year.name}
+                                        </span>
                                     </div>
                                 </td>
 

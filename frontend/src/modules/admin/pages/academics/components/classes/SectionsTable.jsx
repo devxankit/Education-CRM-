@@ -37,13 +37,9 @@ const SectionsTable = ({ sections, className, onAdd, onEdit, onDelete, onDeactiv
                 <tbody className="divide-y divide-gray-100 text-sm bg-white">
                     {sections.map((sec) => (
                         <tr key={sec._id || sec.id} className="group hover:bg-indigo-50/50 transition-colors">
-                                <td className="px-6 py-4 align-middle">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
-                                            {sec.name}
-                                        </div>
-                                        <span className="font-semibold text-gray-900">{sec.name}</span>
-                                    </div>
+                                <td className="px-6 py-4 align-middle text-start">
+                                   
+                                        <span className="font-semibold text-gray-900 text-center">{sec.name}</span>
                                 </td>
 
                                 <td className="px-6 py-4 align-middle">
