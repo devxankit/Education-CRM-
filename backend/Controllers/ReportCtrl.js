@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Student from "../Models/StudentModel.js";
 import Class from "../Models/ClassModel.js";
 import Section from "../Models/SectionModel.js";
@@ -126,6 +127,144 @@ export const getAcademicReport = async (req, res) => {
 
         return res.status(200).json({ success: true, data: { reportData: [], chartData: [], pieData: [] } });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= MASTER ATTENDANCE REPORT (Individual Student Status) =================
+export const getMasterAttendance = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const { branchId, academicYearId, classId, sectionId, courseId, date, subjectId } = req.query;
+
+        if (!date) {
+            return res.status(400).json({ success: false, message: "Date is required" });
+        }
+
+        // Use a date range to handle timezone offsets (00:00:00 to 23:59:59)
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const query = { instituteId };
+        if (branchId && branchId !== "all") query.branchId = branchId;
+        if (academicYearId && academicYearId !== "all") query.academicYearId = academicYearId;
+        if (classId && classId !== "all") query.classId = classId;
+        if (sectionId && sectionId !== "all") query.sectionId = sectionId;
+        if (courseId && courseId !== "all") query.courseId = courseId;
+        if (subjectId && subjectId !== "all") query.subjectId = subjectId;
+        
+        // Exact date match is risky due to time offsets, use range
+        query.date = { $gte: startOfDay, $lte: endOfDay };
+
+        const attendance = await Attendance.findOne(query)
+            .populate("attendanceData.studentId", "firstName lastName admissionNo rollNo photo gender")
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name")
+            .lean();
+
+        if (!attendance) {
+            // ... (rest of the empty state handling remains same)
+            const studentQuery = { instituteId, status: "active" };
+            if (branchId && branchId !== "all") studentQuery.branchId = branchId;
+            if (classId && classId !== "all") studentQuery.classId = classId;
+            if (sectionId && sectionId !== "all") studentQuery.sectionId = sectionId;
+            if (courseId && courseId !== "all") studentQuery.courseId = courseId;
+
+            const students = await Student.find(studentQuery)
+                .select("firstName lastName admissionNo rollNo photo gender")
+                .lean();
+
+            return res.status(200).json({
+                success: true,
+                message: "No attendance record found for this date",
+                data: null,
+                students: students.map(s => ({
+                    studentId: s,
+                    status: "Not Marked"
+                }))
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: attendance
+        });
+    } catch (error) {
+        console.error("Error fetching master attendance:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= STUDENT ATTENDANCE HISTORY (Admin View) =================
+export const getStudentAttendanceHistory = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const { studentId } = req.params;
+        const { startDate, endDate } = req.query;
+
+        if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+            return res.status(400).json({ success: false, message: "Valid Student ID is required" });
+        }
+
+        const student = await Student.findById(studentId)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("branchId", "name")
+            .select("firstName lastName admissionNo rollNo photo gender classId sectionId branchId")
+            .lean();
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const studentObjId = new mongoose.Types.ObjectId(studentId);
+        let query = {
+            instituteId,
+            "attendanceData.studentId": studentObjId
+        };
+
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        const records = await Attendance.find(query)
+            .populate("classId", "name")
+            .populate("sectionId", "name")
+            .populate("subjectId", "name code")
+            .populate("teacherId", "firstName lastName")
+            .sort({ date: -1 })
+            .lean();
+
+        const history = records.map(record => {
+            const entry = record.attendanceData.find(e => e.studentId.toString() === studentId);
+            return {
+                id: record._id,
+                date: record.date,
+                status: entry?.status || "N/A",
+                remarks: entry?.remarks || "",
+                class: record.classId?.name || "N/A",
+                section: record.sectionId?.name || "N/A",
+                subject: record.subjectId?.name || "General",
+                markedBy: record.teacherId ? `${record.teacherId.firstName} ${record.teacherId.lastName}` : "System"
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                student,
+                history
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching student attendance history:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

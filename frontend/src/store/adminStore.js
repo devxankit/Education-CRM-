@@ -2196,8 +2196,48 @@ export const useAdminStore = create(
                         return response.data.url;
                     }
                 } catch (error) {
-                    console.error('Error uploading file:', error);
                     get().addToast('Error uploading file', 'error');
+                    throw error;
+                }
+            },
+
+            // Actions: Attendance
+            fetchMasterAttendance: async (filters) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams();
+                    Object.entries(filters).forEach(([key, value]) => {
+                        if (value && value !== 'all') {
+                            params.append(key, value);
+                        }
+                    });
+                    const response = await axios.get(`${API_URL}/reports/master-attendance?${params.toString()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching master attendance:', error);
+                    throw error;
+                }
+            },
+
+            fetchStudentAttendanceHistory: async (studentId, filters = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams();
+                    if (filters.startDate) params.append('startDate', filters.startDate);
+                    if (filters.endDate) params.append('endDate', filters.endDate);
+                    
+                    const response = await axios.get(`${API_URL}/reports/student-history/${studentId}?${params.toString()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching student attendance history:', error);
                     throw error;
                 }
             },

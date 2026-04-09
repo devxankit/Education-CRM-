@@ -67,6 +67,8 @@ import Departments from './pages/people/departments/Departments';
 import StudentList from './pages/people/students/StudentList';
 import StudentAdmission from './pages/people/students/admission/StudentAdmission';
 import StudentProfile from './pages/people/students/profile/StudentProfile';
+import StudentAttendance from './pages/people/attendance/StudentAttendance';
+import StudentAttendanceHistory from './pages/people/attendance/StudentAttendanceHistory';
 import EmploymentTypes from './pages/people/employment-types/EmploymentTypes';
 import Notices from './pages/communication/notices/Notices';
 import Announcements from './pages/communication/announcements/Announcements';
@@ -150,6 +152,8 @@ const adminRoutes = [
                     { path: 'people/students/:id', element: <StudentProfile /> }, // New Route
                     { path: 'people/students', element: <StudentList /> },
                     { path: 'people/teachers', element: <Teachers /> },
+                    { path: 'people/attendance', element: <StudentAttendance /> },
+            { path: 'people/attendance/student/:id', element: <StudentAttendanceHistory /> },
 
                     { path: 'people/employment-types', element: <EmploymentTypes /> }, // New Route
                     { path: 'people/parents', element: <Parents /> },
