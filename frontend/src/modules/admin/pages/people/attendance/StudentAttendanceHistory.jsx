@@ -14,7 +14,10 @@ import {
     UserMinus,
     AlertCircle,
     PieChart as PieChartIcon,
+    Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useAdminStore } from '../../../../../store/adminStore';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { clsx } from 'clsx';
@@ -82,6 +85,98 @@ const StudentAttendanceHistory = () => {
         }
     };
 
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+        
+        // Add Title
+        doc.setFontSize(22);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text("Student Attendance History", 14, 20);
+        
+        // Add Metadata Header
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text(`Generated On: ${timestamp}`, 14, 28);
+        doc.text(`Date Range: ${dateRange.startDate} to ${dateRange.endDate}`, 14, 33);
+        
+        // Student Details
+        doc.setFontSize(11);
+        doc.setTextColor(51, 65, 85); // slate-700
+        doc.text(`Student: ${student?.firstName} ${student?.lastName} (${student?.admissionNo})`, 14, 42);
+        doc.text(`Class: ${student?.classId?.name} | Roll No: ${student?.rollNo}`, 14, 48);
+        doc.text(`Branch: ${student?.branchId?.name}`, 14, 54);
+
+        // Stats Box
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(120, 38, 76, 22, 2, 2, 'FD');
+        
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text(`Present: ${stats.present}`, 125, 43);
+        doc.text(`Absent: ${stats.absent}`, 125, 48);
+        doc.text(`Late: ${stats.late}`, 125, 53);
+        doc.text(`Leave: ${stats.leave}`, 155, 43);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${stats.percentage}%`, 155, 52);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Average`, 155, 56);
+
+        // Table
+        const tableColumn = ["#", "Date", "Day", "Status", "Subject", "Marked By"];
+        const tableRows = history.map((record, index) => [
+            index + 1,
+            format(new Date(record.date), 'dd MMM, yyyy'),
+            format(new Date(record.date), 'EEEE'),
+            record.status,
+            record.subject || '-',
+            record.markedBy || '-'
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 65,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: [15, 23, 42], 
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold'
+            },
+            bodyStyles: { 
+                fontSize: 9,
+                textColor: [51, 65, 85]
+            },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index === 3) {
+                    const status = data.cell.raw;
+                    if (status === 'Present') data.cell.styles.textColor = [5, 150, 105];
+                    if (status === 'Absent') data.cell.styles.textColor = [220, 38, 38];
+                }
+            }
+        });
+
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184); // slate-400
+            doc.text(
+                `Page ${i} of ${pageCount} - Education CRM`,
+                doc.internal.pageSize.getWidth() / 2,
+                doc.internal.pageSize.getHeight() - 10,
+                { align: 'center' }
+            );
+        }
+
+        doc.save(`Attendance_History_${student?.firstName}_${student?.admissionNo}.pdf`);
+    };
+
     if (loading && !data) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -129,6 +224,13 @@ const StudentAttendanceHistory = () => {
                             onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                         />
                     </div>
+                    <button 
+                        onClick={handleExportPDF}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-semibold shadow-xl shadow-slate-200 active:scale-95"
+                    >
+                        <Download size={18} />
+                        <span>Export History</span>
+                    </button>
                 </div>
             </div>
 

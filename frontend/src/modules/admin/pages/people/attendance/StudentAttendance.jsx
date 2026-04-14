@@ -20,6 +20,8 @@ import { useAdminStore } from '../../../../../store/adminStore';
 import { format } from 'date-fns';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Premium Student Attendance View for Admin
@@ -46,7 +48,8 @@ const StudentAttendance = () => {
     const [noRecordStudents, setNoRecordStudents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const [selectedIds, setSelectedIds] = useState([]);
+    const itemsPerPage = 8;
     
     // Filter State
     const [filters, setFilters] = useState({
@@ -156,6 +159,7 @@ const StudentAttendance = () => {
 
     useEffect(() => {
         setCurrentPage(1);
+        setSelectedIds([]); // Reset selection on search or filter change
     }, [searchTerm, filters]);
 
     const filteredDisplayData = useMemo(() => {
@@ -209,6 +213,135 @@ const StudentAttendance = () => {
         }
     };
 
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedIds(filteredDisplayData.map(s => s.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelectRow = (id) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+
+        // Table Data Source
+        const dataToExport = selectedIds.length > 0 
+            ? filteredDisplayData.filter(s => selectedIds.includes(s.id))
+            : filteredDisplayData;
+
+        // Recalculate stats for exported data
+        const exportStats = {
+            total: dataToExport.length,
+            present: dataToExport.filter(s => s.status === 'Present').length,
+            absent: dataToExport.filter(s => s.status === 'Absent').length,
+            others: dataToExport.filter(s => !['Present', 'Absent'].includes(s.status)).length
+        };
+        
+        // Add Title
+        doc.setFontSize(22);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text("Attendance Report", 14, 20);
+        
+        // Add Metadata Header
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139); // slate-500
+        const reportDate = format(new Date(filters.date), 'PPPP');
+        doc.text(`Report Date: ${reportDate}`, 14, 28);
+        doc.text(`Generated On: ${timestamp}`, 14, 33);
+        
+        // Filter Details
+        const branchName = branches.find(b => b._id === filters.branchId)?.name || 'All Branches';
+        const className = classes.find(c => c._id === filters.classId)?.name || 'All Classes';
+        const sectionName = (sections[filters.classId] || []).find(s => s._id === filters.sectionId)?.name || 'All Sections';
+        const courseName = courses.find(c => c._id === filters.courseId)?.name || 'All Courses';
+        
+        doc.setFontSize(11);
+        doc.setTextColor(51, 65, 85); // slate-700
+        doc.text(`Branch: ${branchName}`, 14, 42);
+        doc.text(`Class: ${className} (${sectionName})`, 14, 48);
+        doc.text(`Course: ${courseName}`, 14, 54);
+
+        // Stats Box
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(140, 38, 56, 22, 2, 2, 'FD');
+        
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text(`Total: ${exportStats.total}`, 145, 43);
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.text(`Present: ${exportStats.present}`, 145, 48);
+        doc.setTextColor(244, 63, 94); // rose-500
+        doc.text(`Absent: ${exportStats.absent}`, 145, 53);
+        doc.setTextColor(245, 158, 11); // amber-500
+        doc.text(`Others: ${exportStats.others}`, 170, 48);
+
+        const tableColumn = ["#", "Student Name", "Admission No", "Roll No", "Status", "Gender"];
+        const tableRows = dataToExport.map((student, index) => [
+            index + 1,
+            student.name,
+            student.admissionNo,
+            student.rollNo,
+            student.status,
+            student.gender
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 62,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: [15, 23, 42], 
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold',
+                halign: 'left'
+            },
+            bodyStyles: { 
+                fontSize: 9,
+                textColor: [51, 65, 85]
+            },
+            alternateRowStyles: {
+                fillColor: [248, 250, 252]
+            },
+            columnStyles: {
+                0: { cellWidth: 10 },
+                4: { fontStyle: 'bold' }
+            },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index === 4) {
+                    const status = data.cell.raw;
+                    if (status === 'Present') data.cell.styles.textColor = [5, 150, 105];
+                    if (status === 'Absent') data.cell.styles.textColor = [220, 38, 38];
+                }
+            }
+        });
+
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184); // slate-400
+            doc.text(
+                `Page ${i} of ${pageCount} - Generated by Education CRM`,
+                doc.internal.pageSize.getWidth() / 2,
+                doc.internal.pageSize.getHeight() - 10,
+                { align: 'center' }
+            );
+        }
+
+        doc.save(`Attendance_Report_${filters.date}_${className}.pdf`);
+    };
+
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 space-y-6">
             {/* Header Section */}
@@ -232,9 +365,17 @@ const StudentAttendance = () => {
                     >
                         <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
                     </button>
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-semibold shadow-xl shadow-slate-200 active:scale-95">
+                    <button 
+                        onClick={handleExportPDF}
+                        className={twMerge(
+                            "flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all font-semibold shadow-xl active:scale-95",
+                            selectedIds.length > 0 
+                                ? "bg-indigo-600 text-white shadow-indigo-200" 
+                                : "bg-slate-900 text-white shadow-slate-200"
+                        )}
+                    >
                         <Download size={18} />
-                        <span>Export Report</span>
+                        <span>{selectedIds.length > 0 ? `Export Selected (${selectedIds.length})` : 'Export Filtered'}</span>
                     </button>
                 </div>
             </div>
@@ -333,6 +474,14 @@ const StudentAttendance = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
+                                <th className="px-6 py-4 bg-slate-50/50">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        checked={selectedIds.length === filteredDisplayData.length && filteredDisplayData.length > 0}
+                                        onChange={handleSelectAll}
+                                    />
+                                </th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/50">Student Info</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/50">Adm. No / Roll</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/50">Attendance Status</th>
@@ -344,7 +493,21 @@ const StudentAttendance = () => {
                                 Array(5).fill(0).map((_, i) => <SkeletonRow key={i} />)
                             ) : paginatedData.length > 0 ? (
                                 paginatedData.map((student) => (
-                                    <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <tr 
+                                        key={student.id} 
+                                        className={twMerge(
+                                            "hover:bg-slate-50/50 transition-colors group",
+                                            selectedIds.includes(student.id) && "bg-indigo-50/30"
+                                        )}
+                                    >
+                                        <td className="px-6 py-4">
+                                            <input 
+                                                type="checkbox" 
+                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                checked={selectedIds.includes(student.id)}
+                                                onChange={() => handleSelectRow(student.id)}
+                                            />
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-xl bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200 group-hover:border-slate-300 transition-all">
@@ -504,6 +667,9 @@ const FilterSelect = ({ label, value, onChange, options, disabled }) => (
 
 const SkeletonRow = () => (
     <tr className="animate-pulse">
+        <td className="px-6 py-4">
+            <div className="w-4 h-4 bg-slate-100 rounded" />
+        </td>
         <td className="px-6 py-4">
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-100" />
