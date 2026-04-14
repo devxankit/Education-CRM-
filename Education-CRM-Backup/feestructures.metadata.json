@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"9d84b0f9468c40ee8b6492c74cb1ad9f","collectionName":"feestructures","type":"collection"}

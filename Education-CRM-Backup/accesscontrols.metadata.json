@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"instituteId":{"$numberInt":"1"},"branchId":{"$numberInt":"1"}},"name":"instituteId_1_branchId_1","unique":true}],"uuid":"1a5744b743ee4fef9d3892643e356cff","collectionName":"accesscontrols","type":"collection"}

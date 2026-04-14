@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"receiptNo":{"$numberInt":"1"}},"name":"receiptNo_1","unique":true}],"uuid":"9ee49e24e4ed469b850070d38b8a4fd3","collectionName":"feepayments","type":"collection"}

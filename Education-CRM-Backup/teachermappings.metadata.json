@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"academicYearId":{"$numberInt":"1"},"sectionId":{"$numberInt":"1"},"subjectId":{"$numberInt":"1"}},"name":"academicYearId_1_sectionId_1_subjectId_1","unique":true}],"uuid":"0429afeac80c4ef296ddb068a9387177","collectionName":"teachermappings","type":"collection"}

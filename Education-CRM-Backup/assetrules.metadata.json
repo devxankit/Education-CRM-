@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"branchId":{"$numberInt":"1"}},"name":"branchId_1","unique":true}],"uuid":"41ce35ee028e400188b53141fa9ccc7b","collectionName":"assetrules","type":"collection"}

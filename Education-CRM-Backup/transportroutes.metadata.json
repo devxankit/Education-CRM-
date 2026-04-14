@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"branchId":{"$numberInt":"1"},"code":{"$numberInt":"1"}},"name":"branchId_1_code_1","unique":true}],"uuid":"a25b11eb278f423eb271efad09ac5fc6","collectionName":"transportroutes","type":"collection"}

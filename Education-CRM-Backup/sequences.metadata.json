@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"instituteId":{"$numberInt":"1"},"type":{"$numberInt":"1"},"year":{"$numberInt":"1"}},"name":"instituteId_1_type_1_year_1","unique":true}],"uuid":"d8d374fa592b4122b81560d23af65d7c","collectionName":"sequences","type":"collection"}
