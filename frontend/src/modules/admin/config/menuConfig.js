@@ -13,7 +13,8 @@ import {
     Cog,
     Shield,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    BookOpen
 } from 'lucide-react';
 
 /**
@@ -141,6 +142,20 @@ export const adminMenuConfig = [
             { id: 'notices', label: 'Notices & Circulars', path: '/admin/communication/notices' },
             { id: 'announcements', label: 'Announcements', path: '/admin/communication/announcements' },
             { id: 'notification-rules', label: 'Notification Rules', path: '/admin/communication/notification-rules' }
+        ]
+    },
+    {
+        id: 'library',
+        label: 'Library Management',
+        icon: BookOpen,
+        path: '/admin/library',
+        subItems: [
+            { id: 'books', label: 'Books Catalog', path: '/admin/library/books' },
+            { id: 'issuance', label: 'Book Issuance', path: '/admin/library/issuance' },
+            { id: 'members', label: 'Members', path: '/admin/library/members' },
+            { id: 'reservations', label: 'Reservations', path: '/admin/library/reservations' },
+            { id: 'fines', label: 'Fine & Penalties', path: '/admin/library/fines' },
+            { id: 'lib-reports', label: 'Library Reports', path: '/admin/library/reports' }
         ]
     },
     {

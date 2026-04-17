@@ -94,6 +94,14 @@ import SecurityAudit from './pages/audit/security/SecurityAudit';
 import VerificationPolicies from './pages/compliance/verification-policies/VerificationPolicies';
 import Checklists from './pages/compliance/checklists/Checklists';
 
+// Library Management Pages
+import LibraryBooks from './pages/library/Books';
+import LibraryIssuance from './pages/library/Issuance';
+import LibraryMembers from './pages/library/Members';
+import LibraryReservations from './pages/library/Reservations';
+import LibraryFines from './pages/library/Fines';
+import LibraryReports from './pages/library/LibraryReports';
+
 // Helper to render Outlet
 const OutletWrapper = () => <Outlet />;
 
@@ -198,6 +206,15 @@ const adminRoutes = [
                     { path: 'communication/announcements', element: <Announcements /> },
                     { path: 'communication/templates', element: <MessageTemplates /> },
                     { path: 'communication/notification-rules', element: <NotificationRules /> },
+
+                    // Library Management
+                    { path: 'library', element: <Navigate to="library/books" replace /> },
+                    { path: 'library/books', element: <LibraryBooks /> },
+                    { path: 'library/issuance', element: <LibraryIssuance /> },
+                    { path: 'library/members', element: <LibraryMembers /> },
+                    { path: 'library/reservations', element: <LibraryReservations /> },
+                    { path: 'library/fines', element: <LibraryFines /> },
+                    { path: 'library/reports', element: <LibraryReports /> },
 
                     // 10. Reports – only Academic Reports enabled for now
                     { path: 'reports', element: <AcademicReports /> },
