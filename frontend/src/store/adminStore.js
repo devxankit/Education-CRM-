@@ -503,6 +503,30 @@ export const useAdminStore = create(
                 }
             },
 
+            feeManagementStatus: [],
+            fetchFeeManagementStatus: async (filters = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams();
+                    if (filters.branchId) params.set('branchId', filters.branchId);
+                    if (filters.academicYearId) params.set('academicYearId', filters.academicYearId);
+                    if (filters.classId) params.set('classId', filters.classId);
+                    if (filters.sectionId) params.set('sectionId', filters.sectionId);
+                    if (filters.courseId) params.set('courseId', filters.courseId);
+                    if (filters.status) params.set('status', filters.status);
+
+                    const response = await axios.get(`${API_URL}/fee-management/status?${params.toString()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ feeManagementStatus: response.data.data });
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching fee management status:', error);
+                }
+            },
+
             // Actions: Roles
             addRole: (role) => set((state) => ({
                 roles: [...state.roles, { ...role, id: Date.now(), type: 'custom', status: 'active', userCount: 0 }]
@@ -2239,6 +2263,154 @@ export const useAdminStore = create(
                 } catch (error) {
                     console.error('Error fetching student attendance history:', error);
                     throw error;
+                }
+            },
+
+            // Teacher Attendance Actions
+            teacherAttendance: [],
+            fetchTeacherAttendanceHistory: async (filters = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const params = new URLSearchParams();
+                    Object.keys(filters).forEach(key => {
+                        if (filters[key]) params.append(key, filters[key]);
+                    });
+                    const response = await axios.get(`${API_URL}/teacher-attendance/history?${params.toString()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ teacherAttendance: response.data.data });
+                        return response.data.data;
+                    }
+                } catch (error) {
+                    console.error('Error fetching teacher attendance history:', error);
+                    get().addToast('Error fetching teacher attendance', 'error');
+                }
+            },
+
+            markTeacherAttendance: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/teacher-attendance/mark`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast(response.data.message || 'Attendance marked successfully', 'success');
+                        return response.data;
+                    }
+                } catch (error) {
+                    console.error('Error marking teacher attendance:', error);
+                    get().addToast(error.response?.data?.message || 'Error marking attendance', 'error');
+                    throw error;
+                }
+            },
+            // Library Management
+            books: [],
+            libraryMembers: [],
+            reservations: [],
+            libraryFines: [],
+
+            fetchBooks: async (params = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const query = new URLSearchParams(params).toString();
+                    const response = await axios.get(`${API_URL}/library/books?${query}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ books: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching books:', error);
+                }
+            },
+
+            addBook: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/library/books/add`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Book added successfully', 'success');
+                        get().fetchBooks({ branchId: data.branchId });
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error adding book', 'error');
+                }
+            },
+
+            fetchLibraryMembers: async (params = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const query = new URLSearchParams(params).toString();
+                    const response = await axios.get(`${API_URL}/library/members?${query}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ libraryMembers: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching library members:', error);
+                }
+            },
+
+            addLibraryMember: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/library/members/add`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Member registered successfully', 'success');
+                        get().fetchLibraryMembers({ branchId: data.branchId });
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error registering member', 'error');
+                }
+            },
+
+            issueBook: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/library/issue`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Book issued successfully', 'success');
+                        get().fetchBooks({ branchId: data.branchId });
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error issuing book', 'error');
+                }
+            },
+
+            returnBook: async (data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.post(`${API_URL}/library/return`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Book returned successfully', 'success');
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error returning book', 'error');
+                }
+            },
+
+            fetchLibraryFines: async (params = {}) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const query = new URLSearchParams(params).toString();
+                    const response = await axios.get(`${API_URL}/library/fines?${query}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        set({ libraryFines: response.data.data });
+                    }
+                } catch (error) {
+                    console.error('Error fetching fines:', error);
                 }
             },
         }),

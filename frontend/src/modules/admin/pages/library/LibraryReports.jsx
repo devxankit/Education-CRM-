@@ -1,78 +1,96 @@
-import React from 'react';
-import { BarChartHorizontal, TrendingUp, PieChart, Download } from 'lucide-react';
-import LibraryStats from './components/LibraryStats';
-import { libraryStats } from '../../data/libraryData';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, PieChart, TrendingUp, Download, FileText, Calendar, Filter, ArrowUpRight, ArrowDownRight, Book } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
 
 const LibraryReports = () => {
-    const stats = [
-        { label: 'Circulation Rate', value: '78%', icon: TrendingUp, bgColor: 'bg-green-50', iconColor: 'text-green-600' },
-        { label: 'Active Members', value: libraryStats.totalMembers, icon: BarChartHorizontal, bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },
-        { label: 'Lost/Damaged', value: '4', icon: PieChart, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
-        { label: 'Avg Loan Time', value: '11 Days', icon: BarChartHorizontal, bgColor: 'bg-indigo-50', iconColor: 'text-indigo-600' }
-    ];
+    const { branches, fetchBranches } = useAdminStore();
+    const [branchId, setBranchId] = useState('');
 
-    const reports = [
-        { title: 'Monthly Circulation Report', description: 'Summary of books issued and returned in the last 30 days.', type: 'PDF/Excel' },
-        { title: 'Overdue Summary', description: 'Detailed list of members with overdue books and pending fines.', type: 'Excel' },
-        { title: 'New Acquisitions', description: 'List of books added to the inventory this academic quarter.', type: 'PDF' },
-        { title: 'Category Distribution', description: 'Analysis of book count and usage across different categories.', type: 'CSV' }
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    const reportCards = [
+        { title: 'Circulation Report', desc: 'Books issued vs returned trend.', icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+        { title: 'Inventory Analysis', desc: 'Category-wise book distribution.', icon: PieChart, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { title: 'Fine Collection', desc: 'Monthly penalty revenue data.', icon: FileText, color: 'text-rose-600', bg: 'bg-rose-50' },
+        { title: 'Member Engagement', desc: 'Top readers and active members.', icon: BarChart3, color: 'text-amber-600', bg: 'bg-amber-50' }
     ];
 
     return (
-        <div className="flex flex-col pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="p-6 space-y-8 bg-gray-50/50 min-h-screen">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Library Reports</h1>
-                    <p className="text-gray-500 text-sm">Comprehensive analytics on book distribution and stock.</p>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                        <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg ring-4 ring-indigo-50">
+                            <BarChart3 size={24} />
+                        </div>
+                        Library Intelligence
+                    </h1>
+                    <p className="text-gray-500 text-sm mt-1 font-medium">Business analytics and operational reports.</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm font-medium transition-all">
-                    <Download size={18} /> Export Dashboard
-                </button>
+                <div className="w-full md:w-64">
+                    <select 
+                        value={branchId}
+                        onChange={(e) => setBranchId(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
+                    >
+                        <option value="">All Branches</option>
+                        {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                    </select>
+                </div>
             </div>
 
-            <LibraryStats stats={stats} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <TrendingUp size={20} className="text-indigo-600" /> Shelf Occupancy
-                    </h3>
-                    <div className="space-y-4">
-                        {[
-                            { label: 'Fiction', val: 85, color: 'bg-blue-500' },
-                            { label: 'Technology', val: 42, color: 'bg-indigo-500' },
-                            { label: 'Self-Help', val: 76, color: 'bg-purple-500' },
-                            { label: 'Reference', val: 92, color: 'bg-teal-500' }
-                        ].map((item, idx) => (
-                            <div key={idx}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-600">{item.label}</span>
-                                    <span className="font-semibold text-gray-900">{item.val}%</span>
-                                </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2">
-                                    <div className={`${item.color} h-2 rounded-full`} style={{ width: `${item.val}%` }}></div>
-                                </div>
-                            </div>
-                        ))}
+            {/* Quick Stats Overlay */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                        <TrendingUp size={80} />
+                    </div>
+                    <div className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Monthly Circulation</div>
+                    <div className="text-3xl font-black text-gray-900">1,240</div>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-emerald-500">
+                        <ArrowUpRight size={14} /> +12% from last month
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Available Downloads</h3>
-                    <div className="space-y-3">
-                        {reports.map((report, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 border border-gray-50 rounded-lg hover:bg-gray-50 transition-colors group">
-                                <div className="flex-1">
-                                    <h4 className="text-sm font-semibold text-gray-900">{report.title}</h4>
-                                    <p className="text-xs text-gray-500">{report.description}</p>
-                                </div>
-                                <button className="p-2 text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Download size={18} />
-                                </button>
-                            </div>
-                        ))}
+                <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                        <Book size={80} />
                     </div>
+                    <div className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Most Borrowed Book</div>
+                    <div className="text-xl font-black text-gray-900 uppercase">Java Fundamentals</div>
+                    <div className="mt-2 text-xs font-bold text-indigo-500 uppercase tracking-tight">42 Issues this week</div>
                 </div>
+
+                <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                        <ArrowDownRight size={80} />
+                    </div>
+                    <div className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Fines Collected</div>
+                    <div className="text-3xl font-black text-emerald-600 font-mono">₹14,250</div>
+                    <div className="mt-2 text-xs font-bold text-gray-400 uppercase tracking-tight">Across all branches</div>
+                </div>
+            </div>
+
+            {/* Report Generator Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {reportCards.map((report, idx) => (
+                    <div key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between hover:border-indigo-500 transition-all group cursor-pointer">
+                        <div className="flex items-center gap-5">
+                            <div className={`p-4 ${report.bg} ${report.color} rounded-2xl`}>
+                                <report.icon size={28} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 text-lg">{report.title}</h3>
+                                <p className="text-gray-400 text-sm">{report.desc}</p>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-gray-50 text-gray-400 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <Download size={20} />
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

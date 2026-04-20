@@ -51,6 +51,8 @@ import ReportRouter from "./Routers/ReportRouter.js";
 import DashboardRouter from "./Routers/DashboardRouter.js";
 import HostelRouter from "./routes/HostelRouter.js";
 import FAQRouter from "./Routers/FAQRouter.js";
+import FeeManagementRouter from "./Routers/FeeManagementRouter.js";
+import LibraryRouter from "./Routers/LibraryRouter.js";
 
 const router = Router();
 
@@ -112,5 +114,7 @@ router.use("/api/v1/logs", LogRouter);
 router.use("/api/v1/reports", ReportRouter);
 router.use("/api/v1/dashboard", DashboardRouter);
 router.use("/api/v1/faq", FAQRouter);
+router.use("/api/v1/fee-management", FeeManagementRouter);
+router.use("/api/v1/library", LibraryRouter);
 
 export default router;

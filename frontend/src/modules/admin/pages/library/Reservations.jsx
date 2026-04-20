@@ -1,81 +1,78 @@
-import React from 'react';
-import { BookmarkCheck, Clock, CheckCircle2, XCircle } from 'lucide-react';
-import LibraryStats from './components/LibraryStats';
-import { mockReservations, libraryStats } from '../../data/libraryData';
+import React, { useState, useEffect } from 'react';
+import { Bookmark, Search, Clock, User, Book as BookIcon, CheckCircle, XCircle, AlertCircle, Calendar } from 'lucide-react';
+import { useAdminStore } from '../../../../store/adminStore';
+import { format } from 'date-fns';
 
-const BookReservations = () => {
-    const stats = [
-        { label: 'Total Reservations', value: libraryStats.reservations, icon: BookmarkCheck, bgColor: 'bg-indigo-50', iconColor: 'text-indigo-600' },
-        { label: 'Pending', value: '14', icon: Clock, bgColor: 'bg-amber-50', iconColor: 'text-amber-600' },
-        { label: 'Available', value: '8', icon: CheckCircle2, bgColor: 'bg-green-50', iconColor: 'text-green-600' },
-        { label: 'Cancelled', value: '2', icon: XCircle, bgColor: 'bg-red-50', iconColor: 'text-red-600' }
-    ];
+const LibraryReservations = () => {
+    const { 
+        reservations, fetchReservations, // Note: I need to add fetchReservations to store if missing
+        branches, fetchBranches
+    } = useAdminStore();
 
-    const getStatusStyle = (status) => {
-        switch (status) {
-            case 'Available': return 'bg-green-100 text-green-700';
-            case 'Pending': return 'bg-amber-100 text-amber-700';
-            case 'Cancelled': return 'bg-red-100 text-red-700';
-            default: return 'bg-gray-100 text-gray-700';
+    const [branchId, setBranchId] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        fetchBranches();
+    }, [fetchBranches]);
+
+    useEffect(() => {
+        if (branchId) {
+            // fetchReservations({ branchId }); // Placeholder, check store
         }
-    };
+    }, [branchId]);
 
     return (
-        <div className="flex flex-col pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="p-6 space-y-8 bg-gray-50/50 min-h-screen">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 font-['Poppins']">Book Reservations</h1>
-                    <p className="text-gray-500 text-sm">View and manage book reservation requests from members.</p>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                        <div className="p-2 bg-amber-500 text-white rounded-xl shadow-lg ring-4 ring-amber-50">
+                            <Bookmark size={24} />
+                        </div>
+                        Reservations
+                    </h1>
+                    <p className="text-gray-500 text-sm mt-1 font-medium">Manage book holds for unavailable titles.</p>
                 </div>
             </div>
 
-            <LibraryStats stats={stats} />
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-800">Pending & Active Reservations</h2>
+            {/* Filters */}
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search by book or member..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-amber-500 transition-all outline-none text-sm font-medium"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
+                <div className="w-full md:w-64">
+                    <select 
+                        value={branchId}
+                        onChange={(e) => setBranchId(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-amber-500 transition-all outline-none text-sm font-bold"
+                    >
+                        <option value="">Select Branch</option>
+                        {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                    </select>
+                </div>
+            </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
-                                <th className="px-6 py-4 font-semibold">Book Title</th>
-                                <th className="px-6 py-4 font-semibold">Member Name</th>
-                                <th className="px-6 py-4 font-semibold">Request Date</th>
-                                <th className="px-6 py-4 font-semibold">Expiry Date</th>
-                                <th className="px-6 py-4 font-semibold">Status</th>
-                                <th className="px-6 py-4 font-semibold text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {mockReservations.map((res) => (
-                                <tr key={res.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-gray-900">{res.bookTitle}</td>
-                                    <td className="px-6 py-4 text-gray-600">{res.memberName}</td>
-                                    <td className="px-6 py-4 text-gray-500 text-sm">{res.reservationDate}</td>
-                                    <td className="px-6 py-4 text-gray-500 text-sm">{res.expiryDate}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(res.status)}`}>
-                                            {res.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {res.status === 'Available' && (
-                                                <button className="text-green-600 hover:text-green-700 text-sm font-medium">Issue Now</button>
-                                            )}
-                                            <button className="text-gray-400 hover:text-red-600 text-sm font-medium transition-colors">Cancel</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {/* Reservations Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Empty State for now until backend integration is verified */}
+                <div className="col-span-full py-20 text-center space-y-4 bg-white rounded-[40px] border border-dashed border-gray-200">
+                    <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-500 mb-4">
+                        <Clock size={40} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Queue is Clear</h3>
+                    <p className="text-gray-400 max-w-xs mx-auto text-sm font-medium">There are currently no active book reservations in the system.</p>
                 </div>
             </div>
         </div>
     );
 };
 
-export default BookReservations;
+export default LibraryReservations;

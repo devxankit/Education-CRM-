@@ -83,10 +83,10 @@ export const getDayInfo = async (req, res) => {
 // ================= MARK TEACHER ATTENDANCE =================
 export const markTeacherAttendance = async (req, res) => {
     try {
-        const { teacherId, date, status, checkInTime, checkOutTime, remarks, employeeType } = req.body;
+        const { teacherId, date, status, checkInTime, checkOutTime, remarks, employeeType, branchId: bodyBranchId, academicYearId } = req.body;
         const markedBy = req.user._id; // Staff member marking attendance
         const instituteId = req.user.instituteId || req.user._id;
-        const branchId = req.user.branchId;
+        const branchId = bodyBranchId || req.user.branchId;
 
         if (!teacherId || !date || !status) {
             return res.status(400).json({
@@ -118,10 +118,9 @@ export const markTeacherAttendance = async (req, res) => {
         } else {
             employee = await Teacher.findOne({
                 _id: teacherId,
-                instituteId,
-                branchId
+                instituteId
             });
-        }
+        }http://localhost:5173/admin/library/books
 
         if (!employee) {
             return res.status(404).json({
@@ -176,6 +175,7 @@ export const markTeacherAttendance = async (req, res) => {
                 attendance.checkOutTime = checkOutTime ? new Date(checkOutTime) : attendance.checkOutTime;
                 attendance.remarks = remarks || attendance.remarks;
                 attendance.markedBy = markedBy;
+                if (academicYearId) attendance.academicYearId = academicYearId;
                 await attendance.save();
             } else {
                 // Create new attendance record
@@ -183,6 +183,7 @@ export const markTeacherAttendance = async (req, res) => {
                     instituteId,
                     branchId,
                     teacherId,
+                    academicYearId,
                     date: attendanceDate,
                     status,
                     checkInTime: checkInTime ? new Date(checkInTime) : undefined,
@@ -283,9 +284,16 @@ export const getTeacherAttendanceHistory = async (req, res) => {
     try {
         const { teacherId, startDate, endDate } = req.query;
         const instituteId = req.user.instituteId || req.user._id;
-        const branchId = req.user.branchId;
+        const branchId = resolveBranchId(req);
 
-        const query = { instituteId, branchId };
+        const query = { instituteId };
+        if (branchId && branchId !== 'all') {
+            query.branchId = branchId;
+        }
+
+        if (req.query.academicYearId) {
+            query.academicYearId = req.query.academicYearId;
+        }
 
         if (teacherId) {
             query.teacherId = teacherId;

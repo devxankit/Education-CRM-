@@ -31,6 +31,7 @@ import Payroll from './pages/finance/Payroll';
 import ExpenseCategories from './pages/finance/ExpenseCategories';
 import Expenses from './pages/finance/Expenses';
 import Taxes from './pages/finance/Taxes';
+import FeeManagement from './pages/finance/FeeManagement';
 
 // Academic Management Pages
 import Classes from './pages/academics/Classes';
@@ -69,6 +70,7 @@ import StudentAdmission from './pages/people/students/admission/StudentAdmission
 import StudentProfile from './pages/people/students/profile/StudentProfile';
 import StudentAttendance from './pages/people/attendance/StudentAttendance';
 import StudentAttendanceHistory from './pages/people/attendance/StudentAttendanceHistory';
+import TeacherAttendance from './pages/people/attendance/TeacherAttendance';
 import EmploymentTypes from './pages/people/employment-types/EmploymentTypes';
 import Notices from './pages/communication/notices/Notices';
 import Announcements from './pages/communication/announcements/Announcements';
@@ -160,6 +162,7 @@ const adminRoutes = [
                     { path: 'people/students/:id', element: <StudentProfile /> }, // New Route
                     { path: 'people/students', element: <StudentList /> },
                     { path: 'people/teachers', element: <Teachers /> },
+                    { path: 'people/teacher-attendance', element: <TeacherAttendance /> },
                     { path: 'people/attendance', element: <StudentAttendance /> },
             { path: 'people/attendance/student/:id', element: <StudentAttendanceHistory /> },
 
@@ -169,6 +172,7 @@ const adminRoutes = [
 
                     // 6. Finance Management
                     { path: 'finance/fee-structures', element: <FeeStructures /> },
+                    { path: 'finance/fee-management', element: <FeeManagement /> },
                     { path: 'finance/fee-policies', element: <FeePolicies /> },
                     { path: 'finance/payroll-rules', element: <PayrollRules /> },
                     { path: 'finance/payroll', element: <Payroll /> },

@@ -79,10 +79,10 @@ export const adminMenuConfig = [
         subItems: [
             { id: 'students', label: 'Students (Master View)', path: '/admin/people/students' },
             { id: 'teachers', label: 'Teachers', path: '/admin/people/teachers' },
-
+            { id: 'teacher-attendance', label: 'Teacher Attendance', path: '/admin/people/teacher-attendance' },
             { id: 'parents', label: 'Parents', path: '/admin/people/parents' },
             { id: 'departments', label: 'Departments & Roles', path: '/admin/people/departments' },
-            { id: 'attendance', label: 'Attendance', path: '/admin/people/attendance' }
+            { id: 'attendance', label: 'Student Attendance', path: '/admin/people/attendance' }
         ]
     },
     {
@@ -92,6 +92,7 @@ export const adminMenuConfig = [
         path: '/admin/finance',
         subItems: [
             { id: 'fee-structures', label: 'Fee Structures', path: '/admin/finance/fee-structures' },
+            { id: 'fee-management', label: 'Fee Management', path: '/admin/finance/fee-management' },
             { id: 'fee-policies', label: 'Fee Policies', path: '/admin/finance/fee-policies' },
             { id: 'payroll-rules', label: 'Payroll Rules', path: '/admin/finance/payroll-rules' },
             { id: 'payroll', label: 'Payroll Management', path: '/admin/finance/payroll' },
