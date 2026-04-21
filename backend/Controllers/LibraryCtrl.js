@@ -3,9 +3,49 @@ import LibraryMember from "../Models/LibraryMemberModel.js";
 import BookIssue from "../Models/BookIssueModel.js";
 import LibraryReservation from "../Models/LibraryReservationModel.js";
 import LibraryFine from "../Models/LibraryFineModel.js";
+import LibrarySettings from "../Models/LibrarySettingsModel.js";
 import Student from "../Models/StudentModel.js";
 import Teacher from "../Models/TeacherModel.js";
 import Staff from "../Models/StaffModel.js";
+
+// ================= DASHBOARD STATS =================
+
+export const getLibraryDashboardStats = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const { branchId } = req.query;
+
+        const query = { instituteId };
+        if (branchId) query.branchId = branchId;
+
+        const totalBooks = await Book.countDocuments(query);
+        const issuedBooks = await BookIssue.countDocuments({ ...query, status: 'issued' });
+        const returnedBooks = await BookIssue.countDocuments({ ...query, status: 'returned' });
+        const overdueBooks = await BookIssue.countDocuments({ 
+            ...query, 
+            status: 'issued', 
+            dueDate: { $lt: new Date() } 
+        });
+
+        const pendingFines = await LibraryFine.aggregate([
+            { $match: { ...query, status: 'unpaid' } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalBooks,
+                issuedBooks,
+                returnedBooks,
+                overdueBooks,
+                pendingFine: pendingFines[0]?.total || 0
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // ================= BOOKS CATALOG =================
 
@@ -43,6 +83,28 @@ export const addBook = async (req, res) => {
         const book = new Book(bookData);
         await book.save();
         res.status(201).json({ success: true, message: "Book added successfully", data: book });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const updateBook = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedBook = await Book.findByIdAndUpdate(id, req.body, { new: true });
+        if (!updatedBook) return res.status(404).json({ success: false, message: "Book not found" });
+        res.status(200).json({ success: true, data: updatedBook });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const deleteBook = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedBook = await Book.findByIdAndDelete(id);
+        if (!deletedBook) return res.status(404).json({ success: false, message: "Book not found" });
+        res.status(200).json({ success: true, message: "Book deleted successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -113,11 +175,42 @@ export const addLibraryMember = async (req, res) => {
 
 // ================= BOOK ISSUANCE =================
 
+export const getIssuedBooks = async (req, res) => {
+    try {
+        const { branchId, search } = req.query;
+        const instituteId = req.user.instituteId || req.user._id;
+        const query = { instituteId, status: 'issued' };
+        if (branchId) query.branchId = branchId;
+
+        const issuedBooks = await BookIssue.find(query)
+            .populate("bookId", "title author category price")
+            .populate({
+                path: "memberId",
+                populate: [
+                    { path: "studentId", select: "firstName lastName admissionNo rollNo" },
+                    { path: "teacherId", select: "firstName lastName employeeId" }
+                ]
+            })
+            .sort({ issueDate: -1 });
+
+        res.status(200).json({ success: true, data: issuedBooks });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export const issueBook = async (req, res) => {
     try {
         const { bookId, memberId, dueDate } = req.body;
         const instituteId = req.user.instituteId || req.user._id;
-        const branchId = req.body.branchId;
+
+        // Fetch member to get branchId if not provided
+        const member = await LibraryMember.findById(memberId);
+        if (!member || member.status !== 'active') {
+            return res.status(400).json({ success: false, message: "Member not found or inactive" });
+        }
+        
+        const branchId = req.body.branchId || member.branchId;
 
         // 1. Check if book available
         const book = await Book.findById(bookId);
@@ -125,12 +218,7 @@ export const issueBook = async (req, res) => {
             return res.status(400).json({ success: false, message: "Book not available for issuance" });
         }
 
-        // 2. Check if member active and hasn't reached limit
-        const member = await LibraryMember.findById(memberId);
-        if (!member || member.status !== 'active') {
-            return res.status(400).json({ success: false, message: "Member not found or inactive" });
-        }
-
+        // 2. Check if member has reached limit
         const currentlyIssued = await BookIssue.countDocuments({ memberId, status: 'issued' });
         if (currentlyIssued >= (member.maxBooksAllowed || 2)) {
             return res.status(400).json({ success: false, message: "Member has reached the book issuance limit" });
@@ -236,13 +324,65 @@ export const getLibraryFines = async (req, res) => {
             .populate({
                 path: "memberId",
                 populate: [
-                    { path: "studentId", select: "firstName lastName" },
-                    { path: "teacherId", select: "firstName lastName" }
+                    { path: "studentId", select: "firstName lastName admissionNo" },
+                    { path: "teacherId", select: "firstName lastName employeeId" }
                 ]
             })
-            .populate("issueId", "bookId issueDate returnDate");
+            .populate({
+                path: "issueId",
+                populate: { path: "bookId", select: "title author" }
+            });
 
         res.status(200).json({ success: true, data: fines });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const collectFine = async (req, res) => {
+    try {
+        const { fineId, transactionId } = req.body;
+        const fine = await LibraryFine.findById(fineId);
+        if (!fine) return res.status(404).json({ success: false, message: "Fine record not found" });
+
+        fine.status = "paid";
+        fine.paymentDate = new Date();
+        fine.transactionId = transactionId;
+        await fine.save();
+
+        res.status(200).json({ success: true, message: "Fine collected successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ================= SETTINGS =================
+
+export const getLibrarySettings = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        let settings = await LibrarySettings.findOne({ instituteId });
+        
+        if (!settings) {
+            settings = new LibrarySettings({ instituteId });
+            await settings.save();
+        }
+
+        res.status(200).json({ success: true, data: settings });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const updateLibrarySettings = async (req, res) => {
+    try {
+        const instituteId = req.user.instituteId || req.user._id;
+        const settings = await LibrarySettings.findOneAndUpdate(
+            { instituteId },
+            { $set: req.body },
+            { new: true, upsert: true }
+        );
+        res.status(200).json({ success: true, message: "Settings updated successfully", data: settings });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

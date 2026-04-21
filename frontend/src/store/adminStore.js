@@ -2339,6 +2339,36 @@ export const useAdminStore = create(
                     get().addToast(error.response?.data?.message || 'Error adding book', 'error');
                 }
             },
+            
+            updateBook: async (id, data) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.put(`${API_URL}/library/books/${id}`, data, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Book updated successfully', 'success');
+                        get().fetchBooks({ branchId: data.branchId });
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error updating book', 'error');
+                }
+            },
+
+            deleteBook: async (id, branchId) => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.delete(`${API_URL}/library/books/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        get().addToast('Book deleted successfully', 'success');
+                        get().fetchBooks({ branchId });
+                    }
+                } catch (error) {
+                    get().addToast(error.response?.data?.message || 'Error deleting book', 'error');
+                }
+            },
 
             fetchLibraryMembers: async (params = {}) => {
                 try {

@@ -1,19 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Book as BookIcon, Plus, Search, Filter, BookOpen, Clock, AlertTriangle, LayoutGrid, Building2, Trash2, Edit2 } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
+import { toast } from 'react-hot-toast';
 
 const BooksCatalog = () => {
     const { 
         books, fetchBooks, 
         branches, fetchBranches,
-        addBook
+        addBook, updateBook, deleteBook
     } = useAdminStore();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [branchId, setBranchId] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [newBook, setNewBook] = useState({
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentBookId, setCurrentBookId] = useState(null);
+    
+    const [formData, setFormData] = useState({
         title: '', author: '', isbn: '', category: '', 
         quantity: 1, rackNumber: '', publisher: '',
         branchId: ''
@@ -41,12 +45,44 @@ const BooksCatalog = () => {
         ];
     }, [books]);
 
-    const handleAddBook = async (e) => {
+    const handleOpenAdd = () => {
+        setFormData({ title: '', author: '', isbn: '', category: '', quantity: 1, rackNumber: '', publisher: '', branchId: '' });
+        setIsEditing(false);
+        setShowModal(true);
+    };
+
+    const handleOpenEdit = (book) => {
+        setFormData({
+            title: book.title,
+            author: book.author,
+            isbn: book.isbn,
+            category: book.category,
+            quantity: book.quantity,
+            rackNumber: book.rackNumber,
+            publisher: book.publisher,
+            branchId: book.branchId?._id || book.branchId
+        });
+        setCurrentBookId(book._id);
+        setIsEditing(true);
+        setShowModal(true);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!newBook.branchId) return alert('Please select a branch');
-        await addBook(newBook);
-        setShowAddModal(false);
-        setNewBook({ title: '', author: '', isbn: '', category: '', quantity: 1, rackNumber: '', publisher: '', branchId: '' });
+        if (!formData.branchId) return toast.error('Please select a branch');
+        
+        if (isEditing) {
+            await updateBook(currentBookId, formData);
+        } else {
+            await addBook(formData);
+        }
+        setShowModal(false);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this book?")) {
+            await deleteBook(id, branchId);
+        }
     };
 
     return (
@@ -58,7 +94,7 @@ const BooksCatalog = () => {
                     <p className="text-gray-500 text-sm mt-1">Inventory of books available across library branches.</p>
                 </div>
                 <button 
-                    onClick={() => setShowAddModal(true)}
+                    onClick={handleOpenAdd}
                     className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
                 >
                     <Plus size={18} /> Add New Book
@@ -158,8 +194,18 @@ const BooksCatalog = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"><Edit2 size={16} /></button>
-                                                <button className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+                                                <button 
+                                                    onClick={() => handleOpenEdit(book)}
+                                                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDelete(book._id)}
+                                                    className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -172,22 +218,22 @@ const BooksCatalog = () => {
                 </div>
             </div>
 
-            {/* Add Book Modal */}
-            {showAddModal && (
+            {/* Book Modal (Add/Edit) */}
+            {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
-                            <h3 className="font-bold">Add New Book to Collection</h3>
-                            <button onClick={() => setShowAddModal(false)} className="text-white/80 hover:text-white">&times;</button>
+                            <h3 className="font-bold">{isEditing ? 'Update Book Details' : 'Add New Book to Collection'}</h3>
+                            <button onClick={() => setShowModal(false)} className="text-white/80 hover:text-white">&times;</button>
                         </div>
-                        <form onSubmit={handleAddBook} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Select Branch</label>
                                     <select 
                                         required
-                                        value={newBook.branchId}
-                                        onChange={e => setNewBook({...newBook, branchId: e.target.value})}
+                                        value={formData.branchId}
+                                        onChange={e => setFormData({...formData, branchId: e.target.value})}
                                         className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-bold"
                                     >
                                         <option value="">Choose Branch</option>
@@ -197,42 +243,44 @@ const BooksCatalog = () => {
                                 <div className="col-span-2 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Book Title</label>
                                     <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} />
+                                        value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Author</label>
                                     <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.author} onChange={e => setNewBook({...newBook, author: e.target.value})} />
+                                        value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Category</label>
                                     <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.category} onChange={e => setNewBook({...newBook, category: e.target.value})} />
+                                        value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ISBN</label>
                                     <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.isbn} onChange={e => setNewBook({...newBook, isbn: e.target.value})} />
+                                        value={formData.isbn} onChange={e => setFormData({...formData, isbn: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Quantity</label>
                                     <input type="number" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.quantity} onChange={e => setNewBook({...newBook, quantity: parseInt(e.target.value)})} />
+                                        value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value)})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Rack Number</label>
                                     <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.rackNumber} onChange={e => setNewBook({...newBook, rackNumber: e.target.value})} />
+                                        value={formData.rackNumber} onChange={e => setFormData({...formData, rackNumber: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Publisher</label>
                                     <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
-                                        value={newBook.publisher} onChange={e => setNewBook({...newBook, publisher: e.target.value})} />
+                                        value={formData.publisher} onChange={e => setFormData({...formData, publisher: e.target.value})} />
                                 </div>
                             </div>
                             <div className="pt-4 flex gap-3">
-                                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">Add Book</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 transition-all">Cancel</button>
+                                <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                                    {isEditing ? 'Update Book' : 'Add Book'}
+                                </button>
                             </div>
                         </form>
                     </div>

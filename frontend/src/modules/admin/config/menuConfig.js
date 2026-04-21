@@ -151,12 +151,13 @@ export const adminMenuConfig = [
         icon: BookOpen,
         path: '/admin/library',
         subItems: [
-            { id: 'books', label: 'Books Catalog', path: '/admin/library/books' },
-            { id: 'issuance', label: 'Book Issuance', path: '/admin/library/issuance' },
-            { id: 'members', label: 'Members', path: '/admin/library/members' },
-            { id: 'reservations', label: 'Reservations', path: '/admin/library/reservations' },
-            { id: 'fines', label: 'Fine & Penalties', path: '/admin/library/fines' },
-            { id: 'lib-reports', label: 'Library Reports', path: '/admin/library/reports' }
+            { id: 'lib-dashboard', label: 'Overview', path: '/admin/library/dashboard' },
+            { id: 'books', label: 'Book Management', path: '/admin/library/books' },
+            { id: 'issue-book', label: 'Issue Books', path: '/admin/library/issue' },
+            { id: 'return-book', label: 'Return Books', path: '/admin/library/return' },
+            { id: 'members', label: 'Members / Students', path: '/admin/library/members' },
+            { id: 'fines', label: 'Fines Management', path: '/admin/library/fines' },
+            { id: 'lib-settings', label: 'Settings', path: '/admin/library/settings' }
         ]
     },
     {

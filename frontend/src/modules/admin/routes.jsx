@@ -97,12 +97,14 @@ import VerificationPolicies from './pages/compliance/verification-policies/Verif
 import Checklists from './pages/compliance/checklists/Checklists';
 
 // Library Management Pages
+import LibraryDashboard from './pages/library/Dashboard';
 import LibraryBooks from './pages/library/Books';
-import LibraryIssuance from './pages/library/Issuance';
+import LibraryIssueBook from './pages/library/IssueBook';
+import LibraryReturnBook from './pages/library/ReturnBook';
 import LibraryMembers from './pages/library/Members';
-import LibraryReservations from './pages/library/Reservations';
 import LibraryFines from './pages/library/Fines';
 import LibraryReports from './pages/library/LibraryReports';
+import LibrarySettings from './pages/library/Settings';
 
 // Helper to render Outlet
 const OutletWrapper = () => <Outlet />;
@@ -212,13 +214,14 @@ const adminRoutes = [
                     { path: 'communication/notification-rules', element: <NotificationRules /> },
 
                     // Library Management
-                    { path: 'library', element: <Navigate to="library/books" replace /> },
+                    { path: 'library', element: <Navigate to="dashboard" replace /> },
+                    { path: 'library/dashboard', element: <LibraryDashboard /> },
                     { path: 'library/books', element: <LibraryBooks /> },
-                    { path: 'library/issuance', element: <LibraryIssuance /> },
+                    { path: 'library/issue', element: <LibraryIssueBook /> },
+                    { path: 'library/return', element: <LibraryReturnBook /> },
                     { path: 'library/members', element: <LibraryMembers /> },
-                    { path: 'library/reservations', element: <LibraryReservations /> },
                     { path: 'library/fines', element: <LibraryFines /> },
-                    { path: 'library/reports', element: <LibraryReports /> },
+                    { path: 'library/settings', element: <LibrarySettings /> },
 
                     // 10. Reports – only Academic Reports enabled for now
                     { path: 'reports', element: <AcademicReports /> },

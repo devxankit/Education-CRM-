@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { IndianRupee, Search, Filter, Calendar, User, Book as BookIcon, CheckCircle, Clock, AlertTriangle, CreditCard, Trash2 } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 import { format } from 'date-fns';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+import { API_URL } from '@/app/api';
 
 const LibraryFines = () => {
     const { 
@@ -22,6 +26,26 @@ const LibraryFines = () => {
             fetchLibraryFines({ branchId });
         }
     }, [branchId, fetchLibraryFines]);
+
+    const handleCollectFine = async (fineId) => {
+        if (!window.confirm("Mark this fine as paid?")) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`${API_URL}/library/fines/collect`, {
+                fineId,
+                transactionId: `LIB-${Date.now()}`
+            }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                toast.success("Fine collected successfully");
+                fetchLibraryFines({ branchId });
+            }
+        } catch (error) {
+            toast.error("Failed to collect fine");
+        }
+    };
 
     const filteredFines = libraryFines.filter(fine => {
         const memberName = fine.memberId?.memberType === 'student' 
@@ -101,7 +125,7 @@ const LibraryFines = () => {
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-black text-gray-400">
-                                                        {memberName[0]}
+                                                        {memberName ? memberName[0] : '?'}
                                                     </div>
                                                     <div>
                                                         <div className="text-sm font-black text-gray-900 uppercase">{memberName}</div>
@@ -112,7 +136,7 @@ const LibraryFines = () => {
                                             <td className="px-8 py-6">
                                                 <div className="space-y-1">
                                                     <div className="text-[11px] font-black text-gray-600 flex items-center gap-1.5 uppercase">
-                                                        <BookIcon size={12} className="text-indigo-400" /> Book ID: {fine.issueId?.bookId?.toString().slice(-6) || 'N/A'}
+                                                        <BookIcon size={12} className="text-indigo-400" /> Book ID: {fine.issueId?.bookId?.title || 'N/A'}
                                                     </div>
                                                     <div className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 uppercase">
                                                         <Calendar size={12} /> Due: {fine.issueId?.dueDate ? format(new Date(fine.issueId.dueDate), 'dd MMM yyyy') : 'N/A'}
@@ -135,13 +159,16 @@ const LibraryFines = () => {
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 {fine.status === 'unpaid' ? (
-                                                    <button className="px-4 py-2 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-100 hover:bg-rose-700 transition-all active:scale-95">
+                                                    <button 
+                                                        onClick={() => handleCollectFine(fine._id)}
+                                                        className="px-4 py-2 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-100 hover:bg-rose-700 transition-all active:scale-95"
+                                                    >
                                                         Collect Fine
                                                     </button>
                                                 ) : (
-                                                    <button className="p-2.5 text-gray-300 hover:text-gray-400 transition-colors">
-                                                        <CreditCard size={18} />
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2 text-emerald-600 font-bold text-[10px] uppercase">
+                                                        <CreditCard size={14} /> Paid
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>
