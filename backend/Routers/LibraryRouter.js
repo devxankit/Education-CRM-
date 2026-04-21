@@ -1,5 +1,5 @@
 import express from "express";
-import { AuthMiddleware } from "../Middlewares/authMiddleware.js";
+import { AuthMiddleware } from "../Middlewares/AuthMiddleware.js";
 import { 
     getBooks, addBook, updateBook, deleteBook,
     getLibraryMembers, addLibraryMember,
