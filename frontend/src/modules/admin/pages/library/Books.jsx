@@ -123,7 +123,7 @@ const BooksCatalog = () => {
                     <input
                         type="text"
                         placeholder="Search by title, author, or ISBN..."
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-sm font-medium"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-sm font-medium"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -132,7 +132,7 @@ const BooksCatalog = () => {
                     <select 
                         value={branchId}
                         onChange={(e) => setBranchId(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-sm font-semibold"
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-sm font-semibold"
                     >
                         <option value="">Select Branch</option>
                         {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
@@ -234,7 +234,7 @@ const BooksCatalog = () => {
                                         required
                                         value={formData.branchId}
                                         onChange={e => setFormData({...formData, branchId: e.target.value})}
-                                        className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-bold"
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-bold"
                                     >
                                         <option value="">Choose Branch</option>
                                         {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
@@ -242,37 +242,37 @@ const BooksCatalog = () => {
                                 </div>
                                 <div className="col-span-2 space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Book Title</label>
-                                    <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Author</label>
-                                    <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Category</label>
-                                    <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">ISBN</label>
-                                    <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.isbn} onChange={e => setFormData({...formData, isbn: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Quantity</label>
-                                    <input type="number" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input type="number" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value)})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Rack Number</label>
-                                    <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.rackNumber} onChange={e => setFormData({...formData, rackNumber: e.target.value})} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Publisher</label>
-                                    <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
+                                    <input type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-xl text-sm font-medium" 
                                         value={formData.publisher} onChange={e => setFormData({...formData, publisher: e.target.value})} />
                                 </div>
                             </div>

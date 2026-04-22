@@ -45,6 +45,8 @@ const TeacherAttendance = () => {
         date: new Date().toISOString().split('T')[0],
     });
 
+    const [selectedTeachers, setSelectedTeachers] = useState([]);
+
     // Reset page on filter changes
     useEffect(() => {
         setCurrentPage(1);
@@ -110,8 +112,25 @@ const TeacherAttendance = () => {
     useEffect(() => {
         if (filters.branchId) {
             loadAttendance();
+            setSelectedTeachers([]); // Reset selection on branch/date change
         }
     }, [filters.branchId, filters.date]);
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedTeachers(filteredData.map(t => t.id));
+        } else {
+            setSelectedTeachers([]);
+        }
+    };
+
+    const handleSelectOne = (id) => {
+        setSelectedTeachers(prev => 
+            prev.includes(id) 
+                ? prev.filter(item => item !== id) 
+                : [...prev, id]
+        );
+    };
 
     // Derived & Filtered Data
     const filteredData = useMemo(() => {
@@ -157,14 +176,21 @@ const TeacherAttendance = () => {
         const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
         const branchName = branches.find(b => b._id === filters.branchId)?.name || 'All';
         
+        const dataToExport = selectedTeachers.length > 0 
+            ? filteredData.filter(t => selectedTeachers.includes(t.id))
+            : filteredData;
+
         doc.setFontSize(20);
         doc.text("Teacher Attendance Report", 14, 15);
         doc.setFontSize(10);
         doc.text(`Branch: ${branchName}`, 14, 22);
         doc.text(`Date: ${format(new Date(filters.date), 'dd MMM yyyy')}`, 14, 27);
+        if (selectedTeachers.length > 0) {
+            doc.text(`Selected Records: ${selectedTeachers.length}`, 14, 32);
+        }
 
         const tableColumn = ["Teacher Name", "ID", "Department", "Designation", "Status", "In Time", "Out Time"];
-        const tableRows = filteredData.map(att => [
+        const tableRows = dataToExport.map(att => [
             att.name,
             att.employeeId || '-',
             att.department || '-',
@@ -230,7 +256,7 @@ const TeacherAttendance = () => {
                         className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-50 transition-all"
                     >
                         <Download size={18} />
-                        <span>Export Report</span>
+                        <span>{selectedTeachers.length > 0 ? `Export Selected (${selectedTeachers.length})` : 'Export Report'}</span>
                     </button>
                 </div>
             </div>
@@ -308,6 +334,14 @@ const TeacherAttendance = () => {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
+                                <th className="px-6 py-4 w-10">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        onChange={handleSelectAll}
+                                        checked={filteredData.length > 0 && selectedTeachers.length === filteredData.length}
+                                    />
+                                </th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Teacher Details</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Employee ID</th>
@@ -321,7 +355,18 @@ const TeacherAttendance = () => {
                                 Array(5).fill(0).map((_, i) => <SkeletonRow key={i} />)
                             ) : paginatedData.length > 0 ? (
                                 paginatedData.map((att) => (
-                                    <tr key={att.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <tr key={att.id} className={twMerge(
+                                        "hover:bg-slate-50/50 transition-colors",
+                                        selectedTeachers.includes(att.id) ? "bg-indigo-50/30" : ""
+                                    )}>
+                                        <td className="px-6 py-4">
+                                            <input 
+                                                type="checkbox" 
+                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                checked={selectedTeachers.includes(att.id)}
+                                                onChange={() => handleSelectOne(att.id)}
+                                            />
+                                        </td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-600">
                                             {format(new Date(filters.date), 'dd MMM yyyy')}
                                         </td>
@@ -383,7 +428,7 @@ const TeacherAttendance = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-20 text-center text-slate-400 font-medium">
+                                    <td colSpan="7" className="px-6 py-20 text-center text-slate-400 font-medium">
                                         {!filters.branchId ? "Select a branch to view attendance" : "No attendance records found for this period"}
                                     </td>
                                 </tr>
@@ -443,6 +488,7 @@ const StatCard = ({ label, value, color, icon }) => {
 
 const SkeletonRow = () => (
     <tr className="animate-pulse">
+        <td className="px-6 py-4"><div className="h-4 w-4 bg-slate-100 rounded" /></td>
         <td className="px-6 py-4"><div className="h-4 w-24 bg-slate-100 rounded" /></td>
         <td className="px-6 py-4">
             <div className="h-4 w-32 bg-slate-100 rounded mb-1" />
