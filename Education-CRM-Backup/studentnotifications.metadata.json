@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"studentId":{"$numberInt":"1"},"createdAt":{"$numberInt":"-1"}},"name":"studentId_1_createdAt_-1"}],"uuid":"cb1ba861300a45b49f4e1ab818b491a9","collectionName":"studentnotifications","type":"collection"}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserPlus, Search, Filter, Mail, Phone, CreditCard, Shield, Clock, Users as UsersIcon, Building2, User } from 'lucide-react';
+import { UserPlus, Search, Filter, Mail, Phone, CreditCard, Shield, Clock, Users as UsersIcon, Building2, User, ChevronRight } from 'lucide-react';
 import { useAdminStore } from '../../../../store/adminStore';
 
 const LibraryMembers = () => {
@@ -8,13 +8,16 @@ const LibraryMembers = () => {
         branches, fetchBranches,
         addLibraryMember,
         academicYears, fetchAcademicYears,
-        students, fetchStudents
+        students, fetchStudents,
+        teachers, fetchTeachers
     } = useAdminStore();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [branchId, setBranchId] = useState('');
     const [loading, setLoading] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [modalSearchTerm, setModalSearchTerm] = useState('');
+    const [showDropdown, setShowDropdown] = useState(false);
     
     const [newMember, setNewMember] = useState({
         memberType: 'student',
@@ -38,7 +41,10 @@ const LibraryMembers = () => {
         if (newMember.branchId && newMember.academicYearId && newMember.memberType === 'student') {
             fetchStudents({ branchId: newMember.branchId, academicYearId: newMember.academicYearId });
         }
-    }, [newMember.branchId, newMember.academicYearId, newMember.memberType, fetchStudents]);
+        if (newMember.branchId && newMember.memberType === 'teacher') {
+            fetchTeachers(); // We might want to filter by branch in the future if backend supports it
+        }
+    }, [newMember.branchId, newMember.academicYearId, newMember.memberType, fetchStudents, fetchTeachers]);
 
     useEffect(() => {
         if (newMember.branchId) {
@@ -178,7 +184,8 @@ const LibraryMembers = () => {
                             if (!newMember.branchId) return alert('Please select a branch');
                             await addLibraryMember(newMember);
                             setShowAddModal(false);
-                            setNewMember({ memberType: 'student', studentId: '', teacherId: '', libraryCardNo: '', maxBooksAllowed: 2, branchId: '' });
+                            setModalSearchTerm('');
+                            setNewMember({ memberType: 'student', studentId: '', teacherId: '', libraryCardNo: '', maxBooksAllowed: 2, branchId: '', academicYearId: '' });
                         }} className="p-10 space-y-6">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
@@ -222,41 +229,53 @@ const LibraryMembers = () => {
 
                                 <div className="col-span-2 space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Select {newMember.memberType === 'student' ? 'Student' : 'Teacher'}</label>
-                                    {newMember.memberType === 'student' ? (
-                                        <div className="relative group/search">
-                                            {newMember.studentId ? (
-                                                <div className="flex items-center justify-between px-6 py-4 bg-emerald-50 border border-emerald-200 rounded-[20px]">
-                                                    <div>
-                                                        <div className="text-sm font-bold text-emerald-900">
-                                                            {students.find(s => s._id === newMember.studentId)?.firstName} {students.find(s => s._id === newMember.studentId)?.lastName}
-                                                        </div>
-                                                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                                                            Adm: {students.find(s => s._id === newMember.studentId)?.admissionNo}
-                                                        </div>
+                                    <div className="relative group/search">
+                                        {(newMember.memberType === 'student' ? newMember.studentId : newMember.teacherId) ? (
+                                            <div className="flex items-center justify-between px-6 py-4 bg-emerald-50 border border-emerald-200 rounded-[20px]">
+                                                <div>
+                                                    <div className="text-sm font-bold text-emerald-900">
+                                                        {newMember.memberType === 'student' 
+                                                            ? `${students.find(s => s._id === newMember.studentId)?.firstName || ''} ${students.find(s => s._id === newMember.studentId)?.lastName || ''}`.trim() || 'Selected Student'
+                                                            : `${teachers.find(t => t._id === newMember.teacherId)?.firstName || ''} ${teachers.find(t => t._id === newMember.teacherId)?.lastName || ''}`.trim() || 'Selected Teacher'
+                                                        }
                                                     </div>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => setNewMember({ ...newMember, studentId: '' })}
-                                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-200/50 text-emerald-700 hover:bg-emerald-200 transition-colors"
-                                                    >X</button>
+                                                    <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                                                        {newMember.memberType === 'student'
+                                                            ? `Adm: ${students.find(s => s._id === newMember.studentId)?.admissionNo || 'N/A'}`
+                                                            : `Emp ID: ${teachers.find(t => t._id === newMember.teacherId)?.employeeId || 'N/A'}`
+                                                        }
+                                                    </div>
                                                 </div>
-                                            ) : (
-                                                <>
-                                                    <div className="relative">
-                                                        <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                        <input 
-                                                            type="text"
-                                                            placeholder="Search student name or admission no..."
-                                                            className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 focus:bg-white focus:border-emerald-500 transition-all outline-none rounded-[20px] text-sm font-bold shadow-inner"
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                        />
-                                                    </div>
-                                                    {searchTerm && (
-                                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-[20px] shadow-2xl z-[60] max-h-[250px] overflow-y-auto p-2">
-                                                            {students
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setNewMember({ ...newMember, studentId: '', teacherId: '' })}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-200/50 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                                                >X</button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="relative">
+                                                    <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input 
+                                                        type="text"
+                                                        placeholder={`Search ${newMember.memberType} name or ID...`}
+                                                        className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-200 focus:bg-white focus:border-emerald-500 transition-all outline-none rounded-[20px] text-sm font-bold shadow-inner"
+                                                        value={modalSearchTerm}
+                                                        onFocus={() => setShowDropdown(true)}
+                                                        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                                        onChange={(e) => {
+                                                            setModalSearchTerm(e.target.value);
+                                                            setShowDropdown(true);
+                                                        }}
+                                                    />
+                                                </div>
+                                                {showDropdown && (
+                                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-[20px] shadow-2xl z-[60] max-h-[250px] overflow-y-auto p-2">
+                                                        {newMember.memberType === 'student' ? (
+                                                            students
                                                                 .filter(s => 
-                                                                    `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                                    s.admissionNo?.toLowerCase().includes(searchTerm.toLowerCase())
+                                                                    `${s.firstName} ${s.lastName}`.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+                                                                    s.admissionNo?.toLowerCase().includes(modalSearchTerm.toLowerCase())
                                                                 )
                                                                 .map(s => (
                                                                     <button
@@ -264,7 +283,8 @@ const LibraryMembers = () => {
                                                                         type="button"
                                                                         onClick={() => {
                                                                             setNewMember({ ...newMember, studentId: s._id });
-                                                                            setSearchTerm('');
+                                                                            setModalSearchTerm('');
+                                                                            setShowDropdown(false);
                                                                         }}
                                                                         className="w-full flex items-center justify-between p-4 hover:bg-emerald-50 rounded-xl transition-all text-left group/item"
                                                                     >
@@ -276,28 +296,46 @@ const LibraryMembers = () => {
                                                                             <ChevronRight size={14} className="text-emerald-500" />
                                                                         </div>
                                                                     </button>
-                                                                ))}
-                                                            {students.length === 0 && (
-                                                                <div className="p-4 text-center text-gray-400 text-xs font-bold uppercase">No students found</div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <input 
-                                            required
-                                            placeholder="Enter Employee ID"
-                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 focus:bg-white focus:border-emerald-500 transition-all outline-none rounded-[20px] text-sm font-bold shadow-inner"
-                                            value={newMember.teacherId}
-                                            onChange={e => setNewMember({...newMember, teacherId: e.target.value})}
-                                        />
-                                    )}
+                                                                ))
+                                                        ) : (
+                                                            teachers
+                                                                .filter(t => 
+                                                                    `${t.firstName} ${t.lastName}`.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+                                                                    t.employeeId?.toLowerCase().includes(modalSearchTerm.toLowerCase())
+                                                                )
+                                                                .map(t => (
+                                                                    <button
+                                                                        key={t._id}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setNewMember({ ...newMember, teacherId: t._id });
+                                                                            setModalSearchTerm('');
+                                                                            setShowDropdown(false);
+                                                                        }}
+                                                                        className="w-full flex items-center justify-between p-4 hover:bg-emerald-50 rounded-xl transition-all text-left group/item"
+                                                                    >
+                                                                        <div>
+                                                                            <div className="text-sm font-bold text-gray-900">{t.firstName} {t.lastName}</div>
+                                                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover/item:text-emerald-500 transition-colors">Emp ID: {t.employeeId}</div>
+                                                                        </div>
+                                                                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-all">
+                                                                            <ChevronRight size={14} className="text-emerald-500" />
+                                                                        </div>
+                                                                    </button>
+                                                                ))
+                                                        )}
+                                                        {((newMember.memberType === 'student' && students.length === 0) || (newMember.memberType === 'teacher' && teachers.length === 0)) && (
+                                                            <div className="p-4 text-center text-gray-400 text-xs font-bold uppercase">No {newMember.memberType}s found</div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                     <p className="text-[9px] text-gray-400 font-bold ml-1 uppercase">
                                         {newMember.memberType === 'student' 
                                             ? `* ${students.length} students found in this branch & year` 
-                                            : `* Enter valid Employee ID for teacher`}
+                                            : `* ${teachers.length} teachers found`}
                                     </p>
                                 </div>
 

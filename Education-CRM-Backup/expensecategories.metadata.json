@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"branchId":{"$numberInt":"1"},"code":{"$numberInt":"1"}},"name":"branchId_1_code_1","unique":true}],"uuid":"c3abe38478cf46f590c5e2c301e7eb13","collectionName":"expensecategories","type":"collection"}

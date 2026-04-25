@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"noticeId":{"$numberInt":"1"},"userId":{"$numberInt":"1"}},"name":"noticeId_1_userId_1","unique":true}],"uuid":"aaf1754f72bf4640a215d1b8f07601c5","collectionName":"noticeacknowledgments","type":"collection"}

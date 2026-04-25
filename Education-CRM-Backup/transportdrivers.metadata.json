@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"instituteId":{"$numberInt":"1"},"branchId":{"$numberInt":"1"}},"name":"instituteId_1_branchId_1"}],"uuid":"b43098029f454ce9a8fd3fc9c5948332","collectionName":"transportdrivers","type":"collection"}

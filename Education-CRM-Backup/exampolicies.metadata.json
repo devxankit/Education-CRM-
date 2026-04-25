@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"instituteId":{"$numberInt":"1"},"academicYearId":{"$numberInt":"1"},"branchId":{"$numberInt":"1"}},"name":"instituteId_1_academicYearId_1_branchId_1","unique":true}],"uuid":"2180a43a47bf4affa749eab5f79c174f","collectionName":"exampolicies","type":"collection"}
