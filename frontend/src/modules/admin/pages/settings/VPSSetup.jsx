@@ -23,7 +23,7 @@ const VPSSetup = () => {
     }, [logs]);
 
     useEffect(() => {
-        const socket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000');
+        const socket = io(window.location.origin);
 
         socket.on('deployment-log', (data) => {
             setLogs(prev => [...prev, { text: data.data, isError: data.isError, time: new Date().toLocaleTimeString() }]);

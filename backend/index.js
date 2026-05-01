@@ -61,8 +61,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
-// ✅ Handle Pre-flight
-app.options("/:any*", cors());
 
 // ============================
 // ✅ Normal Middlewares AFTER webhook
