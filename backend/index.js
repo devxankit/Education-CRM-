@@ -35,7 +35,7 @@ const allowedOrigins = [
 // ✅ Socket.IO Setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
 });
