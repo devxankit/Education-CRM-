@@ -11,6 +11,7 @@ import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
 import { dbConnect } from "./Config/dbConnect.js";
+import { seedDefaultAdmin } from "./Helpers/seeder.js";
 import { errorHandler } from "./Helpers/helpers.js";
 import routes from "./app.js";
 
@@ -50,8 +51,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ Connect DB
-dbConnect();
+// ✅ Connect DB & Seed
+dbConnect().then(() => {
+  seedDefaultAdmin();
+});
 
 // ✅ CORS (Universal Fix for IP-based access)
 app.use(cors({ 
