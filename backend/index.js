@@ -86,9 +86,9 @@ app.use("/", routes);
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
-// ✅ Handle SPA Routing (Middleware-based to avoid Express 5 Regex issues)
+// ✅ Handle SPA Routing (Fixed to not block assets)
 app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith("/api/v1") && !req.path.startsWith("/health")) {
+  if (req.method === 'GET' && !req.path.includes('.') && !req.path.startsWith("/api/v1") && !req.path.startsWith("/health")) {
     return res.sendFile(path.join(publicPath, "index.html"));
   }
   next();
