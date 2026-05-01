@@ -21,6 +21,7 @@ COPY backend/ ./
 
 # Copy built frontend to an absolute fixed path
 COPY --from=frontend-builder /app/frontend/dist /app/public
+RUN chmod -R 755 /app/public
 
 # Expose port
 EXPOSE 3000

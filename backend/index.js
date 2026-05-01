@@ -78,6 +78,22 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 // ✅ Serve Static Frontend Files (Absolute Path for Docker)
 const publicPath = "/app/public";
+
+// Manual Assets Fallback (To fix 500 errors)
+
+app.get('/assets/:file', (req, res, next) => {
+  try {
+    const filePath = path.join(publicPath, 'assets', req.params.file);
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+    next();
+  } catch (err) {
+    console.error("❌ Asset Serving Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.use(express.static(publicPath));
 app.use('/assets', express.static(path.join(publicPath, 'assets')));
 
