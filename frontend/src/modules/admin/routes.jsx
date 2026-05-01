@@ -87,6 +87,7 @@ import AppConfiguration from './pages/settings/app-configuration/AppConfiguratio
 import Integrations from './pages/settings/integrations/Integrations';
 import FAQ from './pages/settings/faq/FAQ';
 import BackupsRecovery from './pages/settings/backups/BackupsRecovery';
+import VPSSetup from './pages/settings/VPSSetup';
 import RequiredDocumentsRules from './pages/compliance/required-documents/RequiredDocumentsRules';
 import DocumentRulesCompliance from './pages/compliance/document-rules/DocumentRulesCompliance';
 import UserActivityAudit from './pages/audit/user-activity/UserActivityAudit';
@@ -237,6 +238,7 @@ const adminRoutes = [
                     { path: 'settings/app-config', element: <AppConfiguration /> },
                     { path: 'settings/integrations', element: <Integrations /> },
                     { path: 'settings/backup', element: <BackupsRecovery /> },
+                    { path: 'settings/vps-setup', element: <VPSSetup /> },
 
                     // 12. Security & Audit Logs (Renamed from 'security')
                     { path: 'audit/user-activity', element: <UserActivityAudit /> },

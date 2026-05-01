@@ -7,7 +7,7 @@ import asyncHandler from 'express-async-handler';
  * @access  Private/Admin (Assuming auth middleware is applied in router)
  */
 export const setupRemoteVPS = asyncHandler(async (req, res) => {
-    const { host, username, password, repoUrl } = req.body;
+    const { host, username, password } = req.body;
 
     if (!host || !username || !password) {
         res.status(400);
@@ -25,7 +25,7 @@ export const setupRemoteVPS = asyncHandler(async (req, res) => {
         // 1. Install git if not present
         // 2. Clone the repo
         // 3. Run setup.sh
-        const repo = repoUrl || 'https://github.com/your-username/Education-CRM-.git'; 
+        const repo = 'https://github.com/devxankit/Education-CRM-'; 
         const folderName = 'education-crm';
         
         const command = `
