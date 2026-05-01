@@ -66,8 +66,8 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
-// ✅ Handle Pre-flight
-app.options("*", cors());
+// ✅ Handle Pre-flight (Simplified for Express 5)
+app.use(cors());
 
 // ============================
 // ✅ Normal Middlewares AFTER webhook
@@ -86,11 +86,12 @@ app.use("/", routes);
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
-// ✅ Handle SPA Routing (Redirect all non-API requests to index.html)
-app.get("*", (req, res) => {
-  if (!req.path.startsWith("/api/v1") && !req.path.startsWith("/health")) {
-    res.sendFile(path.join(publicPath, "index.html"));
+// ✅ Handle SPA Routing (Middleware-based to avoid Express 5 Regex issues)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith("/api/v1") && !req.path.startsWith("/health")) {
+    return res.sendFile(path.join(publicPath, "index.html"));
   }
+  next();
 });
 
 // ✅ Error handler
