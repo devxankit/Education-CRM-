@@ -53,22 +53,16 @@ io.on('connection', (socket) => {
 // ✅ Connect DB
 dbConnect();
 
-// ✅ CORS
+// ✅ CORS (Universal Fix for IP-based access)
 app.use(cors({ 
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
-// ✅ Handle Pre-flight (Simplified for Express 5)
-app.use(cors());
+// ✅ Handle Pre-flight
+app.options("/:any*", cors());
 
 // ============================
 // ✅ Normal Middlewares AFTER webhook
