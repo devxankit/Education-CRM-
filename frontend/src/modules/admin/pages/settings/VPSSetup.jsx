@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Server, Shield, Terminal, Play, CheckCircle2, AlertCircle, Loader2, Copy } from 'lucide-react';
+import { Server, Shield, Terminal, Play, CheckCircle2, AlertCircle, Loader2, Globe, Cpu, Activity, Zap } from 'lucide-react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
@@ -36,20 +36,21 @@ const VPSSetup = () => {
         e.preventDefault();
         setLoading(true);
         setStatus('deploying');
-        setLogs([{ text: '🚀 Starting deployment process...', time: new Date().toLocaleTimeString() }]);
+        setLogs([{ text: '🚀 System Check: Initiating Remote VPS Deployment...', time: new Date().toLocaleTimeString() }]);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL || '/api/v1'}/deployment/setup-vps`, config);
+            const apiBase = import.meta.env.VITE_API_URL || (window.location.origin + '/api/v1');
+            const response = await axios.post(`${apiBase}/deployment/setup-vps`, config);
             if (response.data.success) {
                 setStatus('success');
-                setLogs(prev => [...prev, { text: '✅ Deployment completed successfully!', time: new Date().toLocaleTimeString() }]);
+                setLogs(prev => [...prev, { text: '✅ CORE SYSTEM READY: All services are operational.', time: new Date().toLocaleTimeString() }]);
             } else {
                 setStatus('error');
             }
         } catch (error) {
             setStatus('error');
             setLogs(prev => [...prev, { 
-                text: `❌ Error: ${error.response?.data?.message || error.message}`, 
+                text: `❌ FAIL: ${error.response?.data?.message || error.message}`, 
                 isError: true, 
                 time: new Date().toLocaleTimeString() 
             }]);
@@ -59,152 +60,232 @@ const VPSSetup = () => {
     };
 
     return (
-        <div className="p-8 space-y-8 bg-gray-50/30 min-h-screen">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                        <Server className="text-indigo-600" size={36} />
-                        VPS One-Click Setup
-                    </h1>
-                    <p className="text-gray-500 font-medium mt-2">Deploy the School CRM to any remote VPS automatically.</p>
-                </div>
-                <div className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${
-                    status === 'success' ? 'bg-emerald-100 text-emerald-700' :
-                    status === 'deploying' ? 'bg-indigo-100 text-indigo-700' :
-                    status === 'error' ? 'bg-rose-100 text-rose-700' : 'bg-gray-100 text-gray-600'
-                }`}>
-                    <div className={`w-2 h-2 rounded-full ${
-                        status === 'success' ? 'bg-emerald-500' :
-                        status === 'deploying' ? 'bg-indigo-500 animate-pulse' :
-                        status === 'error' ? 'bg-rose-500' : 'bg-gray-400'
-                    }`} />
-                    {status.toUpperCase()}
-                </div>
+        <div className="h-screen w-screen bg-[#0a0a0c] text-slate-300 font-sans selection:bg-indigo-500/30 flex flex-col overflow-hidden fixed inset-0">
+            {/* Background Effects */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Configuration Card */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-200/50 space-y-6">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                                <Shield size={20} />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-800">VPS Credentials</h3>
+            {/* Header */}
+            <header className="relative z-10 border-b border-white/5 bg-black/20 backdrop-blur-md px-6 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <Zap className="text-white fill-white" size={16} />
+                    </div>
+                    <div>
+                        <h1 className="text-base font-black text-white tracking-tight uppercase leading-none">System Core <span className="text-indigo-400">Deployer</span></h1>
+                        <p className="text-[8px] text-slate-500 font-bold tracking-[0.2em] uppercase mt-1">v2.0 Module</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/5">
+                        <Activity size={12} className="text-indigo-400" />
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{config.host || 'DISCONNECTED'}</span>
+                    </div>
+                    <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 border ${
+                        status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        status === 'deploying' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                        status === 'error' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-white/5 text-slate-500 border-white/10'
+                    }`}>
+                        <div className={`w-1 h-1 rounded-full ${
+                            status === 'success' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' :
+                            status === 'deploying' ? 'bg-indigo-400 animate-pulse shadow-[0_0_8px_rgba(129,140,248,0.6)]' :
+                            status === 'error' ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]' : 'bg-slate-500'
+                        }`} />
+                        {status}
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
+                
+                {/* Left Panel: Configuration */}
+                <div className="lg:col-span-4 border-r border-white/5 p-6 overflow-y-auto bg-black/10">
+                    <div className="max-w-md mx-auto space-y-6">
+                        <div className="space-y-1">
+                            <h2 className="text-xl font-bold text-white tracking-tight">Provisioning</h2>
+                            <p className="text-[11px] text-slate-500 leading-relaxed">Enter remote credentials to initiate containerization.</p>
                         </div>
 
-                        <form onSubmit={handleDeploy} className="space-y-5">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IP Address</label>
-                                <input 
-                                    required
-                                    placeholder="e.g. 157.245.xx.xx"
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-2xl text-sm font-bold shadow-inner"
-                                    value={config.host}
-                                    onChange={e => setConfig({...config, host: e.target.value})}
-                                    disabled={loading}
-                                />
-                            </div>
+                        <form onSubmit={handleDeploy} className="space-y-4">
+                            <div className="space-y-3">
+                                <div className="group">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Target IP</label>
+                                    <div className="relative">
+                                        <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                        <input 
+                                            required
+                                            placeholder="0.0.0.0"
+                                            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.07] outline-none rounded-xl text-xs font-medium text-white transition-all shadow-inner"
+                                            value={config.host}
+                                            onChange={e => setConfig({...config, host: e.target.value})}
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">SSH Username</label>
-                                <input 
-                                    required
-                                    placeholder="usually root"
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-2xl text-sm font-bold shadow-inner"
-                                    value={config.username}
-                                    onChange={e => setConfig({...config, username: e.target.value})}
-                                    disabled={loading}
-                                />
-                            </div>
+                                <div className="group">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Auth User</label>
+                                    <div className="relative">
+                                        <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                        <input 
+                                            required
+                                            placeholder="root"
+                                            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.07] outline-none rounded-xl text-xs font-medium text-white transition-all shadow-inner"
+                                            value={config.username}
+                                            onChange={e => setConfig({...config, username: e.target.value})}
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">SSH Password</label>
-                                <input 
-                                    required
-                                    type="password"
-                                    placeholder="••••••••"
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-500 transition-all outline-none rounded-2xl text-sm font-bold shadow-inner"
-                                    value={config.password}
-                                    onChange={e => setConfig({...config, password: e.target.value})}
-                                    disabled={loading}
-                                />
+                                <div className="group">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Access Key</label>
+                                    <div className="relative">
+                                        <Terminal className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                        <input 
+                                            required
+                                            type="password"
+                                            placeholder="••••••••"
+                                            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.07] outline-none rounded-xl text-xs font-medium text-white transition-all shadow-inner"
+                                            value={config.password}
+                                            onChange={e => setConfig({...config, password: e.target.value})}
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <button 
                                 type="submit"
                                 disabled={loading}
-                                className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all ${
+                                className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
                                     loading 
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 active:scale-[0.98]'
+                                    ? 'bg-white/5 text-slate-500 cursor-not-allowed' 
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-[0.98]'
                                 }`}
                             >
-                                {loading ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
-                                {loading ? 'Deploying...' : 'Start Installation'}
+                                {loading && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />}
+                                {loading ? <Loader2 className="animate-spin" size={18} /> : <Play className="fill-white" size={16} />}
+                                {loading ? 'EXECUTING...' : 'Start Installation'}
                             </button>
                         </form>
-                    </div>
 
-                    <div className="bg-amber-50 border border-amber-100 p-6 rounded-[28px] space-y-3">
-                        <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
-                            <AlertCircle size={18} />
-                            Important Note
+                        <div className="pt-4 space-y-4">
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                    <Cpu size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-tight">Container Engine</p>
+                                    <p className="text-[10px] text-slate-500 font-medium">Docker Orchestration</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-1">
+                                <div className="flex items-center gap-2 text-amber-500 font-black text-[8px] uppercase tracking-widest">
+                                    <AlertCircle size={12} />
+                                    Warning
+                                </div>
+                                <p className="text-[10px] text-slate-500 leading-tight">
+                                    This will provision a fresh environment. Existing data on target will be lost.
+                                </p>
+                            </div>
                         </div>
-                        <p className="text-xs text-amber-600 font-medium leading-relaxed">
-                            Ensure your VPS is running **Ubuntu 20.04+** and you have **root** access. Existing data in the `education-crm` folder will be overwritten.
-                        </p>
                     </div>
                 </div>
 
-                {/* Console Card */}
-                <div className="lg:col-span-2">
-                    <div className="bg-gray-900 rounded-[32px] border border-gray-800 shadow-2xl overflow-hidden flex flex-col h-[600px]">
-                        <div className="px-6 py-4 bg-gray-800/50 border-b border-gray-800 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Terminal size={18} className="text-indigo-400" />
-                                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Deployment Console</span>
+                {/* Right Panel: Console */}
+                <div className="lg:col-span-8 bg-black/40 flex flex-col relative overflow-hidden">
+                    {/* Console Header */}
+                    <div className="px-6 py-2 bg-white/5 border-b border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1">
+                                <div className="w-2 h-2 rounded-full bg-rose-500/40" />
+                                <div className="w-2 h-2 rounded-full bg-amber-500/40" />
+                                <div className="w-2 h-2 rounded-full bg-emerald-500/40" />
                             </div>
-                            <button 
-                                onClick={() => setLogs([])}
-                                className="text-[10px] font-black text-gray-500 hover:text-white uppercase transition-colors"
-                            >Clear Console</button>
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Kernel_Logs.log</span>
                         </div>
-                        
-                        <div className="flex-1 overflow-y-auto p-6 font-mono text-sm space-y-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-                            {logs.length === 0 ? (
-                                <div className="h-full flex items-center justify-center text-gray-600 flex-col gap-4 italic">
-                                    <Terminal size={48} className="opacity-20" />
-                                    Waiting for deployment to start...
-                                </div>
-                            ) : (
-                                logs.map((log, i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <span className="text-gray-600 shrink-0">[{log.time}]</span>
-                                        <span className={log.isError ? 'text-rose-400' : 'text-emerald-400'}>{log.text}</span>
-                                    </div>
-                                ))
-                            )}
-                            <div ref={logEndRef} />
-                        </div>
+                        <button 
+                            onClick={() => setLogs([])}
+                            className="text-[8px] font-black text-slate-600 hover:text-indigo-400 uppercase transition-colors"
+                        >Clear</button>
+                    </div>
 
-                        {status === 'success' && (
-                            <div className="p-6 bg-emerald-500/10 border-t border-emerald-500/20 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <CheckCircle2 className="text-emerald-500" />
-                                    <div className="text-sm font-bold text-emerald-400">Application is now live!</div>
-                                </div>
-                                <a 
-                                    href={`http://${config.host}:3000`} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-all"
-                                >OPEN CRM</a>
+                    {/* Console Output */}
+                    <div className="flex-1 overflow-y-auto p-6 font-mono text-[12px] leading-relaxed space-y-1.5 custom-scrollbar scroll-smooth">
+                        {logs.length === 0 ? (
+                            <div className="h-full flex items-center justify-center text-slate-700 flex-col gap-4 select-none opacity-40">
+                                <Terminal size={24} />
+                                <p className="text-[8px] font-black uppercase tracking-[0.3em]">Ready...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                {logs.map((log, i) => (
+                                    <div key={i} className="flex gap-3 group animate-in fade-in slide-in-from-left-1 duration-200">
+                                        <span className="text-slate-700 shrink-0 select-none text-[10px]">{log.time}</span>
+                                        <span className="text-indigo-500/30 shrink-0 select-none">›</span>
+                                        <span className={`break-all ${
+                                            log.isError ? 'text-rose-400' : 
+                                            log.text.startsWith('✅') ? 'text-emerald-400' :
+                                            log.text.startsWith('🚀') ? 'text-indigo-400' : 'text-slate-400'
+                                        }`}>
+                                            {log.text}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
+                        <div ref={logEndRef} className="h-2" />
                     </div>
+
+                    {/* Success Overlay Bar */}
+                    {status === 'success' && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[85%] bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/20 p-3 rounded-xl flex items-center justify-between animate-in zoom-in-95 duration-300 shadow-2xl">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
+                                    <CheckCircle2 size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-white uppercase tracking-tight leading-none">System Online</p>
+                                    <p className="text-[9px] text-emerald-400 font-bold tracking-wider mt-1">READY</p>
+                                </div>
+                            </div>
+                            <a 
+                                href={`http://${config.host}:3000`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="px-5 py-2 bg-emerald-500 text-white text-[10px] font-black rounded-lg hover:bg-emerald-600 transition-all uppercase tracking-widest"
+                            >Launch</a>
+                        </div>
+                    )}
                 </div>
-            </div>
+            </main>
+
+            <style dangerouslySetInnerHTML={{ __html: `
+                body { overflow: hidden !important; }
+                @keyframes shimmer {
+                    100% { transform: translateX(100%); }
+                }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                }
+            `}} />
         </div>
     );
 };

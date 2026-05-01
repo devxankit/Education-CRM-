@@ -116,6 +116,7 @@ const adminRoutes = [
         element: <OutletWrapper />,
         children: [
             { path: 'login', element: <Login /> },
+            { path: 'vps-setup', element: <VPSSetup /> },
             // Protected Routes – token nahi to /admin/login pe bhejo
             {
                 element: <AdminAuthGuard />,
@@ -238,7 +239,6 @@ const adminRoutes = [
                     { path: 'settings/app-config', element: <AppConfiguration /> },
                     { path: 'settings/integrations', element: <Integrations /> },
                     { path: 'settings/backup', element: <BackupsRecovery /> },
-                    { path: 'settings/vps-setup', element: <VPSSetup /> },
 
                     // 12. Security & Audit Logs (Renamed from 'security')
                     { path: 'audit/user-activity', element: <UserActivityAudit /> },
