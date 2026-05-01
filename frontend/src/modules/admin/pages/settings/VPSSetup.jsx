@@ -5,9 +5,9 @@ import { io } from 'socket.io-client';
 
 const VPSSetup = () => {
     const [config, setConfig] = useState({
-        host: '',
+        host: '187.127.134.252',
         username: 'root',
-        password: ''
+        password: 'Jastinew@123'
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('idle'); // idle, deploying, success, error

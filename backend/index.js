@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import fs from "fs";
 dotenv.config();
 
 import bodyParser from "body-parser";
@@ -75,21 +76,26 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
+// ✅ Serve Static Frontend Files (Moved up for priority)
+const publicPath = path.resolve(process.cwd(), "public");
+app.use(express.static(publicPath));
+app.use('/assets', express.static(path.join(publicPath, 'assets')));
+
 // ✅ Health check route
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });
 });
+
 // ✅ API routes
 app.use("/", routes);
 
-// ✅ Serve Static Frontend Files
-const publicPath = path.join(__dirname, "public");
-app.use(express.static(publicPath));
-
-// ✅ Handle SPA Routing (Fixed to not block assets)
+// ✅ Handle SPA Routing (Robust version)
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.includes('.') && !req.path.startsWith("/api/v1") && !req.path.startsWith("/health")) {
-    return res.sendFile(path.join(publicPath, "index.html"));
+    const indexPath = path.join(publicPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
   }
   next();
 });
