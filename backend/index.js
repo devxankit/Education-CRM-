@@ -76,10 +76,21 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
-// ✅ Serve Static Frontend Files (Moved up for priority)
-const publicPath = path.resolve(process.cwd(), "public");
+// ✅ Serve Static Frontend Files (Absolute Path for Docker)
+const publicPath = "/app/public";
 app.use(express.static(publicPath));
 app.use('/assets', express.static(path.join(publicPath, 'assets')));
+
+// ✅ Debug Route for Static Files
+app.get("/debug-static", (req, res) => {
+  try {
+    const files = fs.readdirSync(publicPath);
+    const assets = fs.existsSync(path.join(publicPath, 'assets')) ? fs.readdirSync(path.join(publicPath, 'assets')) : 'no assets folder';
+    res.json({ publicPath, files, assets });
+  } catch (err) {
+    res.status(500).json({ error: err.message, publicPath });
+  }
+});
 
 // ✅ Health check route
 app.get("/health", (req, res) => {

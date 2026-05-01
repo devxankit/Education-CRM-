@@ -19,8 +19,8 @@ RUN npm install --production
 # Copy backend source
 COPY backend/ ./
 
-# Copy built frontend from Stage 1
-COPY --from=frontend-builder /app/frontend/dist ./public
+# Copy built frontend to an absolute fixed path
+COPY --from=frontend-builder /app/frontend/dist /app/public
 
 # Expose port
 EXPOSE 3000
