@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # =================================================================
-# School CRM - Automated VPS Setup Script
+# School CRM - Universal Automated VPS Setup Script
+# Works on: Ubuntu, Debian, CentOS, Fedora, RHEL
 # =================================================================
 
 set -e
 
 echo "---------------------------------------------------"
-echo "🚀 Starting School CRM Deployment..."
+echo "🚀 Starting Universal School CRM Deployment..."
 echo "---------------------------------------------------"
 
 # 1. Root Check
@@ -16,9 +17,33 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# 2. Check for Docker
+# 2. Identify Package Manager
+if [ -x "$(command -v apt-get)" ]; then
+    PKG_MANAGER="apt-get"
+    UPDATE_CMD="apt-get update"
+    INSTALL_CMD="apt-get install -y"
+elif [ -x "$(command -v dnf)" ]; then
+    PKG_MANAGER="dnf"
+    UPDATE_CMD="dnf check-update || true"
+    INSTALL_CMD="dnf install -y"
+elif [ -x "$(command -v yum)" ]; then
+    PKG_MANAGER="yum"
+    UPDATE_CMD="yum check-update || true"
+    INSTALL_CMD="yum install -y"
+else
+    echo "❌ Unrecognized package manager. Please install Docker manually."
+    exit 1
+fi
+
+echo "📦 OS identified. Using $PKG_MANAGER for installations."
+
+# 3. Install Git & Prerequisites
+$UPDATE_CMD
+$INSTALL_CMD git curl openssl
+
+# 4. Universal Docker Installation
 if ! [ -x "$(command -v docker)" ]; then
-  echo "📦 Docker not found. Installing Docker..."
+  echo "🐳 Installing Docker..."
   curl -fsSL https://get.docker.com -o get-docker.sh
   sh get-docker.sh
   systemctl enable --now docker
@@ -27,41 +52,44 @@ else
   echo "✅ Docker is already installed."
 fi
 
-# 3. Check for Docker Compose
+# 5. Docker Compose Check (Plugin mode)
 if ! docker compose version > /dev/null 2>&1; then
-  echo "📦 Docker Compose plugin not found. Installing..."
-  apt-get update
-  apt-get install -y docker-compose-plugin
-  echo "✅ Docker Compose installed."
-else
-  echo "✅ Docker Compose is already installed."
+  echo "📦 Installing Docker Compose Plugin..."
+  if [ "$PKG_MANAGER" == "apt-get" ]; then
+    $INSTALL_CMD docker-compose-plugin
+  else
+    curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+  fi
+  echo "✅ Docker Compose ready."
 fi
 
-# 4. Prepare Environment
+# 6. Environment Setup (.env generation)
 if [ ! -f .env ]; then
-  echo "📝 Creating default .env file..."
+  echo "📝 Generating secure .env file..."
   if [ -f .env.example ]; then
     cp .env.example .env
-    # Generate random secrets for security
-    sed -i "s/YOUR_SECURE_JWT_SECRET/$(openssl rand -hex 32)/g" .env
-    sed -i "s/YOUR_SECURE_JWT_REFRESH_ACCESS_SECRET/$(openssl rand -hex 32)/g" .env
-    sed -i "s/YOUR_SECURE_JWT_REFRESH_SECRET/$(openssl rand -hex 32)/g" .env
-    sed -i "s/YOUR_SECURE_JWT_RESET_SECRET/$(openssl rand -hex 32)/g" .env
-    echo "✅ .env file created with secure random secrets."
+    # Secure random key generation for JWT secrets
+    sed -i "s/JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
+    sed -i "s/JWT_REFRESH_ACESS_SECRET=.*/JWT_REFRESH_ACESS_SECRET=$(openssl rand -hex 32)/" .env
+    sed -i "s/JWT_REFRESH_SECRET=.*/JWT_REFRESH_SECRET=$(openssl rand -hex 32)/" .env
+    sed -i "s/JWT_RESET_SECRET=.*/JWT_RESET_SECRET=$(openssl rand -hex 32)/" .env
+    echo "✅ .env file created with unique keys."
   else
-    echo "⚠️ .env.example not found. Please create a .env file manually."
+    echo "⚠️ .env.example not found. Using defaults from docker-compose."
   fi
 else
   echo "✅ .env file already exists."
 fi
 
-# 5. Build and Start Containers
+# 7. Start CRM
 echo "⚡ Building and starting containers (this may take a few minutes)..."
 docker compose up -d --build
 
-# 6. Final Status
+# 8. Final Status
 echo "---------------------------------------------------"
-echo "🎉 Setup Complete!"
+echo "🎉 Setup Complete on $PKG_MANAGER based system!"
 echo "---------------------------------------------------"
 echo "📍 Application: http://$(curl -s ifconfig.me):3000"
 echo "📊 Database:    Internal (Port 27017)"

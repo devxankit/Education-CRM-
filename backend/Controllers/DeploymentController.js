@@ -29,7 +29,13 @@ export const setupRemoteVPS = asyncHandler(async (req, res) => {
         const folderName = 'education-crm';
         
         const command = `
-            apt-get update && apt-get install -y git && \
+            if [ -x "$(command -v apt-get)" ]; then
+                apt-get update && apt-get install -y git
+            elif [ -x "$(command -v dnf)" ]; then
+                dnf install -y git
+            elif [ -x "$(command -v yum)" ]; then
+                yum install -y git
+            fi && \
             rm -rf ${folderName} && \
             git clone ${repo} ${folderName} && \
             cd ${folderName} && \
