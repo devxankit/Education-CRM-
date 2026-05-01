@@ -85,12 +85,15 @@ app.get('/assets/:file', (req, res, next) => {
   try {
     const filePath = path.join(publicPath, 'assets', req.params.file);
     if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
+      const ext = path.extname(filePath);
+      if (ext === '.js') res.setHeader('Content-Type', 'application/javascript');
+      if (ext === '.css') res.setHeader('Content-Type', 'text/css');
+      return fs.createReadStream(filePath).pipe(res);
     }
     next();
   } catch (err) {
-    console.error("❌ Asset Serving Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Asset Streaming Error:", err);
+    if (!res.headersSent) res.status(500).json({ error: err.message });
   }
 });
 
