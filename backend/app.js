@@ -53,6 +53,7 @@ import HostelRouter from "./routes/HostelRouter.js";
 import FAQRouter from "./Routers/FAQRouter.js";
 import FeeManagementRouter from "./Routers/FeeManagementRouter.js";
 import LibraryRouter from "./Routers/LibraryRouter.js";
+import DeploymentRouter from "./Routers/DeploymentRouter.js";
 
 const router = Router();
 
@@ -116,5 +117,6 @@ router.use("/api/v1/dashboard", DashboardRouter);
 router.use("/api/v1/faq", FAQRouter);
 router.use("/api/v1/fee-management", FeeManagementRouter);
 router.use("/api/v1/library", LibraryRouter);
+router.use("/api/v1/deployment", DeploymentRouter);
 
 export default router;

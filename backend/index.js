@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -11,6 +13,9 @@ import { dbConnect } from "./Config/dbConnect.js";
 import { errorHandler } from "./Helpers/helpers.js";
 import routes from "./app.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const PORT = process.env.PORT || 3000;
 const app = express();
 const server = http.createServer(app);
@@ -21,8 +26,9 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "http://127.0.0.1:3000",
-  "http://127.0.0.1:5173"
-];
+  "http://127.0.0.1:5173",
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 // ✅ Socket.IO Setup
 const io = new Server(server, {
@@ -61,6 +67,17 @@ app.get("/health", (req, res) => {
 });
 // ✅ API routes
 app.use("/", routes);
+
+// ✅ Serve Static Frontend Files
+const publicPath = path.join(__dirname, "public");
+app.use(express.static(publicPath));
+
+// ✅ Handle SPA Routing (Redirect all non-API requests to index.html)
+app.get("*", (req, res) => {
+  if (!req.path.startsWith("/api/v1") && !req.path.startsWith("/health")) {
+    res.sendFile(path.join(publicPath, "index.html"));
+  }
+});
 
 // ✅ Error handler
 app.use(errorHandler);

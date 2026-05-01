@@ -1,0 +1,34 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: school-crm-db
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=ERP-School
+
+  app:
+    build: .
+    container_name: school-crm-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017/ERP-School
+      - PORT=3000
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-UJERLTMEL3544H1RYU35R4U313D2XB1XD57}
+      - JWT_REFRESH_ACESS_SECRET=${JWT_REFRESH_ACESS_SECRET:-JC9YR89HF44FN89NFIHFJHF9HH}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-UJERYU35R4U44H1RYU35RYU35R4UXB1XD57}
+      - JWT_RESET_SECRET=${JWT_RESET_SECRET:-UJERRYU35R4U313D4U44H1RYU35RYU35R4UXB1XD57}
+      # All other variables will be picked up from the .env file in the same directory
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
