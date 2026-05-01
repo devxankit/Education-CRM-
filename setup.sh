@@ -11,10 +11,12 @@ echo "---------------------------------------------------"
 echo "🚀 Starting Universal School CRM Deployment..."
 echo "---------------------------------------------------"
 
-# 1. Root Check
+# 1. Root/Sudo Check
 if [[ $EUID -ne 0 ]]; then
-   echo "❌ This script must be run as root (use sudo)"
-   exit 1
+   echo "⚠️ Not running as root. Will attempt to use 'sudo' for administrative tasks."
+   SUDO="sudo"
+else
+   SUDO=""
 fi
 
 # 2. Identify Package Manager & OS
@@ -53,18 +55,18 @@ fi
 # 3. Install Git & Prerequisites
 echo "📦 Installing prerequisites..."
 if [ "$PKG_MANAGER" == "pacman" ]; then
-    $INSTALL_CMD git curl openssl || true
+    $SUDO $INSTALL_CMD git curl openssl || true
 else
-    $UPDATE_CMD
-    $INSTALL_CMD git curl openssl || true
+    $SUDO $UPDATE_CMD
+    $SUDO $INSTALL_CMD git curl openssl || true
 fi
 
 # 4. Universal Docker Installation
 if ! [ -x "$(command -v docker)" ]; then
   echo "🐳 Installing Docker via official convenience script..."
   curl -fsSL https://get.docker.com -o get-docker.sh
-  sh get-docker.sh
-  systemctl enable --now docker || service docker start || true
+  $SUDO sh get-docker.sh
+  $SUDO systemctl enable --now docker || $SUDO service docker start || true
   echo "✅ Docker installed."
 else
   echo "✅ Docker is already installed."
@@ -74,11 +76,11 @@ fi
 if ! docker compose version > /dev/null 2>&1; then
   echo "📦 Installing Docker Compose Plugin..."
   if [ "$PKG_MANAGER" == "apt-get" ]; then
-    $INSTALL_CMD docker-compose-plugin
+    $SUDO $INSTALL_CMD docker-compose-plugin
   else
     curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+    $SUDO chmod +x /usr/local/bin/docker-compose
+    $SUDO ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
   fi
   echo "✅ Docker Compose ready."
 fi
@@ -104,16 +106,16 @@ fi
 # 7. Open Firewall Port
 if [ -x "$(command -v ufw)" ]; then
     echo "🔓 Opening port 3000 (UFW)..."
-    sudo ufw allow 3000/tcp || true
+    $SUDO ufw allow 3000/tcp || true
 elif [ -x "$(command -v firewall-cmd)" ]; then
     echo "🔓 Opening port 3000 (FirewallD)..."
-    sudo firewall-cmd --permanent --add-port=3000/tcp || true
-    sudo firewall-cmd --reload || true
+    $SUDO firewall-cmd --permanent --add-port=3000/tcp || true
+    $SUDO firewall-cmd --reload || true
 fi
 
 # 8. Start CRM
 echo "⚡ Building and starting containers (this may take a few minutes)..."
-docker compose up -d --build
+$SUDO docker compose up -d --build
 
 # 8. Final Status
 echo "---------------------------------------------------"
