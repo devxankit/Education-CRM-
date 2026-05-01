@@ -83,7 +83,17 @@ else
   echo "✅ .env file already exists."
 fi
 
-# 7. Start CRM
+# 7. Open Firewall Port
+if [ -x "$(command -v ufw)" ]; then
+    echo "🔓 Opening port 3000 (UFW)..."
+    sudo ufw allow 3000/tcp || true
+elif [ -x "$(command -v firewall-cmd)" ]; then
+    echo "🔓 Opening port 3000 (FirewallD)..."
+    sudo firewall-cmd --permanent --add-port=3000/tcp || true
+    sudo firewall-cmd --reload || true
+fi
+
+# 8. Start CRM
 echo "⚡ Building and starting containers (this may take a few minutes)..."
 docker compose up -d --build
 

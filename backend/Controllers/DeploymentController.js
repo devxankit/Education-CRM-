@@ -30,17 +30,17 @@ export const setupRemoteVPS = asyncHandler(async (req, res) => {
         
         const command = `
             if [ -x "$(command -v apt-get)" ]; then
-                apt-get update && apt-get install -y git
+                echo "${password}" | sudo -S apt-get update && echo "${password}" | sudo -S apt-get install -y git
             elif [ -x "$(command -v dnf)" ]; then
-                dnf install -y git
+                echo "${password}" | sudo -S dnf install -y git
             elif [ -x "$(command -v yum)" ]; then
-                yum install -y git
+                echo "${password}" | sudo -S yum install -y git
             fi && \
             rm -rf ${folderName} && \
             git clone ${repo} ${folderName} && \
             cd ${folderName} && \
             chmod +x setup.sh && \
-            ./setup.sh
+            echo "${password}" | sudo -S ./setup.sh
         `;
 
         conn.exec(command, (err, stream) => {
