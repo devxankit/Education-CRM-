@@ -17,7 +17,15 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# 2. Identify Package Manager
+# 2. Identify Package Manager & OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+    VER=$VERSION_ID
+fi
+
+echo "🔍 Detected OS: $OS ($VER)"
+
 if [ -x "$(command -v apt-get)" ]; then
     PKG_MANAGER="apt-get"
     UPDATE_CMD="apt-get update"
@@ -30,23 +38,33 @@ elif [ -x "$(command -v yum)" ]; then
     PKG_MANAGER="yum"
     UPDATE_CMD="yum check-update || true"
     INSTALL_CMD="yum install -y"
+elif [ -x "$(command -v pacman)" ]; then
+    PKG_MANAGER="pacman"
+    UPDATE_CMD="pacman -Sy"
+    INSTALL_CMD="pacman -S --noconfirm"
+elif [ -x "$(command -v zypper)" ]; then
+    PKG_MANAGER="zypper"
+    UPDATE_CMD="zypper refresh"
+    INSTALL_CMD="zypper install -y"
 else
-    echo "❌ Unrecognized package manager. Please install Docker manually."
-    exit 1
+    echo "❌ Unrecognized package manager. Trying official Docker script anyway..."
 fi
 
-echo "📦 OS identified. Using $PKG_MANAGER for installations."
-
 # 3. Install Git & Prerequisites
-$UPDATE_CMD
-$INSTALL_CMD git curl openssl
+echo "📦 Installing prerequisites..."
+if [ "$PKG_MANAGER" == "pacman" ]; then
+    $INSTALL_CMD git curl openssl || true
+else
+    $UPDATE_CMD
+    $INSTALL_CMD git curl openssl || true
+fi
 
 # 4. Universal Docker Installation
 if ! [ -x "$(command -v docker)" ]; then
-  echo "🐳 Installing Docker..."
+  echo "🐳 Installing Docker via official convenience script..."
   curl -fsSL https://get.docker.com -o get-docker.sh
   sh get-docker.sh
-  systemctl enable --now docker
+  systemctl enable --now docker || service docker start || true
   echo "✅ Docker installed."
 else
   echo "✅ Docker is already installed."
