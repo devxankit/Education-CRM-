@@ -53,7 +53,21 @@ io.on('connection', (socket) => {
 dbConnect();
 
 // ✅ CORS
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ 
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
+
+// ✅ Handle Pre-flight
+app.options("*", cors());
 
 // ============================
 // ✅ Normal Middlewares AFTER webhook
