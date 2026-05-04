@@ -7,7 +7,8 @@ const VPSSetup = () => {
     const [config, setConfig] = useState({
         host: '',
         username: '',
-        password: ''
+        password: '',
+        domain: ''
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('idle'); // idle, deploying, success, error
@@ -114,7 +115,7 @@ const VPSSetup = () => {
                         <form onSubmit={handleDeploy} className="space-y-4">
                             <div className="space-y-3">
                                 <div className="group">
-                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Target IP</label>
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Target IP (Public or NATed)</label>
                                     <div className="relative">
                                         <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
                                         <input 
@@ -138,6 +139,20 @@ const VPSSetup = () => {
                                             className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.07] outline-none rounded-xl text-xs font-medium text-white transition-all shadow-inner"
                                             value={config.username}
                                             onChange={e => setConfig({...config, username: e.target.value})}
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Domain Name (Optional for SSL)</label>
+                                    <div className="relative">
+                                        <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                        <input 
+                                            placeholder="crm.example.com"
+                                            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.07] outline-none rounded-xl text-xs font-medium text-white transition-all shadow-inner"
+                                            value={config.domain}
+                                            onChange={e => setConfig({...config, domain: e.target.value})}
                                             disabled={loading}
                                         />
                                     </div>

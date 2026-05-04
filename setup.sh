@@ -1,15 +1,21 @@
 #!/bin/bash
 
-# =================================================================
-# School CRM - Universal Automated VPS Setup Script
-# Works on: Ubuntu, Debian, CentOS, Fedora, RHEL
-# =================================================================
+# 0. Domain Input (Optional for SSL)
+DOMAIN=$1
+if [ -z "$DOMAIN" ]; then
+    echo "🌐 No domain provided as argument. Running in IP-only mode."
+    echo "💡 To use SSL, run: sudo bash setup.sh yourdomain.com"
+fi
 
 set -e
 
-echo "---------------------------------------------------"
 echo "🚀 Starting Universal School CRM Deployment..."
 echo "---------------------------------------------------"
+
+# 1. IP Detection (Private/NATed vs Public)
+PRIVATE_IP=$(hostname -I | awk '{print $1}')
+PUBLIC_IP=$(curl -s ifconfig.me || echo "Unknown")
+echo "🔍 Network: Private IP ($PRIVATE_IP), Public IP ($PUBLIC_IP)"
 
 # 1. Root/Sudo Check
 if [[ $EUID -ne 0 ]]; then
@@ -55,10 +61,10 @@ fi
 # 3. Install Git & Prerequisites
 echo "📦 Installing prerequisites..."
 if [ "$PKG_MANAGER" == "pacman" ]; then
-    $SUDO $INSTALL_CMD git curl openssl || true
+    $SUDO $INSTALL_CMD git curl openssl nginx certbot python-certbot-nginx || true
 else
     $SUDO $UPDATE_CMD
-    $SUDO $INSTALL_CMD git curl openssl || true
+    $SUDO $INSTALL_CMD git curl openssl nginx certbot python3-certbot-nginx || true
 fi
 
 # 4. Universal Docker Installation
@@ -95,6 +101,16 @@ if [ ! -f .env ]; then
     sed -i "s/JWT_REFRESH_ACESS_SECRET=.*/JWT_REFRESH_ACESS_SECRET=$(openssl rand -hex 32)/" .env
     sed -i "s/JWT_REFRESH_SECRET=.*/JWT_REFRESH_SECRET=$(openssl rand -hex 32)/" .env
     sed -i "s/JWT_RESET_SECRET=.*/JWT_RESET_SECRET=$(openssl rand -hex 32)/" .env
+    
+    # Update FRONTEND_URL based on domain or IP
+    if [ -z "$DOMAIN" ]; then
+      sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=http://$PRIVATE_IP:3000|" .env
+      echo "🌐 FRONTEND_URL set to NATed IP: http://$PRIVATE_IP:3000"
+    else
+      sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=https://$DOMAIN|" .env
+      echo "🌐 FRONTEND_URL set to domain: https://$DOMAIN"
+    fi
+
     echo "✅ .env file created with unique keys."
   else
     echo "⚠️ .env.example not found. Using defaults from docker-compose."
@@ -117,11 +133,50 @@ fi
 echo "⚡ Building and starting containers (this may take a few minutes)..."
 $SUDO docker compose up -d --build
 
+# 9. SSL & Domain Configuration (Nginx)
+if [ ! -z "$DOMAIN" ]; then
+    echo "🌐 Configuring Domain & SSL for $DOMAIN..."
+    
+    # Create Nginx Config
+    $SUDO tee /etc/nginx/sites-available/school_crm > /dev/null <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF
+
+    # Enable Config
+    $SUDO ln -s /etc/nginx/sites-available/school_crm /etc/nginx/sites-enabled/ || true
+    $SUDO rm /etc/nginx/sites-enabled/default || true
+    $SUDO systemctl restart nginx
+
+    # Obtain SSL Certificate
+    echo "🔒 Obtaining SSL Certificate (Let's Encrypt)..."
+    $SUDO certbot --nginx -d $DOMAIN --non-interactive --agree-tos --register-unsafely-without-email || true
+    
+    $SUDO systemctl restart nginx
+    echo "✅ SSL configured successfully!"
+fi
+
 # 8. Final Status
 echo "---------------------------------------------------"
 echo "🎉 Setup Complete on $PKG_MANAGER based system!"
 echo "---------------------------------------------------"
-echo "📍 Application: http://$(curl -s ifconfig.me):3000"
+if [ ! -z "$DOMAIN" ]; then
+    echo "📍 Application: https://$DOMAIN"
+else
+    echo "📍 Application (Private/NATed): http://$PRIVATE_IP:3000"
+    echo "📍 Application (Public IP):      http://$PUBLIC_IP:3000"
+fi
 echo "📊 Database:    Internal (Port 27017)"
 echo "---------------------------------------------------"
 echo "💡 Note: Please ensure port 3000 is open in your firewall."

@@ -7,7 +7,7 @@ import asyncHandler from 'express-async-handler';
  * @access  Private/Admin (Assuming auth middleware is applied in router)
  */
 export const setupRemoteVPS = asyncHandler(async (req, res) => {
-    const { host, username, password } = req.body;
+    const { host, username, password, domain } = req.body;
 
     if (!host || !username || !password) {
         res.status(400);
@@ -22,9 +22,6 @@ export const setupRemoteVPS = asyncHandler(async (req, res) => {
         console.log(`Connected to VPS: ${host}`);
         
         // Command to setup the CRM
-        // 1. Install git if not present
-        // 2. Clone the repo
-        // 3. Run setup.sh
         const repo = 'https://github.com/devxankit/Education-CRM-'; 
         const folderName = 'education-crm';
         
@@ -40,7 +37,7 @@ export const setupRemoteVPS = asyncHandler(async (req, res) => {
             git clone ${repo} ${folderName} && \
             cd ${folderName} && \
             chmod +x setup.sh && \
-            echo "${password}" | sudo -S ./setup.sh
+            echo "${password}" | sudo -S ./setup.sh ${domain || ''}
         `;
 
         conn.exec(command, (err, stream) => {
