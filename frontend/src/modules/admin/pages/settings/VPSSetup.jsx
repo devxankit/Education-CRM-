@@ -4,16 +4,24 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 
 const VPSSetup = () => {
-    const [config, setConfig] = useState({
-        host: '',
-        username: '',
-        password: '',
-        domain: ''
+    const [config, setConfig] = useState(() => {
+        const saved = localStorage.getItem('vps_config');
+        return saved ? JSON.parse(saved) : {
+            host: '',
+            port: '22',
+            username: '',
+            password: '',
+            domain: ''
+        };
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('idle'); // idle, deploying, success, error
     const [logs, setLogs] = useState([]);
     const logEndRef = useRef(null);
+
+    useEffect(() => {
+        localStorage.setItem('vps_config', JSON.stringify(config));
+    }, [config]);
 
     const scrollToBottom = () => {
         logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,11 +58,14 @@ const VPSSetup = () => {
             }
         } catch (error) {
             setStatus('error');
-            setLogs(prev => [...prev, { 
-                text: `❌ FAIL: ${error.response?.data?.message || error.message}`, 
-                isError: true, 
-                time: new Date().toLocaleTimeString() 
-            }]);
+            const errorMessage = error.response?.data?.message || error.message;
+            const hint = error.response?.data?.hint;
+            
+            setLogs(prev => [
+                ...prev, 
+                { text: `❌ FAIL: ${errorMessage}`, isError: true, time: new Date().toLocaleTimeString() },
+                ...(hint ? [{ text: `💡 HINT: ${hint}`, isError: false, time: new Date().toLocaleTimeString() }] : [])
+            ]);
         } finally {
             setLoading(false);
         }
@@ -130,6 +141,20 @@ const VPSSetup = () => {
                                 </div>
 
                                 <div className="group">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">SSH Port (Default: 22)</label>
+                                    <div className="relative">
+                                        <Terminal className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                                        <input 
+                                            placeholder="22"
+                                            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 focus:border-indigo-500/50 focus:bg-white/[0.07] outline-none rounded-xl text-xs font-medium text-white transition-all shadow-inner"
+                                            value={config.port}
+                                            onChange={e => setConfig({...config, port: e.target.value})}
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="group">
                                     <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block group-focus-within:text-indigo-400 transition-colors">Auth User</label>
                                     <div className="relative">
                                         <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={16} />
@@ -156,6 +181,27 @@ const VPSSetup = () => {
                                             disabled={loading}
                                         />
                                     </div>
+                                    {config.domain && (
+                                        <div className="mt-2 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-lg animate-in fade-in slide-in-from-top-1 duration-300">
+                                            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                                <Shield size={10} /> DNS Configuration Required
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="bg-black/20 p-2 rounded border border-white/5">
+                                                    <p className="text-[7px] text-slate-500 uppercase font-bold">Type</p>
+                                                    <p className="text-[10px] text-white font-mono">A Record</p>
+                                                </div>
+                                                <div className="bg-black/20 p-2 rounded border border-white/5">
+                                                    <p className="text-[7px] text-slate-500 uppercase font-bold">Host</p>
+                                                    <p className="text-[10px] text-white font-mono">@ or {config.domain.split('.')[0]}</p>
+                                                </div>
+                                                <div className="col-span-2 bg-black/20 p-2 rounded border border-white/5">
+                                                    <p className="text-[7px] text-slate-500 uppercase font-bold">Points To (Value)</p>
+                                                    <p className="text-[10px] text-emerald-400 font-mono">{config.host || 'ENTER_IP_ABOVE'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="group">

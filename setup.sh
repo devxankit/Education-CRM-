@@ -14,7 +14,7 @@ echo "---------------------------------------------------"
 
 # 1. IP Detection (Private/NATed vs Public)
 PRIVATE_IP=$(hostname -I | awk '{print $1}')
-PUBLIC_IP=$(curl -s ifconfig.me || echo "Unknown")
+PUBLIC_IP=$(curl -s ifconfig.me || curl -s icanhazip.com || curl -s api.ipify.org || echo "Unknown")
 echo "🔍 Network: Private IP ($PRIVATE_IP), Public IP ($PUBLIC_IP)"
 
 # 1. Root/Sudo Check
@@ -34,10 +34,22 @@ fi
 
 echo "🔍 Detected OS: $OS ($VER)"
 
+# Function to wait for apt/dpkg locks
+wait_for_lock() {
+    if [ -x "$(command -v apt-get)" ]; then
+        echo "🔍 Checking for package manager locks..."
+        while $SUDO fuser /var/lib/dpkg/lock >/dev/null 2>&1 || $SUDO fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || $SUDO fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+            echo "⏳ Waiting for other package manager process to finish (apt is busy)..."
+            sleep 5
+        done
+    fi
+}
+
 if [ -x "$(command -v apt-get)" ]; then
     PKG_MANAGER="apt-get"
     UPDATE_CMD="apt-get update"
     INSTALL_CMD="apt-get install -y"
+    wait_for_lock
 elif [ -x "$(command -v dnf)" ]; then
     PKG_MANAGER="dnf"
     UPDATE_CMD="dnf check-update || true"
@@ -104,8 +116,14 @@ if [ ! -f .env ]; then
     
     # Update FRONTEND_URL based on domain or IP
     if [ -z "$DOMAIN" ]; then
-      sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=http://$PRIVATE_IP:3000|" .env
-      echo "🌐 FRONTEND_URL set to NATed IP: http://$PRIVATE_IP:3000"
+      # Prefer Public IP for external access if available
+      if [ "$PUBLIC_IP" != "Unknown" ]; then
+        APP_IP=$PUBLIC_IP
+      else
+        APP_IP=$PRIVATE_IP
+      fi
+      sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=http://$APP_IP:3000|" .env
+      echo "🌐 FRONTEND_URL set to: http://$APP_IP:3000"
     else
       sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=https://$DOMAIN|" .env
       echo "🌐 FRONTEND_URL set to domain: https://$DOMAIN"
